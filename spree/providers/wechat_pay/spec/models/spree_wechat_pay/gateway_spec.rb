@@ -263,4 +263,38 @@ RSpec.describe SpreeWechatPay::Gateway do
       expect(gateway.decrypt_sensitive_field(ciphertext)).to eq('张三')
     end
   end
+
+  # Every v3 answer is verified before it is believed, with one explicit
+  # exception: the certificate download, which exists to fetch the very keys
+  # verification needs. OAuth is a different host and protocol, not v3.
+  #
+  #   Verified    transaction create (all five scenes), query, close, refund,
+  #               refund query
+  #   Unverified  certificate download
+  #   Not v3      OAuth access_token, OAuth jscode2session
+  describe 'response verification' do
+    it 'routes every payment and refund call through a verified client' do
+      allow(SpreeWechatPay::Client).to receive(:new).and_call_original
+
+      gateway.send(:transaction_for, 'R1001-abcd1234')
+      gateway.send(:refund_for, 're_test-ABCDEF12')
+
+      expect(SpreeWechatPay::Client).to have_received(:new).with(hash_including(:verifier)).twice
+    end
+
+    it 'leaves only the certificate download unverified' do
+      allow(SpreeWechatPay::Client).to receive(:new).and_call_original
+
+      gateway.certificate_store
+
+      expect(SpreeWechatPay::Client).to have_received(:new).with(hash_excluding(:verifier)).once
+    end
+
+    it 'keeps the OAuth exchange out of the v3 client entirely' do
+      allow(SpreeWechatPay::Client).to receive(:new)
+
+      expect(gateway.send(:oauth)).to be_a(SpreeWechatPay::Oauth)
+      expect(SpreeWechatPay::Client).not_to have_received(:new)
+    end
+  end
 end
