@@ -1,0 +1,90 @@
+---
+title: "Connect WeChat Pay to Spree Commerce"
+sidebarTitle: WeChat Pay
+description: "Set up Spree's WeChat Pay integration to accept payments by QR code, in-app, and inside the WeChat browser — the dominant payment method in mainland China."
+---
+
+WeChat Pay (微信支付) is the payment method most Chinese customers already use, built into the WeChat app they spend their day in. Spree's integration covers all five ways a customer can pay: scanning a QR code, paying inside the WeChat browser, paying from a mini program, paying from a mobile browser, and paying from a native app.
+
+<Note>WeChat Pay's domestic API settles in renminbi (CNY) only, so the payment method is offered only to stores that accept CNY.</Note>
+
+## Installation
+
+Add the gem to your application:
+
+<CodeGroup>
+
+```bash Spree CLI (Docker)
+spree bundle add spree_wechat_pay
+```
+
+```bash Without Spree CLI
+bundle add spree_wechat_pay
+```
+
+</CodeGroup>
+
+Restart the server afterwards. The gateway registers itself automatically.
+
+## What you need from WeChat
+
+WeChat Pay credentials are issued for a merchant account (商户号). You will need the following from the [WeChat Pay merchant platform](https://pay.weixin.qq.com/):
+
+- **Merchant ID** (商户号) — your merchant account number.
+- **Merchant certificate** — the private key and its serial number, used to sign every request you send to WeChat.
+- **APIv3 key** — a 32-character key that decrypts payment and refund notifications.
+- **A verification key** — either the WeChat Pay public key (recommended for new merchants) or the platform certificate (established merchants).
+
+## Connect WeChat Pay
+
+Sign in to your Spree admin dashboard and navigate to **Settings → Payments**.
+
+Find WeChat Pay under Available Payment Methods and click **Add**, then fill in the credentials.
+
+### Verification mode
+
+WeChat verifies its own signatures in one of two ways. Choose **WeChat Pay public key** for a new merchant account, or **platform certificate** for an account that predates public keys.
+
+| Field | What to enter |
+| --- | --- |
+| **Merchant ID** | Your 商户号 |
+| **Merchant certificate private key** | The full PEM block, including its `BEGIN` and `END` lines |
+| **Merchant certificate serial** | The serial number of that certificate |
+| **APIv3 key** | The 32-character APIv3 key |
+| **Verification mode** | `WeChat Pay public key` or `platform certificate` |
+| **WeChat Pay public key** | The public key, when in public key mode |
+| **WeChat Pay public key ID** | The `PUB_KEY_ID_…` identifier, when in public key mode |
+
+Saving the credentials runs one check against WeChat, so a typo in the merchant ID or a mismatched key pair is reported at configuration time rather than at the first checkout.
+
+## Payment scenes
+
+One merchant account can take payments through several surfaces. Tick the scenes you want, and provide the application identifier each one needs.
+
+| Scene | How the customer pays | Application identifier |
+| --- | --- | --- |
+| **Native** | Scans a QR code on your storefront | Any identifier bound to your merchant account |
+| **JSAPI** | Inside the WeChat browser | Your official account's app ID |
+| **Mini program** | Inside a WeChat mini program | Your mini program's app ID |
+| **H5** | In a mobile browser outside WeChat | Any identifier bound to your merchant account |
+| **APP** | In your native app | Your open-platform app ID |
+
+Each scene is refused if you enable it without the identifier it needs.
+
+### Storefront setup per scene
+
+The storefront work differs per scene, and it is the part most likely to be got wrong.
+
+- **Native** — the storefront renders the QR code it is handed and polls the session until it is paid. No customer identity is involved.
+- **JSAPI** — the storefront must first redirect the customer to WeChat to obtain an authorization code, then pass that code to the payment session. The gateway exchanges it for the customer's identity on the server; the official account secret never leaves the server, and the customer's identity is never taken from the browser.
+- **Mini program** — the same exchange as JSAPI, using the mini program's own identifier and code.
+- **H5** — the storefront redirects the customer to the link the gateway returns, and supplies the customer's IP address and device type (`Wap`, `iOS`, or `Android`) when it asks for a session.
+- **APP** — the storefront passes the signed parameter set the gateway returns to the app's WeChat SDK, which starts the payment.
+
+## Refunds
+
+Refunds are accepted by WeChat and settle asynchronously. A refund starts as *processing* and moves to *completed* or *canceled* when WeChat reports the outcome. WeChat's own words — for example, an abnormal refund whose money could not reach the customer's bank — are kept on the refund so an operator can see exactly what WeChat said.
+
+## Test before going live
+
+WeChat offers a self-test that sends a signed, encrypted notification to your own callback address and expects it to be verified and decrypted correctly. Run it from the merchant platform after configuring a publicly reachable callback to confirm the whole chain works.

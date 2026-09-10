@@ -572,7 +572,8 @@
                           "integrations/payments/stripe",
                           "integrations/payments/adyen",
                           "integrations/payments/paypal",
-                          "integrations/payments/razorpay"
+                          "integrations/payments/razorpay",
+                          "integrations/payments/wechat-pay"
                         ]
                       },
                       {
@@ -1613,7 +1614,8 @@
                   "integrations/payments/stripe",
                   "integrations/payments/adyen",
                   "integrations/payments/paypal",
-                  "integrations/payments/razorpay"
+                  "integrations/payments/razorpay",
+                  "integrations/payments/wechat-pay"
                 ]
               },
               {
@@ -2480,7 +2482,8 @@
               "integrations/payments/stripe",
               "integrations/payments/adyen",
               "integrations/payments/paypal",
-              "integrations/payments/razorpay"
+              "integrations/payments/razorpay",
+              "integrations/payments/wechat-pay"
             ]
           },
           {
