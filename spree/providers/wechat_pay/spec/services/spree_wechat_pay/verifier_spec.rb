@@ -5,7 +5,7 @@ RSpec.describe SpreeWechatPay::Verifier do
   let(:timestamp) { '1554208460' }
   let(:nonce) { 'NONCE_STRING' }
   let(:keys) { { WechatPaySpecHelpers::PUBLIC_KEY_ID => platform_key_pair.public_key } }
-  let(:verifier) { described_class.new(keys) }
+  let(:verifier) { described_class.new(keys, now: Time.zone.at(timestamp.to_i)) }
 
   def signature_for(body, timestamp, nonce, key: platform_key_pair)
     sign_like_wechat("#{timestamp}\n#{nonce}\n#{body}\n", key: key)
@@ -72,6 +72,41 @@ RSpec.describe SpreeWechatPay::Verifier do
           signature: 'not base64!!', serial: WechatPaySpecHelpers::PUBLIC_KEY_ID
         )
       end.to raise_error(described_class::InvalidSignature, /Malformed signature encoding/)
+    end
+  end
+
+  # A signature never expires on its own, so without this a notification
+  # captured today would verify exactly as well tomorrow.
+  describe 'the replay window' do
+    def verify_within(offset)
+      described_class.new(keys, now: Time.zone.at(timestamp.to_i) + offset).verify!(
+        body: body, timestamp: timestamp, nonce: nonce,
+        signature: signature_for(body, timestamp, nonce),
+        serial: WechatPaySpecHelpers::PUBLIC_KEY_ID
+      )
+    end
+
+    it 'accepts a signature made four minutes ago' do
+      expect(verify_within(4.minutes)).to be true
+    end
+
+    it 'rejects a signature made six minutes ago' do
+      expect { verify_within(6.minutes) }.to raise_error(described_class::InvalidSignature, /replay window/)
+    end
+
+    # A clock ahead of WeChat's produces a future timestamp as readily as a
+    # forgery does, and a signature from the future is no more current.
+    it 'rejects a signature dated more than five minutes ahead' do
+      expect { verify_within(-6.minutes) }.to raise_error(described_class::InvalidSignature, /replay window/)
+    end
+
+    it 'rejects a timestamp that is not a number' do
+      expect do
+        described_class.new(keys).verify!(
+          body: body, timestamp: 'yesterday', nonce: nonce,
+          signature: signature_for(body, timestamp, nonce), serial: WechatPaySpecHelpers::PUBLIC_KEY_ID
+        )
+      end.to raise_error(described_class::InvalidSignature, /Malformed signature timestamp/)
     end
   end
 end

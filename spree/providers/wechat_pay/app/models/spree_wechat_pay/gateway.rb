@@ -119,12 +119,12 @@ module SpreeWechatPay
     #
     # @return [SpreeWechatPay::Client]
     def client
-      Client.new(context: merchant_context)
+      Client.new(context: merchant_context, verifier: -> { verifier })
     end
 
     # @return [SpreeWechatPay::CertificateStore]
     def certificate_store
-      CertificateStore.new(context: merchant_context, client: client)
+      CertificateStore.new(context: merchant_context, client: unverified_client)
     end
 
     # The keys WeChat's signatures are verified against, by the serial its
@@ -137,6 +137,21 @@ module SpreeWechatPay
     end
 
     private
+
+    # The one client that does not verify what it is told, because it is the one
+    # that fetches the very keys verification needs: a cold certificate cache
+    # would otherwise ask for the keys, fetch them, and try to verify that fetch
+    # against keys it does not have yet. Every official WeChat Pay SDK carves
+    # out the same call for the same reason.
+    #
+    # The exposure is bounded — the download is the only thing this client is
+    # used for, and what it returns is still decrypted with the APIv3 key, which
+    # is what proves a genuine certificate set arrived.
+    #
+    # @return [SpreeWechatPay::Client]
+    def unverified_client
+      Client.new(context: merchant_context)
+    end
 
     # WeChat's own identifiers for a transaction, under the gateway's own names.
     # Written to the payment so an operator holding a payment can find it in the

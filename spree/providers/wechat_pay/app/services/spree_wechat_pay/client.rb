@@ -17,9 +17,13 @@ module SpreeWechatPay
 
     # @param context [SpreeWechatPay::MerchantContext]
     # @param connection [Faraday::Connection, nil] injected by specs
-    def initialize(context:, connection: nil)
+    # @param verifier [#call, SpreeWechatPay::Verifier, nil] what every answer is
+    #   checked against; a callable is resolved per answer, so a certificate
+    #   rotation is picked up without rebuilding clients
+    def initialize(context:, connection: nil, verifier: nil)
       @context = context
       @connection = connection || build_connection
+      @verifier = verifier
     end
 
     # @param path [String]
@@ -75,6 +79,8 @@ module SpreeWechatPay
     end
 
     def handle(response)
+      verify_response!(response)
+
       payload = parse(response.body)
 
       case response.status
@@ -101,6 +107,28 @@ module SpreeWechatPay
         # reported as unknown rather than as a failure.
         raise ConnectionError, "WeChat Pay answered #{response.status}"
       end
+    end
+
+    # WeChat signs every answer, and the signature is the whole of what makes an
+    # answer WeChat's: without it a code_url, a transaction state or a
+    # certificate could have been written by anything on the path. Checked
+    # before the body is parsed, because there is no point reading a payload
+    # that has not been attributed to anyone.
+    def verify_response!(response)
+      return if @verifier.blank?
+
+      verifier = @verifier.respond_to?(:call) ? @verifier.call : @verifier
+      return if verifier.blank?
+
+      verifier.verify!(
+        body: response.body.to_s,
+        timestamp: response.headers['Wechatpay-Timestamp'].to_s,
+        nonce: response.headers['Wechatpay-Nonce'].to_s,
+        signature: response.headers['Wechatpay-Signature'].to_s,
+        serial: response.headers['Wechatpay-Serial'].to_s
+      )
+    rescue Verifier::InvalidSignature => error
+      raise VerificationError, "WeChat Pay answered with a signature that does not verify (#{error.message})"
     end
 
     def parse(body)

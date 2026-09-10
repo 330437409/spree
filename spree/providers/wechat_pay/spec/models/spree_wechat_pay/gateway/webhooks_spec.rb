@@ -45,7 +45,10 @@ RSpec.describe SpreeWechatPay::Gateway::Webhooks do
   end
 
   # Signs the body the way WeChat does, over timestamp, nonce and the raw bytes.
-  def signed_request(body, timestamp: '1554208460', nonce: 'NONCE', key: platform_key_pair)
+  # The timestamp is the current one because WeChat refuses — and so do we — a
+  # message dated more than five minutes from now; the stale case is asserted
+  # separately below.
+  def signed_request(body, timestamp: Time.current.to_i.to_s, nonce: 'NONCE', key: platform_key_pair)
     headers = {
       'Wechatpay-Timestamp' => timestamp,
       'Wechatpay-Nonce' => nonce,
@@ -111,6 +114,19 @@ RSpec.describe SpreeWechatPay::Gateway::Webhooks do
 
       expect { gateway.parse_webhook_event(body, headers) }.to raise_error(
         Spree::PaymentMethod::WebhookSignatureError, /No verification key/
+      )
+    end
+
+    # A signature is valid forever on its own, so a notification captured today
+    # would otherwise be replayable for good — and a replayed payment
+    # notification reads exactly like a genuine one.
+    it 'refuses a notification dated outside the replay window' do
+      body, headers = signed_request(
+        JSON.generate(envelope), timestamp: 10.minutes.ago.to_i.to_s
+      )
+
+      expect { gateway.parse_webhook_event(body, headers) }.to raise_error(
+        Spree::PaymentMethod::WebhookSignatureError, /replay window/
       )
     end
 

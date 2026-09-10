@@ -102,5 +102,23 @@ RSpec.describe SpreeWechatPay::Gateway do
       expect(gateway.merchant_context.merchant_id).to eq('1900000002')
       expect(first.merchant_id).to eq('1900000001')
     end
+
+    it 'checks every answer against WeChat’s signature' do
+      allow(SpreeWechatPay::Client).to receive(:new).and_call_original
+
+      gateway.client
+
+      expect(SpreeWechatPay::Client).to have_received(:new).with(hash_including(:verifier))
+    end
+
+    # The certificate download cannot be verified against the keys it exists to
+    # fetch, so it is the one call made without a verifier.
+    it 'downloads certificates with a client that does not verify them' do
+      allow(SpreeWechatPay::Client).to receive(:new).and_call_original
+
+      gateway.certificate_store
+
+      expect(SpreeWechatPay::Client).to have_received(:new).with(hash_excluding(:verifier))
+    end
   end
 end

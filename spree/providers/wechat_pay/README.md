@@ -65,6 +65,12 @@ serves. The URL must be HTTPS, publicly reachable, and carry no query parameters
 WeChat requires an answer within five seconds; Spree verifies the signature
 synchronously and does the rest in the background.
 
+Signatures are checked in both directions. A notification that cannot be
+verified is refused, and a notification dated more than five minutes from now is
+refused as well — WeChat's own rule, and the only thing that stops a captured
+notification from being replayed. Answers from WeChat are verified the same way
+before anything in them is believed.
+
 ## Further reading
 
 - Plan and design record: `docs/plans/6.0-wechat-pay-gateway.md`

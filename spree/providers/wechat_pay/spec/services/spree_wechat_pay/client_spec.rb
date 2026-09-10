@@ -94,6 +94,94 @@ RSpec.describe SpreeWechatPay::Client do
     end
   end
 
+  # WeChat signs every answer it sends. That signature is the whole of what
+  # makes an answer WeChat's rather than something the request happened to
+  # reach, so a client that is given a verifier believes nothing without one.
+  describe 'verifying an answer' do
+    let(:verifying_client) do
+      described_class.new(context: context, connection: connection, verifier: verifier)
+    end
+    let(:verifier) do
+      SpreeWechatPay::Verifier.new(
+        { WechatPaySpecHelpers::PUBLIC_KEY_ID => platform_key_pair.public_key }
+      )
+    end
+    let(:path) { '/v3/pay/transactions/native' }
+    let(:payload) { '{"code_url":"weixin://wxpay/abc"}' }
+
+    def wechat_headers_for(payload, key: platform_key_pair)
+      timestamp = Time.current.to_i.to_s
+
+      {
+        'Content-Type' => 'application/json',
+        'Wechatpay-Timestamp' => timestamp,
+        'Wechatpay-Nonce' => 'NONCE',
+        'Wechatpay-Serial' => WechatPaySpecHelpers::PUBLIC_KEY_ID,
+        'Wechatpay-Signature' => sign_like_wechat("#{timestamp}\nNONCE\n#{payload}\n", key: key)
+      }
+    end
+
+    it 'accepts an answer WeChat signed' do
+      stubs.post(path) { [200, wechat_headers_for(payload), payload] }
+
+      expect(verifying_client.post(path, {})).to eq('code_url' => 'weixin://wxpay/abc')
+    end
+
+    it 'refuses an answer signed with a key that is not WeChat’s' do
+      other_key = OpenSSL::PKey::RSA.new(2048)
+      stubs.post(path) { [200, wechat_headers_for(payload, key: other_key), payload] }
+
+      expect { verifying_client.post(path, {}) }.
+        to raise_error(SpreeWechatPay::VerificationError, /does not verify/)
+    end
+
+    it 'refuses an answer whose body changed after it was signed' do
+      stubs.post(path) { [200, wechat_headers_for(payload), '{"code_url":"weixin://wxpay/other"}'] }
+
+      expect { verifying_client.post(path, {}) }.
+        to raise_error(SpreeWechatPay::VerificationError, /does not verify/)
+    end
+
+    it 'refuses an answer carrying no signature at all' do
+      stubs.post(path) { [200, { 'Content-Type' => 'application/json' }, payload] }
+
+      expect { verifying_client.post(path, {}) }.
+        to raise_error(SpreeWechatPay::VerificationError, /Missing verification headers/)
+    end
+
+    it 'refuses an answer signed outside the replay window' do
+      stale = wechat_headers_for(payload)
+      stale['Wechatpay-Timestamp'] = (Time.current.to_i - 10.minutes.to_i).to_s
+      stubs.post(path) { [200, stale, payload] }
+
+      expect { verifying_client.post(path, {}) }.
+        to raise_error(SpreeWechatPay::VerificationError, /replay window/)
+    end
+
+    # An answer that cannot be attributed says nothing about whether the request
+    # took effect, so it is reported the way a dropped connection is — and a
+    # create is never repeated on the strength of it.
+    it 'reports it as an unknown outcome rather than as a refusal' do
+      attempts = 0
+      stubs.post(path) do
+        attempts += 1
+        [200, { 'Content-Type' => 'application/json' }, payload]
+      end
+
+      expect { verifying_client.post(path, {}) }.to raise_error(SpreeWechatPay::ConnectionError)
+      expect(attempts).to eq(1)
+    end
+
+    # The download that supplies the verification keys cannot be verified
+    # against the keys it is fetching, so a client without a verifier is what
+    # the certificate store is given.
+    it 'believes a client that was given no verifier' do
+      stubs.get('/v3/certificates') { [200, { 'Content-Type' => 'application/json' }, '{"data":[]}'] }
+
+      expect(client.get('/v3/certificates')).to eq('data' => [])
+    end
+  end
+
   # Queries are reads: retrying one cannot move money or create a second
   # transaction.
   describe 'retrying a query' do
