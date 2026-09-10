@@ -5175,3 +5175,46 @@ seller ledger endpoints authorize `:seller_earnings` and root in
 audience; and a new `q[<column>_eq]` filter on either ledger model needs that
 column in `whitelisted_ransackable_attributes` — a whitelisted association
 name does not make its foreign key filterable.
+
+## 2026-09-10 — WeChat Pay lands as a gateway gem; async refunds become an opt-in gateway capability
+
+Two decisions from `6.0-wechat-pay-gateway.md`, both of which reach past that
+plan.
+
+**Payment gateway credentials stay on `PaymentMethod` rows, and a gateway is
+not an `Spree::Integration`.** This restates the 2026-07-30 cardinality
+decision because `6.0-integrations-admin.md` carries a blanket constraint —
+"new provider gems must ship an Integration subclass" — that reads as covering
+payment gateways. It does not: integrations are the store-level singleton
+connection (delivery rates, tax, fulfillment, pickup points), where one
+credential serves many config rows, and their `(store, type)` uniqueness
+actively fights the merchant-entity model that payments need. A gateway
+subclassing `Spree::Integration` is wrong, not merely redundant. A scope note
+was added to that plan's constraint.
+
+**A gateway may declare asynchronous refunds, and only such a gateway's refund
+rows carry a status.** `spree_refunds` has no status column today — a refund is
+either credited (`transaction_id` present) or destroyed on failure — and
+`credit_allowed` sums every row. WeChat Pay accepts a refund request and settles
+it later, sometimes failing after acceptance, so the truth cannot be recorded in
+that shape. Core gains `Spree::PaymentMethod#async_refunds?`, **false by
+default**, plus a `processing`/`completed`/`canceled` status on `spree_refunds`
+and a `credit_allowed` that ignores no-longer-live refunds.
+
+**Constraints now:** with `async_refunds?` false nothing about the refund path
+may change — Stripe's existing refund specs are the guard, and they must pass
+untouched; and nothing is added to the refund path that cannot be expressed for
+both kinds of gateway. WeChat's own statuses map non-trivially and the mapping
+is deliberate: only `SUCCESS` and `CLOSED` are terminal per WeChat's own
+documentation, so `SUCCESS` is `completed`, `CLOSED` is `canceled`, and — the
+part worth stating — **`ABNORMAL` stays `processing`, not `failed`**. An abnormal
+refund is non-terminal and can still succeed, so calling it failed would both
+misstate the money to the operator and corrupt the balance: `credit_allowed`
+excludes failed refunds, so a still-live refund marked failed would free that
+amount as creditable while WeChat could still complete it — a double-refund
+path. The provider's own status goes in the refund's `metadata`, which the model
+and the admin serializer already carry.
+
+The general rule, which any future async-refund gateway inherits: **a
+non-terminal provider state must never be mapped onto a terminal canonical one,
+however alarming the provider's wording is.**
