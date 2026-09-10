@@ -90,7 +90,10 @@ module SpreeWechatPay
 
       # The chain, in order: WeChat's refund id against the refund's own
       # transaction_id, then our refund number against the metadata it was
-      # written to before the API call.
+      # written to before the API call. These are the only two identities that
+      # settle a refund — a match by `out_trade_no` plus amount is deliberately
+      # not here: it is orphan evidence, never an auto-attachment (see the
+      # constraint in the plan).
       def find_refund(resource)
         refund = refunds.find_by(transaction_id: resource['refund_id'])
         return refund if refund
