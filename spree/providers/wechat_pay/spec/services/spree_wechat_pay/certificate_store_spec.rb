@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'timecop'
 
 RSpec.describe SpreeWechatPay::CertificateStore do
   # Platform certificate mode throughout: public key mode resolves to the one
@@ -173,6 +174,43 @@ RSpec.describe SpreeWechatPay::CertificateStore do
       )
 
       expect(store.current_public_key).to be_a(OpenSSL::PKey::RSA)
+    end
+  end
+
+  # WeChat rotates a platform certificate every five years with a 24-hour
+  # overlap during which both the old and the new certificate are served. A
+  # refresh must carry the old certificate across that overlap — it is still
+  # signing in-flight notifications — and drop it only once it has actually
+  # expired, so a persistent cache never verifies with a stale key.
+  describe 'certificate rotation lifecycle' do
+    it 'keeps both across the overlap, then drops the old one after it expires' do
+      old_pem = OpenSSL::PKey::RSA.new(2048).public_key.to_pem
+      new_pem = OpenSSL::PKey::RSA.new(2048).public_key.to_pem
+      now = Time.current
+
+      Timecop.freeze(now) do
+        allow(client).to receive(:get).with('/v3/certificates').and_return(
+          'data' => [
+            certificate_entry('OLD_SERIAL', old_pem, expire_time: 24.hours.from_now.iso8601),
+            certificate_entry('NEW_SERIAL', new_pem, expire_time: 5.years.from_now.iso8601)
+          ]
+        )
+
+        store.refresh!
+
+        expect(store.verification_keys.keys).to contain_exactly('OLD_SERIAL', 'NEW_SERIAL')
+      end
+
+      Timecop.freeze(now + 25.hours) do
+        # After the overlap WeChat serves only the new certificate.
+        allow(client).to receive(:get).with('/v3/certificates').and_return(
+          'data' => [certificate_entry('NEW_SERIAL', new_pem, expire_time: 5.years.from_now.iso8601)]
+        )
+
+        store.refresh!
+
+        expect(store.verification_keys.keys).to eq(['NEW_SERIAL'])
+      end
     end
   end
 end
