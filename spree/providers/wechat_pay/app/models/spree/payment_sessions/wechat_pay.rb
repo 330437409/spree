@@ -31,6 +31,14 @@ module Spree
       external_data&.dig('code_url')
     end
 
+    # The redirect link an H5 customer is sent to. Like the Native code URL, not
+    # a fixed value — redirect to it rather than storing or comparing it.
+    #
+    # @return [String, nil]
+    def h5_url
+      external_data&.dig('h5_url')
+    end
+
     # WeChat's own identifier for the transaction, known only once it is paid.
     #
     # @return [String, nil]

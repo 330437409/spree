@@ -17,6 +17,10 @@ module SpreeWechatPay
         'TRANSACTION.SUCCESS' => :captured
       }.freeze
 
+      # A refund notification arrives when a refund reaches a terminal or
+      # non-terminal state worth knowing about.
+      REFUND_EVENT_TYPES = %w[REFUND.SUCCESS REFUND.ABNORMAL REFUND.CLOSED].freeze
+
       # Translates a WeChat notification into the shape core consumes.
       # Everything after this — idempotency, locking, payment creation, order
       # completion — belongs to core.
@@ -34,6 +38,16 @@ module SpreeWechatPay
         notification = Notification.new(envelope: envelope, api_v3_key: merchant_context.api_v3_key)
         return nil unless notification.readable?
 
+        if REFUND_EVENT_TYPES.include?(notification.event_type)
+          parse_refund_event(notification)
+        else
+          parse_payment_event(notification)
+        end
+      end
+
+      private
+
+      def parse_payment_event(notification)
         action = PAYMENT_EVENT_ACTIONS[notification.event_type]
         return nil unless action
 
@@ -56,7 +70,69 @@ module SpreeWechatPay
         }
       end
 
-      private
+      # A refund notification carries a refund, found by the lookup chain rather
+      # than by the session's external id, and a canonical target status core
+      # applies idempotently.
+      def parse_refund_event(notification)
+        resource = notification.resource
+        refund = find_refund(resource)
+
+        return report_unknown_refund(resource) if refund.nil?
+
+        {
+          action: :refund,
+          refund: refund,
+          refund_status: Refund::STATUS_ACTIONS[resource['refund_status']] || 'processing',
+          transaction_id: resource['refund_id'],
+          metadata: refund_metadata(resource)
+        }
+      end
+
+      # The chain, in order: WeChat's refund id against the refund's own
+      # transaction_id, then our refund number against the metadata it was
+      # written to before the API call.
+      def find_refund(resource)
+        refund = refunds.find_by(transaction_id: resource['refund_id'])
+        return refund if refund
+
+        out_refund_no = resource['out_refund_no']
+        return nil if out_refund_no.blank?
+
+        refunds.processing.find_each do |candidate|
+          return candidate if candidate.metadata['wechat_pay_out_refund_no'] == out_refund_no
+        end
+
+        nil
+      end
+
+      # A refund notification this installation has no record for is a reportable
+      # event, not a crash and not a silent success — the callback answers 200 so
+      # WeChat stops retrying, and the operator is told what was missed.
+      def report_unknown_refund(resource)
+        Rails.error.report(
+          "WeChat Pay refund notification for an unknown refund: #{resource['refund_id']}",
+          handled: true,
+          context: { out_refund_no: resource['out_refund_no'], out_trade_no: resource['out_trade_no'] },
+          source: 'spree_wechat_pay'
+        )
+        nil
+      end
+
+      # This payment method's own refunds, so a notification cannot act on a
+      # refund belonging to another store's merchant account.
+      def refunds
+        Spree::Refund.joins(:payment).merge(Spree::Payment.where(payment_method_id: id))
+      end
+
+      # WeChat's own identifiers for a refund, under the gateway's own names.
+      def refund_metadata(resource)
+        {
+          'wechat_pay_refund_id' => resource['refund_id'],
+          'wechat_pay_refund_status' => resource['refund_status'],
+          'wechat_pay_out_refund_no' => resource['out_refund_no'],
+          'wechat_pay_last_event_at' => Time.current.iso8601
+        }.compact_blank
+      end
 
       def verify_webhook_signature(raw_body, headers)
         verifier.verify!(

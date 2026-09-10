@@ -21,6 +21,10 @@ module SpreeWechatPay
       @certificate_serial = certificate_serial
     end
 
+    # The APP launch parameter set names the merchant as `partnerId`, which is
+    # this value.
+    attr_reader :merchant_id
+
     # Value for the `Authorization` header of any v3 request.
     #
     # The signed string is five lines, each terminated by a newline *including

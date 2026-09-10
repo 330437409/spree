@@ -85,9 +85,48 @@ RSpec.describe SpreeWechatPay::LaunchParameters do
     end
   end
 
-  # APP's signed string differs in its fourth line, and it is not built yet —
-  # saying so is better than returning something plausible.
+  # APP's signed string differs in its fourth line, and the field set is the app
+  # SDK's `PayReq` rather than the browser bridge's.
+  describe 'for APP' do
+    subject(:app) { params(scene: 'app', app_id: 'wx_app_appid') }
+
+    it 'hands the app SDK its PayReq field set' do
+      expect(app.keys).to contain_exactly(
+        'appId', 'partnerId', 'prepayId', 'package', 'nonceStr', 'timeStamp', 'sign'
+      )
+    end
+
+    it 'names the merchant as the partner' do
+      expect(app['partnerId']).to eq(WechatPaySpecHelpers::MERCHANT_ID)
+    end
+
+    it 'carries the prepay id bare, not wrapped' do
+      expect(app['prepayId']).to eq(prepay_id)
+    end
+
+    it 'uses the fixed package value' do
+      expect(app['package']).to eq('Sign=WXPay')
+    end
+
+    # The fourth line is the bare prepay id — not `prepay_id=<value>` as the
+    # browser scenes sign — and getting it wrong makes the payment silently not
+    # start.
+    it 'signs the bare prepay id' do
+      expected = "wx_app_appid\n1554208460\nNONCE_STRING\n#{prepay_id}\n"
+
+      expect(
+        context.private_key.public_key.verify(
+          OpenSSL::Digest.new('SHA256'),
+          Base64.strict_decode64(app['sign']),
+          expected
+        )
+      ).to be true
+    end
+  end
+
+  # Native and H5 carry a URL, not a signed parameter set, so they have no
+  # launch parameters to build.
   it 'refuses a scene whose launch parameters are not implemented' do
-    expect { params(scene: 'app') }.to raise_error(ArgumentError, /app/)
+    expect { params(scene: 'native') }.to raise_error(ArgumentError, /native/)
   end
 end

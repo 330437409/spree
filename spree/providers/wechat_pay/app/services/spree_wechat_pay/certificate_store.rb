@@ -46,7 +46,7 @@ module SpreeWechatPay
         certificates = cached_certificates
       end
 
-      certificates.transform_values { |pem| OpenSSL::PKey::RSA.new(pem) }
+      certificates.transform_values { |entry| OpenSSL::PKey::RSA.new(entry['pem']) }
     end
 
     # Fetches WeChat's platform certificates and merges them into the cache.
@@ -60,17 +60,43 @@ module SpreeWechatPay
       merged = cached_certificates
 
       fetch_certificates.each do |entry|
-        pem = Aead.decrypt(
-          envelope: entry['encrypt_certificate'] || {},
-          key: @context.api_v3_key
-        )
-        merged[entry['serial_no']] = pem
+        merged[entry['serial_no']] = {
+          'pem' => Aead.decrypt(
+            envelope: entry['encrypt_certificate'] || {},
+            key: @context.api_v3_key
+          ),
+          'expire_time' => entry['expire_time']
+        }
       end
+
+      # A certificate outlives the 24-hour overlap during which WeChat serves it
+      # alongside its replacement, so the set is pruned by each entry's own
+      # expiry rather than by what the latest download happened to include.
+      merged.delete_if { |_serial, entry| expired?(entry['expire_time']) }
 
       # One write of the whole set, so a reader never observes a half-updated
       # collection.
       @cache.write(CACHE_KEY, merged)
       merged.size
+    end
+
+    # The platform certificate's public key to encrypt a sensitive field with:
+    # the one that stays valid longest, so WeChat can still decrypt it after a
+    # rotation already in flight.
+    #
+    # @return [OpenSSL::PKey::RSA]
+    # @raise [RuntimeError] when no valid certificate is cached and the download
+    #   fails
+    def current_public_key
+      refresh! if cached_certificates.empty?
+
+      entry = cached_certificates.values.
+        reject { |candidate| expired?(candidate['expire_time']) }.
+        max_by { |candidate| expire_time(candidate['expire_time']) }
+
+      raise 'No valid WeChat Pay platform certificate is cached' if entry.nil?
+
+      OpenSSL::PKey::RSA.new(entry['pem'])
     end
 
     private
@@ -92,6 +118,31 @@ module SpreeWechatPay
 
     def cached_certificates
       @cache.read(CACHE_KEY) || {}
+    end
+
+    # @param expire_time [String, nil] WeChat's RFC3339 expiry
+    # @return [Boolean]
+    def expired?(expire_time)
+      return false if expire_time.blank?
+
+      Time.iso8601(expire_time) < Time.current
+    rescue ArgumentError
+      # An unreadable expiry means we cannot tell whether the certificate has
+      # lapsed, so it is kept — dropping a still-valid key breaks verification,
+      # while keeping a lapsed one merely never matches an incoming serial.
+      false
+    end
+
+    # @param value [String, nil] WeChat's RFC3339 expiry
+    # @return [Time] the parsed expiry, or the epoch when it cannot be read — so
+    #   an unreadable expiry sorts last and is never the certificate chosen to
+    #   encrypt with
+    def expire_time(value)
+      return Time.at(0) if value.blank?
+
+      Time.iso8601(value)
+    rescue ArgumentError
+      Time.at(0)
     end
   end
 end

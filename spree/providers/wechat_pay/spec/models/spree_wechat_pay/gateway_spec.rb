@@ -23,11 +23,10 @@ RSpec.describe SpreeWechatPay::Gateway do
       expect(gateway.session_required?).to be true
     end
 
-    # WeChat does settle a refund after accepting it, but advertising that
-    # before a refund API exists leaves a `processing` refund reserving the
-    # payment's balance with nothing able to resolve it.
-    it 'does not claim asynchronous refunds before refunds are implemented' do
-      expect(gateway.async_refunds?).to be false
+    # WeChat accepts a refund and settles it later, so a refund starts in
+    # `processing` and is resolved by notification or reconciliation.
+    it 'claims asynchronous refunds' do
+      expect(gateway.async_refunds?).to be true
     end
 
     # Nothing here sends an amount in a currency WeChat will not settle, so a
@@ -119,6 +118,75 @@ RSpec.describe SpreeWechatPay::Gateway do
       gateway.certificate_store
 
       expect(SpreeWechatPay::Client).to have_received(:new).with(hash_excluding(:verifier))
+    end
+  end
+
+  describe '#credit' do
+    let(:gateway) { wechat_gateway }
+    let(:cart) { wechat_cart }
+
+    let(:payment) do
+      session = Spree::PaymentSessions::WechatPay.create!(
+        owner: cart, payment_method: gateway, amount: cart.total, currency: 'CNY',
+        status: 'pending', external_id: 'R1001-credit'
+      )
+      session.settle_payment!(captured: true, metadata: {})
+    end
+
+    let(:refund) { create(:refund, payment: payment, amount: 5, status: 'processing', transaction_id: nil) }
+
+    before do
+      client = instance_double(SpreeWechatPay::Client)
+      allow(gateway).to receive(:client).and_return(client)
+      allow(client).to receive(:post).and_return('refund_id' => 'r1', 'status' => 'PROCESSING')
+    end
+
+    it 'submits the refund against the merchant order number and returns WeChat own refund id' do
+      response = gateway.credit(500, payment.response_code, originator: refund)
+
+      expect(response).to be_success
+      expect(response.authorization).to eq('r1')
+      expect(gateway.client).to have_received(:post).with(
+        '/v3/refund/domestic/refunds',
+        hash_including('out_trade_no' => payment.response_code, 'amount' => hash_including('refund' => 500))
+      )
+    end
+
+    # The refund number is the correlation key the notification and reconciliation
+    # find the refund by, so it is written before the call.
+    it 'writes the refund number to metadata before the call' do
+      gateway.credit(500, payment.response_code, originator: refund)
+
+      expect(refund.reload.metadata['wechat_pay_out_refund_no']).to be_present
+    end
+
+    it 'surfaces a definite rejection in WeChat own words' do
+      allow(gateway.client).to receive(:post).and_raise(
+        SpreeWechatPay::ApiError.new('余额不足', code: 'NOT_ENOUGH')
+      )
+
+      expect { gateway.credit(500, payment.response_code, originator: refund) }.to raise_error(
+        Spree::Core::GatewayError, /余额不足/
+      )
+    end
+  end
+
+  describe 'sensitive fields' do
+    let(:gateway) { wechat_gateway }
+
+    # Public key mode is the helper's default, so encryption uses the configured
+    # WeChat Pay public key — the spec's `platform_key_pair` holds its private
+    # half, standing in for WeChat.
+    it 'encrypts a field only WeChat can read' do
+      ciphertext = gateway.encrypt_sensitive_field('张三')
+
+      expect(SpreeWechatPay::SensitiveField.decrypt(ciphertext, key: platform_key_pair)).to eq('张三')
+    end
+
+    it 'decrypts a field WeChat encrypted against the merchant certificate' do
+      ciphertext = SpreeWechatPay::SensitiveField.encrypt('张三', key: merchant_key_pair.public_key)
+
+      expect(gateway.decrypt_sensitive_field(ciphertext)).to eq('张三')
     end
   end
 end

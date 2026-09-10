@@ -72,14 +72,10 @@ module SpreeWechatPay
       true
     end
 
-    # Off until refunds are implemented. WeChat does settle a refund after
-    # accepting it, so this will become true — but claiming the capability now is
-    # worse than not having it: `Refunds::Create` would start the refund in
-    # `processing`, the credit call would fail because no `credit` verb exists
-    # yet, and the row would be kept (that being what opt-in means), leaving a
-    # refund that reserves the payment's balance forever and never resolves.
+    # WeChat accepts a refund and settles it later, so a refund starts in
+    # `processing` and is resolved by notification or reconciliation.
     def async_refunds?
-      false
+      true
     end
 
     # WeChat Pay's domestic API settles in yuan alone, so an order in any other
@@ -136,6 +132,65 @@ module SpreeWechatPay
       Verifier.new(certificate_store.verification_keys)
     end
 
+    # Credits a payment back at WeChat. Core calls this from `Spree::Refund#perform!`
+    # with the payment's merchant order number as `transaction_id` and the refund
+    # itself as `originator`.
+    #
+    # WeChat's answer is acceptance, not completion, so the response reports the
+    # refund's own `refund_id` as the authorization — core records it on the
+    # refund's transaction_id — and the refund stays `processing` until the
+    # notification or reconciliation resolves it.
+    #
+    # @param amount_in_cents [Integer] the amount to refund, in fen
+    # @param transaction_id [String] the payment's merchant order number
+    # @param originator [Spree::Refund] the refund being credited
+    # @return [Spree::PaymentResponse]
+    def credit(amount_in_cents, transaction_id, originator: nil)
+      refund_number = MerchantOrderNumber.generate_refund(originator)
+      record_refund_number(originator, refund_number)
+
+      response = refund_for(refund_number).create(
+        refund_payload(
+          out_trade_no: transaction_id,
+          out_refund_no: refund_number,
+          amount_in_cents: amount_in_cents,
+          payment: originator&.payment
+        )
+      )
+
+      Spree::PaymentResponse.new(true, nil, response, authorization: response['refund_id'])
+    rescue ApiError => error
+      # A definite rejection — WeChat named what is wrong (balance, order state) —
+      # surfaced in WeChat's own words rather than as a generic gateway failure.
+      raise Spree::Core::GatewayError, error.message
+    end
+
+    # Asks WeChat what became of a refund, for reconciliation to apply.
+    #
+    # @param refund_number [String] our `out_refund_no`
+    # @return [Hash] the refund as WeChat sees it
+    def query_refund(refund_number)
+      refund_for(refund_number).query
+    end
+
+    # Encrypts a sensitive field WeChat will decrypt with its own private key —
+    # the configured WeChat Pay public key, or the latest platform certificate.
+    #
+    # @param plaintext [String]
+    # @return [String] Base64 ciphertext
+    def encrypt_sensitive_field(plaintext)
+      SensitiveField.encrypt(plaintext, key: sensitive_field_encryption_key)
+    end
+
+    # Decrypts a sensitive field WeChat encrypted against the merchant
+    # certificate's public key.
+    #
+    # @param ciphertext [String] Base64
+    # @return [String] the plaintext
+    def decrypt_sensitive_field(ciphertext)
+      SensitiveField.decrypt(ciphertext, key: merchant_context.private_key)
+    end
+
     private
 
     # The one client that does not verify what it is told, because it is the one
@@ -151,6 +206,53 @@ module SpreeWechatPay
     # @return [SpreeWechatPay::Client]
     def unverified_client
       Client.new(context: merchant_context)
+    end
+
+    # @param merchant_refund_number [String]
+    # @return [SpreeWechatPay::Refund]
+    def refund_for(merchant_refund_number)
+      Refund.new(context: merchant_context, client: client, merchant_refund_number: merchant_refund_number)
+    end
+
+    # @return [OpenSSL::PKey::RSA] the key a sensitive field is encrypted with
+    def sensitive_field_encryption_key
+      if merchant_context.verification_mode == 'public_key'
+        OpenSSL::PKey::RSA.new(merchant_context.public_key_pem)
+      else
+        certificate_store.current_public_key
+      end
+    end
+
+    # The refund request. `amount.total` is the original order amount (the
+    # payment's captured amount), `amount.refund` is what is being given back.
+    def refund_payload(out_trade_no:, out_refund_no:, amount_in_cents:, payment:)
+      {
+        'out_trade_no' => out_trade_no,
+        'out_refund_no' => out_refund_no,
+        'notify_url' => webhook_url,
+        'amount' => {
+          'refund' => amount_in_cents,
+          'total' => total_in_cents(payment),
+          'currency' => 'CNY'
+        }
+      }
+    end
+
+    def total_in_cents(payment)
+      return 0 if payment.blank?
+
+      Spree::Money.new(payment.amount, currency: payment.currency).cents
+    end
+
+    # The refund number is the gateway's own correlation key, written down before
+    # the API call: if the acceptance response is lost to a timeout, the refund
+    # is still findable by this number when the notification or reconciliation
+    # arrives.
+    def record_refund_number(refund, refund_number)
+      return if refund.blank?
+
+      refund.metadata['wechat_pay_out_refund_no'] = refund_number
+      refund.update_columns(metadata: refund.metadata)
     end
 
     # WeChat's own identifiers for a transaction, under the gateway's own names.

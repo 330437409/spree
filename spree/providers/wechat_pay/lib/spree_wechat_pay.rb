@@ -21,4 +21,13 @@ module SpreeWechatPay
   # `Wechatpay-Serial` header. A serial that does not match this shape names a
   # platform certificate instead.
   PUBLIC_KEY_ID_PREFIX = 'PUB_KEY_ID_'.freeze
+
+  # Background queue for the gem's jobs. Defaults to Spree's default queue.
+  def self.queue
+    @queue ||= Spree.queues.default
+  end
+
+  class << self
+    attr_writer :queue
+  end
 end

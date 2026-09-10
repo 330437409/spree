@@ -13,9 +13,10 @@ module SpreeWechatPay
       # gateway does — the transaction stays payable for seven days (15 for the
       # scenes that allow it) while the customer's launch token does not.
       TRANSACTION_VALIDITY = 7.days
-      # `code_url` for Native and `prepay_id` for the WeChat-browser scenes are
-      # documented as valid for two hours; H5's URL for five minutes.
+      # `code_url` for Native and `prepay_id` for the WeChat-browser and APP
+      # scenes are documented as valid for two hours; H5's URL for five minutes.
       LAUNCH_TOKEN_VALIDITY = 2.hours
+      H5_LAUNCH_TOKEN_VALIDITY = 5.minutes
       # WeChat caps `description` at 127 characters.
       DESCRIPTION_LIMIT = 127
       SCENES = MerchantContext::TRANSACTION_PATHS.keys.freeze
@@ -23,7 +24,7 @@ module SpreeWechatPay
       # whole vocabulary so a merchant's configuration survives an upgrade, but
       # enabling one that is not built yet is refused plainly rather than failing
       # somewhere further in, where the cause would be unrecognisable.
-      IMPLEMENTED_SCENES = %w[native jsapi mini_program].freeze
+      IMPLEMENTED_SCENES = %w[native jsapi mini_program h5 app].freeze
       # Scenes that must name the payer on the order.
       PAYER_IDENTITY_SCENES = %w[jsapi mini_program].freeze
 
@@ -55,6 +56,7 @@ module SpreeWechatPay
             order: order,
             amount_in_cents: amount_in_cents,
             payer_client_ip: payer_client_ip(external_data),
+            h5_type: h5_type(external_data),
             openid: openid
           )
         )
@@ -68,7 +70,7 @@ module SpreeWechatPay
           external_id: number,
           customer: order.customer,
           expires_at: TRANSACTION_VALIDITY.from_now,
-          external_data: session_data(scene, response, openid: openid)
+          external_data: session_data(scene, response, openid: openid, redirect_url: redirect_url(external_data))
         )
       end
 
@@ -103,7 +105,7 @@ module SpreeWechatPay
 
         payment_session.update!(
           amount: total,
-          external_data: session_data(scene, response, openid: openid_for(scene, external_data))
+          external_data: session_data(scene, response, openid: openid_for(scene, external_data), redirect_url: redirect_url(external_data))
         )
         payment_session
       end
@@ -169,7 +171,7 @@ module SpreeWechatPay
           payload: transaction_payload(
             scene: scene, number: number, order: owner,
             amount_in_cents: amount_in_cents, payer_client_ip: payer_client_ip(external_data),
-            openid: openid_for(scene, external_data)
+            h5_type: h5_type(external_data), openid: openid_for(scene, external_data)
           )
         )
         # The session is the same intent; only the transaction under it moved.
@@ -183,7 +185,7 @@ module SpreeWechatPay
           payload: transaction_payload(
             scene: scene, number: payment_session.merchant_order_number, order: owner,
             amount_in_cents: amount_in_cents, payer_client_ip: payer_client_ip(external_data),
-            openid: openid_for(scene, external_data)
+            h5_type: h5_type(external_data), openid: openid_for(scene, external_data)
           )
         )
       end
@@ -226,7 +228,7 @@ module SpreeWechatPay
 
       # Every scene shares this shape; what differs per scene is layered on in
       # the phases that implement them.
-      def transaction_payload(scene:, number:, order:, amount_in_cents:, payer_client_ip: nil, openid: nil)
+      def transaction_payload(scene:, number:, order:, amount_in_cents:, payer_client_ip: nil, openid: nil, h5_type: nil)
         payload = {
           'appid' => merchant_context.app_id_for(scene),
           'mchid' => merchant_context.merchant_id,
@@ -241,11 +243,29 @@ module SpreeWechatPay
         # WeChat's own error for it is a bare parameter complaint.
         payload['payer'] = { 'openid' => openid } if openid.present?
 
-        # Optional as an object, but its one field is required whenever the
-        # object is sent — so it is sent only when we actually have the value.
-        payload['scene_info'] = { 'payer_client_ip' => payer_client_ip } if payer_client_ip.present?
+        # H5 carries a mandatory scene object — its device type and the customer
+        # IP — where the others carry an optional one (the IP alone, when known).
+        scene_info = if scene == 'h5'
+                       h5_scene_info(payer_client_ip, h5_type)
+                     elsif payer_client_ip.present?
+                       { 'payer_client_ip' => payer_client_ip }
+                     end
+        payload['scene_info'] = scene_info if scene_info.present?
 
         payload
+      end
+
+      # The fields H5 requires, refused here rather than handed to WeChat to
+      # reject with a bare parameter complaint.
+      def h5_scene_info(payer_client_ip, h5_type)
+        if h5_type.blank?
+          raise Spree::Core::GatewayError, Spree.t('wechat_pay.errors.h5_type_required')
+        end
+        if payer_client_ip.blank?
+          raise Spree::Core::GatewayError, Spree.t('wechat_pay.errors.payer_client_ip_required')
+        end
+
+        { 'h5_info' => { 'type' => h5_type }, 'payer_client_ip' => payer_client_ip }
       end
 
       # What the customer sees on their WeChat bill.
@@ -259,17 +279,26 @@ module SpreeWechatPay
         external_data[:payer_client_ip].presence || external_data['payer_client_ip'].presence
       end
 
+      def h5_type(external_data)
+        external_data[:h5_type].presence || external_data['h5_type'].presence
+      end
+
+      def redirect_url(external_data)
+        external_data[:redirect_url].presence || external_data['redirect_url'].presence
+      end
+
       # Only what the gateway produced is stored. The caller's own external data
       # is not echoed back: it can carry a single-use authorization code, and the
       # storefront can read this record.
-      def session_data(scene, response, openid: nil)
+      def session_data(scene, response, openid: nil, redirect_url: nil)
         payload = {
           'scene' => scene,
-          'payload_expires_at' => (Time.current + LAUNCH_TOKEN_VALIDITY).iso8601
+          'payload_expires_at' => (Time.current + launch_token_validity(scene)).iso8601
         }
 
         payload['code_url'] = response['code_url'] if response['code_url'].present?
         payload['openid'] = openid if openid.present?
+        payload['h5_url'] = h5_url(response, redirect_url) if response['h5_url'].present?
 
         if response['prepay_id'].present?
           payload['prepay_id'] = response['prepay_id']
@@ -285,6 +314,20 @@ module SpreeWechatPay
         end
 
         payload
+      end
+
+      def launch_token_validity(scene)
+        scene == 'h5' ? H5_LAUNCH_TOKEN_VALIDITY : LAUNCH_TOKEN_VALIDITY
+      end
+
+      # The URL is passed through untouched except for the URL-encoded return
+      # address WeChat redirects to once the customer has paid. WeChat forbids
+      # altering it in any other way and rejects a modified one.
+      def h5_url(response, redirect_url)
+        url = response['h5_url']
+        return url if redirect_url.blank?
+
+        "#{url}&redirect_url=#{CGI.escape(redirect_url)}"
       end
 
       # The payer's identity, for the scenes that need one.

@@ -171,5 +171,88 @@ RSpec.describe SpreeWechatPay::Gateway::Webhooks do
 
       expect { gateway.parse_webhook_event(body, headers) }.to raise_error(SpreeWechatPay::Aead::Error)
     end
+
+    describe 'a refund notification' do
+      let(:refund_id) { '5000000038202601011234567890' }
+      let(:out_refund_no) { 're_test-ABCDEF12' }
+      let(:refund_resource) do
+        {
+          'mchid' => WechatPaySpecHelpers::MERCHANT_ID,
+          'out_trade_no' => number,
+          'transaction_id' => '4200001234202601011234567890',
+          'out_refund_no' => out_refund_no,
+          'refund_id' => refund_id,
+          'refund_status' => 'SUCCESS',
+          'amount' => { 'refund' => 500, 'total' => 1234, 'payer_refund' => 500, 'payer_total' => 1234 }
+        }
+      end
+
+      let!(:payment) { session.settle_payment!(captured: true, metadata: {}) }
+
+      def refund_envelope(event_type: 'REFUND.SUCCESS', resource: refund_resource)
+        envelope(event_type: event_type, resource: resource, original_type: 'refund')
+      end
+
+      it 'maps a successful refund to a completed status, found by refund id' do
+        refund = create(:refund, payment: payment, amount: 5, status: 'processing', transaction_id: refund_id)
+        body, headers = signed_request(JSON.generate(refund_envelope))
+
+        result = gateway.parse_webhook_event(body, headers)
+
+        expect(result[:action]).to eq(:refund)
+        expect(result[:refund]).to eq(refund)
+        expect(result[:refund_status]).to eq('completed')
+        expect(result[:transaction_id]).to eq(refund_id)
+      end
+
+      # A refund whose acceptance response was lost has no transaction_id, so the
+      # notification falls back to the refund number written to metadata before
+      # the API call.
+      it 'finds a refund by its refund number when the transaction id is missing' do
+        refund = create(:refund, payment: payment, amount: 5, status: 'processing', transaction_id: nil,
+                                 metadata: { 'wechat_pay_out_refund_no' => out_refund_no })
+        body, headers = signed_request(JSON.generate(refund_envelope))
+
+        result = gateway.parse_webhook_event(body, headers)
+
+        expect(result[:refund]).to eq(refund)
+        expect(result[:transaction_id]).to eq(refund_id)
+      end
+
+      it 'maps a closed refund to a canceled status' do
+        refund = create(:refund, payment: payment, amount: 5, status: 'processing', transaction_id: refund_id)
+        body, headers = signed_request(
+          JSON.generate(refund_envelope(event_type: 'REFUND.CLOSED', resource: refund_resource.merge('refund_status' => 'CLOSED')))
+        )
+
+        expect(gateway.parse_webhook_event(body, headers)[:refund_status]).to eq('canceled')
+      end
+
+      # ABNORMAL is not terminal: the money could still reach the customer, so it
+      # stays processing and the provider's words are carried in metadata.
+      it 'keeps an abnormal refund in processing' do
+        refund = create(:refund, payment: payment, amount: 5, status: 'processing', transaction_id: refund_id)
+        body, headers = signed_request(
+          JSON.generate(refund_envelope(event_type: 'REFUND.ABNORMAL', resource: refund_resource.merge('refund_status' => 'ABNORMAL')))
+        )
+
+        result = gateway.parse_webhook_event(body, headers)
+
+        expect(result[:refund_status]).to eq('processing')
+        expect(result[:metadata]['wechat_pay_refund_status']).to eq('ABNORMAL')
+      end
+
+      # A refund this installation has no record of is acknowledged without
+      # acting, and the operator is told what was missed.
+      it 'reports and acknowledges a refund it does not hold' do
+        allow(Rails.error).to receive(:report)
+        body, headers = signed_request(
+          JSON.generate(refund_envelope(resource: refund_resource.merge('refund_id' => 'unknown-refund', 'out_refund_no' => 'unknown-out')))
+        )
+
+        expect(gateway.parse_webhook_event(body, headers)).to be_nil
+        expect(Rails.error).to have_received(:report).with(instance_of(String), hash_including(handled: true))
+      end
+    end
   end
 end

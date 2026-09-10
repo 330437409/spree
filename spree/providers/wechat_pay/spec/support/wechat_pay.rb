@@ -90,6 +90,7 @@ module WechatPaySpecHelpers
     gateway.preferred_jsapi_app_secret = JSAPI_APP_SECRET
     gateway.preferred_mini_program_app_id = 'wx_mini_appid'
     gateway.preferred_mini_program_app_secret = MINI_PROGRAM_APP_SECRET
+    gateway.preferred_app_app_id = 'wx_app_appid'
     gateway.preferred_enabled_scenes = ['native']
 
     preferences.each { |key, value| gateway.public_send("preferred_#{key}=", value) }

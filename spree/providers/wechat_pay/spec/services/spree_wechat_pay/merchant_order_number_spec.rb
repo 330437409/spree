@@ -69,4 +69,30 @@ RSpec.describe SpreeWechatPay::MerchantOrderNumber do
       expect(described_class.valid?('aA0_-|*aA0')).to be true
     end
   end
+
+  # Refund numbers obey their own rules: up to 64 bytes and a wider alphabet
+  # where `@` is allowed.
+  describe '.generate_refund' do
+    it 'produces something WeChat would accept' do
+      expect(described_class.generate_refund(nil)).to satisfy { |number| described_class.valid_refund?(number) }
+    end
+
+    it 'keeps the refund readable by its prefixed id' do
+      owner = double('Refund', prefixed_id: 're_86Rf07xd4z', number: nil)
+
+      expect(described_class.generate_refund(owner, suffix: 'abcd1234')).to eq('re_86Rf07xd4z-abcd1234')
+    end
+
+    it 'stays within 64 bytes for a long owner reference' do
+      owner = double('Refund', prefixed_id: 'R' * 200, number: nil)
+
+      expect(described_class.generate_refund(owner).bytesize).to be <= 64
+    end
+
+    it 'allows the @ character the refund alphabet adds' do
+      owner = double('Refund', prefixed_id: 're_@refund', number: nil)
+
+      expect(described_class.generate_refund(owner, suffix: 'abcd1234')).to include('@')
+    end
+  end
 end

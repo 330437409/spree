@@ -28,6 +28,9 @@ module SpreeWechatPay
       # anyway is not an error WeChat reports — the payment simply does not
       # start — so the difference is kept here rather than left to a caller.
       when 'mini_program' then jsapi.except('appId')
+      # The APP launch call is a different field set, signed over the bare
+      # prepay id rather than `prepay_id=<value>`.
+      when 'app' then app_params
       else
         raise ArgumentError, "No launch parameters are implemented for the #{@scene} scene yet"
       end
@@ -44,6 +47,21 @@ module SpreeWechatPay
         'package' => "prepay_id=#{@prepay_id}",
         'signType' => SIGN_TYPE,
         'paySign' => signature
+      }
+    end
+
+    # The APP SDK's `PayReq`: the merchant as `partnerId`, the prepay id bare,
+    # and a fixed `package`. The docs name this field `packageValue` for Android
+    # and `package` for iOS — the storefront maps it to whichever SDK it drives.
+    def app_params
+      {
+        'appId' => @app_id,
+        'partnerId' => @signer.merchant_id,
+        'prepayId' => @prepay_id,
+        'package' => 'Sign=WXPay',
+        'nonceStr' => @nonce,
+        'timeStamp' => @timestamp,
+        'sign' => signature
       }
     end
 

@@ -14,11 +14,16 @@ RSpec.describe SpreeWechatPay::CertificateStore do
   let(:cache) { ActiveSupport::Cache::MemoryStore.new }
   let(:store) { described_class.new(context: context, client: client, cache: cache) }
 
-  def certificate_entry(serial, pem)
+  def certificate_entry(serial, pem, expire_time: 1.year.from_now.iso8601)
     {
       'serial_no' => serial,
+      'expire_time' => expire_time,
       'encrypt_certificate' => encrypt_like_wechat(pem, associated_data: 'certificate')
     }
+  end
+
+  def cached_certificate(pem, expire_time: 1.year.from_now.iso8601)
+    { 'pem' => pem, 'expire_time' => expire_time }
   end
 
   describe '#refresh!' do
@@ -27,7 +32,7 @@ RSpec.describe SpreeWechatPay::CertificateStore do
     # drop the certificate still signing in-flight notifications, and
     # verification would fail for hours.
     it 'merges what it downloaded with what it already held' do
-      cache.write(described_class::CACHE_KEY, { 'OLD_SERIAL' => platform_key_pair.to_pem })
+      cache.write(described_class::CACHE_KEY, { 'OLD_SERIAL' => cached_certificate(platform_key_pair.to_pem) })
       allow(client).to receive(:get).with('/v3/certificates').and_return(
         'data' => [certificate_entry('NEW_SERIAL', platform_key_pair.to_pem)]
       )
@@ -58,8 +63,36 @@ RSpec.describe SpreeWechatPay::CertificateStore do
       expect(store.refresh!).to eq(2)
     end
 
+    # A certificate outlives the 24-hour overlap during which WeChat serves it
+    # alongside its replacement. Holding the old key past that point is harmless,
+    # but the set is pruned so it does not grow without bound across rotations.
+    it 'drops certificates whose expiry has passed' do
+      cache.write(described_class::CACHE_KEY, {
+        'LIVE_SERIAL' => cached_certificate(platform_key_pair.to_pem),
+        'EXPIRED_SERIAL' => cached_certificate(platform_key_pair.to_pem, expire_time: 1.day.ago.iso8601)
+      })
+      allow(client).to receive(:get).with('/v3/certificates').and_return(
+        'data' => [certificate_entry('NEW_SERIAL', platform_key_pair.to_pem)]
+      )
+
+      store.refresh!
+
+      expect(store.verification_keys.keys).to contain_exactly('LIVE_SERIAL', 'NEW_SERIAL')
+    end
+
+    it 'keeps a certificate whose expiry cannot be read' do
+      cache.write(described_class::CACHE_KEY, {
+        'MYSTERY_SERIAL' => cached_certificate(platform_key_pair.to_pem, expire_time: 'not-a-time')
+      })
+      allow(client).to receive(:get).with('/v3/certificates').and_return('data' => [])
+
+      store.refresh!
+
+      expect(store.verification_keys.keys).to eq(['MYSTERY_SERIAL'])
+    end
+
     it 'leaves the cache untouched when the download fails' do
-      cache.write(described_class::CACHE_KEY, { 'OLD_SERIAL' => platform_key_pair.to_pem })
+      cache.write(described_class::CACHE_KEY, { 'OLD_SERIAL' => cached_certificate(platform_key_pair.to_pem) })
       allow(client).to receive(:get).and_raise(
         SpreeWechatPay::ConnectionError.new('WeChat Pay answered 500')
       )
@@ -89,13 +122,13 @@ RSpec.describe SpreeWechatPay::CertificateStore do
     end
 
     it 'returns the cached certificates in platform certificate mode' do
-      cache.write(described_class::CACHE_KEY, { 'A_SERIAL' => platform_key_pair.to_pem })
+      cache.write(described_class::CACHE_KEY, { 'A_SERIAL' => cached_certificate(platform_key_pair.to_pem) })
 
       expect(store.verification_keys.keys).to eq(['A_SERIAL'])
     end
 
     it 'reads the cache rather than WeChat when it is warm' do
-      cache.write(described_class::CACHE_KEY, { 'A_SERIAL' => platform_key_pair.to_pem })
+      cache.write(described_class::CACHE_KEY, { 'A_SERIAL' => cached_certificate(platform_key_pair.to_pem) })
       expect(client).not_to receive(:get)
 
       store.verification_keys
@@ -109,6 +142,37 @@ RSpec.describe SpreeWechatPay::CertificateStore do
       )
 
       expect(store.verification_keys.keys).to eq(['A_SERIAL'])
+    end
+  end
+
+  describe '#current_public_key' do
+    it 'returns the certificate that stays valid longest' do
+      old_key = OpenSSL::PKey::RSA.new(2048)
+      new_key = OpenSSL::PKey::RSA.new(2048)
+      cache.write(described_class::CACHE_KEY, {
+        'OLD_SERIAL' => cached_certificate(old_key.public_key.to_pem, expire_time: 1.day.from_now.iso8601),
+        'NEW_SERIAL' => cached_certificate(new_key.public_key.to_pem, expire_time: 1.year.from_now.iso8601)
+      })
+
+      expect(store.current_public_key.n).to eq(new_key.public_key.n)
+    end
+
+    it 'skips a certificate that has already expired' do
+      live_key = OpenSSL::PKey::RSA.new(2048)
+      cache.write(described_class::CACHE_KEY, {
+        'EXPIRED_SERIAL' => cached_certificate(platform_key_pair.public_key.to_pem, expire_time: 1.day.ago.iso8601),
+        'LIVE_SERIAL' => cached_certificate(live_key.public_key.to_pem, expire_time: 1.year.from_now.iso8601)
+      })
+
+      expect(store.current_public_key.n).to eq(live_key.public_key.n)
+    end
+
+    it 'fetches once when the cache is cold' do
+      expect(client).to receive(:get).with('/v3/certificates').once.and_return(
+        'data' => [certificate_entry('A_SERIAL', platform_key_pair.to_pem)]
+      )
+
+      expect(store.current_public_key).to be_a(OpenSSL::PKey::RSA)
     end
   end
 end

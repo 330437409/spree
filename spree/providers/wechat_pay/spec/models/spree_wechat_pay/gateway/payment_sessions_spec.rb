@@ -241,10 +241,129 @@ RSpec.describe SpreeWechatPay::Gateway::PaymentSessions do
     end
   end
 
-  describe 'a scene that is not implemented yet' do
+  # H5 is the same transaction with a mandatory scene object and a redirect URL
+  # that lives for five minutes rather than two hours.
+  describe 'the H5 scene' do
     let(:gateway) { wechat_gateway(enabled_scenes: %w[h5]) }
+    let(:h5_url) { 'https://wx.tenpay.com/cgi-bin/mmpayweb-bin/checkmweb?prepay_id=wx123&package=123' }
+
+    before { stub_client('/v3/pay/transactions/h5', { 'h5_url' => h5_url }) }
+
+    it 'uses the bound application identifier' do
+      expect(gateway.client).to receive(:post).with(
+        '/v3/pay/transactions/h5', hash_including('appid' => WechatPaySpecHelpers::BOUND_APP_ID)
+      ).and_return('h5_url' => h5_url)
+
+      gateway.create_payment_session(
+        order: cart, external_data: { scene: 'h5', h5_type: 'Wap', payer_client_ip: '203.0.113.7' }
+      )
+    end
+
+    # Where H5 differs from every other scene: `scene_info.h5_info.type` is
+    # required, and `payer_client_ip` is required whenever scene_info is sent.
+    it 'sends the mandatory scene object' do
+      expect(gateway.client).to receive(:post).with(
+        '/v3/pay/transactions/h5',
+        hash_including('scene_info' => {
+          'h5_info' => { 'type' => 'Wap' }, 'payer_client_ip' => '203.0.113.7'
+        })
+      ).and_return('h5_url' => h5_url)
+
+      gateway.create_payment_session(
+        order: cart, external_data: { scene: 'h5', h5_type: 'Wap', payer_client_ip: '203.0.113.7' }
+      )
+    end
+
+    it 'refuses to place an H5 order without a device type' do
+      expect {
+        gateway.create_payment_session(
+          order: cart, external_data: { scene: 'h5', payer_client_ip: '203.0.113.7' }
+        )
+      }.to raise_error(Spree::Core::GatewayError, /device type/)
+    end
+
+    it 'refuses to place an H5 order without the customer IP' do
+      expect {
+        gateway.create_payment_session(order: cart, external_data: { scene: 'h5', h5_type: 'Wap' })
+      }.to raise_error(Spree::Core::GatewayError, /IP address/)
+    end
+
+    it 'hands the storefront the H5 link, good for five minutes' do
+      session = gateway.create_payment_session(
+        order: cart, external_data: { scene: 'h5', h5_type: 'Wap', payer_client_ip: '203.0.113.7' }
+      )
+
+      expect(session.h5_url).to eq(h5_url)
+      expect(session.payload_expires_at).to be_within(1.minute).of(5.minutes.from_now)
+    end
+
+    # The URL is passed through untouched except for the return address WeChat
+    # redirects to after payment, which is appended URL-encoded.
+    it 'extends the link with the URL-encoded return address' do
+      session = gateway.create_payment_session(
+        order: cart,
+        external_data: {
+          scene: 'h5', h5_type: 'Wap', payer_client_ip: '203.0.113.7',
+          redirect_url: 'https://shop.example/return?order=1'
+        }
+      )
+
+      expect(session.h5_url).to start_with(h5_url)
+      expect(session.h5_url).to end_with("redirect_url=#{CGI.escape('https://shop.example/return?order=1')}")
+    end
+  end
+
+  # APP is the same transaction as Native — no payer, no scene object — but the
+  # response is a prepay id and the launch contract is the app SDK's PayReq.
+  describe 'the APP scene' do
+    let(:gateway) { wechat_gateway(enabled_scenes: %w[app]) }
+    let(:prepay_id) { 'wx281410272009395522657a690389285100' }
+
+    before { stub_client('/v3/pay/transactions/app', { 'prepay_id' => prepay_id }) }
+
+    it 'uses the open-platform application identifier' do
+      expect(gateway.client).to receive(:post).with(
+        '/v3/pay/transactions/app', hash_including('appid' => 'wx_app_appid')
+      ).and_return('prepay_id' => prepay_id)
+
+      gateway.create_payment_session(order: cart, external_data: { scene: 'app' })
+    end
+
+    it 'names no payer on the order' do
+      expect(gateway.client).to receive(:post).with(
+        '/v3/pay/transactions/app', hash_excluding('payer')
+      ).and_return('prepay_id' => prepay_id)
+
+      gateway.create_payment_session(order: cart, external_data: { scene: 'app' })
+    end
+
+    it 'hands the storefront the APP launch parameter set' do
+      session = gateway.create_payment_session(order: cart, external_data: { scene: 'app' })
+
+      expect(session.external_data['launch_params']).to include(
+        'appId' => 'wx_app_appid',
+        'partnerId' => WechatPaySpecHelpers::MERCHANT_ID,
+        'prepayId' => prepay_id,
+        'package' => 'Sign=WXPay'
+      )
+      expect(session.external_data['launch_params']['sign']).to be_present
+    end
+  end
+
+  # A scene in the vocabulary but not in IMPLEMENTED_SCENES must say so, rather
+  # than failing somewhere further in where the cause is unrecognisable. Every
+  # scene is implemented today, so the guard is exercised by narrowing the list.
+  describe 'a scene that is not implemented yet' do
+    before do
+      stub_const(
+        'SpreeWechatPay::Gateway::PaymentSessions::IMPLEMENTED_SCENES',
+        %w[native jsapi mini_program]
+      )
+    end
 
     it 'refuses plainly' do
+      gateway = wechat_gateway(enabled_scenes: %w[h5])
+
       expect { gateway.create_payment_session(order: cart) }.to raise_error(
         Spree::Core::GatewayError, /not available in this version/
       )
