@@ -10,16 +10,28 @@ module Spree
       # `metadata` is whatever the gateway's `parse_webhook_event` returned —
       # the provider's own identifiers for what just happened. It reaches the
       # workflow so the session can record them on the payment.
-      def perform(payment_method_id:, action:, payment_session_id:, metadata: {})
+      def perform(payment_method_id:, action:, payment_session_id: nil, refund_id: nil, refund_status: nil, transaction_id: nil, metadata: {})
         payment_method = Spree::PaymentMethod.find(payment_method_id)
-        payment_session = Spree::PaymentSession.find(payment_session_id)
 
-        Spree.payments_handle_webhook_workflow.call(
-          payment_method: payment_method,
-          action: action.to_sym,
-          payment_session: payment_session,
-          metadata: metadata || {}
-        )
+        if action.to_sym == :refund
+          refund = Spree::Refund.find(refund_id)
+          Spree.payments_handle_webhook_workflow.call(
+            payment_method: payment_method,
+            action: :refund,
+            refund: refund,
+            refund_status: refund_status,
+            transaction_id: transaction_id,
+            metadata: metadata || {}
+          )
+        else
+          payment_session = Spree::PaymentSession.find(payment_session_id)
+          Spree.payments_handle_webhook_workflow.call(
+            payment_method: payment_method,
+            action: action.to_sym,
+            payment_session: payment_session,
+            metadata: metadata || {}
+          )
+        end
       end
     end
   end

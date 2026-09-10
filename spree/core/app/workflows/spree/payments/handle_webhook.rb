@@ -14,12 +14,23 @@ module Spree
       attr_reader :payment
 
       # @param payment_method [Spree::PaymentMethod] the method that received the webhook
-      # @param action [Symbol] normalized action (:captured, :authorized, :failed, :canceled)
+      # @param action [Symbol] normalized action (:captured, :authorized, :failed, :canceled, :refund)
       # @param payment_session [Spree::PaymentSession, nil] nil is a no-op —
       #   webhooks arrive for sessions this store does not own
+      # @param refund [Spree::Refund, nil] the refund a refund action concerns
+      # @param refund_status [String, nil] the canonical status a refund action reports
+      # @param transaction_id [String, nil] the gateway's refund reference
       # @param metadata [Hash] gateway-specific payload (charge data, psp reference)
-      def perform(payment_method:, action:, payment_session:, metadata: {})
+      def perform(payment_method:, action:, payment_session: nil, refund: nil, refund_status: nil, transaction_id: nil, metadata: {})
         super
+
+        if action == :refund
+          halt!(nil) if refund.nil?
+          step :apply_refund_status
+          run_hooks :after_handle
+          success(refund)
+          return
+        end
 
         halt!(nil) if payment_session.nil?
 
@@ -94,6 +105,13 @@ module Spree
 
       def cancel_session
         payment_session.cancel if payment_session.can_cancel?
+      end
+
+      # The refund action is a state transition, not a settlement, so it is
+      # idempotent by construction — the refund compares what it is with what the
+      # gateway reports and moves only on a legal move.
+      def apply_refund_status
+        refund.apply_status!(refund_status, transaction_id: transaction_id, provider_metadata: metadata)
       end
     end
   end

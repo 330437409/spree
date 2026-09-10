@@ -38,12 +38,21 @@ module Spree
             # The gateway's own metadata travels with the job: it is what
             # identifies the payment at the provider (a charge id, a WeChat
             # transaction number), and the session records it on the payment.
-            Spree::Payments::HandleWebhookJob.set(wait: 30.seconds).perform_later(
+            job_args = {
               payment_method_id: payment_method.id,
               action: result[:action].to_s,
-              payment_session_id: result[:payment_session].id,
               metadata: result[:metadata] || {}
-            )
+            }
+
+            if result[:refund].present?
+              job_args[:refund_id] = result[:refund].id
+              job_args[:refund_status] = result[:refund_status]
+              job_args[:transaction_id] = result[:transaction_id]
+            else
+              job_args[:payment_session_id] = result[:payment_session]&.id
+            end
+
+            Spree::Payments::HandleWebhookJob.set(wait: 30.seconds).perform_later(**job_args)
 
             head :ok
           rescue Spree::PaymentMethod::WebhookSignatureError

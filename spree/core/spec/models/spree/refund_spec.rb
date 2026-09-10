@@ -232,4 +232,54 @@ describe Spree::Refund, type: :model do
       it { is_expected.to eq([]) }
     end
   end
+
+  describe '#apply_status!' do
+    subject(:apply) { refund.apply_status!(target_status, transaction_id: transaction_id, provider_metadata: provider_metadata) }
+
+    let(:payment) { create(:payment, amount: 200, payment_method: create(:credit_card_payment_method)) }
+    let(:refund) { create(:refund, payment: payment, amount: 10, status: 'processing', transaction_id: nil) }
+    let(:target_status) { 'completed' }
+    let(:transaction_id) { 'refund-123' }
+    let(:provider_metadata) { { 'provider_status' => 'SUCCESS' } }
+
+    it 'moves a processing refund to a terminal status' do
+      apply
+
+      expect(refund.reload).to be_completed
+    end
+
+    it 'records the gateway refund reference when it was missing' do
+      apply
+
+      expect(refund.reload.transaction_id).to eq('refund-123')
+    end
+
+    it 'keeps the provider detail verbatim in metadata' do
+      apply
+
+      expect(refund.reload.metadata['provider_status']).to eq('SUCCESS')
+    end
+
+    it 'does not move a refund that already reached a terminal status' do
+      refund.update!(status: 'completed', transaction_id: 'refund-123')
+
+      expect { apply }.not_to change { refund.reload.status }
+    end
+
+    it 'leaves a non-terminal report in processing' do
+      refund.apply_status!('processing', transaction_id: 'refund-123', provider_metadata: { 'provider_status' => 'ABNORMAL' })
+
+      expect(refund.reload).to be_processing
+      expect(refund.transaction_id).to eq('refund-123')
+      expect(refund.metadata['provider_status']).to eq('ABNORMAL')
+    end
+
+    it 'does not move a canceled refund to completed' do
+      refund.update!(status: 'canceled', transaction_id: 'refund-123')
+
+      apply
+
+      expect(refund.reload).to be_canceled
+    end
+  end
 end

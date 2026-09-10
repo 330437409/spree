@@ -113,6 +113,28 @@ module Spree
       true
     end
 
+    # Applies an asynchronous gateway's report on the refund.
+    #
+    # The row moves to the reported status only from `processing` and only to a
+    # terminal one — a replay of a state already reached, or a non-terminal
+    # report (a refund that is "abnormal" but still live), leaves the status
+    # alone. The gateway's refund reference is recorded as transaction_id when
+    # it is missing (a refund whose acceptance response was lost), and the
+    # provider's words are kept verbatim in metadata.
+    #
+    # @param target_status [String, Symbol] the canonical status the gateway reports
+    # @param transaction_id [String, nil] the gateway's refund reference
+    # @param provider_metadata [Hash] provider detail, written verbatim
+    # @return [Spree::Refund]
+    def apply_status!(target_status, transaction_id: nil, provider_metadata: {})
+      attributes = { metadata: metadata.merge(provider_metadata.stringify_keys) }
+      attributes[:transaction_id] = transaction_id if transaction_id.present? && self.transaction_id.blank?
+      attributes[:status] = target_status.to_s if processing? && %w[completed canceled].include?(target_status.to_s)
+
+      update!(attributes)
+      self
+    end
+
     private
 
     # A payment belonging to one order answers this for itself; a payment

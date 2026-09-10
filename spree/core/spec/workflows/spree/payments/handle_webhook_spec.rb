@@ -140,6 +140,28 @@ RSpec.describe Spree::Payments::HandleWebhook do
       end
     end
 
+    context 'with :refund action' do
+      let(:refund) { create(:refund, payment: payment, amount: 10, status: 'processing', transaction_id: nil) }
+      let(:payment) { create(:payment, payment_method: payment_method, amount: 100, state: 'completed') }
+
+      it 'moves the refund to the reported status' do
+        result = subject.call(
+          payment_method: payment_method, action: :refund, refund: refund,
+          refund_status: 'completed', transaction_id: 'refund-123'
+        )
+
+        expect(result).to be_success
+        expect(refund.reload).to be_completed
+        expect(refund.transaction_id).to eq('refund-123')
+      end
+
+      it 'returns success without processing when the refund is nil' do
+        result = subject.call(payment_method: payment_method, action: :refund, refund: nil, refund_status: 'completed')
+
+        expect(result).to be_success
+      end
+    end
+
     context 'when payment_session is nil' do
       it 'returns success without processing' do
         result = subject.call(payment_method: payment_method, action: :captured, payment_session: nil)
