@@ -84,6 +84,26 @@ RSpec.describe SpreeWechatPay::Gateway do
     end
   end
 
+  describe 'merchant mode' do
+    before { gateway.capture_method = 'checkout' }
+
+    it 'accepts direct mode' do
+      gateway.preferred_merchant_mode = 'direct'
+
+      expect(gateway).to be_valid
+    end
+
+    # `merchant_mode` is a future-compatibility preference, not a capability:
+    # only direct is implemented, so anything else is refused plainly rather
+    # than branched on later.
+    it 'refuses a mode that is not direct' do
+      gateway.preferred_merchant_mode = 'partner'
+
+      expect(gateway).not_to be_valid
+      expect(gateway.errors[:base].join).to include('direct')
+    end
+  end
+
   describe 'scene identifiers' do
     before { gateway.capture_method = 'checkout' }
 

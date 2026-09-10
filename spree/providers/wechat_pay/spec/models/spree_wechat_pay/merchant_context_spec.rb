@@ -16,16 +16,6 @@ RSpec.describe SpreeWechatPay::MerchantContext do
     )
   end
 
-  # Only `direct` is implemented. The mode is declared from the start so that
-  # partner mode is a lifted restriction rather than a predicate that appears
-  # in every payload builder later.
-  it 'accepts only direct mode for now' do
-    context = merchant_context(mode: 'partner')
-
-    expect(context).not_to be_valid
-    expect(context.errors.attribute_names).to include(:mode)
-  end
-
   describe 'application identifiers' do
     it 'resolves one per scene, because they are three different identities' do
       expect(context.app_id_for('jsapi')).to eq('wx_jsapi_appid')

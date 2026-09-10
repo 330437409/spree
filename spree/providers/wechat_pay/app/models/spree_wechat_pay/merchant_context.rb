@@ -1,22 +1,15 @@
 module SpreeWechatPay
-  # Everything that varies between one merchant arrangement and another, in one
-  # object.
+  # The direct merchant's context: one merchant number and one application
+  # identifier per scene, resolved once and handed to the payload builders and
+  # the path resolver rather than re-derived in each.
   #
-  # A direct merchant has one merchant number and one application identifier per
-  # scene. 服务商 (partner) mode adds a service provider above and a sub-merchant
-  # below, changes which openid flavour is valid, and moves ordering onto a
-  # different path — which is why this is a resolved context rather than a
-  # couple of lookup tables threaded through every payload builder.
-  #
-  # Only `direct` is implemented. The mode is a declared preference from the
-  # start so that lifting the restriction is the whole of the future work,
-  # instead of a `partner_mode?` predicate appearing in five scene
-  # implementations later.
+  # 服务商 (partner) mode is deliberately not a flag on this class. It changes
+  # the merchant fields, the payer identifier and the ordering path, so it will
+  # be a separate context — a `mode` attribute here would only invite
+  # `if partner?` branches scattered through every caller.
   class MerchantContext
     include ActiveModel::Model
     include ActiveModel::Attributes
-
-    MODES = %w[direct].freeze
 
     # How WeChat's own signature is verified. WeChat steers new integrations to
     # the public key, which never expires; established merchants are on platform
@@ -35,7 +28,6 @@ module SpreeWechatPay
       'app' => '/v3/pay/transactions/app'
     }.freeze
 
-    attribute :mode, :string, default: 'direct'
     attribute :merchant_id, :string
     attribute :certificate_serial, :string
     attribute :api_v3_key, :string
@@ -56,7 +48,6 @@ module SpreeWechatPay
     # is bound to the merchant number. This is that identifier.
     attribute :bound_app_id, :string
 
-    validates :mode, inclusion: { in: MODES }
     validates :verification_mode, inclusion: { in: VERIFICATION_MODES }
     validates :merchant_id, :certificate_serial, :api_v3_key, :private_key_pem, presence: true
 

@@ -43,6 +43,7 @@ module SpreeWechatPay
 
     validate :validate_credentials, unless: -> { Rails.env.test? }, if: :credentials_present?
     validate :validate_capture_method
+    validate :validate_merchant_mode
     validate :validate_scene_identifiers
 
     def provider_class
@@ -104,7 +105,6 @@ module SpreeWechatPay
     # @return [SpreeWechatPay::MerchantContext]
     def merchant_context
       MerchantContext.new(
-        mode: preferred_merchant_mode,
         merchant_id: preferred_merchant_id,
         certificate_serial: preferred_merchant_certificate_serial,
         api_v3_key: preferred_api_v3_key,
@@ -297,6 +297,16 @@ module SpreeWechatPay
 
       errors.add(:capture_method, :unsupported,
                  message: Spree.t('wechat_pay.errors.capture_method_unsupported'))
+    end
+
+    # `merchant_mode` exists so a future partner mode does not have to retrofit a
+    # preference, but only `direct` is implemented — anything else is refused here
+    # rather than left to a `partner_mode?` branch scattered through the payload
+    # builders.
+    def validate_merchant_mode
+      return if preferred_merchant_mode == 'direct'
+
+      errors.add(:base, Spree.t('wechat_pay.errors.merchant_mode_unsupported'))
     end
 
     # Every enabled scene must carry the identifier it places the order with. A
