@@ -11,6 +11,7 @@ en:
         invalid_private_key: The merchant certificate private key could not be read. Paste the full PEM block, including its BEGIN and END lines.
         no_scenes_enabled: No WeChat Pay payment scenes are enabled on this payment method. Enable at least one in its settings.
         payer_client_ip_required: The H5 scene needs the customer's IP address, which WeChat requires on every H5 order.
+        scene_identifier_required: The %{scene} scene needs its application identifier before it can be enabled.
         scene_not_enabled: The %{scene} scene is not enabled on this WeChat Pay payment method.
         scene_not_implemented: The %{scene} scene is enabled on this WeChat Pay payment method but is not available in this version yet.
         scene_required: Choose which WeChat Pay scene to use — this payment method has more than one enabled.

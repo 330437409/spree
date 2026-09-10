@@ -30,8 +30,20 @@ module SpreeWechatPay
     preference :enabled_scenes, :array, default: []
     preference :statement_descriptor, :string
 
+    # The identifier each scene needs. Enabling a scene without its identifier
+    # is refused here, at configuration time, rather than when the first payment
+    # is placed and WeChat rejects the missing `appid`.
+    SCENE_IDENTIFIER_PREFERENCES = {
+      'jsapi' => :jsapi_app_id,
+      'mini_program' => :mini_program_app_id,
+      'native' => :bound_app_id,
+      'h5' => :bound_app_id,
+      'app' => :app_app_id
+    }.freeze
+
     validate :validate_credentials, unless: -> { Rails.env.test? }, if: :credentials_present?
     validate :validate_capture_method
+    validate :validate_scene_identifiers
 
     def provider_class
       self.class
@@ -285,6 +297,23 @@ module SpreeWechatPay
 
       errors.add(:capture_method, :unsupported,
                  message: Spree.t('wechat_pay.errors.capture_method_unsupported'))
+    end
+
+    # Every enabled scene must carry the identifier it places the order with. A
+    # scene that is ticked without one would otherwise fail only when the first
+    # payment is placed and WeChat rejects the missing `appid`.
+    def validate_scene_identifiers
+      Array(preferred_enabled_scenes).each do |scene|
+        preference_name = SCENE_IDENTIFIER_PREFERENCES[scene.to_s]
+        next if preference_name.nil?
+
+        next if public_send("preferred_#{preference_name}").present?
+
+        # The message is passed as a string rather than a symbol type: a
+        # preference is not a column, so a symbol type would make Rails read the
+        # attribute value to interpolate it, and that lookup does not exist.
+        errors.add(preference_name, Spree.t('wechat_pay.errors.scene_identifier_required', scene: scene))
+      end
     end
 
     def credentials_present?

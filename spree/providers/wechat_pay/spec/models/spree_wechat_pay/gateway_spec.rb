@@ -84,6 +84,60 @@ RSpec.describe SpreeWechatPay::Gateway do
     end
   end
 
+  describe 'scene identifiers' do
+    before { gateway.capture_method = 'checkout' }
+
+    it 'accepts a scene that carries its identifier' do
+      gateway.preferred_enabled_scenes = ['native']
+      gateway.preferred_bound_app_id = 'wx_bound_appid'
+
+      expect(gateway).to be_valid
+    end
+
+    # A scene ticked without its identifier would otherwise fail only when the
+    # first payment is placed and WeChat rejects the missing appid.
+    it 'refuses Native without a bound application identifier' do
+      gateway.preferred_enabled_scenes = ['native']
+
+      expect(gateway).not_to be_valid
+      expect(gateway.errors.attribute_names).to include(:bound_app_id)
+    end
+
+    it 'refuses H5 without a bound application identifier' do
+      gateway.preferred_enabled_scenes = ['h5']
+
+      expect(gateway).not_to be_valid
+      expect(gateway.errors.attribute_names).to include(:bound_app_id)
+    end
+
+    it 'refuses APP without its application identifier' do
+      gateway.preferred_enabled_scenes = ['app']
+
+      expect(gateway).not_to be_valid
+      expect(gateway.errors.attribute_names).to include(:app_app_id)
+    end
+
+    it 'refuses JSAPI without its application identifier' do
+      gateway.preferred_enabled_scenes = ['jsapi']
+
+      expect(gateway).not_to be_valid
+      expect(gateway.errors.attribute_names).to include(:jsapi_app_id)
+    end
+
+    it 'names the scene that is missing its identifier' do
+      gateway.preferred_enabled_scenes = ['native']
+      gateway.valid?
+
+      expect(gateway.errors[:bound_app_id].first).to include('native')
+    end
+
+    it 'ignores a scene outside the known vocabulary' do
+      gateway.preferred_enabled_scenes = ['micropay']
+
+      expect(gateway).to be_valid
+    end
+  end
+
   describe 'credentials' do
     it 'builds a merchant context from its preferences' do
       gateway.preferred_merchant_id = WechatPaySpecHelpers::MERCHANT_ID
