@@ -275,6 +275,14 @@ describe Spree::PaymentMethod, type: :model do
     end
   end
 
+  # Opting in changes when a refund is considered settled, so the default has to
+  # be off — every gateway Spree ships credits within the call.
+  describe '#async_refunds?' do
+    it 'returns false by default' do
+      expect(build(:payment_method).async_refunds?).to be false
+    end
+  end
+
   describe '#payment_source_class' do
     let(:payment_method) { build(:credit_card_payment_method) }
 

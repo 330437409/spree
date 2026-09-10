@@ -183,6 +183,38 @@ describe Spree::Refund, type: :model do
     end
   end
 
+  describe 'status' do
+    it 'defaults a new refund to completed' do
+      expect(build(:refund).status).to eq('completed')
+    end
+  end
+
+  describe '.holding_balance' do
+    let(:payment) { create(:payment, amount: 100, status: 'completed') }
+
+    it 'keeps refunds that still reserve their amount' do
+      processing = create(:refund, payment: payment, amount: 10, status: 'processing')
+      completed = create(:refund, payment: payment, amount: 10, status: 'completed')
+
+      expect(described_class.holding_balance).to contain_exactly(processing, completed)
+    end
+
+    it 'drops a refund the gateway canceled' do
+      canceled = create(:refund, payment: payment, amount: 10, status: 'canceled')
+
+      expect(described_class.holding_balance).not_to include(canceled)
+    end
+
+    # The only way to reach a NULL is a row written outside the model, and
+    # counting it as released would let the same amount be refunded twice.
+    it 'treats a row written outside the model as still holding balance' do
+      refund = create(:refund, payment: payment, amount: 10)
+      refund.update_column(:status, nil)
+
+      expect(described_class.holding_balance).to include(refund)
+    end
+  end
+
   describe '#return_line_items' do
     subject { refund.return_line_items }
 

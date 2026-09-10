@@ -267,8 +267,12 @@ module Spree
       offsets.sum(:amount)
     end
 
+    # Only refunds that still hold balance count against it. A gateway that
+    # settles asynchronously can abandon a refund it accepted — WeChat closes
+    # one after seven days of insufficient merchant balance — and that money
+    # never left, so counting it would understate what is left to refund.
     def credit_allowed
-      amount - (offsets_total.abs + refunds.sum(:amount))
+      amount - (offsets_total.abs + refunds.holding_balance.sum(:amount))
     end
 
     def can_credit?

@@ -87,6 +87,42 @@ RSpec.describe Spree::Refunds::Create do
       expect(payment.refunds.reload.count).to eq(1)
       expect(payment.refunds.first.transaction_id).to eq('txn_123')
     end
+
+    it 'records a refund from a synchronous gateway as completed' do
+      result = described_class.call(payment: payment)
+
+      expect(result.value.status).to eq('completed')
+    end
+  end
+
+  # A gateway that settles a refund after the credit call returns cannot be
+  # recorded as having refunded on the strength of that call.
+  describe 'a gateway that settles refunds asynchronously' do
+    before do
+      allow_any_instance_of(Spree::PaymentMethod).to receive(:async_refunds?).and_return(true)
+    end
+
+    it 'starts the refund in processing' do
+      result = described_class.call(payment: payment)
+
+      expect(result).to be_success
+      expect(result.value.status).to eq('processing')
+    end
+
+    # A timeout answers nothing about whether the refund was accepted, so the
+    # row is kept and resolved later by querying the gateway. Destroying it
+    # would erase the only record of money that may already be on its way back.
+    it 'keeps the refund row when the credit call fails' do
+      allow_any_instance_of(Spree::Refund).to receive(:perform!).
+        and_raise(Spree::Core::GatewayError, 'timed out')
+
+      result = described_class.call(payment: payment)
+
+      expect(result).to be_failure
+      expect(result.error.value).to eq('timed out')
+      expect(payment.refunds.reload.count).to eq(1)
+      expect(payment.refunds.first.status).to eq('processing')
+    end
   end
 
   describe 'hooks' do

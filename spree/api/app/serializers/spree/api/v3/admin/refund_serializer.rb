@@ -3,11 +3,12 @@ module Spree
     module V3
       module Admin
         class RefundSerializer < V3::RefundSerializer
-          typelize payment_id: [:string, nullable: true],
+          typelize status: [:string, enum: Spree::Refund.statuses, enum_type_name: 'RefundStatus'],
+                   payment_id: [:string, nullable: true],
                    refund_reason_id: [:string, nullable: true],
                    metadata: 'Record<string, unknown>'
 
-          attributes :metadata,
+          attributes :status, :metadata,
                      created_at: :iso8601, updated_at: :iso8601
 
           one :payment,

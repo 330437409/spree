@@ -215,6 +215,18 @@ module Spree
       false
     end
 
+    # Whether a refund settles after the credit call returns rather than within
+    # it. A gateway that answers "accepted" and reports the outcome later cannot
+    # be recorded as having refunded on the strength of that answer, so its
+    # refunds start in `processing` and `Refunds::Create` keeps the row when the
+    # outcome is still open. False for every gateway that credits synchronously,
+    # which is every gateway Spree ships today.
+    #
+    # @return [Boolean]
+    def async_refunds?
+      false
+    end
+
     def show_in_admin?
       true
     end

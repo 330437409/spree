@@ -842,6 +842,24 @@ describe Spree::Payment, type: :model do
       allow(payment).to receive(:offsets_total).and_return(-80)
       expect(payment.credit_allowed).to eq(20)
     end
+
+    # A gateway that settles asynchronously can abandon a refund it accepted.
+    # That money never left, so it must go back to the creditable balance —
+    # otherwise the merchant silently loses the ability to refund it again.
+    it 'counts a refund that is still processing' do
+      payment = create(:payment, amount: 100, status: 'completed')
+      create(:refund, payment: payment, amount: 30, status: 'processing')
+
+      expect(payment.credit_allowed).to eq(70)
+    end
+
+    it 'ignores a refund the gateway canceled' do
+      payment = create(:payment, amount: 100, status: 'completed')
+      create(:refund, payment: payment, amount: 30, status: 'processing')
+      create(:refund, payment: payment, amount: 40, status: 'canceled')
+
+      expect(payment.credit_allowed).to eq(70)
+    end
   end
 
   describe '#can_credit?' do

@@ -22490,6 +22490,7 @@ paths:
                 refund_reason_id: rr_UkLWZg9DAJ
                 originator_id:
                 originator_type:
+                status: completed
                 metadata: {}
                 created_at: '2026-01-15T12:00:00.000Z'
                 updated_at: '2026-01-15T12:00:00.000Z'
@@ -42902,6 +42903,16 @@ components:
         originator_type:
           type: string
           nullable: true
+        status:
+          anyOf:
+          - type: string
+            enum:
+            - processing
+            - completed
+            - canceled
+          - type: string
+          description: The values listed are the built-in ones; extensions may add
+            more.
         metadata:
           type: object
         created_at:
@@ -42918,6 +42929,7 @@ components:
       - refund_reason_id
       - originator_id
       - originator_type
+      - status
       - metadata
       - created_at
       - updated_at

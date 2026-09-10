@@ -96,7 +96,11 @@ module Spree
             order: order || payment.order,
             reason: reason || Spree::RefundReason.return_processing_reason(refund_store),
             refunder: refunder,
-            originator: originator
+            originator: originator,
+            # A gateway that settles asynchronously has not finished when the
+            # credit call returns, so the row says so instead of claiming
+            # completion it cannot vouch for.
+            status: payment.payment_method.async_refunds? ? 'processing' : 'completed'
           )
         end
       end
@@ -128,8 +132,18 @@ module Spree
       # Runs when a step after create_refund fails. Only an uncredited row is
       # destroyed — a present transaction_id means the money moved, and the
       # record must survive whatever failed afterwards.
+      #
+      # An asynchronous gateway is the exception. Its credit call can fail after
+      # the refund was accepted — a timeout answers nothing about what happened
+      # — so the row survives and is resolved later by querying the gateway.
+      # The trade is deliberate: a row that outlives a refund which never
+      # happened is recoverable, whereas a destroyed record of money that did
+      # move is not.
       def destroy_uncredited_refund
-        refund.destroy! if refund&.transaction_id.blank?
+        return if refund.blank? || refund.transaction_id.present?
+        return if payment.payment_method.async_refunds?
+
+        refund.destroy!
       end
     end
   end

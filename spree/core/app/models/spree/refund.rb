@@ -5,9 +5,29 @@ module Spree
     include Spree::HasCustomFields
     include Spree::Metadata
     include Spree::InstrumentsGatewayCalls
+    include Spree::HasStatus
     if defined?(Spree::Security::Refunds)
       include Spree::Security::Refunds
     end
+
+    # A gateway that settles a refund asynchronously reports acceptance, not
+    # completion, so its refunds start in `processing` and are moved to
+    # `completed` or `canceled` by the notification that eventually arrives. A
+    # synchronous gateway credits within the call, so its refunds are complete
+    # the moment the row exists — which is also what every refund predating this
+    # column is.
+    has_status :processing, :completed, :canceled, default: :completed
+
+    # Refunds that still reserve their amount against the payment.
+    #
+    # A NULL status counts as holding balance rather than as released: the only
+    # way to reach a NULL is a row written outside the model, and the failure
+    # that matters is releasing money that is still committed, which would let
+    # the same amount be refunded twice. Written as an explicit IS NULL rather
+    # than as a list containing nil, because `IN (NULL, …)` matches no row.
+    #
+    # @return [ActiveRecord::Relation]
+    scope :holding_balance, -> { where.not(status: 'canceled').or(where(status: nil)) }
 
     publishes_lifecycle_events
 
