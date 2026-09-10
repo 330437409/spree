@@ -29,9 +29,9 @@ payment method serves whichever scenes you enable.
   so a store or payment method set to authorize at checkout and capture later
   cannot use this gateway. It is refused when you save the configuration rather
   than when the first order ships.
-- **Refunds settle asynchronously.** WeChat accepts a refund request and reports
-  the outcome later, so refunds are recorded as processing until the result
-  arrives.
+- **Refunds are not supported yet.** Placing a refund against a WeChat payment
+  fails cleanly today. WeChat accepts a refund and reports the outcome later,
+  which Spree can record, but the refund API itself is still to be built.
 - **No stored payment instruments.** WeChat issues no reusable token for one-off
   payments, so customers pay each time. Entrusted deduction (委托代扣) is a
   separate product with its own onboarding.

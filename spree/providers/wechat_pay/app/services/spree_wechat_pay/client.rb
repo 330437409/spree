@@ -83,10 +83,17 @@ module SpreeWechatPay
       when 400..499
         # WeChat named what was wrong with the request. Retrying an identical
         # request would be refused identically.
+        #
+        # The offending field is nested: `{"code":…,"message":…,"detail":{"field":
+        # "/amount/currency","issue":…}}`. Reading it from the top level yields
+        # nil for every rejection, and the `issue` is the half that says what to
+        # change.
+        detail = payload['detail'] || {}
         raise ApiError.new(
           payload['message'] || 'WeChat Pay rejected the request',
           code: payload['code'],
-          field: payload['field'],
+          field: detail['field'],
+          issue: detail['issue'],
           status: response.status
         )
       else

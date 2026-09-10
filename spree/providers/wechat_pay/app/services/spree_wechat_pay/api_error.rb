@@ -10,15 +10,18 @@ module SpreeWechatPay
     attr_reader :code
     # @return [String, nil] JSON pointer to the offending parameter
     attr_reader :field
+    # @return [String, nil] WeChat's own description of what is wrong with it
+    attr_reader :issue
     # @return [Integer, nil] the HTTP status WeChat answered with
     attr_reader :status
 
-    def initialize(message, code: nil, field: nil, status: nil)
+    def initialize(message, code: nil, field: nil, issue: nil, status: nil)
       @code = code
       @field = field
+      @issue = issue
       @status = status
 
-      detail = [code, (field && "field #{field}")].compact.join(', ')
+      detail = [code, issue, (field && "field #{field}")].compact.join(', ')
       super(detail.present? ? "#{message} (#{detail})" : message)
     end
   end

@@ -72,11 +72,25 @@ module SpreeWechatPay
       true
     end
 
-    # WeChat accepts a refund and settles it later, sometimes failing after
-    # acceptance, so its refunds start in `processing` rather than claiming a
-    # completion the API call cannot vouch for.
+    # Off until refunds are implemented. WeChat does settle a refund after
+    # accepting it, so this will become true — but claiming the capability now is
+    # worse than not having it: `Refunds::Create` would start the refund in
+    # `processing`, the credit call would fail because no `credit` verb exists
+    # yet, and the row would be kept (that being what opt-in means), leaving a
+    # refund that reserves the payment's balance forever and never resolves.
     def async_refunds?
-      true
+      false
+    end
+
+    # WeChat Pay's domestic API settles in yuan alone, so an order in any other
+    # currency cannot be paid this way. Without this the payload's hardcoded
+    # `CNY` would be attached to another currency's minor units — the same
+    # number, a different amount of money.
+    #
+    # @param order [Spree::Order]
+    # @return [Boolean]
+    def available_for_order?(order)
+      super && order.currency.to_s == 'CNY'
     end
 
     # @return [SpreeWechatPay::MerchantContext]

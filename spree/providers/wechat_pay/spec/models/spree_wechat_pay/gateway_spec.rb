@@ -23,10 +23,25 @@ RSpec.describe SpreeWechatPay::Gateway do
       expect(gateway.session_required?).to be true
     end
 
-    # WeChat accepts a refund and reports the outcome later, which is what makes
-    # its refunds start in `processing` rather than claiming completion.
-    it 'settles refunds asynchronously' do
-      expect(gateway.async_refunds?).to be true
+    # WeChat does settle a refund after accepting it, but advertising that
+    # before a refund API exists leaves a `processing` refund reserving the
+    # payment's balance with nothing able to resolve it.
+    it 'does not claim asynchronous refunds before refunds are implemented' do
+      expect(gateway.async_refunds?).to be false
+    end
+
+    # Nothing here sends an amount in a currency WeChat will not settle, so a
+    # store in another currency must not be offered the method at all.
+    it 'is offered only for orders in yuan' do
+      order = build(:order, currency: 'USD')
+
+      expect(gateway.available_for_order?(order)).to be false
+    end
+
+    it 'is offered for an order in yuan' do
+      order = build(:order, currency: 'CNY')
+
+      expect(gateway.available_for_order?(order)).to be true
     end
 
     it 'holds no reusable customer instrument' do

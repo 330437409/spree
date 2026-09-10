@@ -39,9 +39,12 @@ RSpec.describe SpreeWechatPay::Client do
 
   describe 'a rejection WeChat named' do
     before do
+      # The field is nested under `detail`, as WeChat documents it. A flat
+      # `field` was what this spec used to stub, which is why the bug survived.
       stubs.post('/v3/pay/transactions/native') do
         [403, { 'Content-Type' => 'application/json' },
-         '{"code":"OUT_TRADE_NO_USED","message":"商户订单号重复","field":"/out_trade_no"}']
+         '{"code":"OUT_TRADE_NO_USED","message":"商户订单号重复",' \
+         '"detail":{"field":"/out_trade_no","issue":"duplicate out_trade_no","location":"body"}}']
       end
     end
 
@@ -50,6 +53,7 @@ RSpec.describe SpreeWechatPay::Client do
         expect(error.code).to eq('OUT_TRADE_NO_USED')
         expect(error.field).to eq('/out_trade_no')
         expect(error.status).to eq(403)
+        expect(error.issue).to eq('duplicate out_trade_no')
         expect(error.message).to include('商户订单号重复', 'OUT_TRADE_NO_USED', '/out_trade_no')
       end
     end
