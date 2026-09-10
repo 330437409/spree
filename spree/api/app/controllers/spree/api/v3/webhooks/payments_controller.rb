@@ -34,10 +34,15 @@ module Spree
 
             # Process asynchronously — gateways have timeout limits and will
             # retry on timeouts, so we must return 200 quickly.
+            #
+            # The gateway's own metadata travels with the job: it is what
+            # identifies the payment at the provider (a charge id, a WeChat
+            # transaction number), and the session records it on the payment.
             Spree::Payments::HandleWebhookJob.set(wait: 30.seconds).perform_later(
               payment_method_id: payment_method.id,
               action: result[:action].to_s,
-              payment_session_id: result[:payment_session].id
+              payment_session_id: result[:payment_session].id,
+              metadata: result[:metadata] || {}
             )
 
             head :ok

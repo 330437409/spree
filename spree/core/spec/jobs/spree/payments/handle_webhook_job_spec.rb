@@ -17,13 +17,31 @@ RSpec.describe Spree::Payments::HandleWebhookJob, type: :job do
       expect(handler).to receive(:call).with(
         payment_method: payment_method,
         action: :captured,
-        payment_session: payment_session
+        payment_session: payment_session,
+        metadata: {}
       )
 
       described_class.new.perform(
         payment_method_id: payment_method.id,
         action: 'captured',
         payment_session_id: payment_session.id
+      )
+    end
+
+    # The gateway's own identifiers for what happened — a charge id, a WeChat
+    # transaction number — reach the session, which records them on the payment.
+    it 'forwards the metadata the gateway returned' do
+      handler = instance_double(Spree::Payments::HandleWebhook)
+      allow(Spree::Payments::HandleWebhook).to receive(:new).and_return(handler)
+      expect(handler).to receive(:call).with(
+        hash_including(metadata: { 'charge_id' => 'ch_123' })
+      )
+
+      described_class.new.perform(
+        payment_method_id: payment_method.id,
+        action: 'captured',
+        payment_session_id: payment_session.id,
+        metadata: { 'charge_id' => 'ch_123' }
       )
     end
 

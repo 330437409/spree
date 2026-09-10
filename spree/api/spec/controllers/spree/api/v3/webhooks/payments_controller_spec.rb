@@ -104,7 +104,8 @@ RSpec.describe Spree::Api::V3::Webhooks::PaymentsController, type: :controller d
             .with(
               payment_method_id: payment_method.id,
               action: 'captured',
-              payment_session_id: payment_session.id
+              payment_session_id: payment_session.id,
+              metadata: {}
             )
         end
       end
