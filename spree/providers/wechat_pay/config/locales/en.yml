@@ -1,0 +1,16 @@
+---
+en:
+  spree:
+    wechat_pay:
+      errors:
+        authorization_code_required: The %{scene} scene needs the customer's WeChat authorization code — the storefront must obtain it by redirecting to WeChat before asking for a payment session.
+        authorization_failed: WeChat refused the authorization code (%{message}). The code is single use and short lived, so the customer usually just needs to start over.
+        capture_method_unsupported: WeChat Pay charges at checkout and cannot hold an authorization for later capture. Set this store or payment method to capture at checkout.
+        credentials_rejected: WeChat Pay rejected these credentials — %{message}
+        invalid_private_key: The merchant certificate private key could not be read. Paste the full PEM block, including its BEGIN and END lines.
+        no_scenes_enabled: No WeChat Pay payment scenes are enabled on this payment method. Enable at least one in its settings.
+        scene_not_enabled: The %{scene} scene is not enabled on this WeChat Pay payment method.
+        scene_not_implemented: The %{scene} scene is enabled on this WeChat Pay payment method but is not available in this version yet.
+        scene_required: Choose which WeChat Pay scene to use — this payment method has more than one enabled.
+        unavailable: WeChat Pay could not be reached to verify these credentials. Try again later.
+        zero_amount: A WeChat Pay session cannot be created for a zero amount.
