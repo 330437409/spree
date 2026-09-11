@@ -12,6 +12,8 @@ When proposing significant architectural changes:
 
 Use `/project:create-plan` and `/project:update-plan` for plan management, and `/project:implement-plan <plan>` to deliver a plan end to end (open questions → implementation → reviews → running QA environment → pull request).
 
+Every plan is tracked as one Linear issue (Spree project, milestone = the plan's target version) and one GitHub issue (milestone `vX.Y`, on the org Roadmap project), both named in the plan's `**Tracking:**` header. The skills open and update them; a pull request that implements a plan carries the Linear id in its title, `Title (V-1234)`.
+
 ## Monorepo Structure
 
 | Directory | Description |
@@ -123,6 +125,7 @@ NEVER kill/shut off dev serves already running unless they are broken (eg. migra
 - ALWAYS use Yard comments for classes and public methods, with `@param` and `@return` types
 - DO NOT generate too much comment noise, be very strict and selective about what gets a comment — only non-obvious public methods, never private methods or internal helpers
 - DO NOT use shorthand variable names, readibility by humans is the core principle
+- Always use `ActiveJob::Continuable` when a Background Job iterates over records and perform operations on them
 
 ### Code Organization
 
