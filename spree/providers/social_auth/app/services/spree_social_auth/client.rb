@@ -13,22 +13,25 @@ module SpreeSocialAuth
 
     # @param url [String]
     # @param params [Hash]
+    # @param headers [Hash]
     # @return [Hash] the parsed body
-    def get(url, params)
-      request(:get, url, params)
+    def get(url, params, headers: {})
+      request(:get, url, params, headers)
     end
 
     # @param url [String]
     # @param params [Hash]
+    # @param headers [Hash]
     # @return [Hash] the parsed body
-    def post(url, params)
-      request(:post, url, params)
+    def post(url, params, headers: {})
+      request(:post, url, params, headers)
     end
 
     private
 
-    def request(verb, url, params)
-      response = verb == :post ? post_request(url, params) : @connection.get(url, params)
+    def request(verb, url, params, headers)
+      response = verb == :post ? post_request(url, params, headers) : @connection.get(url, params, headers)
+      raise_for_status(response)
 
       parse(response.body)
     rescue Faraday::TimeoutError, Faraday::ConnectionFailed => e
@@ -38,11 +41,31 @@ module SpreeSocialAuth
     # Encoded here rather than left to Faraday's middleware: both providers that
     # post do it as a form, and a Hash handed straight to #post is not a body
     # Faraday can send.
-    def post_request(url, params)
+    def post_request(url, params, headers)
       @connection.post(url) do |request|
+        request.headers.merge!(headers) if headers.present?
         request.headers['Content-Type'] = 'application/x-www-form-urlencoded'
         request.body = URI.encode_www_form(params)
       end
+    end
+
+    # A provider that refuses with a real status must not be read as a success:
+    # the flow would carry on with an empty token and fail somewhere that names
+    # nothing useful. WeChat and Douyin always answer 200, so this never fires
+    # for them.
+    def raise_for_status(response)
+      return if response.success?
+
+      raise ApiError.new("The provider refused the request (HTTP #{response.status}#{detail_suffix(response.body)})")
+    end
+
+    def detail_suffix(body)
+      error = JSON.parse(body.to_s)
+      detail = [error['error'], error['error_description']].map(&:presence).compact.uniq.join(': ')
+
+      detail.present? ? ": #{detail}" : ''
+    rescue StandardError
+      ''
     end
 
     def parse(body)

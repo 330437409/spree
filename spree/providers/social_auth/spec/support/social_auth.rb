@@ -3,6 +3,8 @@ module SocialAuthSpecHelpers
   WECHAT_PROFILE_PATTERN = %r{\Ahttps://api\.weixin\.qq\.com/sns/userinfo}.freeze
   DOUYIN_TOKEN_PATTERN = %r{\Ahttps://open\.douyin\.com/oauth/access_token/}.freeze
   DOUYIN_PROFILE_PATTERN = %r{\Ahttps://open\.douyin\.com/oauth/userinfo/}.freeze
+  GOOGLE_TOKEN_PATTERN = %r{\Ahttps://oauth2\.googleapis\.com/token}.freeze
+  GOOGLE_PROFILE_PATTERN = %r{\Ahttps://openidconnect\.googleapis\.com/v1/userinfo}.freeze
 
   JSON_HEADERS = { 'Content-Type' => 'application/json' }.freeze
 
@@ -86,5 +88,35 @@ module SocialAuthSpecHelpers
   def stub_douyin_profile_error(code:, message: 'something went wrong')
     stub_request(:post, DOUYIN_PROFILE_PATTERN).
       to_return(status: 200, headers: JSON_HEADERS, body: { data: {}, err_no: code, err_msg: message }.to_json)
+  end
+
+  # Google answers with real statuses and a standard claims document.
+  def stub_google_exchange(token: {}, profile: {})
+    token_data = {
+      access_token: 'google-access-token-1',
+      expires_in: 3600,
+      token_type: 'Bearer'
+    }.merge(token)
+
+    claims = {
+      sub: 'google-subject-1',
+      email: 'ada@example.com',
+      email_verified: true,
+      name: 'Ada Lovelace',
+      given_name: 'Ada',
+      family_name: 'Lovelace',
+      picture: 'https://lh3.googleusercontent.com/ada.jpg'
+    }.merge(profile)
+
+    stub_request(:post, GOOGLE_TOKEN_PATTERN).
+      to_return(status: 200, headers: JSON_HEADERS, body: token_data.to_json)
+
+    stub_request(:get, GOOGLE_PROFILE_PATTERN).
+      to_return(status: 200, headers: JSON_HEADERS, body: claims.to_json)
+  end
+
+  def stub_google_token_error(status: 400, error: 'invalid_grant', description: 'Bad Request')
+    stub_request(:post, GOOGLE_TOKEN_PATTERN).
+      to_return(status: status, headers: JSON_HEADERS, body: { error: error, error_description: description }.to_json)
   end
 end

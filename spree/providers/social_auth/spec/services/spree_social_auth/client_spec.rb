@@ -14,7 +14,7 @@ RSpec.describe SpreeSocialAuth::Client do
            with(query: { appid: 'wx_appid', code: 'auth-code' }).
            to_return(status: 200, body: '{"openid":"openid-1"}')
 
-    client.get('https://api.weixin.qq.com/sns/oauth2/access_token', appid: 'wx_appid', code: 'auth-code')
+    client.get('https://api.weixin.qq.com/sns/oauth2/access_token', { appid: 'wx_appid', code: 'auth-code' })
 
     expect(stub).to have_been_requested
   end
@@ -24,7 +24,7 @@ RSpec.describe SpreeSocialAuth::Client do
            with(body: { client_key: 'key', code: 'auth-code' }).
            to_return(status: 200, body: '{"data":{}}')
 
-    client.post('https://open.douyin.com/oauth/access_token/', client_key: 'key', code: 'auth-code')
+    client.post('https://open.douyin.com/oauth/access_token/', { client_key: 'key', code: 'auth-code' })
 
     expect(stub).to have_been_requested
   end
@@ -34,6 +34,16 @@ RSpec.describe SpreeSocialAuth::Client do
 
     expect { client.get('https://api.weixin.qq.com/sns/userinfo', {}) }.
       to raise_error(SpreeSocialAuth::ConnectionError, /could not be reached/)
+  end
+
+  # Providers that refuse with a real status (Google does) must not be read as a
+  # success — the flow would carry on with an empty token.
+  it 'raises on a refusal sent with a real status, naming the provider reason' do
+    stub_request(:post, 'https://oauth2.googleapis.com/token').
+      to_return(status: 400, headers: SocialAuthSpecHelpers::JSON_HEADERS, body: { error: 'invalid_grant', error_description: 'Bad Request' }.to_json)
+
+    expect { client.post('https://oauth2.googleapis.com/token', {}) }.
+      to raise_error(SpreeSocialAuth::ApiError, /HTTP 400: invalid_grant: Bad Request/)
   end
 
   it 'refuses a body that is not JSON' do

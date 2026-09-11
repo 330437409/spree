@@ -18,12 +18,19 @@ module SpreeSocialAuth
 
     # Core assigns the authentication registry in its own after_initialize, so
     # appending has to happen in a later one — engine callbacks run in load
-    # order.
+    # order. Each provider is one Integration (its per-store credentials) and one
+    # strategy class; registering both is the whole wiring.
     config.after_initialize do
-      Spree.integrations << 'SpreeSocialAuth::Integrations::WeChat'
-      Spree.integrations << 'SpreeSocialAuth::Integrations::Douyin'
-      Spree.store_authentication_strategies.add(:wechat, SpreeSocialAuth::Strategies::WeChat.provider)
-      Spree.store_authentication_strategies.add(:douyin, SpreeSocialAuth::Strategies::Douyin.provider)
+      [
+        SpreeSocialAuth::Strategies::WeChat,
+        SpreeSocialAuth::Strategies::Douyin,
+        SpreeSocialAuth::Strategies::Google
+      ].each do |strategy|
+        provider = strategy.provider
+
+        Spree.integrations << provider.integration_class.name
+        Spree.store_authentication_strategies.add(provider.key, provider)
+      end
     end
   end
 end

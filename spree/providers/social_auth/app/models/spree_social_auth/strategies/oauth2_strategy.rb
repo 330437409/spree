@@ -85,18 +85,32 @@ module SpreeSocialAuth
       end
 
       def exchange(code)
-        token = unwrap(check_errors!(fetch(token_url, token_params(code: code), request: token_request)))
-        profile = unwrap(check_errors!(fetch(profile_url, profile_params(token), request: profile_request)))
+        token = unwrap(
+          check_errors!(fetch(token_url, token_params(code: code), request: token_request, headers: token_headers))
+        )
+        profile = unwrap(
+          check_errors!(fetch(profile_url, profile_params(token), request: profile_request, headers: profile_headers(token)))
+        )
 
         [token, profile]
       end
 
-      def fetch(url, params, request:)
-        request == :post ? client.post(url, params) : client.get(url, params)
+      def fetch(url, params, request:, headers:)
+        request == :post ? client.post(url, params, headers: headers) : client.get(url, params, headers: headers)
       end
 
       def client
         @client ||= SpreeSocialAuth::Client.new
+      end
+
+      # Headers the exchange needs. WeChat and Douyin carry everything in the
+      # parameters; Google puts its access token in a header on the profile read.
+      def token_headers
+        {}
+      end
+
+      def profile_headers(_token)
+        {}
       end
 
       # Providers that refuse with an HTTP status need nothing here; WeChat and
