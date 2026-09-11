@@ -165,6 +165,37 @@ RSpec.describe SpreeWechatPay::Gateway do
       expect(gateway.merchant_context.merchant_id).to eq(WechatPaySpecHelpers::MERCHANT_ID)
     end
 
+    # An empty row is a draft an operator can come back to. A half-filled one is
+    # a mistake, and it is refused while it is still on screen rather than when
+    # the first customer tries to pay.
+    it 'allows a payment method with no credentials yet' do
+      draft = described_class.new(store: store, name: 'WeChat Pay')
+      draft.capture_method = 'checkout'
+
+      expect(draft).to be_valid
+    end
+
+    it 'refuses a half-filled credential set' do
+      gateway.capture_method = 'checkout'
+      gateway.preferred_merchant_id = WechatPaySpecHelpers::MERCHANT_ID
+      gateway.preferred_merchant_private_key = merchant_key_pair.to_pem
+      gateway.preferred_merchant_certificate_serial = WechatPaySpecHelpers::MERCHANT_SERIAL
+
+      expect(gateway).not_to be_valid
+      expect(gateway.errors[:base].join).to include('Api v3 key')
+    end
+
+    it 'refuses public key mode without WeChat Pay’s own public key' do
+      gateway.capture_method = 'checkout'
+      gateway.preferred_merchant_id = WechatPaySpecHelpers::MERCHANT_ID
+      gateway.preferred_merchant_private_key = merchant_key_pair.to_pem
+      gateway.preferred_merchant_certificate_serial = WechatPaySpecHelpers::MERCHANT_SERIAL
+      gateway.preferred_api_v3_key = WechatPaySpecHelpers::API_V3_KEY
+
+      expect(gateway).not_to be_valid
+      expect(gateway.errors[:base].join).to include('Public key pem', 'Public key id')
+    end
+
     # Built per call: an operator who corrects a credential expects the next
     # payment to use it.
     it 'reflects a corrected credential on the next call' do
@@ -242,6 +273,55 @@ RSpec.describe SpreeWechatPay::Gateway do
       expect { gateway.credit(500, payment.response_code, originator: refund) }.to raise_error(
         Spree::Core::GatewayError, /余额不足/
       )
+    end
+  end
+
+  # WeChat takes the money at checkout, so cancel has nothing to void — the only
+  # thing it can do with a captured payment is give it back, through the one
+  # refund path core owns.
+  describe '#cancel' do
+    let(:gateway) { wechat_gateway }
+    let(:cart) { wechat_cart }
+
+    let(:payment) do
+      session = Spree::PaymentSessions::WechatPay.create!(
+        owner: cart, payment_method: gateway, amount: cart.total, currency: 'CNY',
+        status: 'pending', external_id: 'R1001-cancel'
+      )
+      session.settle_payment!(captured: true, metadata: {})
+    end
+
+    it 'answers success when there is no completed payment to settle' do
+      expect(gateway.cancel('R1001-abcd1234', nil)).to be_success
+    end
+
+    it 'leaves captured money alone when the operator asked to keep it' do
+      expect(Spree.refund_create_workflow).not_to receive(:call)
+
+      expect(gateway.cancel(payment.response_code, payment, refund: false)).to be_success
+    end
+
+    it 'refunds a captured payment through the refund workflow' do
+      refund = instance_double(
+        Spree::Refund,
+        response: Spree::PaymentResponse.new(true, nil, {}, authorization: 'refund-1')
+      )
+      allow(Spree.refund_create_workflow).to receive(:call).and_return(
+        Spree::ServiceModule::Result.new(true, refund, nil)
+      )
+
+      expect(gateway.cancel(payment.response_code, payment)).to be_success
+      expect(Spree.refund_create_workflow).to have_received(:call).with(
+        hash_including(payment: payment, reason: a_kind_of(Spree::RefundReason))
+      )
+    end
+  end
+
+  describe '#void' do
+    let(:gateway) { wechat_gateway }
+
+    it 'answers success, because WeChat has no uncaptured authorization to release' do
+      expect(gateway.void('R1001-abcd1234')).to be_success
     end
   end
 

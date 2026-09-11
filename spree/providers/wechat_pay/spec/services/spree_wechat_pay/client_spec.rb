@@ -185,6 +185,8 @@ RSpec.describe SpreeWechatPay::Client do
   # Queries are reads: retrying one cannot move money or create a second
   # transaction.
   describe 'retrying a query' do
+    before { allow(client).to receive(:sleep) }
+
     it 'retries a read that failed, then returns the answer' do
       attempts = 0
       stubs.get('/v3/certificates') do
@@ -205,6 +207,68 @@ RSpec.describe SpreeWechatPay::Client do
 
       expect { client.get('/v3/certificates') }.to raise_error(SpreeWechatPay::ConnectionError)
       expect(attempts).to eq(described_class::QUERY_RETRIES + 1)
+    end
+
+    # Immediate retries turn one WeChat blip into three requests in the time one
+    # would have taken, and a real outage into a tight loop.
+    it 'waits longer before each retry' do
+      stubs.get('/v3/certificates') { [500, {}, ''] }
+
+      expect { client.get('/v3/certificates') }.to raise_error(SpreeWechatPay::ConnectionError)
+
+      expect(client).to have_received(:sleep).with(0.5).ordered
+      expect(client).to have_received(:sleep).with(1.0).ordered
+    end
+  end
+
+  # A WeChat outage costs one timeout per worker rather than one per request:
+  # once enough calls have failed, the rest are refused without being made until
+  # the circuit has had time to close. The state lives in the cache, so every
+  # worker and process sees the same outage.
+  describe 'an open circuit' do
+    let(:cache) { ActiveSupport::Cache::MemoryStore.new }
+    let(:breaker) { SpreeWechatPay::CircuitBreaker.new(context.merchant_id, cache: cache) }
+    let(:client) { described_class.new(context: context, connection: connection, breaker: breaker) }
+
+    before { allow(client).to receive(:sleep) }
+
+    # No stub is registered, so a call that reached the adapter would come back
+    # as a test-adapter miss rather than as the circuit's own refusal.
+    it 'refuses to call WeChat' do
+      SpreeWechatPay::CircuitBreaker::FAILURE_THRESHOLD.times { breaker.record_failure }
+
+      expect { client.get('/v3/certificates') }.to raise_error(SpreeWechatPay::CircuitOpenError)
+    end
+
+    # Retries count too: three timeouts out of one query are three failures, not
+    # one, because that is three times WeChat was waited on for nothing.
+    it 'counts every failed attempt' do
+      stubs.get('/v3/certificates') { [500, {}, ''] }
+
+      described_class::QUERY_RETRIES.times do
+        expect { client.get('/v3/certificates') }.to raise_error(SpreeWechatPay::ConnectionError)
+      end
+
+      expect(breaker).to be_open
+    end
+
+    it 'stays closed while WeChat is answering' do
+      stubs.get('/v3/certificates') { [200, {}, '{"data":[]}'] }
+
+      client.get('/v3/certificates')
+
+      expect(breaker).not_to be_open
+    end
+
+    it 'closes again once a call succeeds' do
+      SpreeWechatPay::CircuitBreaker::FAILURE_THRESHOLD.times { breaker.record_failure }
+      stubs.get('/v3/certificates') { [200, {}, '{"data":[]}'] }
+
+      Timecop.travel(SpreeWechatPay::CircuitBreaker::OPEN_FOR + 1.second) do
+        client.get('/v3/certificates')
+
+        expect(breaker).not_to be_open
+      end
     end
   end
 end

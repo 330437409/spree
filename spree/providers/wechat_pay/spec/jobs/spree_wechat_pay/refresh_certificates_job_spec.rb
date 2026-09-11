@@ -44,5 +44,19 @@ RSpec.describe SpreeWechatPay::RefreshCertificatesJob do
 
       expect(healthy_store).to have_received(:refresh!)
     end
+
+    # WeChat is not answering at all, so the next gateway would be refused just
+    # as fast and reported for nothing. The next scheduled run picks the sweep
+    # up once the circuit has had time to close.
+    it 'stops the sweep while the circuit is open' do
+      gateway = wechat_gateway(verification_mode: 'platform_certificate')
+      store = instance_double(SpreeWechatPay::CertificateStore)
+      allow(gateway).to receive(:certificate_store).and_return(store)
+      allow(store).to receive(:refresh!).and_raise(SpreeWechatPay::CircuitOpenError)
+      allow(SpreeWechatPay::Gateway).to receive(:find_each).and_yield(gateway)
+      expect(Rails.error).not_to receive(:report)
+
+      described_class.new.perform
+    end
   end
 end

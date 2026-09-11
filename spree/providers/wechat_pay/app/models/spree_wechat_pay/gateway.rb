@@ -43,6 +43,7 @@ module SpreeWechatPay
 
     validate :validate_credentials, unless: -> { Rails.env.test? }, if: :credentials_present?
     validate :validate_capture_method
+    validate :validate_merchant_context, if: :credentials_present?
     validate :validate_merchant_mode
     validate :validate_scene_identifiers
 
@@ -177,6 +178,40 @@ module SpreeWechatPay
       raise Spree::Core::GatewayError, error.message
     end
 
+    # Settles a payment for a canceled order.
+    #
+    # WeChat takes the money at checkout, so there is never an uncaptured
+    # authorization for this to release — the only thing left to do with a
+    # captured payment is give it back, and only when the operator asked for it.
+    #
+    # @param transaction_id [String] the payment's merchant order number
+    # @param payment [Spree::Payment, nil]
+    # @param refund [Boolean] whether money already captured may be returned
+    # @return [Spree::PaymentResponse]
+    def cancel(transaction_id, payment = nil, refund: true)
+      return success_response(transaction_id) unless payment&.completed?
+      return success_response(transaction_id) unless refund
+      return success_response(transaction_id) if payment.credit_allowed.to_d.zero?
+
+      result = Spree.refund_create_workflow.call(
+        payment: payment,
+        reason: Spree::RefundReason.order_canceled_reason(payment.owner.store),
+        refunder: payment.order&.canceler
+      )
+      raise Spree::Core::GatewayError, result.error.value.to_s if result.failure?
+
+      success_response(transaction_id, result.value.response&.params)
+    end
+
+    # WeChat takes the money at checkout, so a void has no uncaptured
+    # authorization to release. Answering success keeps a cancellation or a
+    # voided payment from failing against a gateway with nothing to undo.
+    #
+    # @return [Spree::PaymentResponse]
+    def void(_transaction_id, _gateway_options = {})
+      Spree::PaymentResponse.new(true, nil, {})
+    end
+
     # Asks WeChat what became of a refund, for reconciliation to apply.
     #
     # @param refund_number [String] our `out_refund_no`
@@ -204,6 +239,13 @@ module SpreeWechatPay
     end
 
     private
+
+    # @param authorization [String, nil]
+    # @param params [Hash, nil]
+    # @return [Spree::PaymentResponse]
+    def success_response(authorization, params = nil)
+      Spree::PaymentResponse.new(true, nil, params || {}, authorization: authorization)
+    end
 
     # The one client that does not verify what it is told, because it is the one
     # that fetches the very keys verification needs: a cold certificate cache
@@ -297,6 +339,25 @@ module SpreeWechatPay
 
       errors.add(:capture_method, :unsupported,
                  message: Spree.t('wechat_pay.errors.capture_method_unsupported'))
+    end
+
+    # Only runs once the two fields that name the merchant are present, so a row
+    # with nothing filled in stays a draft. Beyond those, the context is the one
+    # place that knows what a usable credential set looks like, so it is asked
+    # rather than restated here as a second list of presence rules.
+    def validate_merchant_context
+      context = merchant_context
+      return if context.valid?
+
+      # `keep_id_suffix` because the default drops " id": the public key's
+      # identifier would be reported as "Public key", the same name as the key
+      # itself, leaving the operator no way to tell which one is missing.
+      problems = context.errors.map do |error|
+        "#{error.attribute.to_s.humanize(keep_id_suffix: true)} #{error.message}"
+      end
+      errors.add(:base, :incomplete_credentials,
+                 message: Spree.t('wechat_pay.errors.incomplete_credentials',
+                                  problems: problems.to_sentence))
     end
 
     # `merchant_mode` exists so a future partner mode does not have to retrofit a

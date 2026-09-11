@@ -9,6 +9,7 @@ en:
         credentials_rejected: WeChat Pay rejected these credentials — %{message}
         h5_type_required: The H5 scene needs the customer's device type (Wap, iOS or Android) so WeChat can serve the right payment page.
         invalid_private_key: The merchant certificate private key could not be read. Paste the full PEM block, including its BEGIN and END lines.
+        incomplete_credentials: These credentials cannot be used yet — %{problems}. Fill in every field WeChat Pay needs, or clear them all and save the method as a draft.
         merchant_mode_unsupported: Only the direct merchant mode is supported today. Service provider (partner) mode is not available in this version yet.
         no_scenes_enabled: No WeChat Pay payment scenes are enabled on this payment method. Enable at least one in its settings.
         payer_client_ip_required: The H5 scene needs the customer's IP address, which WeChat requires on every H5 order.

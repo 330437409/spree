@@ -14,16 +14,23 @@ module SpreeWechatPay
     # unanswered request may have been accepted, and only the caller knows how to
     # find out — by querying under the same merchant number before trying again.
     QUERY_RETRIES = 2
+    # How long to wait before the first retry, doubling for each attempt after
+    # it. Long enough that WeChat's own blip is ridden out, short enough that a
+    # real outage is left to the caller's schedule — the notification retry or
+    # the reconciliation sweep — rather than holding a worker.
+    RETRY_BACKOFF = 0.5
 
     # @param context [SpreeWechatPay::MerchantContext]
     # @param connection [Faraday::Connection, nil] injected by specs
     # @param verifier [#call, SpreeWechatPay::Verifier, nil] what every answer is
     #   checked against; a callable is resolved per answer, so a certificate
     #   rotation is picked up without rebuilding clients
-    def initialize(context:, connection: nil, verifier: nil)
+    # @param breaker [SpreeWechatPay::CircuitBreaker, nil]
+    def initialize(context:, connection: nil, verifier: nil, breaker: nil)
       @context = context
       @connection = connection || build_connection
       @verifier = verifier
+      @breaker = breaker || CircuitBreaker.new(context.merchant_id)
     end
 
     # @param path [String]
@@ -50,16 +57,22 @@ module SpreeWechatPay
     end
 
     def request(verb, path, payload, retries:)
+      raise CircuitOpenError if @breaker.open?
+
       body = payload ? JSON.generate(payload) : ''
       attempt = 0
 
       begin
-        handle(perform(verb, path, body))
+        response = handle(perform(verb, path, body))
+        @breaker.record_success
+        response
       rescue ConnectionError
+        @breaker.record_failure
         attempt += 1
-        retry if attempt <= retries
+        raise if attempt > retries
 
-        raise
+        sleep(RETRY_BACKOFF * (2**(attempt - 1)))
+        retry
       end
     end
 

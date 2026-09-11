@@ -55,7 +55,7 @@ WeChat verifies its own signatures in one of two ways. Choose **WeChat Pay publi
 | **WeChat Pay public key** | The public key, when in public key mode |
 | **WeChat Pay public key ID** | The `PUB_KEY_ID_…` identifier, when in public key mode |
 
-Saving the credentials runs one check against WeChat, so a typo in the merchant ID or a mismatched key pair is reported at configuration time rather than at the first checkout.
+Saving the credentials runs one check against WeChat, so a typo in the merchant ID or a mismatched key pair is reported at configuration time rather than at the first checkout. A credential set that is only half filled in is refused while you save it, naming what is still missing.
 
 ## Payment scenes
 
@@ -84,6 +84,8 @@ The storefront work differs per scene, and it is the part most likely to be got 
 ## Refunds
 
 Refunds are accepted by WeChat and settle asynchronously. A refund starts as *processing* and moves to *completed* or *canceled* when WeChat reports the outcome. WeChat's own words — for example, an abnormal refund whose money could not reach the customer's bank — are kept on the refund so an operator can see exactly what WeChat said.
+
+Cancelling an order settles its WeChat payment the same way. WeChat charges at checkout, so there is no authorization to release: the captured money is returned as a refund and then follows the same asynchronous path.
 
 ## Test before going live
 

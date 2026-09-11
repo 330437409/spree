@@ -70,8 +70,10 @@ dumps accordingly.
 | Enabled scenes | Which of the five you accept |
 
 Saving credentials runs one authenticated call, so a wrong key or a mismatched
-pair is reported immediately. It cannot prove WeChat can reach your callback
-address — that needs a publicly reachable URL.
+pair is reported immediately. A method whose credentials are half filled in is
+refused while you save it, naming what is still missing; a method with nothing
+filled in yet is left alone as a draft. The call cannot prove WeChat can reach
+your callback address — that needs a publicly reachable URL.
 
 ## Payment notifications
 
@@ -86,6 +88,20 @@ verified is refused, and a notification dated more than five minutes from now is
 refused as well — WeChat's own rule, and the only thing that stops a captured
 notification from being replayed. Answers from WeChat are verified the same way
 before anything in them is believed.
+
+## When WeChat is unavailable
+
+Calls are made with short timeouts, and a read that fails is retried twice with
+a growing wait between attempts. A call that creates a payment or a refund is
+never retried automatically — an unanswered one may have been accepted, so the
+outcome is looked up under the same merchant number instead.
+
+After repeated failures against one merchant account, further calls to that
+account are refused without being made for a minute, after which one call is let
+through to see whether WeChat has recovered. This keeps an outage costing one
+timeout per worker rather than one per request. Both scheduled sweeps stop when
+they meet a refusal instead of failing once per record, and pick up on their next
+run.
 
 ## Further reading
 

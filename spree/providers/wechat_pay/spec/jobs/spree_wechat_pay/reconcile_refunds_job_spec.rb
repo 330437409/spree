@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'active_job/continuation/test_helper'
 
 RSpec.describe SpreeWechatPay::ReconcileRefundsJob do
   let(:gateway) { wechat_gateway }
@@ -57,6 +58,51 @@ RSpec.describe SpreeWechatPay::ReconcileRefundsJob do
       described_class.new.perform
 
       expect(refund.reload).to be_processing
+    end
+
+    # WeChat is not answering at all, so the next refund would be refused just
+    # as fast and reported for nothing. The next scheduled run picks the sweep
+    # up once the circuit has had time to close.
+    it 'stops the sweep while the circuit is open' do
+      stale_refund
+      stale_refund
+      expect_any_instance_of(SpreeWechatPay::Gateway).to receive(:query_refund).once
+        .and_raise(SpreeWechatPay::CircuitOpenError)
+      expect(Rails.error).not_to receive(:report)
+
+      described_class.new.perform
+    end
+
+    describe 'interruption and resume' do
+      include ActiveJob::Continuation::TestHelper
+
+      around do |example|
+        original = ActiveJob::Base.queue_adapter
+        ActiveJob::Base.queue_adapter = :test
+        example.run
+      ensure
+        ActiveJob::Base.queue_adapter = original
+      end
+
+      # The cursor is the last refund queried, so a sweep that stops partway
+      # through picks up with the next one rather than starting over.
+      it 'resumes with the next refund' do
+        first = stale_refund
+        second = stale_refund
+        allow_any_instance_of(SpreeWechatPay::Gateway).to receive(:query_refund).and_return(
+          'refund_id' => 'r1', 'status' => 'SUCCESS', 'out_refund_no' => 're_test-ABCDEF12'
+        )
+
+        described_class.perform_later
+        interrupt_job_during_step(described_class, :reconcile_refunds, cursor: first.id + 1) { perform_enqueued_jobs }
+
+        expect(first.reload).to be_completed
+        expect(second.reload).to be_processing
+
+        perform_enqueued_jobs
+
+        expect(second.reload).to be_completed
+      end
     end
   end
 end
