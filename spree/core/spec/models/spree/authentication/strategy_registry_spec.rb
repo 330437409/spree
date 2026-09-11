@@ -183,5 +183,39 @@ describe Spree::Authentication::StrategyRegistry do
       expect(described).to include({ key: 'email', kind: 'password' })
       expect(described.last).to eq(key: 'broken', kind: 'redirect', label: 'Broken')
     end
+
+    # A provider the store has not configured — no integration, or an inactive
+    # one — must not appear at all: a button that can only fail is worse than
+    # no button.
+    it 'leaves out a provider that reports itself unavailable' do
+      unavailable = double('unavailable strategy', kind: :redirect, label: 'WeChat', available?: false)
+      registry = described_class.new(email: password_strategy, wechat: unavailable)
+
+      expect(registry.describe).to eq([{ key: 'email', kind: 'password' }])
+    end
+
+    it 'leaves out a provider whose availability check raises' do
+      broken = double('broken strategy', kind: :redirect, label: 'Broken')
+      allow(broken).to receive(:available?).and_raise(StandardError, 'no integration')
+      registry = described_class.new(email: password_strategy, broken: broken)
+
+      expect(registry.describe).to eq([{ key: 'email', kind: 'password' }])
+    end
+
+    # Entries written before the availability contract keep working.
+    it 'lists an entry that does not answer #available?' do
+      registry = described_class.new(entra: redirect_strategy)
+
+      expect(registry.describe.map { |entry| entry[:key] }).to eq(['entra'])
+    end
+
+    # The storefront reads this to warn that a registration step is coming.
+    it 'marks a redirect provider that needs an email' do
+      needs_email = double('wechat strategy', kind: :redirect, label: 'WeChat', requires_email: true,
+                                              authorization_url: 'https://open.weixin.qq.com/connect/qrconnect?state=xyz')
+      registry = described_class.new(wechat: needs_email)
+
+      expect(registry.describe.first).to include(key: 'wechat', requires_email: true)
+    end
   end
 end

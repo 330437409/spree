@@ -1,6 +1,27 @@
 require 'spec_helper'
 
 describe Spree::UserIdentity, type: :model do
+  let(:store) { @default_store }
+  let(:provider) { 'email' }
+  let(:uid) { '123456789' }
+  let(:tokens) do
+    {
+      access_token: 'access_token_123',
+      refresh_token: 'refresh_token_456',
+      expires_at: 1.hour.from_now
+    }
+  end
+  let(:profile) do
+    Spree::Authentication::Profile.new(
+      provider: provider,
+      uid: uid,
+      email: 'user@example.com',
+      email_verified: true,
+      info: { first_name: 'John', last_name: 'Doe' },
+      tokens: tokens
+    )
+  end
+
   describe 'validations' do
     subject { build(:user_identity) }
 
@@ -39,224 +60,205 @@ describe Spree::UserIdentity, type: :model do
     end
   end
 
-  describe '.find_or_create_from_oauth' do
-    let(:provider) { 'email' }
-    let(:uid) { '123456789' }
-    let(:info) do
-      {
-        email: 'user@example.com',
-        first_name: 'John',
-        last_name: 'Doe'
-      }
-    end
-    let(:tokens) do
-      {
-        access_token: 'access_token_123',
-        refresh_token: 'refresh_token_456',
-        expires_at: 1.hour.from_now
-      }
+  describe '.find_for' do
+    let!(:user) { create(:user) }
+    let!(:identity) { create(:user_identity, user: user, provider: provider, uid: uid) }
+
+    it 'finds the identity for the user class' do
+      expect(described_class.find_for(provider: provider, uid: uid)).to eq(identity)
     end
 
-    context 'when identity does not exist' do
-      it 'creates a new user and identity' do
+    it 'does not match an identity belonging to another user class' do
+      stub_const('Spree::AdminUser', Class.new(Spree.customer_class))
+
+      expect(described_class.find_for(provider: provider, uid: uid, user_class: Spree::AdminUser)).to be_nil
+    end
+  end
+
+  describe '.attach_to' do
+    let(:user) { create(:user) }
+
+    it 'records the identity, profile and tokens on the account' do
+      identity = described_class.attach_to(user, profile)
+
+      expect(identity.user).to eq(user)
+      expect(identity.provider).to eq(provider)
+      expect(identity.uid).to eq(uid)
+      expect(identity.access_token).to eq('access_token_123')
+      expect(identity.refresh_token).to eq('refresh_token_456')
+      expect(identity.expires_at).to be_within(1.second).of(tokens[:expires_at])
+      expect(identity.info).to include('first_name' => 'John')
+    end
+
+    it 'updates the account identity instead of adding a second one' do
+      existing = described_class.attach_to(user, profile)
+      described_class.attach_to(
+        user,
+        Spree::Authentication::Profile.new(provider: provider, uid: uid, info: { first_name: 'Jane' },
+                                           tokens: { access_token: 'new_token' })
+      )
+
+      expect(described_class.where(provider: provider, uid: uid).count).to eq(1)
+      expect(existing.reload.access_token).to eq('new_token')
+      expect(existing.info).to include('first_name' => 'Jane')
+    end
+
+    # Two first logins racing on one provider subject: the uniqueness rule
+    # rejects the loser, which then re-reads the winner rather than raising.
+    it 're-reads the winner when a concurrent login already claimed the subject' do
+      winner_identity = described_class.attach_to(create(:user), profile)
+      loser = create(:user)
+
+      expect(described_class.attach_to(loser, profile)).to eq(winner_identity)
+      expect(described_class.where(provider: provider, uid: uid).count).to eq(1)
+    end
+  end
+
+  describe '.refresh_from' do
+    let!(:identity) do
+      create(:user_identity, provider: provider, uid: uid, access_token: 'old_token', refresh_token: 'old_refresh')
+    end
+
+    it 'updates the info and the tokens the provider returned' do
+      described_class.refresh_from(identity, profile)
+
+      identity.reload
+      expect(identity.access_token).to eq('access_token_123')
+      expect(identity.refresh_token).to eq('refresh_token_456')
+      expect(identity.info).to include('first_name' => 'John')
+    end
+
+    # A provider that returns no new token (Weibo issues no refresh token, for
+    # one) must not blank the stored one.
+    it 'keeps stored tokens the provider did not return' do
+      described_class.refresh_from(
+        identity,
+        Spree::Authentication::Profile.new(provider: provider, uid: uid, info: { first_name: 'Jane' }, tokens: {})
+      )
+
+      identity.reload
+      expect(identity.access_token).to eq('old_token')
+      expect(identity.refresh_token).to eq('old_refresh')
+      expect(identity.info).to include('first_name' => 'Jane')
+    end
+  end
+
+  describe '.find_or_create_from_oauth' do
+    let(:info) { { email: 'shopper@example.com', first_name: 'John', last_name: 'Doe', email_verified: true } }
+
+    context 'when the identity does not exist' do
+      it 'creates the account through the registration workflow' do
         expect do
-          described_class.find_or_create_from_oauth(
-            provider: provider,
-            uid: uid,
-            info: info,
-            tokens: tokens
+          @user = described_class.find_or_create_from_oauth(
+            provider: provider, uid: uid, info: info, tokens: tokens, store: store
           )
         end.to change(Spree.customer_class, :count).by(1)
            .and change(described_class, :count).by(1)
+
+        expect(@user.email).to eq('shopper@example.com')
+        expect(@user.first_name).to eq('John')
+        expect(@user.last_name).to eq('Doe')
       end
 
-      it 'sets user attributes from info' do
+      # The shopper authenticated with the provider, so the account carries no
+      # password — it is claimed later through password reset, exactly like an
+      # account the checkout "create an account" box creates.
+      it 'creates the account without a password' do
         user = described_class.find_or_create_from_oauth(
-          provider: provider,
-          uid: uid,
-          info: info,
-          tokens: tokens
+          provider: provider, uid: uid, info: info, tokens: tokens, store: store
         )
 
-        expect(user.email).to eq('user@example.com')
-        expect(user.first_name).to eq('John')
-        expect(user.last_name).to eq('Doe')
+        expect(user.password_digest).to be_nil
       end
 
-      it 'creates identity with tokens' do
-        user = described_class.find_or_create_from_oauth(
-          provider: provider,
-          uid: uid,
-          info: info,
-          tokens: tokens
-        )
-
-        identity = user.identities.first
-        expect(identity.provider).to eq('email')
-        expect(identity.uid).to eq('123456789')
-        expect(identity.access_token).to eq('access_token_123')
-        expect(identity.refresh_token).to eq('refresh_token_456')
-        expect(identity.expires_at).to be_within(1.second).of(tokens[:expires_at])
-      end
-
-      it 'generates temporary email if email is missing' do
-        user = described_class.find_or_create_from_oauth(
-          provider: provider,
-          uid: uid,
-          info: info.except(:email),
-          tokens: tokens
-        )
-
-        expect(user.email).to eq('email-123456789@temporary.example.com')
-      end
-
-      it 'uses custom user class when provided' do
-        admin_user_class = Spree.admin_user_class
+      it 'adopts an existing account whose address the provider verified' do
+        existing = create(:user, email: 'shopper@example.com')
 
         user = described_class.find_or_create_from_oauth(
-          provider: provider,
-          uid: uid,
-          info: info,
-          tokens: tokens,
-          user_class: admin_user_class
+          provider: provider, uid: uid, info: info, tokens: tokens, store: store
         )
 
-        expect(user).to be_a(admin_user_class)
-      end
-    end
-
-    context 'when identity already exists' do
-      let!(:user) { create(:user, email: 'existing@example.com') }
-      let!(:identity) do
-        create(:user_identity,
-               user: user,
-               provider: provider,
-               uid: uid,
-               access_token: 'old_token',
-               refresh_token: 'old_refresh')
+        expect(user).to eq(existing)
+        expect(existing.identities.reload.count).to eq(1)
       end
 
-      it 'does not create a new user' do
+      # Linking on an unverified address is how a shopper claims someone
+      # else's account, so the claim is refused and registration fails on the
+      # address already being taken.
+      it 'refuses an address the provider did not verify' do
+        create(:user, email: 'shopper@example.com')
+
         expect do
           described_class.find_or_create_from_oauth(
-            provider: provider,
-            uid: uid,
-            info: info,
-            tokens: tokens
+            provider: provider, uid: uid, info: info.merge(email_verified: false), tokens: tokens, store: store
+          )
+        end.to raise_error(ActiveRecord::RecordInvalid)
+      end
+
+      it 'asks for a registration instead of inventing an address' do
+        before_count = Spree.customer_class.count
+
+        expect do
+          described_class.find_or_create_from_oauth(
+            provider: provider, uid: uid, info: { first_name: 'John' }, tokens: tokens, store: store
+          )
+        end.to raise_error(Spree::Authentication::RegistrationRequired)
+
+        expect(Spree.customer_class.count).to eq(before_count)
+        expect(described_class.find_for(provider: provider, uid: uid)).to be_nil
+      end
+
+      # Staff accounts sit outside the storefront registration flow, so a
+      # strategy the merchant wrote for them keeps creating its own account.
+      it 'creates a staff account for a custom user class' do
+        expect do
+          @admin = described_class.find_or_create_from_oauth(
+            provider: provider, uid: uid, info: info, tokens: tokens, store: store,
+            user_class: Spree.admin_user_class
+          )
+        end.to change(Spree.admin_user_class, :count).by(1)
+
+        expect(@admin).to be_a(Spree.admin_user_class)
+        expect(
+          described_class.find_for(provider: provider, uid: uid, user_class: Spree.admin_user_class)
+        ).to be_present
+      end
+    end
+
+    context 'when the identity already exists' do
+      let!(:user) { create(:user, email: 'existing@example.com') }
+      let!(:identity) do
+        create(:user_identity, user: user, provider: provider, uid: uid,
+                               access_token: 'old_token', refresh_token: 'old_refresh')
+      end
+
+      it 'does not create a new account' do
+        expect do
+          described_class.find_or_create_from_oauth(
+            provider: provider, uid: uid, info: info, tokens: tokens, store: store
           )
         end.not_to change(Spree.customer_class, :count)
       end
 
-      it 'returns the existing user' do
-        result = described_class.find_or_create_from_oauth(
-          provider: provider,
-          uid: uid,
-          info: info,
-          tokens: tokens
-        )
-
-        expect(result).to eq(user)
+      it 'returns the existing account' do
+        expect(
+          described_class.find_or_create_from_oauth(
+            provider: provider, uid: uid, info: info, tokens: tokens, store: store
+          )
+        ).to eq(user)
       end
 
-      it 'updates identity tokens' do
+      it 'updates the identity tokens and info' do
         described_class.find_or_create_from_oauth(
-          provider: provider,
-          uid: uid,
-          info: info,
-          tokens: tokens
+          provider: provider, uid: uid, info: info, tokens: tokens, store: store
         )
 
         identity.reload
         expect(identity.access_token).to eq('access_token_123')
         expect(identity.refresh_token).to eq('refresh_token_456')
         expect(identity.expires_at).to be_within(1.second).of(tokens[:expires_at])
+        expect(identity.info).to include('first_name' => 'John')
       end
-
-      it 'updates identity info' do
-        described_class.find_or_create_from_oauth(
-          provider: provider,
-          uid: uid,
-          info: { email: 'new@example.com', first_name: 'Jane' },
-          tokens: tokens
-        )
-
-        identity.reload
-        expect(identity.info).to include('email' => 'new@example.com', 'first_name' => 'Jane')
-      end
-    end
-
-    context 'when a concurrent request creates the identity during the race window' do
-      let!(:winner) { create(:user, email: 'winner@example.com') }
-      let!(:winning_identity) do
-        create(:user_identity, user: winner, provider: provider, uid: uid)
-      end
-
-      before do
-        allow(described_class).to receive(:find_by).and_call_original
-        allow(described_class).to receive(:find_by)
-          .with(provider: provider, uid: uid, user_type: Spree.customer_class.name)
-          .and_return(nil)
-        allow(described_class).to receive(:create_user_from_oauth)
-          .and_raise(ActiveRecord::RecordNotUnique)
-      end
-
-      it 'recovers by returning the winner instead of raising error' do
-        result = nil
-        expect do
-          result = described_class.find_or_create_from_oauth(
-            provider: provider,
-            uid: uid,
-            info: info,
-            tokens: tokens
-          )
-        end.not_to raise_error
-
-        expect(result).to eq(winner)
-      end
-    end
-  end
-
-  describe '.create_user_from_oauth' do
-    it 'creates user with random password' do
-      user = described_class.create_user_from_oauth(
-        provider: 'email',
-        uid: '123',
-        info: { email: 'test@example.com', first_name: 'Test', last_name: 'User' },
-        tokens: {}
-      )
-
-      expect(user.persisted?).to be_truthy
-      expect(user.valid?).to be_truthy
-      expect(user.password).to be_present
-    end
-
-    context 'when the identity insert fails' do
-      subject do
-        described_class.create_user_from_oauth(
-          provider: 'email',
-          uid: 'dup',
-          info: { email: 'test@example.com' },
-          tokens: {}
-        )
-      end
-
-      before do
-        allow_any_instance_of(Spree.customer_class).to receive(:identities)
-          .and_raise(ActiveRecord::RecordNotUnique)
-      end
-
-      it 'rolls back the user' do
-        expect do
-          expect { subject }.to raise_error(ActiveRecord::RecordNotUnique)
-        end.not_to change(Spree.customer_class, :count)
-      end
-    end
-  end
-
-  describe '.generate_temp_email' do
-    it 'generates email with provider and uid' do
-      email = described_class.generate_temp_email('email', '123456')
-      expect(email).to eq('email-123456@temporary.example.com')
     end
   end
 

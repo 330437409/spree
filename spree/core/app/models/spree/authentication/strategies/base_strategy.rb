@@ -25,12 +25,42 @@ module Spree
           def label
             nil
           end
+
+          # Whether this provider can answer without an email the account needs.
+          # Published through provider discovery so the storefront can say a
+          # registration step is coming. Password strategies never ask.
+          # @return [Boolean]
+          def requires_email
+            false
+          end
         end
 
         def initialize(params:, request_env:, user_class: nil)
           @params = params
           @request_env = request_env
           @user_class = user_class || Spree.customer_class
+        end
+
+        # Whether this provider's email claim may be trusted to adopt an
+        # existing account when the provider does not assert verification.
+        # Off by default, and only an integration for a directory that owns the
+        # addresses it issues should turn it on.
+        # @return [Boolean]
+        def trust_unverified_email
+          false
+        end
+
+        # The profile of a shopper who authenticated but whose account still
+        # needs an email, set by +#registration_required+.
+        # @return [Spree::Authentication::Profile, nil]
+        attr_reader :registration_profile
+
+        # True when the last +#callback+ authenticated the shopper but stopped
+        # short of an account because the provider returned no email. The
+        # controller answers with a registration token instead of a session.
+        # @return [Boolean]
+        def registration_required?
+          registration_profile.present?
         end
 
         # Where to send the browser to begin authentication. Redirect strategies
@@ -90,7 +120,35 @@ module Spree
           user_class.find_by(user_class.arel_table[:email].lower.eq(email.to_s.downcase))
         end
 
-        # Find or create user identity
+        # Resolves a provider profile to an account, or reports that one still
+        # has to be registered. Strategies call this from +#callback+.
+        #
+        # @param profile [Spree::Authentication::Profile]
+        # @return [Spree::Authentication::Resolution]
+        def resolve_account(profile)
+          Spree::Authentication::ResolveAccount.new(
+            profile: profile,
+            store: Spree::Current.store,
+            user_class: user_class,
+            trust_unverified_email: trust_unverified_email
+          ).call
+        end
+
+        # Records that the shopper authenticated but the account still needs an
+        # email, so the caller can mint a registration token rather than create
+        # an account with an address that cannot receive mail.
+        #
+        # @param profile [Spree::Authentication::Profile]
+        # @return [Spree::ServiceModule::Result] a failure, by convention
+        def registration_required(profile)
+          @registration_profile = profile
+          failure(Spree.t('errors.messages.registration_required'))
+        end
+
+        # Signs an OAuth profile in through the shared resolution rules.
+        #
+        # @raise [Spree::Authentication::RegistrationRequired] when the profile
+        #   carries no email — call +#registration_required+ instead
         def find_or_create_user_from_oauth(provider:, uid:, info:, tokens: {})
           Spree::UserIdentity.find_or_create_from_oauth(
             provider: provider,

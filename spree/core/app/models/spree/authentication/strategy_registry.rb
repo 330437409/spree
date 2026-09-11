@@ -101,17 +101,30 @@ module Spree
         end
       end
 
-      # Self-description of every registered strategy, for the provider-discovery
-      # endpoint that drives the dashboard login page.
+      # Whether a provider is reached by sending the browser to the identity
+      # provider, as opposed to posting credentials to the auth endpoint.
+      #
+      # @param key [Symbol, String] provider identifier
+      # @return [Boolean]
+      def redirect?(key)
+        kind_of(self[key]) == :redirect
+      end
+
+      # Self-description of the strategies available on this store, for the
+      # provider-discovery endpoint that drives a login page.
+      #
+      # A provider the store has not configured is left out entirely — offering
+      # a button that can only fail is worse than offering none.
       #
       # Exposes only what a login screen needs — never client secrets, never
       # strategy class names.
       #
-      # @return [Array<Hash>] one entry per registered provider
+      # @return [Array<Hash>] one entry per available provider
       # @yieldparam key [Symbol] provider key, for minting a per-provider CSRF state
-      # @return [Array<Hash>] one entry per registered provider
       def describe
-        @strategies.map do |key, entry|
+        @strategies.filter_map do |key, entry|
+          next unless available?(entry)
+
           kind = kind_of(entry)
           descriptor = { key: key.to_s, kind: kind.to_s }
           descriptor[:label] = label_of(entry)
@@ -119,6 +132,7 @@ module Spree
           if kind == :redirect
             state = block_given? ? yield(key) : nil
             descriptor[:authorization_url] = authorization_url_for(entry, state: state)
+            descriptor[:requires_email] = true if requires_email?(entry)
           end
 
           descriptor.compact
@@ -126,6 +140,22 @@ module Spree
       end
 
       private
+
+      # Entries written before provider availability existed stay listed; one
+      # that raises while answering is treated as unavailable, because describe
+      # backs an unauthenticated login page.
+      def available?(entry)
+        return true unless entry.respond_to?(:available?)
+
+        entry.available?
+      rescue StandardError => e
+        Rails.logger.error("[Spree] Could not check availability for #{label_of(entry) || entry}: #{e.message}")
+        false
+      end
+
+      def requires_email?(entry)
+        entry.respond_to?(:requires_email) && entry.requires_email.present?
+      end
 
       # Registry entries predate the kind/label contract — a strategy registered
       # before it existed (or one that does not inherit BaseStrategy) must not
