@@ -17,6 +17,10 @@ module Spree
           # the identity provider, but no account here is authorized for them.
           account_not_provisioned: 'account_not_provisioned',
           invalid_oauth_state: 'invalid_oauth_state',
+          # A social sign-up that still needs an email carries a signed token
+          # between its two calls; this is that token being stale or forged.
+          invalid_registration_token: 'invalid_registration_token',
+          email_taken: 'email_taken',
           current_password_invalid: 'current_password_invalid',
           password_reset_token_invalid: 'password_reset_token_invalid',
           redirect_url_not_allowed: 'redirect_url_not_allowed',

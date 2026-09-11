@@ -5,6 +5,7 @@ module Spree
         class AuthController < Admin::BaseController
           include Spree::Api::V3::Admin::AuthCookies
           include Spree::Api::V3::AuthenticationStrategies
+          include Spree::Api::V3::OauthState
 
           skip_scope_check!
 
@@ -149,32 +150,8 @@ module Spree
             super
           end
 
-          OAUTH_STATE_PURPOSE = 'spree/admin/oauth_state'.freeze
-          OAUTH_STATE_EXPIRY = 15.minutes
-
-          # Signed, self-expiring CSRF token handed to the identity provider and
-          # echoed back to the callback. Signing it means no server-side session
-          # storage — the token proves the redirect started here, and a forged or
-          # expired value fails verification.
-          #
-          # The provider key is signed into the payload so a state minted for one
-          # provider cannot be replayed against another's callback.
-          def issue_oauth_state(provider)
-            Rails.application.message_verifier(OAUTH_STATE_PURPOSE).generate(
-              { provider: provider.to_s, nonce: SecureRandom.hex(16) },
-              expires_in: OAUTH_STATE_EXPIRY
-            )
-          end
-
-          def valid_oauth_state?
-            state = params[:state]
-            return false if state.blank?
-
-            # The verifier round-trips through JSON, so payload keys come back as strings.
-            payload = Rails.application.message_verifier(OAUTH_STATE_PURPOSE).verified(state)
-            return false unless payload.is_a?(Hash)
-
-            payload['provider'].to_s == params[:provider].to_s
+          def oauth_state_purpose
+            'spree/admin/oauth_state'
           end
 
           # Sends the browser back to the dashboard. On failure the login page

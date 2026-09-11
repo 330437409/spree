@@ -7,6 +7,13 @@ Spree::Core::Engine.add_routes do
         post 'auth/refresh', to: 'auth#refresh'
         post 'auth/logout', to: 'auth#logout'
 
+        # Provider discovery for the storefront's login page, and the second
+        # call of a social registration — the provider authenticated the
+        # shopper but returned no email, so one is collected before the account
+        # exists. Both are unauthenticated: they run before a session exists.
+        get 'auth/providers', to: 'auth#providers'
+        post 'auth/complete', to: 'auth#complete'
+
         # Markets
         resources :markets, only: [:index, :show] do
           collection do
