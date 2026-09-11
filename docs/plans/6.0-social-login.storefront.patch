@@ -1,0 +1,2500 @@
+From a4f6642ca4ed4684215a7315b72f929d0b342824 Mon Sep 17 00:00:00 2001
+From: Spree <hello@spreecommerce.org>
+Date: Fri, 11 Sep 2026 16:21:38 +0800
+Subject: [PATCH] Add social login to the storefront
+
+WeChat, Douyin and Google sign-in now appear on the login and
+registration pages, driven by the store's configured providers.
+
+A provider redirects the browser back to a callback route that
+exchanges the code server-side and writes the session into the same
+httpOnly cookies password login uses. Providers that return no email
+get one completion screen, which creates the account through the API's
+registration step. The state the API signed is kept in a cookie and
+re-checked before the exchange, and the shopper's destination survives
+the round trip.
+---
+ messages/de.json                              |  16 +-
+ messages/en.json                              |  16 +-
+ messages/es.json                              |  16 +-
+ messages/fr.json                              |  16 +-
+ messages/pl.json                              |  16 +-
+ .../account/AccountPageContent.tsx            | 286 ++++++++++++++++++
+ .../account/callback/[provider]/route.ts      |  83 +++++
+ .../account/complete-registration/page.tsx    |  39 +++
+ .../[locale]/(storefront)/account/page.tsx    | 284 ++---------------
+ .../account/register/RegisterPageContent.tsx  | 274 +++++++++++++++++
+ .../(storefront)/account/register/page.tsx    | 273 +----------------
+ .../account/CompleteRegistrationForm.tsx      | 158 ++++++++++
+ src/components/account/SocialLoginButtons.tsx |  88 ++++++
+ src/lib/data/__tests__/customer.test.ts       | 248 +++++++++++++++
+ src/lib/data/customer.ts                      | 171 ++++++++++-
+ src/lib/spree/cookies.ts                      | 107 +++++++
+ src/lib/spree/index.ts                        |  11 +
+ src/lib/spree/middleware.test.ts              |   2 +
+ src/lib/spree/middleware.ts                   |   8 +-
+ src/lib/utils/__tests__/social-auth.test.ts   |  23 ++
+ src/lib/utils/social-auth.ts                  |  34 +++
+ 21 files changed, 1641 insertions(+), 528 deletions(-)
+ create mode 100644 src/app/[country]/[locale]/(storefront)/account/AccountPageContent.tsx
+ create mode 100644 src/app/[country]/[locale]/(storefront)/account/callback/[provider]/route.ts
+ create mode 100644 src/app/[country]/[locale]/(storefront)/account/complete-registration/page.tsx
+ create mode 100644 src/app/[country]/[locale]/(storefront)/account/register/RegisterPageContent.tsx
+ create mode 100644 src/components/account/CompleteRegistrationForm.tsx
+ create mode 100644 src/components/account/SocialLoginButtons.tsx
+ create mode 100644 src/lib/utils/__tests__/social-auth.test.ts
+ create mode 100644 src/lib/utils/social-auth.ts
+
+diff --git a/messages/de.json b/messages/de.json
+index 6061798..f903f43 100644
+--- a/messages/de.json
++++ b/messages/de.json
+@@ -332,7 +332,21 @@
+     "showPassword": "Passwort anzeigen",
+     "hidePassword": "Passwort verbergen",
+     "forgotPassword": "Passwort vergessen?",
+-    "policyConsentRequired": "Sie müssen den Geschäftsrichtlinien zustimmen, um ein Konto zu erstellen"
++    "policyConsentRequired": "Sie müssen den Geschäftsrichtlinien zustimmen, um ein Konto zu erstellen",
++    "orContinueWith": "Oder weiter mit",
++    "continueWith": "Weiter mit {provider}",
++    "providerNeedsEmail": "Sie werden nach einer E-Mail-Adresse gefragt, um Ihr Konto fertig einzurichten",
++    "socialLoginFailed": "Die Anmeldung ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
++    "socialLoginCancelled": "Die Anmeldung wurde abgebrochen.",
++    "socialErrorExpired": "Ihr Anmeldeversuch ist abgelaufen. Bitte starten Sie erneut.",
++    "socialErrorUnavailable": "Diese Anmeldeoption ist derzeit nicht verfügbar.",
++    "emailTaken": "Ein Konto mit dieser E-Mail-Adresse existiert bereits. Melden Sie sich stattdessen mit Ihrem Passwort an.",
++    "completeRegistrationTitle": "Noch ein Schritt",
++    "completeRegistrationDescription": "Geben Sie Ihre E-Mail-Adresse an, um Ihr Konto fertig einzurichten.",
++    "completeRegistration": "Konto erstellen",
++    "completingRegistration": "Konto wird erstellt...",
++    "firstName": "Vorname",
++    "lastName": "Nachname"
+   },
+   "register": {
+     "createAccount": "Konto erstellen",
+diff --git a/messages/en.json b/messages/en.json
+index 8c5a880..8523aa5 100644
+--- a/messages/en.json
++++ b/messages/en.json
+@@ -332,7 +332,21 @@
+     "showPassword": "Show password",
+     "hidePassword": "Hide password",
+     "forgotPassword": "Forgot password?",
+-    "policyConsentRequired": "You must agree to the store policies to create an account"
++    "policyConsentRequired": "You must agree to the store policies to create an account",
++    "orContinueWith": "Or continue with",
++    "continueWith": "Continue with {provider}",
++    "providerNeedsEmail": "You will be asked for an email address to finish creating your account",
++    "socialLoginFailed": "We could not sign you in. Please try again.",
++    "socialLoginCancelled": "Sign-in was cancelled.",
++    "socialErrorExpired": "Your sign-in attempt expired. Please start again.",
++    "socialErrorUnavailable": "That sign-in option is not available right now.",
++    "emailTaken": "An account with this email already exists. Sign in with your password instead.",
++    "completeRegistrationTitle": "One more step",
++    "completeRegistrationDescription": "Add your email address to finish creating your account.",
++    "completeRegistration": "Create Account",
++    "completingRegistration": "Creating your account...",
++    "firstName": "First name",
++    "lastName": "Last name"
+   },
+   "register": {
+     "createAccount": "Create Account",
+diff --git a/messages/es.json b/messages/es.json
+index 9db1c1d..aa549cb 100644
+--- a/messages/es.json
++++ b/messages/es.json
+@@ -332,7 +332,21 @@
+     "showPassword": "Mostrar contrasena",
+     "hidePassword": "Ocultar contrasena",
+     "forgotPassword": "¿Olvidaste tu contrasena?",
+-    "policyConsentRequired": "Debes aceptar las politicas de la tienda para crear una cuenta"
++    "policyConsentRequired": "Debes aceptar las politicas de la tienda para crear una cuenta",
++    "orContinueWith": "O continúa con",
++    "continueWith": "Continuar con {provider}",
++    "providerNeedsEmail": "Te pediremos un correo electrónico para terminar de crear tu cuenta",
++    "socialLoginFailed": "No pudimos iniciar tu sesión. Inténtalo de nuevo.",
++    "socialLoginCancelled": "Se canceló el inicio de sesión.",
++    "socialErrorExpired": "Tu intento de inicio de sesión caducó. Empieza de nuevo.",
++    "socialErrorUnavailable": "Esa opción de inicio de sesión no está disponible ahora mismo.",
++    "emailTaken": "Ya existe una cuenta con este correo electrónico. Inicia sesión con tu contraseña.",
++    "completeRegistrationTitle": "Un paso más",
++    "completeRegistrationDescription": "Añade tu correo electrónico para terminar de crear tu cuenta.",
++    "completeRegistration": "Crear cuenta",
++    "completingRegistration": "Creando tu cuenta...",
++    "firstName": "Nombre",
++    "lastName": "Apellido"
+   },
+   "register": {
+     "createAccount": "Crear cuenta",
+diff --git a/messages/fr.json b/messages/fr.json
+index 81e2eca..4ea5ae4 100644
+--- a/messages/fr.json
++++ b/messages/fr.json
+@@ -332,7 +332,21 @@
+     "showPassword": "Afficher le mot de passe",
+     "hidePassword": "Masquer le mot de passe",
+     "forgotPassword": "Mot de passe oublie ?",
+-    "policyConsentRequired": "Vous devez accepter les politiques du magasin pour creer un compte"
++    "policyConsentRequired": "Vous devez accepter les politiques du magasin pour creer un compte",
++    "orContinueWith": "Ou continuer avec",
++    "continueWith": "Continuer avec {provider}",
++    "providerNeedsEmail": "Une adresse e-mail vous sera demandée pour finaliser la création de votre compte",
++    "socialLoginFailed": "Nous n'avons pas pu vous connecter. Veuillez réessayer.",
++    "socialLoginCancelled": "La connexion a été annulée.",
++    "socialErrorExpired": "Votre tentative de connexion a expiré. Veuillez recommencer.",
++    "socialErrorUnavailable": "Cette option de connexion n'est pas disponible pour le moment.",
++    "emailTaken": "Un compte existe déjà avec cette adresse e-mail. Connectez-vous avec votre mot de passe.",
++    "completeRegistrationTitle": "Une dernière étape",
++    "completeRegistrationDescription": "Ajoutez votre adresse e-mail pour finaliser la création de votre compte.",
++    "completeRegistration": "Créer un compte",
++    "completingRegistration": "Création de votre compte...",
++    "firstName": "Prénom",
++    "lastName": "Nom"
+   },
+   "register": {
+     "createAccount": "Creer un compte",
+diff --git a/messages/pl.json b/messages/pl.json
+index 22ac0a3..ed92327 100644
+--- a/messages/pl.json
++++ b/messages/pl.json
+@@ -332,7 +332,21 @@
+     "showPassword": "Pokaż hasło",
+     "hidePassword": "Ukryj hasło",
+     "forgotPassword": "Zapomniałeś hasła?",
+-    "policyConsentRequired": "Musisz zaakceptować regulamin sklepu, aby utworzyć konto"
++    "policyConsentRequired": "Musisz zaakceptować regulamin sklepu, aby utworzyć konto",
++    "orContinueWith": "Lub kontynuuj przez",
++    "continueWith": "Kontynuuj przez {provider}",
++    "providerNeedsEmail": "Poprosimy Cię o adres e-mail, aby dokończyć tworzenie konta",
++    "socialLoginFailed": "Nie udało się zalogować. Spróbuj ponownie.",
++    "socialLoginCancelled": "Logowanie zostało anulowane.",
++    "socialErrorExpired": "Próba logowania wygasła. Zacznij od nowa.",
++    "socialErrorUnavailable": "Ta opcja logowania jest teraz niedostępna.",
++    "emailTaken": "Konto z tym adresem e-mail już istnieje. Zaloguj się hasłem.",
++    "completeRegistrationTitle": "Jeszcze jeden krok",
++    "completeRegistrationDescription": "Dodaj adres e-mail, aby dokończyć tworzenie konta.",
++    "completeRegistration": "Utwórz konto",
++    "completingRegistration": "Tworzenie konta...",
++    "firstName": "Imię",
++    "lastName": "Nazwisko"
+   },
+   "register": {
+     "createAccount": "Utwórz konto",
+diff --git a/src/app/[country]/[locale]/(storefront)/account/AccountPageContent.tsx b/src/app/[country]/[locale]/(storefront)/account/AccountPageContent.tsx
+new file mode 100644
+index 0000000..c9c9866
+--- /dev/null
++++ b/src/app/[country]/[locale]/(storefront)/account/AccountPageContent.tsx
+@@ -0,0 +1,286 @@
++"use client";
++
++import type { AuthProvider } from "@spree/sdk";
++import {
++  CircleAlert,
++  CreditCard,
++  Eye,
++  EyeOff,
++  MapPin,
++  ShoppingBag,
++  User,
++} from "lucide-react";
++import Link from "next/link";
++import { usePathname, useRouter, useSearchParams } from "next/navigation";
++import { useTranslations } from "next-intl";
++import { useState } from "react";
++import { AccountShell } from "@/components/account/AccountShell";
++import { SocialLoginButtons } from "@/components/account/SocialLoginButtons";
++import { Alert, AlertDescription } from "@/components/ui/alert";
++import { Button } from "@/components/ui/button";
++import {
++  Card,
++  CardContent,
++  CardDescription,
++  CardFooter,
++  CardHeader,
++  CardTitle,
++} from "@/components/ui/card";
++import { Field, FieldLabel } from "@/components/ui/field";
++import { Input } from "@/components/ui/input";
++import { useAuth } from "@/contexts/AuthContext";
++import { resolveAccountRedirect } from "@/lib/utils/account-redirect";
++import { extractBasePath } from "@/lib/utils/path";
++import { socialAuthMessageKey } from "@/lib/utils/social-auth";
++
++interface AccountPageContentProps {
++  /** The store's redirect providers. Empty when social login is not set up. */
++  providers: AuthProvider[];
++}
++
++export function AccountPageContent({ providers }: AccountPageContentProps) {
++  const router = useRouter();
++  const pathname = usePathname();
++  const searchParams = useSearchParams();
++  const basePath = extractBasePath(pathname);
++  const t = useTranslations("account");
++  const { login, isAuthenticated, loading: authLoading } = useAuth();
++
++  // Get redirect URL from query params (e.g., from checkout)
++  const redirectUrl = resolveAccountRedirect(
++    searchParams.get("redirect"),
++    basePath,
++  );
++
++  const [email, setEmail] = useState("");
++  const [password, setPassword] = useState("");
++  const [showPassword, setShowPassword] = useState(false);
++  const [loading, setLoading] = useState(false);
++  // A social sign-in that failed lands back here with its code in the URL.
++  const [error, setError] = useState<string | null>(() => {
++    const code = searchParams.get("social_error");
++    return code ? t(socialAuthMessageKey(code)) : null;
++  });
++
++  const handleSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
++    setError(null);
++    setLoading(true);
++
++    const result = await login(email, password);
++    if (result.success) {
++      // Redirect to the specified URL or stay on account page
++      if (redirectUrl) {
++        router.push(redirectUrl);
++      }
++    } else {
++      setError(result.error || t("invalidCredentials"));
++    }
++    setLoading(false);
++  };
++
++  // Show loading state while auth is initializing
++  if (authLoading) {
++    return (
++      <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
++        <div className="animate-pulse space-y-4">
++          <div className="h-8 bg-gray-200 rounded w-1/2 mx-auto" />
++          <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto" />
++          <div className="h-48 bg-gray-200 rounded" />
++        </div>
++      </div>
++    );
++  }
++
++  // Show login form if not authenticated
++  if (!isAuthenticated) {
++    return (
++      <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
++        <Card>
++          <CardHeader className="text-center">
++            <CardTitle>{t("myAccount")}</CardTitle>
++            <CardDescription>{t("signInDescription")}</CardDescription>
++          </CardHeader>
++
++          <CardContent className="space-y-6">
++            <form onSubmit={handleSubmit} className="space-y-4">
++              {error && (
++                <Alert variant="destructive">
++                  <CircleAlert />
++                  <AlertDescription>{error}</AlertDescription>
++                </Alert>
++              )}
++
++              <Field>
++                <FieldLabel htmlFor="email">{t("email")}</FieldLabel>
++                <Input
++                  type="email"
++                  id="email"
++                  name="email"
++                  autoComplete="email"
++                  value={email}
++                  onChange={(e) => setEmail(e.target.value)}
++                  required
++                  placeholder="you@example.com"
++                />
++              </Field>
++
++              <Field>
++                <FieldLabel htmlFor="password">{t("password")}</FieldLabel>
++                <div className="relative">
++                  <Input
++                    type={showPassword ? "text" : "password"}
++                    id="password"
++                    name="current-password"
++                    autoComplete="current-password"
++                    value={password}
++                    onChange={(e) => setPassword(e.target.value)}
++                    required
++                    placeholder="••••••••"
++                    className="pr-10"
++                  />
++                  <div className="absolute right-1 top-1/2 -translate-y-1/2">
++                    <Button
++                      type="button"
++                      variant="ghost"
++                      size="icon-sm"
++                      onClick={() => setShowPassword(!showPassword)}
++                      aria-label={
++                        showPassword ? t("hidePassword") : t("showPassword")
++                      }
++                    >
++                      {showPassword ? (
++                        <EyeOff className="w-5 h-5" />
++                      ) : (
++                        <Eye className="w-5 h-5" />
++                      )}
++                    </Button>
++                  </div>
++                </div>
++              </Field>
++
++              <div className="flex justify-end">
++                <Link
++                  href={`${basePath}/account/forgot-password`}
++                  className="text-sm text-primary hover:text-primary/70 font-medium"
++                >
++                  {t("forgotPassword")}
++                </Link>
++              </div>
++
++              <div className="w-full">
++                <Button
++                  type="submit"
++                  disabled={loading}
++                  size="lg"
++                  className="w-full"
++                >
++                  {loading ? t("signingIn") : t("signIn")}
++                </Button>
++              </div>
++            </form>
++
++            <SocialLoginButtons providers={providers} returnTo={redirectUrl} />
++          </CardContent>
++
++          <CardFooter className="justify-center">
++            <p className="text-sm text-muted-foreground">
++              {t("dontHaveAccount")}{" "}
++              <Link
++                href={`${basePath}/account/register`}
++                className="text-primary hover:text-primary/70 font-medium"
++              >
++                {t("signUp")}
++              </Link>
++            </p>
++          </CardFooter>
++        </Card>
++      </div>
++    );
++  }
++
++  // Show account dashboard if authenticated
++  return (
++    <AccountShell>
++      <div>
++        <h1 className="text-2xl font-bold text-gray-900 mb-6">
++          {t("accountOverview")}
++        </h1>
++
++        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
++          <Link href={`${basePath}/account/orders`}>
++            <Card className="hover:border-gray-300 transition-colors h-full">
++              <CardContent className="flex items-center gap-4 py-0">
++                <div className="p-3 bg-gray-100 rounded-xl">
++                  <ShoppingBag className="w-6 h-6 text-primary" />
++                </div>
++                <div>
++                  <h2 className="text-lg font-medium text-gray-900">
++                    {t("orderHistory")}
++                  </h2>
++                  <p className="mt-1 text-sm text-gray-500">
++                    {t("orderHistoryDescription")}
++                  </p>
++                </div>
++              </CardContent>
++            </Card>
++          </Link>
++
++          <Link href={`${basePath}/account/addresses`}>
++            <Card className="hover:border-gray-300 transition-colors h-full">
++              <CardContent className="flex items-center gap-4 py-0">
++                <div className="p-3 bg-gray-100 rounded-xl">
++                  <MapPin className="w-6 h-6 text-primary" />
++                </div>
++                <div>
++                  <h2 className="text-lg font-medium text-gray-900">
++                    {t("addresses")}
++                  </h2>
++                  <p className="mt-1 text-sm text-gray-500">
++                    {t("addressesDescription")}
++                  </p>
++                </div>
++              </CardContent>
++            </Card>
++          </Link>
++
++          <Link href={`${basePath}/account/credit-cards`}>
++            <Card className="hover:border-gray-300 transition-colors h-full">
++              <CardContent className="flex items-center gap-4 py-0">
++                <div className="p-3 bg-gray-100 rounded-xl">
++                  <CreditCard className="w-6 h-6 text-primary" />
++                </div>
++                <div>
++                  <h2 className="text-lg font-medium text-gray-900">
++                    {t("paymentMethods")}
++                  </h2>
++                  <p className="mt-1 text-sm text-gray-500">
++                    {t("paymentMethodsDescription")}
++                  </p>
++                </div>
++              </CardContent>
++            </Card>
++          </Link>
++
++          <Link href={`${basePath}/account/profile`}>
++            <Card className="hover:border-gray-300 transition-colors h-full">
++              <CardContent className="flex items-center gap-4 py-0">
++                <div className="p-3 bg-gray-100 rounded-xl">
++                  <User className="w-6 h-6 text-primary" />
++                </div>
++                <div>
++                  <h2 className="text-lg font-medium text-gray-900">
++                    {t("profile")}
++                  </h2>
++                  <p className="mt-1 text-sm text-gray-500">
++                    {t("profileDescription")}
++                  </p>
++                </div>
++              </CardContent>
++            </Card>
++          </Link>
++        </div>
++      </div>
++    </AccountShell>
++  );
++}
+diff --git a/src/app/[country]/[locale]/(storefront)/account/callback/[provider]/route.ts b/src/app/[country]/[locale]/(storefront)/account/callback/[provider]/route.ts
+new file mode 100644
+index 0000000..d9af136
+--- /dev/null
++++ b/src/app/[country]/[locale]/(storefront)/account/callback/[provider]/route.ts
+@@ -0,0 +1,83 @@
++import { type NextRequest, NextResponse } from "next/server";
++import { loginWithProvider } from "@/lib/data/customer";
++import {
++  OAUTH_STATE_COOKIE_NAME,
++  REGISTRATION_TOKEN_COOKIE_NAME,
++  registrationTokenCookieOptions,
++} from "@/lib/spree";
++import { resolveAccountRedirect } from "@/lib/utils/account-redirect";
++
++const PROVIDER_KEY = /^[a-z0-9_]{1,50}$/;
++
++interface CallbackRouteContext {
++  params: Promise<{ country: string; locale: string; provider: string }>;
++}
++
++/**
++ * Where a provider sends the browser back. The exchange happens on the server,
++ * so the client secret never reaches the browser and the tokens are written
++ * straight into httpOnly cookies.
++ */
++export async function GET(
++  request: NextRequest,
++  context: CallbackRouteContext,
++): Promise<NextResponse> {
++  const { country, locale, provider } = await context.params;
++  const basePath = `/${country}/${locale}`;
++  const origin = request.nextUrl.origin;
++
++  const redirectTo = (path: string): NextResponse => {
++    const response = NextResponse.redirect(new URL(path, origin));
++    response.cookies.set(OAUTH_STATE_COOKIE_NAME, "", {
++      maxAge: -1,
++      path: "/",
++    });
++    return response;
++  };
++
++  const fail = (code: string) =>
++    redirectTo(`${basePath}/account?social_error=${encodeURIComponent(code)}`);
++
++  if (!PROVIDER_KEY.test(provider)) return fail("invalid_provider");
++  // The shopper cancelled at the provider, or it refused on its own terms.
++  if (request.nextUrl.searchParams.get("error")) return fail("access_denied");
++
++  const code = request.nextUrl.searchParams.get("code");
++  const state = request.nextUrl.searchParams.get("state");
++  if (!code || !state) return fail("invalid_oauth_state");
++
++  const result = await loginWithProvider({ provider, code, state });
++
++  if (result.status === "failed") return fail(result.error);
++
++  // Only a destination this market allows, and never the login page itself.
++  const returnTo = resolveAccountRedirect(result.returnTo, basePath);
++  const destination =
++    returnTo && returnTo !== `${basePath}/account`
++      ? returnTo
++      : `${basePath}/account`;
++
++  if (result.status === "registration_required") {
++    const completionUrl = new URL(
++      `${basePath}/account/complete-registration`,
++      origin,
++    );
++    if (destination !== `${basePath}/account`) {
++      completionUrl.searchParams.set("redirect", destination);
++    }
++
++    const response = NextResponse.redirect(completionUrl);
++    response.cookies.set(OAUTH_STATE_COOKIE_NAME, "", {
++      maxAge: -1,
++      path: "/",
++    });
++    response.cookies.set(
++      REGISTRATION_TOKEN_COOKIE_NAME,
++      result.registrationToken,
++      registrationTokenCookieOptions(),
++    );
++    return response;
++  }
++
++  return redirectTo(destination);
++}
+diff --git a/src/app/[country]/[locale]/(storefront)/account/complete-registration/page.tsx b/src/app/[country]/[locale]/(storefront)/account/complete-registration/page.tsx
+new file mode 100644
+index 0000000..50e46d0
+--- /dev/null
++++ b/src/app/[country]/[locale]/(storefront)/account/complete-registration/page.tsx
+@@ -0,0 +1,39 @@
++import { redirect } from "next/navigation";
++import { connection } from "next/server";
++import { Suspense } from "react";
++import { CompleteRegistrationForm } from "@/components/account/CompleteRegistrationForm";
++import { getRegistrationToken } from "@/lib/spree";
++
++interface CompleteRegistrationPageProps {
++  params: Promise<{ country: string; locale: string }>;
++}
++
++export default function CompleteRegistrationPage(
++  props: CompleteRegistrationPageProps,
++) {
++  return (
++    <Suspense fallback={null}>
++      <CompleteRegistrationPageContent {...props} />
++    </Suspense>
++  );
++}
++
++async function CompleteRegistrationPageContent({
++  params,
++}: CompleteRegistrationPageProps) {
++  const { country, locale } = await params;
++  await connection();
++
++  // The token expires in fifteen minutes and is spent by the first submit.
++  // Without one there is nothing to finish, so send the shopper back to sign
++  // in rather than showing a form that can only fail.
++  if (!(await getRegistrationToken())) {
++    redirect(`/${country}/${locale}/account`);
++  }
++
++  return (
++    <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
++      <CompleteRegistrationForm />
++    </div>
++  );
++}
+diff --git a/src/app/[country]/[locale]/(storefront)/account/page.tsx b/src/app/[country]/[locale]/(storefront)/account/page.tsx
+index 878116b..12c253b 100644
+--- a/src/app/[country]/[locale]/(storefront)/account/page.tsx
++++ b/src/app/[country]/[locale]/(storefront)/account/page.tsx
+@@ -1,272 +1,32 @@
+-"use client";
+-
+-import {
+-  CircleAlert,
+-  CreditCard,
+-  Eye,
+-  EyeOff,
+-  MapPin,
+-  ShoppingBag,
+-  User,
+-} from "lucide-react";
+-import Link from "next/link";
+-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+-import { useTranslations } from "next-intl";
+-import { useState } from "react";
+-import { AccountShell } from "@/components/account/AccountShell";
+-import { Alert, AlertDescription } from "@/components/ui/alert";
+-import { Button } from "@/components/ui/button";
+-import {
+-  Card,
+-  CardContent,
+-  CardDescription,
+-  CardFooter,
+-  CardHeader,
+-  CardTitle,
+-} from "@/components/ui/card";
+-import { Field, FieldLabel } from "@/components/ui/field";
+-import { Input } from "@/components/ui/input";
+-import { useAuth } from "@/contexts/AuthContext";
+-import { resolveAccountRedirect } from "@/lib/utils/account-redirect";
+-import { extractBasePath } from "@/lib/utils/path";
++import { connection } from "next/server";
++import { Suspense } from "react";
++import { getAuthProviders } from "@/lib/data/customer";
++import { AccountPageContent } from "./AccountPageContent";
+ 
+ export default function AccountPage() {
+-  const router = useRouter();
+-  const pathname = usePathname();
+-  const searchParams = useSearchParams();
+-  const basePath = extractBasePath(pathname);
+-  const t = useTranslations("account");
+-  const { login, isAuthenticated, loading: authLoading } = useAuth();
+-
+-  // Get redirect URL from query params (e.g., from checkout)
+-  const redirectUrl = resolveAccountRedirect(
+-    searchParams.get("redirect"),
+-    basePath,
++  return (
++    <Suspense fallback={<AccountPageFallback />}>
++      <AccountPageWithProviders />
++    </Suspense>
+   );
++}
+ 
+-  const [email, setEmail] = useState("");
+-  const [password, setPassword] = useState("");
+-  const [showPassword, setShowPassword] = useState(false);
+-  const [loading, setLoading] = useState(false);
+-  const [error, setError] = useState<string | null>(null);
+-
+-  const handleSubmit = async (e: React.FormEvent) => {
+-    e.preventDefault();
+-    setError(null);
+-    setLoading(true);
+-
+-    const result = await login(email, password);
+-    if (result.success) {
+-      // Redirect to the specified URL or stay on account page
+-      if (redirectUrl) {
+-        router.push(redirectUrl);
+-      }
+-    } else {
+-      setError(result.error || t("invalidCredentials"));
+-    }
+-    setLoading(false);
+-  };
+-
+-  // Show loading state while auth is initializing
+-  if (authLoading) {
+-    return (
+-      <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
+-        <div className="animate-pulse space-y-4">
+-          <div className="h-8 bg-gray-200 rounded w-1/2 mx-auto" />
+-          <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto" />
+-          <div className="h-48 bg-gray-200 rounded" />
+-        </div>
+-      </div>
+-    );
+-  }
+-
+-  // Show login form if not authenticated
+-  if (!isAuthenticated) {
+-    return (
+-      <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
+-        <Card>
+-          <CardHeader className="text-center">
+-            <CardTitle>{t("myAccount")}</CardTitle>
+-            <CardDescription>{t("signInDescription")}</CardDescription>
+-          </CardHeader>
+-
+-          <CardContent>
+-            <form onSubmit={handleSubmit} className="space-y-4">
+-              {error && (
+-                <Alert variant="destructive">
+-                  <CircleAlert />
+-                  <AlertDescription>{error}</AlertDescription>
+-                </Alert>
+-              )}
+-
+-              <Field>
+-                <FieldLabel htmlFor="email">{t("email")}</FieldLabel>
+-                <Input
+-                  type="email"
+-                  id="email"
+-                  name="email"
+-                  autoComplete="email"
+-                  value={email}
+-                  onChange={(e) => setEmail(e.target.value)}
+-                  required
+-                  placeholder="you@example.com"
+-                />
+-              </Field>
+-
+-              <Field>
+-                <FieldLabel htmlFor="password">{t("password")}</FieldLabel>
+-                <div className="relative">
+-                  <Input
+-                    type={showPassword ? "text" : "password"}
+-                    id="password"
+-                    name="current-password"
+-                    autoComplete="current-password"
+-                    value={password}
+-                    onChange={(e) => setPassword(e.target.value)}
+-                    required
+-                    placeholder="••••••••"
+-                    className="pr-10"
+-                  />
+-                  <div className="absolute right-1 top-1/2 -translate-y-1/2">
+-                    <Button
+-                      type="button"
+-                      variant="ghost"
+-                      size="icon-sm"
+-                      onClick={() => setShowPassword(!showPassword)}
+-                      aria-label={
+-                        showPassword ? t("hidePassword") : t("showPassword")
+-                      }
+-                    >
+-                      {showPassword ? (
+-                        <EyeOff className="w-5 h-5" />
+-                      ) : (
+-                        <Eye className="w-5 h-5" />
+-                      )}
+-                    </Button>
+-                  </div>
+-                </div>
+-              </Field>
+-
+-              <div className="flex justify-end">
+-                <Link
+-                  href={`${basePath}/account/forgot-password`}
+-                  className="text-sm text-primary hover:text-primary/70 font-medium"
+-                >
+-                  {t("forgotPassword")}
+-                </Link>
+-              </div>
+-
+-              <div className="w-full">
+-                <Button
+-                  type="submit"
+-                  disabled={loading}
+-                  size="lg"
+-                  className="w-full"
+-                >
+-                  {loading ? t("signingIn") : t("signIn")}
+-                </Button>
+-              </div>
+-            </form>
+-          </CardContent>
++async function AccountPageWithProviders() {
++  // Provider discovery is request-scoped: which providers exist depends on the
++  // store, and the authorization URL carries a freshly signed state.
++  await connection();
+ 
+-          <CardFooter className="justify-center">
+-            <p className="text-sm text-muted-foreground">
+-              {t("dontHaveAccount")}{" "}
+-              <Link
+-                href={`${basePath}/account/register`}
+-                className="text-primary hover:text-primary/70 font-medium"
+-              >
+-                {t("signUp")}
+-              </Link>
+-            </p>
+-          </CardFooter>
+-        </Card>
+-      </div>
+-    );
+-  }
++  return <AccountPageContent providers={await getAuthProviders()} />;
++}
+ 
+-  // Show account dashboard if authenticated
++function AccountPageFallback() {
+   return (
+-    <AccountShell>
+-      <div>
+-        <h1 className="text-2xl font-bold text-gray-900 mb-6">
+-          {t("accountOverview")}
+-        </h1>
+-
+-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+-          <Link href={`${basePath}/account/orders`}>
+-            <Card className="hover:border-gray-300 transition-colors h-full">
+-              <CardContent className="flex items-center gap-4 py-0">
+-                <div className="p-3 bg-gray-100 rounded-xl">
+-                  <ShoppingBag className="w-6 h-6 text-primary" />
+-                </div>
+-                <div>
+-                  <h2 className="text-lg font-medium text-gray-900">
+-                    {t("orderHistory")}
+-                  </h2>
+-                  <p className="mt-1 text-sm text-gray-500">
+-                    {t("orderHistoryDescription")}
+-                  </p>
+-                </div>
+-              </CardContent>
+-            </Card>
+-          </Link>
+-
+-          <Link href={`${basePath}/account/addresses`}>
+-            <Card className="hover:border-gray-300 transition-colors h-full">
+-              <CardContent className="flex items-center gap-4 py-0">
+-                <div className="p-3 bg-gray-100 rounded-xl">
+-                  <MapPin className="w-6 h-6 text-primary" />
+-                </div>
+-                <div>
+-                  <h2 className="text-lg font-medium text-gray-900">
+-                    {t("addresses")}
+-                  </h2>
+-                  <p className="mt-1 text-sm text-gray-500">
+-                    {t("addressesDescription")}
+-                  </p>
+-                </div>
+-              </CardContent>
+-            </Card>
+-          </Link>
+-
+-          <Link href={`${basePath}/account/credit-cards`}>
+-            <Card className="hover:border-gray-300 transition-colors h-full">
+-              <CardContent className="flex items-center gap-4 py-0">
+-                <div className="p-3 bg-gray-100 rounded-xl">
+-                  <CreditCard className="w-6 h-6 text-primary" />
+-                </div>
+-                <div>
+-                  <h2 className="text-lg font-medium text-gray-900">
+-                    {t("paymentMethods")}
+-                  </h2>
+-                  <p className="mt-1 text-sm text-gray-500">
+-                    {t("paymentMethodsDescription")}
+-                  </p>
+-                </div>
+-              </CardContent>
+-            </Card>
+-          </Link>
+-
+-          <Link href={`${basePath}/account/profile`}>
+-            <Card className="hover:border-gray-300 transition-colors h-full">
+-              <CardContent className="flex items-center gap-4 py-0">
+-                <div className="p-3 bg-gray-100 rounded-xl">
+-                  <User className="w-6 h-6 text-primary" />
+-                </div>
+-                <div>
+-                  <h2 className="text-lg font-medium text-gray-900">
+-                    {t("profile")}
+-                  </h2>
+-                  <p className="mt-1 text-sm text-gray-500">
+-                    {t("profileDescription")}
+-                  </p>
+-                </div>
+-              </CardContent>
+-            </Card>
+-          </Link>
+-        </div>
++    <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
++      <div className="animate-pulse space-y-4">
++        <div className="h-8 bg-gray-200 rounded w-1/2 mx-auto" />
++        <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto" />
++        <div className="h-48 bg-gray-200 rounded" />
+       </div>
+-    </AccountShell>
++    </div>
+   );
+ }
+diff --git a/src/app/[country]/[locale]/(storefront)/account/register/RegisterPageContent.tsx b/src/app/[country]/[locale]/(storefront)/account/register/RegisterPageContent.tsx
+new file mode 100644
+index 0000000..bfe7801
+--- /dev/null
++++ b/src/app/[country]/[locale]/(storefront)/account/register/RegisterPageContent.tsx
+@@ -0,0 +1,274 @@
++"use client";
++
++import type { AuthProvider } from "@spree/sdk";
++import { CircleAlert, Eye, EyeOff } from "lucide-react";
++import Link from "next/link";
++import { usePathname, useRouter } from "next/navigation";
++import { useTranslations } from "next-intl";
++import { useEffect, useState } from "react";
++import { SocialLoginButtons } from "@/components/account/SocialLoginButtons";
++import { PolicyConsent } from "@/components/policy/PolicyConsent";
++import { Alert, AlertDescription } from "@/components/ui/alert";
++import { Button } from "@/components/ui/button";
++import {
++  Card,
++  CardContent,
++  CardDescription,
++  CardFooter,
++  CardHeader,
++  CardTitle,
++} from "@/components/ui/card";
++import { Field, FieldLabel } from "@/components/ui/field";
++import { Input } from "@/components/ui/input";
++import { useAuth } from "@/contexts/AuthContext";
++import { extractBasePath } from "@/lib/utils/path";
++
++interface RegisterPageContentProps {
++  /** The store's redirect providers. Empty when social login is not set up. */
++  providers: AuthProvider[];
++}
++
++export function RegisterPageContent({ providers }: RegisterPageContentProps) {
++  const router = useRouter();
++  const pathname = usePathname();
++  const basePath = extractBasePath(pathname);
++  const t = useTranslations("register");
++  const ta = useTranslations("account");
++  const { register, isAuthenticated, loading: authLoading } = useAuth();
++
++  const [firstName, setFirstName] = useState("");
++  const [lastName, setLastName] = useState("");
++  const [email, setEmail] = useState("");
++  const [password, setPassword] = useState("");
++  const [showPassword, setShowPassword] = useState(false);
++  const [passwordConfirmation, setPasswordConfirmation] = useState("");
++  const [showPasswordConfirmation, setShowPasswordConfirmation] =
++    useState(false);
++  const [submitting, setSubmitting] = useState(false);
++  const [error, setError] = useState<string | null>(null);
++  const [policyConsent, setPolicyConsent] = useState(false);
++  const [policyError, setPolicyError] = useState(false);
++
++  // Redirect if already authenticated
++  // useEffect is needed here to prevent rendering issues.
++  useEffect(() => {
++    if (!authLoading && isAuthenticated) {
++      router.push(`${basePath}/account`);
++    }
++  }, [authLoading, isAuthenticated, router, basePath]);
++  if (authLoading || isAuthenticated) {
++    return null;
++  }
++
++  const handleSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
++    setError(null);
++
++    if (password !== passwordConfirmation) {
++      setError(t("passwordsDontMatch"));
++      return;
++    }
++
++    if (password.length < 6) {
++      setError(t("passwordTooShort"));
++      return;
++    }
++
++    if (!policyConsent) {
++      setPolicyError(true);
++      setError(ta("policyConsentRequired"));
++      document
++        .getElementById("policy-consent")
++        ?.scrollIntoView({ behavior: "smooth", block: "center" });
++      document.getElementById("policy-consent")?.focus();
++      return;
++    }
++
++    setSubmitting(true);
++
++    try {
++      const result = await register({
++        email,
++        password,
++        password_confirmation: passwordConfirmation,
++        ...(firstName && { first_name: firstName }),
++        ...(lastName && { last_name: lastName }),
++      });
++      if (result.success) {
++        router.push(`${basePath}/account`);
++      } else {
++        setError(result.error || t("registrationFailed"));
++      }
++    } catch {
++      setError(t("unexpectedError"));
++    } finally {
++      setSubmitting(false);
++    }
++  };
++
++  return (
++    <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
++      <Card>
++        <CardHeader className="text-center">
++          <CardTitle>{t("createAccount")}</CardTitle>
++          <CardDescription>{t("signUpDescription")}</CardDescription>
++        </CardHeader>
++
++        <CardContent className="space-y-6">
++          <form onSubmit={handleSubmit} className="space-y-4">
++            {error && (
++              <Alert variant="destructive">
++                <CircleAlert />
++                <AlertDescription>{error}</AlertDescription>
++              </Alert>
++            )}
++
++            <div className="grid grid-cols-2 gap-4">
++              <Field>
++                <FieldLabel htmlFor="firstName">{t("firstName")}</FieldLabel>
++                <Input
++                  type="text"
++                  id="firstName"
++                  value={firstName}
++                  onChange={(e) => setFirstName(e.target.value)}
++                  required
++                  placeholder={t("firstNamePlaceholder")}
++                />
++              </Field>
++
++              <Field>
++                <FieldLabel htmlFor="lastName">{t("lastName")}</FieldLabel>
++                <Input
++                  type="text"
++                  id="lastName"
++                  value={lastName}
++                  onChange={(e) => setLastName(e.target.value)}
++                  required
++                  placeholder={t("lastNamePlaceholder")}
++                />
++              </Field>
++            </div>
++
++            <Field>
++              <FieldLabel htmlFor="email">{ta("email")}</FieldLabel>
++              <Input
++                type="email"
++                id="email"
++                value={email}
++                onChange={(e) => setEmail(e.target.value)}
++                required
++                placeholder={t("emailPlaceholder")}
++              />
++            </Field>
++
++            <Field>
++              <FieldLabel htmlFor="password">{ta("password")}</FieldLabel>
++              <div className="relative">
++                <Input
++                  type={showPassword ? "text" : "password"}
++                  id="password"
++                  value={password}
++                  onChange={(e) => setPassword(e.target.value)}
++                  required
++                  minLength={6}
++                  placeholder="••••••••"
++                  className="pr-10"
++                />
++                <div className="absolute right-1 top-1/2 -translate-y-1/2">
++                  <Button
++                    type="button"
++                    variant="ghost"
++                    size="icon-sm"
++                    onClick={() => setShowPassword(!showPassword)}
++                    aria-label={
++                      showPassword ? ta("hidePassword") : ta("showPassword")
++                    }
++                  >
++                    {showPassword ? (
++                      <EyeOff className="w-5 h-5" />
++                    ) : (
++                      <Eye className="w-5 h-5" />
++                    )}
++                  </Button>
++                </div>
++              </div>
++            </Field>
++
++            <Field>
++              <FieldLabel htmlFor="passwordConfirmation">
++                {t("confirmPassword")}
++              </FieldLabel>
++              <div className="relative">
++                <Input
++                  type={showPasswordConfirmation ? "text" : "password"}
++                  id="passwordConfirmation"
++                  value={passwordConfirmation}
++                  onChange={(e) => setPasswordConfirmation(e.target.value)}
++                  required
++                  minLength={6}
++                  placeholder="••••••••"
++                  className="pr-10"
++                />
++                <div className="absolute right-1 top-1/2 -translate-y-1/2">
++                  <Button
++                    type="button"
++                    variant="ghost"
++                    size="icon-sm"
++                    onClick={() =>
++                      setShowPasswordConfirmation(!showPasswordConfirmation)
++                    }
++                    aria-label={
++                      showPasswordConfirmation
++                        ? ta("hidePassword")
++                        : ta("showPassword")
++                    }
++                  >
++                    {showPasswordConfirmation ? (
++                      <EyeOff className="w-5 h-5" />
++                    ) : (
++                      <Eye className="w-5 h-5" />
++                    )}
++                  </Button>
++                </div>
++              </div>
++            </Field>
++
++            <PolicyConsent
++              checked={policyConsent}
++              onCheckedChange={(checked) => {
++                setPolicyConsent(checked);
++                if (checked) setPolicyError(false);
++              }}
++              error={policyError}
++            />
++
++            <div className="w-full">
++              <Button
++                type="submit"
++                disabled={submitting}
++                size="lg"
++                className="w-full"
++              >
++                {submitting ? t("creatingAccount") : t("createAccount")}
++              </Button>
++            </div>
++          </form>
++
++          <SocialLoginButtons providers={providers} />
++        </CardContent>
++
++        <CardFooter className="justify-center">
++          <p className="text-sm text-muted-foreground">
++            {t("alreadyHaveAccount")}{" "}
++            <Link
++              href={`${basePath}/account`}
++              className="text-primary hover:text-primary/70 font-medium"
++            >
++              {t("signIn")}
++            </Link>
++          </p>
++        </CardFooter>
++      </Card>
++    </div>
++  );
++}
+diff --git a/src/app/[country]/[locale]/(storefront)/account/register/page.tsx b/src/app/[country]/[locale]/(storefront)/account/register/page.tsx
+index 79fae3f..8713f09 100644
+--- a/src/app/[country]/[locale]/(storefront)/account/register/page.tsx
++++ b/src/app/[country]/[locale]/(storefront)/account/register/page.tsx
+@@ -1,265 +1,20 @@
+-"use client";
+-
+-import { CircleAlert, Eye, EyeOff } from "lucide-react";
+-import Link from "next/link";
+-import { usePathname, useRouter } from "next/navigation";
+-import { useTranslations } from "next-intl";
+-import { useEffect, useState } from "react";
+-import { PolicyConsent } from "@/components/policy/PolicyConsent";
+-import { Alert, AlertDescription } from "@/components/ui/alert";
+-import { Button } from "@/components/ui/button";
+-import {
+-  Card,
+-  CardContent,
+-  CardDescription,
+-  CardFooter,
+-  CardHeader,
+-  CardTitle,
+-} from "@/components/ui/card";
+-import { Field, FieldLabel } from "@/components/ui/field";
+-import { Input } from "@/components/ui/input";
+-import { useAuth } from "@/contexts/AuthContext";
+-import { extractBasePath } from "@/lib/utils/path";
++import { connection } from "next/server";
++import { Suspense } from "react";
++import { getAuthProviders } from "@/lib/data/customer";
++import { RegisterPageContent } from "./RegisterPageContent";
+ 
+ export default function RegisterPage() {
+-  const router = useRouter();
+-  const pathname = usePathname();
+-  const basePath = extractBasePath(pathname);
+-  const t = useTranslations("register");
+-  const ta = useTranslations("account");
+-  const { register, isAuthenticated, loading: authLoading } = useAuth();
+-
+-  const [firstName, setFirstName] = useState("");
+-  const [lastName, setLastName] = useState("");
+-  const [email, setEmail] = useState("");
+-  const [password, setPassword] = useState("");
+-  const [showPassword, setShowPassword] = useState(false);
+-  const [passwordConfirmation, setPasswordConfirmation] = useState("");
+-  const [showPasswordConfirmation, setShowPasswordConfirmation] =
+-    useState(false);
+-  const [submitting, setSubmitting] = useState(false);
+-  const [error, setError] = useState<string | null>(null);
+-  const [policyConsent, setPolicyConsent] = useState(false);
+-  const [policyError, setPolicyError] = useState(false);
+-
+-  // Redirect if already authenticated
+-  // useEffect is needed here to prevent rendering issues.
+-  useEffect(() => {
+-    if (!authLoading && isAuthenticated) {
+-      router.push(`${basePath}/account`);
+-    }
+-  }, [authLoading, isAuthenticated, router, basePath]);
+-  if (authLoading || isAuthenticated) {
+-    return null;
+-  }
+-
+-  const handleSubmit = async (e: React.FormEvent) => {
+-    e.preventDefault();
+-    setError(null);
+-
+-    if (password !== passwordConfirmation) {
+-      setError(t("passwordsDontMatch"));
+-      return;
+-    }
+-
+-    if (password.length < 6) {
+-      setError(t("passwordTooShort"));
+-      return;
+-    }
+-
+-    if (!policyConsent) {
+-      setPolicyError(true);
+-      setError(ta("policyConsentRequired"));
+-      document
+-        .getElementById("policy-consent")
+-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+-      document.getElementById("policy-consent")?.focus();
+-      return;
+-    }
+-
+-    setSubmitting(true);
+-
+-    try {
+-      const result = await register({
+-        email,
+-        password,
+-        password_confirmation: passwordConfirmation,
+-        ...(firstName && { first_name: firstName }),
+-        ...(lastName && { last_name: lastName }),
+-      });
+-      if (result.success) {
+-        router.push(`${basePath}/account`);
+-      } else {
+-        setError(result.error || t("registrationFailed"));
+-      }
+-    } catch {
+-      setError(t("unexpectedError"));
+-    } finally {
+-      setSubmitting(false);
+-    }
+-  };
+-
+   return (
+-    <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
+-      <Card>
+-        <CardHeader className="text-center">
+-          <CardTitle>{t("createAccount")}</CardTitle>
+-          <CardDescription>{t("signUpDescription")}</CardDescription>
+-        </CardHeader>
+-
+-        <CardContent>
+-          <form onSubmit={handleSubmit} className="space-y-4">
+-            {error && (
+-              <Alert variant="destructive">
+-                <CircleAlert />
+-                <AlertDescription>{error}</AlertDescription>
+-              </Alert>
+-            )}
+-
+-            <div className="grid grid-cols-2 gap-4">
+-              <Field>
+-                <FieldLabel htmlFor="firstName">{t("firstName")}</FieldLabel>
+-                <Input
+-                  type="text"
+-                  id="firstName"
+-                  value={firstName}
+-                  onChange={(e) => setFirstName(e.target.value)}
+-                  required
+-                  placeholder={t("firstNamePlaceholder")}
+-                />
+-              </Field>
+-
+-              <Field>
+-                <FieldLabel htmlFor="lastName">{t("lastName")}</FieldLabel>
+-                <Input
+-                  type="text"
+-                  id="lastName"
+-                  value={lastName}
+-                  onChange={(e) => setLastName(e.target.value)}
+-                  required
+-                  placeholder={t("lastNamePlaceholder")}
+-                />
+-              </Field>
+-            </div>
+-
+-            <Field>
+-              <FieldLabel htmlFor="email">{ta("email")}</FieldLabel>
+-              <Input
+-                type="email"
+-                id="email"
+-                value={email}
+-                onChange={(e) => setEmail(e.target.value)}
+-                required
+-                placeholder={t("emailPlaceholder")}
+-              />
+-            </Field>
+-
+-            <Field>
+-              <FieldLabel htmlFor="password">{ta("password")}</FieldLabel>
+-              <div className="relative">
+-                <Input
+-                  type={showPassword ? "text" : "password"}
+-                  id="password"
+-                  value={password}
+-                  onChange={(e) => setPassword(e.target.value)}
+-                  required
+-                  minLength={6}
+-                  placeholder="••••••••"
+-                  className="pr-10"
+-                />
+-                <div className="absolute right-1 top-1/2 -translate-y-1/2">
+-                  <Button
+-                    type="button"
+-                    variant="ghost"
+-                    size="icon-sm"
+-                    onClick={() => setShowPassword(!showPassword)}
+-                    aria-label={
+-                      showPassword ? ta("hidePassword") : ta("showPassword")
+-                    }
+-                  >
+-                    {showPassword ? (
+-                      <EyeOff className="w-5 h-5" />
+-                    ) : (
+-                      <Eye className="w-5 h-5" />
+-                    )}
+-                  </Button>
+-                </div>
+-              </div>
+-            </Field>
+-
+-            <Field>
+-              <FieldLabel htmlFor="passwordConfirmation">
+-                {t("confirmPassword")}
+-              </FieldLabel>
+-              <div className="relative">
+-                <Input
+-                  type={showPasswordConfirmation ? "text" : "password"}
+-                  id="passwordConfirmation"
+-                  value={passwordConfirmation}
+-                  onChange={(e) => setPasswordConfirmation(e.target.value)}
+-                  required
+-                  minLength={6}
+-                  placeholder="••••••••"
+-                  className="pr-10"
+-                />
+-                <div className="absolute right-1 top-1/2 -translate-y-1/2">
+-                  <Button
+-                    type="button"
+-                    variant="ghost"
+-                    size="icon-sm"
+-                    onClick={() =>
+-                      setShowPasswordConfirmation(!showPasswordConfirmation)
+-                    }
+-                    aria-label={
+-                      showPasswordConfirmation
+-                        ? ta("hidePassword")
+-                        : ta("showPassword")
+-                    }
+-                  >
+-                    {showPasswordConfirmation ? (
+-                      <EyeOff className="w-5 h-5" />
+-                    ) : (
+-                      <Eye className="w-5 h-5" />
+-                    )}
+-                  </Button>
+-                </div>
+-              </div>
+-            </Field>
+-
+-            <PolicyConsent
+-              checked={policyConsent}
+-              onCheckedChange={(checked) => {
+-                setPolicyConsent(checked);
+-                if (checked) setPolicyError(false);
+-              }}
+-              error={policyError}
+-            />
++    <Suspense fallback={null}>
++      <RegisterPageWithProviders />
++    </Suspense>
++  );
++}
+ 
+-            <div className="w-full">
+-              <Button
+-                type="submit"
+-                disabled={submitting}
+-                size="lg"
+-                className="w-full"
+-              >
+-                {submitting ? t("creatingAccount") : t("createAccount")}
+-              </Button>
+-            </div>
+-          </form>
+-        </CardContent>
++async function RegisterPageWithProviders() {
++  // Provider discovery is request-scoped: which providers exist depends on the
++  // store, and the authorization URL carries a freshly signed state.
++  await connection();
+ 
+-        <CardFooter className="justify-center">
+-          <p className="text-sm text-muted-foreground">
+-            {t("alreadyHaveAccount")}{" "}
+-            <Link
+-              href={`${basePath}/account`}
+-              className="text-primary hover:text-primary/70 font-medium"
+-            >
+-              {t("signIn")}
+-            </Link>
+-          </p>
+-        </CardFooter>
+-      </Card>
+-    </div>
+-  );
++  return <RegisterPageContent providers={await getAuthProviders()} />;
+ }
+diff --git a/src/components/account/CompleteRegistrationForm.tsx b/src/components/account/CompleteRegistrationForm.tsx
+new file mode 100644
+index 0000000..954f1fd
+--- /dev/null
++++ b/src/components/account/CompleteRegistrationForm.tsx
+@@ -0,0 +1,158 @@
++"use client";
++
++import { CircleAlert } from "lucide-react";
++import { usePathname, useRouter, useSearchParams } from "next/navigation";
++import { useTranslations } from "next-intl";
++import { useState } from "react";
++import { PolicyConsent } from "@/components/policy/PolicyConsent";
++import { Alert, AlertDescription } from "@/components/ui/alert";
++import { Button } from "@/components/ui/button";
++import {
++  Card,
++  CardContent,
++  CardDescription,
++  CardHeader,
++  CardTitle,
++} from "@/components/ui/card";
++import { Field, FieldLabel } from "@/components/ui/field";
++import { Input } from "@/components/ui/input";
++import { completeSocialRegistration } from "@/lib/data/customer";
++import { resolveAccountRedirect } from "@/lib/utils/account-redirect";
++import { extractBasePath } from "@/lib/utils/path";
++import { socialAuthMessageKey } from "@/lib/utils/social-auth";
++
++/**
++ * The one screen a social sign-in needs when the provider returned no email:
++ * the address is what turns the verified identity into an account. The account
++ * gets no password — the shopper claims one later through the reset flow, the
++ * same as an account created at checkout.
++ */
++export function CompleteRegistrationForm() {
++  const router = useRouter();
++  const pathname = usePathname();
++  const searchParams = useSearchParams();
++  const basePath = extractBasePath(pathname);
++  const t = useTranslations("account");
++
++  // Where the sign-in started, carried through the callback's redirect.
++  const redirectUrl = resolveAccountRedirect(
++    searchParams.get("redirect"),
++    basePath,
++  );
++
++  const [email, setEmail] = useState("");
++  const [firstName, setFirstName] = useState("");
++  const [lastName, setLastName] = useState("");
++  const [policyConsent, setPolicyConsent] = useState(false);
++  const [policyError, setPolicyError] = useState(false);
++  const [submitting, setSubmitting] = useState(false);
++  const [error, setError] = useState<string | null>(null);
++
++  const handleSubmit = async (event: React.FormEvent) => {
++    event.preventDefault();
++    setError(null);
++
++    if (!policyConsent) {
++      setPolicyError(true);
++      setError(t("policyConsentRequired"));
++      return;
++    }
++
++    setSubmitting(true);
++
++    const result = await completeSocialRegistration({
++      email,
++      first_name: firstName || undefined,
++      last_name: lastName || undefined,
++      terms_of_service: true,
++    });
++
++    if (result.success) {
++      router.push(redirectUrl ?? `${basePath}/account`);
++      return;
++    }
++
++    setSubmitting(false);
++    setError(t(socialAuthMessageKey(result.error)));
++  };
++
++  return (
++    <Card>
++      <CardHeader className="text-center">
++        <CardTitle>{t("completeRegistrationTitle")}</CardTitle>
++        <CardDescription>
++          {t("completeRegistrationDescription")}
++        </CardDescription>
++      </CardHeader>
++
++      <CardContent>
++        <form onSubmit={handleSubmit} className="space-y-4">
++          {error && (
++            <Alert variant="destructive">
++              <CircleAlert />
++              <AlertDescription>{error}</AlertDescription>
++            </Alert>
++          )}
++
++          <div className="grid grid-cols-2 gap-4">
++            <Field>
++              <FieldLabel htmlFor="first-name">{t("firstName")}</FieldLabel>
++              <Input
++                id="first-name"
++                name="given-name"
++                autoComplete="given-name"
++                value={firstName}
++                onChange={(event) => setFirstName(event.target.value)}
++              />
++            </Field>
++
++            <Field>
++              <FieldLabel htmlFor="last-name">{t("lastName")}</FieldLabel>
++              <Input
++                id="last-name"
++                name="family-name"
++                autoComplete="family-name"
++                value={lastName}
++                onChange={(event) => setLastName(event.target.value)}
++              />
++            </Field>
++          </div>
++
++          <Field>
++            <FieldLabel htmlFor="email">{t("email")}</FieldLabel>
++            <Input
++              type="email"
++              id="email"
++              name="email"
++              autoComplete="email"
++              value={email}
++              onChange={(event) => setEmail(event.target.value)}
++              required
++              placeholder="you@example.com"
++            />
++          </Field>
++
++          <PolicyConsent
++            checked={policyConsent}
++            onCheckedChange={(checked) => {
++              setPolicyConsent(checked);
++              if (checked) setPolicyError(false);
++            }}
++            error={policyError}
++          />
++
++          <Button
++            type="submit"
++            disabled={submitting}
++            size="lg"
++            className="w-full"
++          >
++            {submitting
++              ? t("completingRegistration")
++              : t("completeRegistration")}
++          </Button>
++        </form>
++      </CardContent>
++    </Card>
++  );
++}
+diff --git a/src/components/account/SocialLoginButtons.tsx b/src/components/account/SocialLoginButtons.tsx
+new file mode 100644
+index 0000000..fd4c216
+--- /dev/null
++++ b/src/components/account/SocialLoginButtons.tsx
+@@ -0,0 +1,88 @@
++"use client";
++
++import type { AuthProvider } from "@spree/sdk";
++import { CircleAlert } from "lucide-react";
++import { useTranslations } from "next-intl";
++import { useState } from "react";
++import { Alert, AlertDescription } from "@/components/ui/alert";
++import { Button } from "@/components/ui/button";
++import { startSocialLogin } from "@/lib/data/customer";
++
++interface SocialLoginButtonsProps {
++  /** Only the redirect providers — the password form is rendered next to it. */
++  providers: AuthProvider[];
++  /** Where to send the shopper once the provider signs them in. */
++  returnTo?: string | null;
++}
++
++export function SocialLoginButtons({
++  providers,
++  returnTo,
++}: SocialLoginButtonsProps) {
++  const t = useTranslations("account");
++  const [pending, setPending] = useState<string | null>(null);
++  const [error, setError] = useState<string | null>(null);
++
++  if (providers.length === 0) return null;
++
++  const handleClick = async (provider: string) => {
++    setError(null);
++    setPending(provider);
++
++    const result = await startSocialLogin(provider, returnTo ?? undefined);
++
++    if ("url" in result) {
++      // Leaving the page — keep the button disabled so a second click cannot
++      // overwrite the state cookie the callback will check.
++      window.location.assign(result.url);
++      return;
++    }
++
++    setPending(null);
++    setError(t("socialErrorUnavailable"));
++  };
++
++  return (
++    <div className="space-y-4">
++      <div className="flex items-center gap-3">
++        <span className="h-px flex-1 bg-border" />
++        <span className="text-xs uppercase tracking-wide text-muted-foreground">
++          {t("orContinueWith")}
++        </span>
++        <span className="h-px flex-1 bg-border" />
++      </div>
++
++      {error && (
++        <Alert variant="destructive">
++          <CircleAlert />
++          <AlertDescription>{error}</AlertDescription>
++        </Alert>
++      )}
++
++      <div className="space-y-3">
++        {providers.map((provider) => (
++          <div key={provider.key} className="space-y-1">
++            <Button
++              type="button"
++              variant="outline"
++              size="lg"
++              className="w-full"
++              disabled={pending !== null}
++              onClick={() => handleClick(provider.key)}
++            >
++              {t("continueWith", {
++                provider: provider.label ?? provider.key,
++              })}
++            </Button>
++
++            {provider.requires_email && (
++              <p className="text-xs text-muted-foreground text-center">
++                {t("providerNeedsEmail")}
++              </p>
++            )}
++          </div>
++        ))}
++      </div>
++    </div>
++  );
++}
+diff --git a/src/lib/data/__tests__/customer.test.ts b/src/lib/data/__tests__/customer.test.ts
+index abb077e..8b4594c 100644
+--- a/src/lib/data/__tests__/customer.test.ts
++++ b/src/lib/data/__tests__/customer.test.ts
+@@ -4,6 +4,9 @@ const mockClient = {
+   auth: {
+     login: vi.fn(),
+     logout: vi.fn(),
++    providers: vi.fn(),
++    loginWithRedirect: vi.fn(),
++    completeRegistration: vi.fn(),
+   },
+   customers: {
+     create: vi.fn(),
+@@ -38,6 +41,11 @@ vi.mock("@/lib/spree", () => ({
+   getRefreshToken: vi.fn().mockResolvedValue(undefined),
+   setRefreshToken: vi.fn(),
+   clearRefreshToken: vi.fn(),
++  getSocialLoginContext: vi.fn(),
++  setSocialLoginContext: vi.fn(),
++  clearSocialLoginContext: vi.fn(),
++  getRegistrationToken: vi.fn(),
++  clearRegistrationToken: vi.fn(),
+   getCartToken: vi.fn().mockResolvedValue(undefined),
+   getCartId: vi.fn().mockResolvedValue(undefined),
+   clearCartCookies: vi.fn(),
+@@ -48,6 +56,11 @@ vi.mock("@/lib/spree", () => ({
+ }));
+ 
+ vi.mock("@spree/sdk", () => ({
++  isRegistrationRequired: (result: unknown) =>
++    !!result &&
++    typeof result === "object" &&
++    "status" in result &&
++    (result as { status?: string }).status === "registration_required",
+   SpreeError: class SpreeError extends Error {
+     code: string;
+     status: number;
+@@ -67,14 +80,29 @@ vi.mock("next/cache", () => ({
+ }));
+ 
+ import {
++  completeSocialRegistration,
++  getAuthProviders,
+   getCustomer,
+   login,
++  loginWithProvider,
+   logout,
+   register,
++  startSocialLogin,
+   syncSession,
+   updateCustomer,
+ } from "@/lib/data/customer";
+ 
++const AUTHORIZATION_URL =
++  "https://open.weixin.qq.com/connect/qrconnect?redirect_uri=https%3A%2F%2Fstore.example%2Faccount%2Fcallback%2Fwechat&state=signed-state";
++
++const redirectProvider = {
++  key: "wechat",
++  kind: "redirect" as const,
++  label: "WeChat",
++  requires_email: true,
++  authorization_url: AUTHORIZATION_URL,
++};
++
+ const mockUser = {
+   id: "user-1",
+   email: "test@example.com",
+@@ -392,4 +420,224 @@ describe("customer server actions", () => {
+       });
+     });
+   });
++
++  describe("getAuthProviders", () => {
++    it("keeps only redirect providers that carry an authorization URL", async () => {
++      mockClient.auth.providers.mockResolvedValue({
++        providers: [
++          { key: "email", kind: "password" },
++          redirectProvider,
++          { key: "douyin", kind: "redirect", label: "Douyin" },
++        ],
++      });
++
++      const result = await getAuthProviders();
++
++      expect(result).toEqual([redirectProvider]);
++    });
++
++    it("shows the password form alone when discovery fails", async () => {
++      mockClient.auth.providers.mockRejectedValue(new Error("offline"));
++
++      await expect(getAuthProviders()).resolves.toEqual([]);
++    });
++  });
++
++  describe("startSocialLogin", () => {
++    it("keeps the signed state and returns the provider URL", async () => {
++      mockClient.auth.providers.mockResolvedValue({
++        providers: [redirectProvider],
++      });
++      const { setSocialLoginContext } = await import("@/lib/spree");
++
++      const result = await startSocialLogin("wechat");
++
++      expect(setSocialLoginContext).toHaveBeenCalledWith({
++        state: "signed-state",
++        returnTo: undefined,
++      });
++      expect(result).toEqual({ url: AUTHORIZATION_URL });
++    });
++
++    it("carries the destination the shopper was headed for", async () => {
++      mockClient.auth.providers.mockResolvedValue({
++        providers: [redirectProvider],
++      });
++      const { setSocialLoginContext } = await import("@/lib/spree");
++
++      await startSocialLogin("wechat", "/us/en/checkout/cart-1");
++
++      expect(setSocialLoginContext).toHaveBeenCalledWith({
++        state: "signed-state",
++        returnTo: "/us/en/checkout/cart-1",
++      });
++    });
++
++    it("refuses a provider the store does not offer", async () => {
++      mockClient.auth.providers.mockResolvedValue({ providers: [] });
++      const { setSocialLoginContext } = await import("@/lib/spree");
++
++      const result = await startSocialLogin("wechat");
++
++      expect(result).toEqual({ error: "invalid_provider" });
++      expect(setSocialLoginContext).not.toHaveBeenCalled();
++    });
++  });
++
++  describe("loginWithProvider", () => {
++    it("refuses a callback whose state does not match the stored one", async () => {
++      const { getSocialLoginContext } = await import("@/lib/spree");
++      (getSocialLoginContext as ReturnType<typeof vi.fn>).mockResolvedValue({
++        state: "other-state",
++      });
++
++      const result = await loginWithProvider({
++        provider: "wechat",
++        code: "code-1",
++        state: "signed-state",
++      });
++
++      expect(result).toEqual({
++        status: "failed",
++        error: "invalid_oauth_state",
++      });
++      expect(mockClient.auth.loginWithRedirect).not.toHaveBeenCalled();
++    });
++
++    it("stores the session and sends the registered callback", async () => {
++      const { getSocialLoginContext, setAccessToken } = await import(
++        "@/lib/spree"
++      );
++      (getSocialLoginContext as ReturnType<typeof vi.fn>).mockResolvedValue({
++        state: "signed-state",
++        returnTo: "/us/en/checkout/cart-1",
++      });
++      mockClient.auth.providers.mockResolvedValue({
++        providers: [redirectProvider],
++      });
++      mockClient.auth.loginWithRedirect.mockResolvedValue({
++        token: "jwt-token",
++        refresh_token: "refresh-token",
++        user: mockUser,
++      });
++
++      const result = await loginWithProvider({
++        provider: "wechat",
++        code: "code-1",
++        state: "signed-state",
++      });
++
++      expect(mockClient.auth.loginWithRedirect).toHaveBeenCalledWith({
++        provider: "wechat",
++        code: "code-1",
++        state: "signed-state",
++        redirect_uri: "https://store.example/account/callback/wechat",
++      });
++      expect(setAccessToken).toHaveBeenCalledWith("jwt-token");
++      expect(result).toEqual({
++        status: "authenticated",
++        returnTo: "/us/en/checkout/cart-1",
++      });
++    });
++
++    it("reports the registration step instead of a session", async () => {
++      const { getSocialLoginContext, setAccessToken } = await import(
++        "@/lib/spree"
++      );
++      (getSocialLoginContext as ReturnType<typeof vi.fn>).mockResolvedValue({
++        state: "signed-state",
++      });
++      mockClient.auth.providers.mockResolvedValue({
++        providers: [redirectProvider],
++      });
++      mockClient.auth.loginWithRedirect.mockResolvedValue({
++        status: "registration_required",
++        registration_token: "registration-token",
++      });
++
++      const result = await loginWithProvider({
++        provider: "wechat",
++        code: "code-1",
++        state: "signed-state",
++      });
++
++      expect(result).toEqual({
++        status: "registration_required",
++        registrationToken: "registration-token",
++        returnTo: null,
++      });
++      expect(setAccessToken).not.toHaveBeenCalled();
++    });
++
++    it("reports a failed exchange by its API code", async () => {
++      const { getSocialLoginContext } = await import("@/lib/spree");
++      const { SpreeError } = await import("@spree/sdk");
++      (getSocialLoginContext as ReturnType<typeof vi.fn>).mockResolvedValue({
++        state: "signed-state",
++      });
++      mockClient.auth.loginWithRedirect.mockRejectedValue(
++        new SpreeError(
++          { error: { code: "invalid_oauth_state", message: "expired" } },
++          400,
++        ),
++      );
++
++      const result = await loginWithProvider({
++        provider: "wechat",
++        code: "code-1",
++        state: "signed-state",
++      });
++
++      expect(result).toEqual({
++        status: "failed",
++        error: "invalid_oauth_state",
++      });
++    });
++  });
++
++  describe("completeSocialRegistration", () => {
++    it("creates the account with the pending token", async () => {
++      const { getRegistrationToken, setAccessToken, clearRegistrationToken } =
++        await import("@/lib/spree");
++      (getRegistrationToken as ReturnType<typeof vi.fn>).mockResolvedValue(
++        "registration-token",
++      );
++      mockClient.auth.completeRegistration.mockResolvedValue({
++        token: "jwt-token",
++        refresh_token: "refresh-token",
++        user: mockUser,
++      });
++
++      const result = await completeSocialRegistration({
++        email: "shopper@example.com",
++        first_name: "Shopper",
++      });
++
++      expect(mockClient.auth.completeRegistration).toHaveBeenCalledWith({
++        registration_token: "registration-token",
++        email: "shopper@example.com",
++        first_name: "Shopper",
++      });
++      expect(clearRegistrationToken).toHaveBeenCalled();
++      expect(setAccessToken).toHaveBeenCalledWith("jwt-token");
++      expect(result).toEqual({ success: true, user: mockUser });
++    });
++
++    it("refuses without a pending registration", async () => {
++      const { getRegistrationToken } = await import("@/lib/spree");
++      (getRegistrationToken as ReturnType<typeof vi.fn>).mockResolvedValue(
++        undefined,
++      );
++
++      const result = await completeSocialRegistration({
++        email: "shopper@example.com",
++      });
++
++      expect(result).toEqual({
++        success: false,
++        error: "invalid_registration_token",
++      });
++      expect(mockClient.auth.completeRegistration).not.toHaveBeenCalled();
++    });
++  });
+ });
+diff --git a/src/lib/data/customer.ts b/src/lib/data/customer.ts
+index f19e10e..9574927 100644
+--- a/src/lib/data/customer.ts
++++ b/src/lib/data/customer.ts
+@@ -1,6 +1,7 @@
+ "use server";
+ 
+-import type { Customer } from "@spree/sdk";
++import type { AuthProvider, Customer } from "@spree/sdk";
++import { isRegistrationRequired, SpreeError } from "@spree/sdk";
+ import { updateTag } from "next/cache";
+ import {
+   cacheTagSuffix,
+@@ -9,16 +10,21 @@ import {
+   clearAuthCookies,
+   clearCartCookies,
+   clearRefreshToken,
++  clearRegistrationToken,
++  clearSocialLoginContext,
+   ensureFreshSession,
+   getAccessToken,
+   getCartId,
+   getCartToken,
+   getClient,
+   getRefreshToken,
++  getRegistrationToken,
++  getSocialLoginContext,
+   isAuthError,
+   SURFACES,
+   setAccessToken,
+   setRefreshToken,
++  setSocialLoginContext,
+   withAuthRefresh,
+ } from "@/lib/spree";
+ import { actionResult } from "./utils";
+@@ -179,6 +185,169 @@ export async function register(params: {
+   }
+ }
+ 
++/**
++ * The redirect providers this store has configured, ready to render as the
++ * login page's buttons. A store with none, or an unreachable API, shows the
++ * password form alone rather than an error.
++ */
++export async function getAuthProviders(): Promise<AuthProvider[]> {
++  try {
++    const { providers } = await getClient().auth.providers();
++
++    return providers.filter(
++      (provider) =>
++        provider.kind === "redirect" && !!provider.authorization_url,
++    );
++  } catch (error) {
++    console.error("getAuthProviders: could not load providers", error);
++    return [];
++  }
++}
++
++/**
++ * The callback URL registered with the provider, read back from the
++ * authorization URL the API minted — never from the caller, which would let a
++ * visitor point the exchange at a URL the merchant never registered.
++ */
++async function registeredRedirectUri(
++  provider: string,
++): Promise<string | undefined> {
++  const providers = await getAuthProviders();
++  const authorizationUrl = providers.find(
++    (candidate) => candidate.key === provider,
++  )?.authorization_url;
++
++  if (!authorizationUrl) return undefined;
++
++  return (
++    new URL(authorizationUrl).searchParams.get("redirect_uri") ?? undefined
++  );
++}
++
++/**
++ * Begin a social sign-in: keep the API-signed state and the shopper's
++ * destination in a cookie, then hand the browser the provider's authorization
++ * URL. The destination is re-validated by the callback, which knows the market
++ * it belongs to.
++ */
++export async function startSocialLogin(
++  provider: string,
++  returnTo?: string,
++): Promise<{ url: string } | { error: string }> {
++  const providers = await getAuthProviders();
++  const authorizationUrl = providers.find(
++    (candidate) => candidate.key === provider,
++  )?.authorization_url;
++
++  const state = authorizationUrl
++    ? new URL(authorizationUrl).searchParams.get("state")
++    : null;
++
++  if (!authorizationUrl || !state) return { error: "invalid_provider" };
++
++  await setSocialLoginContext({ state, returnTo });
++
++  return { url: authorizationUrl };
++}
++
++/**
++ * Finish a social sign-in the provider redirected back to. The state must match
++ * the one the storefront stashed, or the callback is refused — otherwise a code
++ * obtained elsewhere could be planted in the shopper's session.
++ *
++ * A provider that returned no email answers `registration_required`: nothing is
++ * created yet, and `completeSocialRegistration` supplies the address.
++ */
++export async function loginWithProvider(params: {
++  provider: string;
++  code: string;
++  state: string;
++}): Promise<
++  | { status: "authenticated"; returnTo: string | null }
++  | {
++      status: "registration_required";
++      registrationToken: string;
++      returnTo: string | null;
++    }
++  | { status: "failed"; error: string }
++> {
++  const context = await getSocialLoginContext();
++  await clearSocialLoginContext();
++
++  if (!context || context.state !== params.state) {
++    return { status: "failed", error: "invalid_oauth_state" };
++  }
++
++  try {
++    const result = await getClient().auth.loginWithRedirect({
++      ...params,
++      redirect_uri: await registeredRedirectUri(params.provider),
++    });
++
++    if (isRegistrationRequired(result)) {
++      return {
++        status: "registration_required",
++        registrationToken: result.registration_token,
++        returnTo: context.returnTo ?? null,
++      };
++    }
++
++    await finalizeAuth(result.token, result.refresh_token);
++    return { status: "authenticated", returnTo: context.returnTo ?? null };
++  } catch (error) {
++    console.error("loginWithProvider: exchange failed", error);
++
++    return {
++      status: "failed",
++      error: error instanceof SpreeError ? error.code : "authentication_failed",
++    };
++  }
++}
++
++/**
++ * Create the account a social provider could not, with the email the shopper
++ * supplies. The account stays password-less until they claim one through the
++ * password reset flow.
++ */
++export async function completeSocialRegistration(params: {
++  email: string;
++  first_name?: string;
++  last_name?: string;
++  terms_of_service?: boolean;
++}): Promise<{
++  success: boolean;
++  user?: {
++    id: string;
++    email: string;
++    first_name?: string | null;
++    last_name?: string | null;
++  };
++  error?: string;
++}> {
++  const registrationToken = await getRegistrationToken();
++  if (!registrationToken) {
++    return { success: false, error: "invalid_registration_token" };
++  }
++
++  try {
++    const result = await getClient().auth.completeRegistration({
++      registration_token: registrationToken,
++      ...params,
++    });
++    await clearRegistrationToken();
++    await finalizeAuth(result.token, result.refresh_token);
++
++    return { success: true, user: result.user };
++  } catch (error) {
++    console.error("completeSocialRegistration: registration failed", error);
++
++    return {
++      success: false,
++      error: error instanceof SpreeError ? error.code : "registration_failed",
++    };
++  }
++}
++
+ /**
+  * Logout the current user.
+  */
+diff --git a/src/lib/spree/cookies.ts b/src/lib/spree/cookies.ts
+index 110e73a..e6062f1 100644
+--- a/src/lib/spree/cookies.ts
++++ b/src/lib/spree/cookies.ts
+@@ -10,9 +10,14 @@ import {
+ const DEFAULT_CART_COOKIE = "_spree_cart_token";
+ const DEFAULT_ACCESS_TOKEN_COOKIE = "_spree_jwt";
+ const DEFAULT_REFRESH_TOKEN_COOKIE = "_spree_refresh_token";
++const OAUTH_STATE_COOKIE = "_spree_oauth_state";
++const REGISTRATION_TOKEN_COOKIE = "_spree_registration_token";
+ const CART_TOKEN_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+ const ACCESS_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
+ const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
++// The API signs both tokens with a 15-minute expiry, so the storefront's copies
++// expire exactly when the API stops accepting them.
++const SOCIAL_LOGIN_MAX_AGE = 60 * 15; // 15 minutes
+ 
+ /**
+  * Whether the current execution context may write cookies. Next.js allows
+@@ -225,3 +230,105 @@ export async function isPoisonedDtcCartId(
+   const wholesaleCartId = await getCartId("wholesale");
+   return Boolean(wholesaleCartId) && wholesaleCartId === cartId;
+ }
++
++// --- Social login (OAuth state + pending registration) ---
++//
++// Two short-lived httpOnly cookies carry a social sign-in across the provider
++// redirect. `state` is minted by the API inside the authorization URL; holding
++// it here lets the callback refuse a code that arrives with a different one,
++// so an attacker cannot plant their own account in the shopper's session. The
++// registration token is the API's stand-in for an account it has not created
++// yet — it exists only between the callback and the completion screen.
++//
++// The name and options are exported because the callback is a route handler
++// that answers with a redirect it built itself; setting the cookie on that
++// response is the one way to be sure it leaves with the redirect.
++
++export const OAUTH_STATE_COOKIE_NAME = OAUTH_STATE_COOKIE;
++export const REGISTRATION_TOKEN_COOKIE_NAME = REGISTRATION_TOKEN_COOKIE;
++
++/** What a social sign-in has to remember between the two legs. */
++export interface SocialLoginContext {
++  /** The state the API signed into the authorization URL. */
++  state: string;
++  /** Where the shopper was headed, for the callback to send them on. */
++  returnTo?: string;
++}
++
++export function oauthStateCookieOptions() {
++  return {
++    httpOnly: true,
++    secure: process.env.NODE_ENV === "production",
++    sameSite: "lax" as const,
++    path: "/",
++    maxAge: SOCIAL_LOGIN_MAX_AGE,
++  };
++}
++
++export function registrationTokenCookieOptions() {
++  return {
++    httpOnly: true,
++    secure: process.env.NODE_ENV === "production",
++    sameSite: "lax" as const,
++    path: "/",
++    maxAge: SOCIAL_LOGIN_MAX_AGE,
++  };
++}
++
++export async function getSocialLoginContext(): Promise<
++  SocialLoginContext | undefined
++> {
++  const cookieStore = await cookies();
++  const raw = cookieStore.get(OAUTH_STATE_COOKIE)?.value;
++  if (!raw) return undefined;
++
++  try {
++    const parsed: unknown = JSON.parse(raw);
++    if (!parsed || typeof parsed !== "object") return undefined;
++
++    const { state, returnTo } = parsed as Partial<SocialLoginContext>;
++    if (typeof state !== "string") return undefined;
++
++    return {
++      state,
++      returnTo: typeof returnTo === "string" ? returnTo : undefined,
++    };
++  } catch {
++    return undefined;
++  }
++}
++
++export async function setSocialLoginContext(
++  context: SocialLoginContext,
++): Promise<void> {
++  const cookieStore = await cookies();
++  cookieStore.set(
++    OAUTH_STATE_COOKIE,
++    JSON.stringify(context),
++    oauthStateCookieOptions(),
++  );
++}
++
++export async function clearSocialLoginContext(): Promise<void> {
++  const cookieStore = await cookies();
++  cookieStore.set(OAUTH_STATE_COOKIE, "", { maxAge: -1, path: "/" });
++}
++
++export async function getRegistrationToken(): Promise<string | undefined> {
++  const cookieStore = await cookies();
++  return cookieStore.get(REGISTRATION_TOKEN_COOKIE)?.value;
++}
++
++export async function setRegistrationToken(token: string): Promise<void> {
++  const cookieStore = await cookies();
++  cookieStore.set(
++    REGISTRATION_TOKEN_COOKIE,
++    token,
++    registrationTokenCookieOptions(),
++  );
++}
++
++export async function clearRegistrationToken(): Promise<void> {
++  const cookieStore = await cookies();
++  cookieStore.set(REGISTRATION_TOKEN_COOKIE, "", { maxAge: -1, path: "/" });
++}
+diff --git a/src/lib/spree/index.ts b/src/lib/spree/index.ts
+index 50f6a21..c21c6c6 100644
+--- a/src/lib/spree/index.ts
++++ b/src/lib/spree/index.ts
+@@ -25,16 +25,27 @@ export {
+   clearAllCartCookies,
+   clearCartCookies,
+   clearRefreshToken,
++  clearRegistrationToken,
++  clearSocialLoginContext,
+   getAccessToken,
+   getCartId,
+   getCartOptions,
+   getCartToken,
+   getRefreshToken,
++  getRegistrationToken,
++  getSocialLoginContext,
+   isPoisonedDtcCartId,
++  OAUTH_STATE_COOKIE_NAME,
++  oauthStateCookieOptions,
++  REGISTRATION_TOKEN_COOKIE_NAME,
++  registrationTokenCookieOptions,
+   requireCartId,
++  type SocialLoginContext,
+   setAccessToken,
+   setCartCookies,
+   setRefreshToken,
++  setRegistrationToken,
++  setSocialLoginContext,
+ } from "./cookies";
+ // JWT helpers (expiry inspection, no signature verification)
+ export { decodeJwtExp, isJwtExpired } from "./jwt";
+diff --git a/src/lib/spree/middleware.test.ts b/src/lib/spree/middleware.test.ts
+index 8183f6d..321fb02 100644
+--- a/src/lib/spree/middleware.test.ts
++++ b/src/lib/spree/middleware.test.ts
+@@ -100,8 +100,10 @@ describe("Spree locale middleware", () => {
+   it.each([
+     "/us/en/account",
+     "/us/en/account/register",
++    "/us/en/account/complete-registration",
+     "/us/en/account/forgot-password",
+     "/us/en/account/reset-password?token=reset-token",
++    "/us/en/account/callback/google?code=code-1&state=state-1",
+   ])("keeps the public account route accessible: %s", (pathname) => {
+     const response = middleware(
+       new NextRequest(`https://store.example${pathname}`),
+diff --git a/src/lib/spree/middleware.ts b/src/lib/spree/middleware.ts
+index 45e970e..7302ef2 100644
+--- a/src/lib/spree/middleware.ts
++++ b/src/lib/spree/middleware.ts
+@@ -35,17 +35,23 @@ export interface SpreeMiddlewareConfig {
+ const PUBLIC_ACCOUNT_PATHS = new Set([
+   "/account",
+   "/account/register",
++  "/account/complete-registration",
+   "/account/forgot-password",
+   "/account/reset-password",
+ ]);
+ 
++// Reached before a session exists, and at a depth the exact-path set cannot
++// name: the provider appends its own segments.
++const PUBLIC_ACCOUNT_PREFIXES = ["/account/callback/"];
++
+ function isProtectedAccountPath(pathname: string, localizedPrefix: string) {
+   const localizedPath = pathname.slice(localizedPrefix.length);
+   const normalizedPath = localizedPath.replace(/\/+$/, "") || "/";
+ 
+   return (
+     normalizedPath.startsWith("/account/") &&
+-    !PUBLIC_ACCOUNT_PATHS.has(normalizedPath)
++    !PUBLIC_ACCOUNT_PATHS.has(normalizedPath) &&
++    !PUBLIC_ACCOUNT_PREFIXES.some((prefix) => normalizedPath.startsWith(prefix))
+   );
+ }
+ 
+diff --git a/src/lib/utils/__tests__/social-auth.test.ts b/src/lib/utils/__tests__/social-auth.test.ts
+new file mode 100644
+index 0000000..83853d4
+--- /dev/null
++++ b/src/lib/utils/__tests__/social-auth.test.ts
+@@ -0,0 +1,23 @@
++import { describe, expect, it } from "vitest";
++import { socialAuthMessageKey } from "@/lib/utils/social-auth";
++
++describe("socialAuthMessageKey", () => {
++  it("maps the API's stable codes to account copy", () => {
++    expect(socialAuthMessageKey("email_taken")).toBe("emailTaken");
++    expect(socialAuthMessageKey("invalid_oauth_state")).toBe(
++      "socialErrorExpired",
++    );
++    expect(socialAuthMessageKey("access_denied")).toBe("socialLoginCancelled");
++    expect(socialAuthMessageKey("invalid_provider")).toBe(
++      "socialErrorUnavailable",
++    );
++  });
++
++  it("falls back to the generic failure copy", () => {
++    expect(socialAuthMessageKey("not_a_code_we_know")).toBe(
++      "socialLoginFailed",
++    );
++    expect(socialAuthMessageKey(null)).toBe("socialLoginFailed");
++    expect(socialAuthMessageKey(undefined)).toBe("socialLoginFailed");
++  });
++});
+diff --git a/src/lib/utils/social-auth.ts b/src/lib/utils/social-auth.ts
+new file mode 100644
+index 0000000..5537842
+--- /dev/null
++++ b/src/lib/utils/social-auth.ts
+@@ -0,0 +1,34 @@
++/**
++ * The API answers a failed social sign-in with a stable code, never a message,
++ * so the copy lives here rather than in the response. Keys belong to the
++ * `account` namespace.
++ */
++type AccountMessageKey = Extract<keyof IntlMessages["account"], string>;
++
++const ERROR_MESSAGE_KEYS = {
++  access_denied: "socialLoginCancelled",
++  invalid_oauth_state: "socialErrorExpired",
++  invalid_registration_token: "socialErrorExpired",
++  invalid_provider: "socialErrorUnavailable",
++  redirect_url_not_allowed: "socialErrorUnavailable",
++  authentication_failed: "socialLoginFailed",
++  registration_failed: "socialLoginFailed",
++  email_taken: "emailTaken",
++} as const satisfies Record<string, AccountMessageKey>;
++
++/**
++ * The `account` message key for a code the API or the callback returned.
++ *
++ * @param code - the stable error code, as it arrives from the API or in the
++ *   `social_error` query parameter
++ * @returns a message key, falling back to the generic failure copy
++ */
++export function socialAuthMessageKey(
++  code: string | null | undefined,
++): AccountMessageKey {
++  if (code && code in ERROR_MESSAGE_KEYS) {
++    return ERROR_MESSAGE_KEYS[code as keyof typeof ERROR_MESSAGE_KEYS];
++  }
++
++  return "socialLoginFailed";
++}
+-- 
+2.43.0
+
