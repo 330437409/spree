@@ -278,6 +278,166 @@ paths:
                 refresh_token:
                   type: string
                   description: Refresh token to revoke
+  "/api/v3/store/auth/complete":
+    post:
+      summary: Complete a social registration
+      tags:
+      - Authentication
+      security:
+      - api_key: []
+      description: |
+        Finishes a login a provider could not finish on its own.
+
+        Some providers (WeChat, Douyin, QQ, Weibo, Alipay) authenticate the
+        shopper without returning an email. Nothing is created at that point:
+        `POST /auth/login` answers `registration_required` with a short-lived
+        signed `registration_token` instead. Send that token back with the
+        shopper's email to create the account — password-less, claimed later
+        through password reset — and receive the same JWT + refresh token pair
+        as any other login.
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        '201':
+          description: account registered and signed in
+          content:
+            application/json:
+              example:
+                token: eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJ1c2VyX3R5cGUiOiJjdXN0b21lciIsImp0aSI6IjNhMzU4ZGY4LTU5ZTktNDIzYi1hNDIwLWJlZWMyYjcxYmYzMCIsImlzcyI6InNwcmVlIiwiYXVkIjoic3RvcmVfYXBpIiwiZXhwIjoxNzY4NDgyMDAwfQ.SdVvgqYY7CxIfsfxHBxrYAWSJpQG1aHiTDkgnyPzgSE
+                refresh_token: 6efdDJAMmpXUGXuY96kKAtMb
+                user:
+                  id: cust_UkLWZg9DAJ
+                  email: social-customer@example.com
+                  first_name: Ada
+                  last_name:
+                  phone:
+                  accepts_email_marketing: false
+                  email_marketing_consent_updated_at: '2026-01-15T12:00:00Z'
+                  full_name: Ada
+                  available_store_credit_total: '0'
+                  display_available_store_credit_total: "$0.00"
+                  addresses: []
+                  default_billing_address:
+                  default_shipping_address:
+                  newsletter_subscriber:
+                  customer_groups: []
+              schema:
+                "$ref": "#/components/schemas/AuthResponse"
+        '401':
+          description: invalid or expired registration token
+          content:
+            application/json:
+              example:
+                error:
+                  code: invalid_registration_token
+                  message: The registration token is invalid or has expired
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        '422':
+          description: email already belongs to an account
+          content:
+            application/json:
+              example:
+                error:
+                  code: email_taken
+                  message: An account with this email already exists. Sign in the
+                    way you did before, or use a different address.
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                registration_token:
+                  type: string
+                  description: Token from the `registration_required` login response
+                email:
+                  type: string
+                  format: email
+                  example: customer@example.com
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                terms_of_service:
+                  type: boolean
+                  description: Whether the shopper ticked the terms box
+              required:
+              - registration_token
+              - email
+  "/api/v3/store/auth/providers":
+    get:
+      summary: List authentication providers
+      tags:
+      - Authentication
+      security:
+      - api_key: []
+      description: |
+        Lists the authentication providers this store has configured, for a
+        storefront to render its login page: the password form when `email` is
+        registered, a button per redirect provider.
+
+        A redirect provider's `authorization_url` already carries a signed
+        `state`; the storefront stores it and sends it back with the
+        authorization code. `requires_email` warns that the provider cannot
+        return an email, so the shopper will be asked for one before the
+        account is created.
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: providers listed
+          content:
+            application/json:
+              example:
+                providers:
+                - key: email
+                  kind: password
+                - key: wechat
+                  kind: redirect
+                  label: WeChat
+                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--e0dd6db3ecc1507a0eac42666713a26c74352769
+                  requires_email: true
+              schema:
+                type: object
+                properties:
+                  providers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        key:
+                          type: string
+                          example: wechat
+                        kind:
+                          type: string
+                          enum:
+                          - password
+                          - redirect
+                        label:
+                          type: string
+                          nullable: true
+                          example: WeChat
+                        requires_email:
+                          type: boolean
+                        authorization_url:
+                          type: string
+                          nullable: true
+                      required:
+                      - key
+                      - kind
+                required:
+                - providers
   "/api/v3/store/password_resets":
     post:
       summary: Request a password reset
