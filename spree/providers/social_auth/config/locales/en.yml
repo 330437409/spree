@@ -7,3 +7,4 @@ en:
         missing_code: The provider did not return an authorization code.
         provider_unavailable: This provider is not configured for this store.
         redirect_uri_mismatch: The callback URL does not match the one configured for this provider.
+        redirect_uri_must_not_have_query: Douyin rejects a callback URL that carries query parameters. Register the plain URL and pass anything else in the state.

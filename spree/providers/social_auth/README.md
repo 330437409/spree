@@ -43,6 +43,7 @@ for that store.
 | Key | Provider | Returns an email |
 |---|---|---|
 | `wechat` | WeChat Open Platform website application | no — the shopper is asked for one |
+| `douyin` | Douyin Open Platform website application | no — the shopper is asked for one |
 
 WeChat, Douyin, QQ, Weibo and Alipay authenticate a shopper without returning an email.
 Nothing is created in that case: the login answers `registration_required` and the

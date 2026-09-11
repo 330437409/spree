@@ -85,8 +85,8 @@ module SpreeSocialAuth
       end
 
       def exchange(code)
-        token = check_errors!(fetch(token_url, token_params(code: code), request: token_request))
-        profile = check_errors!(fetch(profile_url, profile_params(token), request: profile_request))
+        token = unwrap(check_errors!(fetch(token_url, token_params(code: code), request: token_request)))
+        profile = unwrap(check_errors!(fetch(profile_url, profile_params(token), request: profile_request)))
 
         [token, profile]
       end
@@ -102,6 +102,12 @@ module SpreeSocialAuth
       # Providers that refuse with an HTTP status need nothing here; WeChat and
       # Douyin answer 200 with a code in the body and override this.
       def check_errors!(payload)
+        payload
+      end
+
+      # Providers that wrap their payload in an envelope override this to hand
+      # the rest of the flow the part it cares about; the rest get the body.
+      def unwrap(payload)
         payload
       end
 

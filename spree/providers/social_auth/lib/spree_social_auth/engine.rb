@@ -21,7 +21,9 @@ module SpreeSocialAuth
     # order.
     config.after_initialize do
       Spree.integrations << 'SpreeSocialAuth::Integrations::WeChat'
+      Spree.integrations << 'SpreeSocialAuth::Integrations::Douyin'
       Spree.store_authentication_strategies.add(:wechat, SpreeSocialAuth::Strategies::WeChat.provider)
+      Spree.store_authentication_strategies.add(:douyin, SpreeSocialAuth::Strategies::Douyin.provider)
     end
   end
 end

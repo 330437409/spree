@@ -1,11 +1,16 @@
 module SocialAuthSpecHelpers
   WECHAT_TOKEN_PATTERN = %r{\Ahttps://api\.weixin\.qq\.com/sns/oauth2/access_token}.freeze
   WECHAT_PROFILE_PATTERN = %r{\Ahttps://api\.weixin\.qq\.com/sns/userinfo}.freeze
+  DOUYIN_TOKEN_PATTERN = %r{\Ahttps://open\.douyin\.com/oauth/access_token/}.freeze
+  DOUYIN_PROFILE_PATTERN = %r{\Ahttps://open\.douyin\.com/oauth/userinfo/}.freeze
 
-  # @return [SpreeSocialAuth::Integrations::WeChat]
-  def create_social_integration(store: nil, client_id: 'wx_appid', client_secret: 'wx_secret',
+  JSON_HEADERS = { 'Content-Type' => 'application/json' }.freeze
+
+  # @return [Spree::Integration]
+  def create_social_integration(store: nil, integration_class: SpreeSocialAuth::Integrations::WeChat,
+                               client_id: 'wx_appid', client_secret: 'wx_secret',
                                redirect_uri: 'https://shop.example.com/account/callback/wechat', active: true)
-    integration = SpreeSocialAuth::Integrations::WeChat.new(store: store || @default_store, active: active)
+    integration = integration_class.new(store: store || @default_store, active: active)
     integration.preferred_client_id = client_id
     integration.preferred_client_secret = client_secret
     integration.preferred_redirect_uri = redirect_uri
@@ -18,7 +23,7 @@ module SocialAuthSpecHelpers
     stub_request(:get, WECHAT_TOKEN_PATTERN).
       to_return(
         status: 200,
-        headers: { 'Content-Type' => 'application/json' },
+        headers: JSON_HEADERS,
         body: {
           access_token: 'access-token-1',
           refresh_token: 'refresh-token-1',
@@ -30,7 +35,7 @@ module SocialAuthSpecHelpers
     stub_request(:get, WECHAT_PROFILE_PATTERN).
       to_return(
         status: 200,
-        headers: { 'Content-Type' => 'application/json' },
+        headers: JSON_HEADERS,
         body: {
           openid: 'openid-1',
           nickname: 'Ada',
@@ -42,10 +47,44 @@ module SocialAuthSpecHelpers
   # WeChat answers failures with HTTP 200 and an error code in the body.
   def stub_wechat_token_error(code:, message: 'something went wrong')
     stub_request(:get, WECHAT_TOKEN_PATTERN).
+      to_return(status: 200, headers: JSON_HEADERS, body: { errcode: code, errmsg: message }.to_json)
+  end
+
+  # Douyin wraps a successful exchange in `data`, and its two endpoints carry the
+  # error code in different places.
+  def stub_douyin_exchange(token: {}, profile: {})
+    token_data = {
+      access_token: 'dy-access-token-1',
+      refresh_token: 'dy-refresh-token-1',
+      expires_in: 1_296_000,
+      open_id: 'open-id-1',
+      error_code: 0
+    }.merge(token)
+
+    profile_data = {
+      open_id: 'open-id-1',
+      nickname: 'Ada',
+      avatar: 'https://dy.example.com/ada.jpg'
+    }.merge(profile)
+
+    stub_request(:post, DOUYIN_TOKEN_PATTERN).
+      to_return(status: 200, headers: JSON_HEADERS, body: { data: token_data, message: 'success' }.to_json)
+
+    stub_request(:post, DOUYIN_PROFILE_PATTERN).
+      to_return(status: 200, headers: JSON_HEADERS, body: { data: profile_data, err_no: 0, err_msg: '' }.to_json)
+  end
+
+  def stub_douyin_token_error(code:, message: 'something went wrong')
+    stub_request(:post, DOUYIN_TOKEN_PATTERN).
       to_return(
         status: 200,
-        headers: { 'Content-Type' => 'application/json' },
-        body: { errcode: code, errmsg: message }.to_json
+        headers: JSON_HEADERS,
+        body: { data: { error_code: code, description: message }, message: message }.to_json
       )
+  end
+
+  def stub_douyin_profile_error(code:, message: 'something went wrong')
+    stub_request(:post, DOUYIN_PROFILE_PATTERN).
+      to_return(status: 200, headers: JSON_HEADERS, body: { data: {}, err_no: code, err_msg: message }.to_json)
   end
 end
