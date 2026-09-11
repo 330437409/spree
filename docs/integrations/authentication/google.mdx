@@ -1,0 +1,69 @@
+---
+title: "Connect Google login to Spree Commerce"
+sidebarTitle: "Google"
+description: "Let customers sign in to your Spree storefront with their Google account, and link them to the account they already have."
+---
+
+Google login uses the standard OAuth 2.0 / OpenID Connect endpoints. It is the simplest provider to set up, and the one that shows how account linking is meant to work: Google returns the customer's address already marked as verified, so a customer who registered with a password keeps the same account — and the same order history — when they later use the Google button.
+
+## What you need from Google
+
+1. **A Google Cloud project** (<https://console.cloud.google.com>).
+2. **An OAuth consent screen**, configured once per project: an application name, a support email and an audience. While it stays in **Testing**, only the test users you list can sign in.
+3. **An OAuth client ID** of type **Web application**, which is where the callback URL is registered.
+
+Spree asks Google for three scopes — `openid`, `email` and `profile`. None of them is sensitive, so Google does not require app verification for them.
+
+## Connect Google
+
+Add the gem and restart the server:
+
+<CodeGroup>
+
+```bash Spree CLI (Docker)
+spree bundle add spree_social_auth
+```
+
+```bash Without Spree CLI
+bundle add spree_social_auth
+```
+
+</CodeGroup>
+
+In the Google Cloud console, open **APIs & Services → Credentials**, create a **Web application** OAuth client and add an **Authorized redirect URI**:
+
+```
+https://your-storefront.example.com/account/callback/google
+```
+
+Then go to **Settings → Integrations → Authentication**, find **Google** and fill in:
+
+| Field | What to enter |
+| --- | --- |
+| **Client Id** | The OAuth client's **Client ID** |
+| **Client Secret** | The OAuth client's **Client secret** |
+| **Redirect Uri** | The same URL you added as the authorized redirect URI |
+| **Trust Unverified Email** | Leave off — Google marks the addresses it returns as verified |
+
+Add your storefront's origin under **Settings → Allowed Origins** as well, then switch **Active** on and save.
+
+<Note>
+Google compares the redirect URI exactly — scheme, host, port and path. `https://shop.example.com/account/callback/google` and `https://shop.example.com/account/callback/google/` are two different URIs to Google. During local development, `http://localhost:3001` is accepted.
+</Note>
+
+## What your customers see
+
+1. **Continue with Google** on the sign-in page, with no note about an email address — Google returns one.
+2. The Google account chooser and consent screen.
+3. They land signed in. If their address already has an account on your store, it is the same account: the provider is attached to it rather than a second account being created.
+
+## Troubleshooting
+
+Google answers with real HTTP statuses and an `error` parameter on the callback, so its own message is usually enough. The ones worth knowing:
+
+| What you see | What it means |
+| --- | --- |
+| `Error 400: redirect_uri_mismatch` | The URI sent does not match any authorized redirect URI on the OAuth client, character for character — including a trailing slash, or `http` where Google has `https` |
+| `access_denied` | The customer closed the consent screen, or the consent screen is still in **Testing** and they are not one of its test users |
+| "Google hasn't verified this app" | The consent screen is not published. Signing in still works — Google shows the warning because the app has not completed its branding review |
+| "An account with this email already exists" | The returned address was not one Google marked verified, and an account already uses it. This is not expected with Google; check the customer's existing identities first |

@@ -1,0 +1,95 @@
+---
+title: "Social login"
+sidebarTitle: "Overview"
+description: "Let customers sign in with WeChat, Douyin or Google instead of a password, on the storefront's sign-in and registration pages."
+---
+
+Social login adds a button for each provider you enable to the storefront's sign-in and registration pages. The customer authenticates with the provider, Spree signs them in, and the account, cart, addresses and order history stay the ones they already had.
+
+| Provider | Email returned | Setup effort |
+| --- | --- | --- |
+| [WeChat](/integrations/authentication/wechat) | no | An approved Open Platform website application and a site carrying an ICP备案号 |
+| [Douyin](/integrations/authentication/douyin) | no | An approved Douyin website application |
+| [Google](/integrations/authentication/google) | yes, verified | A Google Cloud OAuth client — the quickest to set up |
+
+<Info>
+Social login needs **Spree 6.0**. On 5.x the storefront is part of Rails and this gem does not apply.
+</Info>
+
+## Installation
+
+<CodeGroup>
+
+```bash Spree CLI (Docker)
+spree bundle add spree_social_auth
+```
+
+```bash Without Spree CLI
+bundle add spree_social_auth
+```
+
+</CodeGroup>
+
+Restart the server afterwards. The providers register themselves at boot — there is no generator to run and no migration to apply.
+
+## Connect a provider
+
+Each provider is configured per store under **Settings → Integrations → Authentication**. A provider appears on the storefront only while its integration is active.
+
+| Field | What to enter |
+| --- | --- |
+| **Client Id** | The provider's application identifier: WeChat's AppID, Douyin's Client Key, Google's Client ID |
+| **Client Secret** | The matching application secret |
+| **Redirect Uri** | The callback URL you registered in the provider's console |
+| **Trust Unverified Email** | Leave this off. It exists only for a provider whose directory owns every address it issues, and it lets an address the provider did not verify match an existing account |
+
+Saving with **Active** on runs one check of the credentials, so a missing app secret or a callback URL the provider would reject is reported while you are still on the page.
+
+### The callback URL
+
+The callback URL is the storefront route the provider sends the customer back to:
+
+```
+https://your-storefront.example.com/account/callback/wechat
+```
+
+Three things have to line up, and a mismatch here is the most common setup mistake:
+
+1. It must be the exact URL registered in the provider's console. The last segment is the provider key — `wechat`, `douyin` or `google`.
+2. It must sit under your storefront's own origin, and that origin must be listed under **Settings → Allowed Origins**.
+3. WeChat and Douyin add rules of their own, described on their pages.
+
+## What the customer sees
+
+1. The sign-in page shows one button per active provider under "Or continue with". Where a provider cannot return an email address, the button says that one will be asked for.
+2. The customer authenticates with the provider. WeChat and Douyin show a QR code to scan with their app.
+3. If the provider returned a verified address they are signed in straight away. If it did not — WeChat and Douyin never do — they get one more screen asking for their email address, and the account is created then, on the spot.
+
+## How accounts are matched
+
+Spree decides who is signing in with three rules, in order:
+
+1. **A provider identity it already knows** signs in to the account that identity belongs to.
+2. **A verified address** signs in to the account already using it and attaches the provider to it. This is how a customer who registered with a password and later taps WeChat keeps one account and one order history.
+3. **Anything else** asks for an email address and creates a new account through the same registration flow as the sign-up form, so your registration policy, the terms checkbox and marketing consent all apply.
+
+Only an address the provider explicitly marked verified can match an existing account. An unverified one never does — matching on it would let anyone claim someone else's account. A provider that returns an unverified address already in use is refused, and the customer is told to sign in with that address.
+
+An account created by social login starts without a password. The customer can set one at any time through **Forgot password**.
+
+## Limitations
+
+- There is no screen for connecting or disconnecting a provider from the account page yet. A customer can sign in with a provider but cannot detach it themselves.
+- Social sign-up runs through your normal registration workflow, so a store that requires approval before an account can order keeps that requirement.
+
+## Troubleshooting
+
+| What you see | What it means |
+| --- | --- |
+| No buttons on the sign-in page | The store has no active provider integration, or the gem is not loaded — check **Settings → Integrations → Authentication** |
+| The button does nothing, or the provider shows its own error page | The callback URL registered with the provider does not match the one on the integration |
+| "Your sign-in attempt expired. Please start again." | The provider's authorization code was spent or is older than ten minutes. Nothing to fix — the customer starts again |
+| "That sign-in option is not available right now." | The integration is no longer active, or its credentials no longer authenticate |
+| "An account with this email already exists" | The provider returned an address it did not mark verified, and an account already uses it. The customer signs in with that address and its password |
+
+A failed exchange is logged with the provider, the store and the provider's own error code, so the reason is visible without reproducing it.

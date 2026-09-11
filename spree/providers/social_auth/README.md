@@ -26,14 +26,18 @@ generate and no migration beyond the ones Spree already ships.
 ## Configuring a provider
 
 Each provider's credentials live in an `Integration`, one per store, edited on the
-dashboard's **Settings → Integrations** page:
+dashboard's **Settings → Integrations → Authentication** page:
 
-| Setting | What it is |
+| Field | What it is |
 |---|---|
-| App ID | The provider's client id — WeChat's AppID, Douyin's client key |
-| App secret | The matching secret |
-| Callback URL | The URL the provider redirects back to, registered in the provider's console |
-| Trust unverified email | Off by default. Only for a provider whose directory owns the addresses it issues |
+| Client Id | The provider's application identifier — WeChat's AppID, Douyin's client key |
+| Client Secret | The matching secret |
+| Redirect Uri | The URL the provider redirects back to, registered in the provider's console |
+| Trust Unverified Email | Off by default. Only for a provider whose directory owns the addresses it issues |
+
+The callback URL must also sit under an origin listed on **Settings → Allowed
+Origins**, and it ends in the provider key — `/account/callback/wechat`,
+`/account/callback/douyin`, `/account/callback/google`.
 
 A provider appears on a storefront's login page only while its integration is active
 for that store.
@@ -55,7 +59,13 @@ cannot receive mail.
 
 Every provider requires an approved application, the callback URL registered with it,
 and — for WeChat — a website application whose site carries an ICP备案号. Those
-approvals, not the integration, are the slow part. See the plan for the full list.
+approvals, not the integration, are the slow part.
+
+The merchant-facing guides ship with the documentation site:
+[social login](https://docs.spreecommerce.org/integrations/authentication/social-login),
+[WeChat](https://docs.spreecommerce.org/integrations/authentication/wechat),
+[Douyin](https://docs.spreecommerce.org/integrations/authentication/douyin) and
+[Google](https://docs.spreecommerce.org/integrations/authentication/google).
 
 ## Development
 

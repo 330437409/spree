@@ -577,6 +577,15 @@
                         ]
                       },
                       {
+                        "group": "Authentication",
+                        "pages": [
+                          "integrations/authentication/social-login",
+                          "integrations/authentication/wechat",
+                          "integrations/authentication/douyin",
+                          "integrations/authentication/google"
+                        ]
+                      },
+                      {
                         "group": "Tax",
                         "pages": [
                           "integrations/tax/avalara"
@@ -1619,6 +1628,15 @@
                 ]
               },
               {
+                "group": "Authentication",
+                "pages": [
+                  "integrations/authentication/social-login",
+                  "integrations/authentication/wechat",
+                  "integrations/authentication/douyin",
+                  "integrations/authentication/google"
+                ]
+              },
+              {
                 "group": "Tax",
                 "pages": [
                   "integrations/tax/avalara"
@@ -2484,6 +2502,15 @@
               "integrations/payments/paypal",
               "integrations/payments/razorpay",
               "integrations/payments/wechat-pay"
+            ]
+          },
+          {
+            "group": "Authentication",
+            "pages": [
+              "integrations/authentication/social-login",
+              "integrations/authentication/wechat",
+              "integrations/authentication/douyin",
+              "integrations/authentication/google"
             ]
           },
           {

@@ -1,0 +1,87 @@
+---
+title: "Connect WeChat login to Spree Commerce"
+sidebarTitle: "WeChat"
+description: "Let customers sign in to your Spree storefront by scanning a WeChat QR code, with review expectations for the Open Platform website application."
+---
+
+WeChat login (网站应用微信登录) puts a QR code on your sign-in page. The customer scans it with WeChat, confirms on their phone, and is signed in. It is the sign-in most customers in mainland China expect, and often the only one they will use.
+
+<Warning>
+The AppID and AppSecret for this come from an approved **WeChat Open Platform website application**. They are not the credentials of your WeChat Pay merchant account (商户号) — the two are separate WeChat products and their credentials do not work in each other's place.
+</Warning>
+
+## What you need from WeChat
+
+Login is gated behind a review, and the review is the slow part — not the integration.
+
+1. **A WeChat Open Platform account** (<https://open.weixin.qq.com>) with **developer certification** (开发者资质认证). Certification is paid annually and verifies the company behind the account.
+2. **A website application** (网站应用) created under that account, and submitted for review. Approval returns the AppID and AppSecret.
+3. **A site that survives the review.** WeChat expects the site itself to show your company information, a user agreement, a privacy policy, a copyright notice and the site's **ICP备案号**. Reviews generally assume a mainland-China legal entity; a merchant outside China should expect this to be the hard part rather than the integration.
+4. **The callback domain**, filled in on the website application's settings.
+
+WeChat asks for the callback **domain**, not the full URL — for example `your-storefront.example.com`. The URL on the Spree integration must sit under it.
+
+<Note>
+WeChat has three separate login products. This one is the Open Platform **website application**. The Official Account flow (`snsapi_base` / `snsapi_userinfo`) and the Mini Program flow (`jscode2session`) are different integrations and are not covered here.
+</Note>
+
+## Connect WeChat
+
+Add the gem and restart the server:
+
+<CodeGroup>
+
+```bash Spree CLI (Docker)
+spree bundle add spree_social_auth
+```
+
+```bash Without Spree CLI
+bundle add spree_social_auth
+```
+
+</CodeGroup>
+
+Then go to **Settings → Integrations → Authentication**, find **WeChat** and fill in:
+
+| Field | What to enter |
+| --- | --- |
+| **Client Id** | The website application's **AppID** |
+| **Client Secret** | The matching **AppSecret** |
+| **Redirect Uri** | `https://your-storefront.example.com/account/callback/wechat` |
+| **Trust Unverified Email** | Leave off — WeChat returns no email at all |
+
+Add your storefront's origin under **Settings → Allowed Origins** as well, then switch **Active** on and save.
+
+## What your customers see
+
+1. **Continue with WeChat** on the sign-in page, with a note that an email address will be asked for.
+2. A QR code to scan with WeChat, and a confirmation on the phone.
+3. One screen asking for their email address, which creates the account. WeChat returns no email, so this step is always there — and it is deliberate: an account with a made-up address could never be recovered.
+4. They land signed in, with their guest cart, addresses and order history attached.
+
+The same customer signing in again is recognised by their WeChat identity, so the email screen only appears the first time.
+
+## Troubleshooting
+
+The exchange fails with HTTP 200 and an error code in the body, so the status alone tells you nothing. Spree translates the codes it knows into plain language and keeps the provider's own message in the log.
+
+| WeChat code | What it means |
+| --- | --- |
+| `40029`, `40163`, `42003` | The authorization code was already used or is older than ten minutes. Codes are single use — the customer starts again |
+| `40013`, `40001`, `40125`, `41002`, `41004`, `41008` | WeChat rejected the AppID or AppSecret. Check both belong to the same Open Platform website application |
+| `-1` | WeChat was too busy to answer. Retry |
+| A message about `redirect_uri` and the Open Platform configuration | The callback URL on the integration does not sit under the callback domain registered with WeChat |
+
+Other things worth checking when a sign-in does not complete:
+
+| What you see | What to check |
+| --- | --- |
+| The QR code page reports an invalid AppID | The AppID is the website application's, not a payment or Official Account identifier |
+| Scanning does nothing | The callback domain registered with WeChat does not match the **Redirect Uri** on the integration |
+| The customer is asked for their email twice | They are signing in with a different WeChat identity than the first time — check the customer's identities before assuming a bug |
+
+## Notes for a China-region storefront
+
+- **One person, one account.** WeChat identifies a customer by their `unionid`, which is stable across every application under your Open Platform account, falling back to the `openid` when no unionid is issued. A customer who signs in from two different WeChat applications still reaches one Spree account.
+- **The avatar is a display value.** WeChat's `headimgurl` expires when the customer changes their avatar, and WeChat stopped returning gender, province and city in 2021. Do not use any of it as an identity.
+- **Profile data leaving mainland China engages PIPL.** Provider endpoints are also far from non-China infrastructure, and a deployment serving Chinese customers should reach WeChat from a China-region egress. The exchange runs inside the customer's sign-in request with short timeouts, and never blocks on a slow provider.

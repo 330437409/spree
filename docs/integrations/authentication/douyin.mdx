@@ -1,0 +1,74 @@
+---
+title: "Connect Douyin login to Spree Commerce"
+sidebarTitle: "Douyin"
+description: "Let customers sign in to your Spree storefront with Douyin, with the callback rules Douyin enforces and what its application review expects."
+---
+
+Douyin login (抖音开放平台网站授权) signs a customer in from the Douyin app. Like WeChat it returns no email address, so a customer signing in for the first time is asked for one before their account exists.
+
+## What you need from Douyin
+
+1. **A Douyin Open Platform account** (<https://open.douyin.com>) with **real-name verification** (实名认证).
+2. **A website application** (网站应用) created under that account, submitted for review and approved. Approval returns the **Client Key** and **Client Secret**.
+3. **The callback domain**, registered on the application.
+
+<Warning>
+Douyin is stricter about the callback than WeChat. The callback URL must use **https**, must sit under the registered domain, and **must not carry query parameters**. Spree refuses to activate a Douyin integration whose callback URL has a query string, so the mistake surfaces while you configure it rather than at the first sign-in.
+</Warning>
+
+## Connect Douyin
+
+Add the gem and restart the server:
+
+<CodeGroup>
+
+```bash Spree CLI (Docker)
+spree bundle add spree_social_auth
+```
+
+```bash Without Spree CLI
+bundle add spree_social_auth
+```
+
+</CodeGroup>
+
+Then go to **Settings → Integrations → Authentication**, find **Douyin** and fill in:
+
+| Field | What to enter |
+| --- | --- |
+| **Client Id** | The application's **Client Key** |
+| **Client Secret** | The matching **Client Secret** |
+| **Redirect Uri** | `https://your-storefront.example.com/account/callback/douyin` — no query string, no trailing slash |
+| **Trust Unverified Email** | Leave off — Douyin returns no email at all |
+
+Add your storefront's origin under **Settings → Allowed Origins** as well, then switch **Active** on and save.
+
+## What your customers see
+
+1. **Continue with Douyin** on the sign-in page, with a note that an email address will be asked for.
+2. The Douyin authorization screen, and a confirmation in the app.
+3. One screen asking for their email address, which creates the account. Douyin returns no email, so this step is always there on a first sign-in.
+4. They land signed in, with their guest cart, addresses and order history attached.
+
+## Troubleshooting
+
+Douyin answers failures with HTTP 200 and the error code in the body, and its two endpoints do not even agree on where the code lives — Spree reads both shapes and translates the codes it knows.
+
+| Douyin code | What it means |
+| --- | --- |
+| `10007` | The authorization code was already used or is older than ten minutes. Codes are single use — the customer starts again |
+| `10003`, `10013` | Douyin rejected the Client Key or Client Secret. Check both belong to the same website application |
+| `28001003`, `28001008` | The stored access token is no longer valid. The customer signs in again |
+
+Other things worth checking:
+
+| What you see | What to check |
+| --- | --- |
+| Activation is refused with a message about query parameters | The **Redirect Uri** carries a `?…` — Douyin rejects that. Register the plain URL and let the signed state carry everything else |
+| The Douyin page reports an unregistered redirect address | The callback domain registered on the application does not cover the **Redirect Uri** |
+| The customer is asked for their email twice | They are signing in with a different Douyin identity than the first time — check the customer's identities before assuming a bug |
+
+## Notes for a China-region storefront
+
+- **One person, one account.** Douyin identifies a customer by their `union_id`, stable across every application under your developer account, falling back to `open_id` when no union id is issued.
+- **Profile data leaving mainland China engages PIPL**, and provider endpoints are far from non-China infrastructure. A deployment serving Chinese customers should reach Douyin from a China-region egress. The exchange runs inside the customer's sign-in request with short timeouts.
