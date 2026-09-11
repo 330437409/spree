@@ -34,7 +34,10 @@ module SpreeSocialAuth
       raise_for_status(response)
 
       parse(response.body)
-    rescue Faraday::TimeoutError, Faraday::ConnectionFailed => e
+    rescue Faraday::Error => e
+      # Faraday::Error covers the whole family — timeouts, connection failures,
+      # TLS refusals, redirect loops — so a provider that misbehaves in a way
+      # nobody enumerated is still a named refusal, never a 500.
       raise ConnectionError, "The provider could not be reached (#{e.class.name.demodulize})"
     end
 

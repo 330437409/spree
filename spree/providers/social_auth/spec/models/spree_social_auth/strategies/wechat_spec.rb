@@ -73,6 +73,18 @@ RSpec.describe SpreeSocialAuth::Strategies::WeChat do
 
     # WeChat returns no email, so there is nothing to create an account from —
     # the storefront asks for one instead.
+    # An account created for a profile with no uid would be orphaned the moment
+    # the identity failed to attach, so nothing may reach the database.
+    it 'refuses a profile with no account identifier' do
+      stub_wechat_exchange(token: { openid: nil }, profile: { openid: nil })
+
+      expect { @result = strategy(params: { code: 'code-1' }).callback }
+        .not_to change(Spree.customer_class, :count)
+
+      expect(@result).to be_failure
+      expect(@result.error).to include('did not return an account identifier')
+    end
+
     it 'asks for a registration rather than inventing an address' do
       stub_wechat_exchange
       subject = strategy(params: { code: 'auth-code', redirect_uri: redirect_uri })

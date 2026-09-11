@@ -140,4 +140,9 @@ export interface RedirectLogin {
   redirect_uri?: string
 }
 
-export type LoginCredentials = RedirectLogin | EmailPasswordLogin | ProviderLogin
+/**
+ * What `auth.login` accepts. A provider reached by a browser redirect is not
+ * here: its result can be the registration step rather than tokens, and
+ * `auth.loginWithRedirect` is the call that says so.
+ */
+export type LoginCredentials = EmailPasswordLogin | ProviderLogin

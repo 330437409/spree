@@ -1,7 +1,7 @@
 From a4f6642ca4ed4684215a7315b72f929d0b342824 Mon Sep 17 00:00:00 2001
 From: Spree <hello@spreecommerce.org>
 Date: Fri, 11 Sep 2026 16:21:38 +0800
-Subject: [PATCH] Add social login to the storefront
+Subject: [PATCH 1/2] Add social login to the storefront
 
 WeChat, Douyin and Google sign-in now appear on the login and
 registration pages, driven by the store's configured providers.
@@ -2495,6 +2495,480 @@ index 0000000..5537842
 +
 +  return "socialLoginFailed";
 +}
+-- 
+2.43.0
+
+
+From 804b4c91e0a01b73411b9ffe653f79d98c31baa3 Mon Sep 17 00:00:00 2001
+From: Spree <hello@spreecommerce.org>
+Date: Fri, 11 Sep 2026 19:25:33 +0800
+Subject: [PATCH 2/2] Fix the social login callback reporting success as
+ failure
+
+Next refuses updateTag outside a Server Action, so the callback route
+handler threw while expiring the session caches and every completed
+sign-in was reported as a failure. The route now expires them with
+revalidateTag, and the exchange and the session bootstrap are separate:
+a local failure after the API issued tokens can no longer read as a
+rejected login.
+
+The callback URL travels in the social-login cookie instead of being
+looked up a second time after the provider's code is spent, the pending
+registration token is claimed before the call so a double submit cannot
+register twice, and a provider error other than access_denied is no
+longer reported to the shopper as their own cancellation.
+---
+ .../account/callback/[provider]/route.ts      |  15 +-
+ .../account/CompleteRegistrationForm.tsx      |  10 ++
+ src/lib/data/__tests__/customer.test.ts       |  63 ++++++-
+ src/lib/data/customer.ts                      | 154 +++++++++++-------
+ src/lib/spree/cookies.ts                      |   6 +-
+ src/lib/utils/social-auth.ts                  |   1 +
+ 6 files changed, 185 insertions(+), 64 deletions(-)
+
+diff --git a/src/app/[country]/[locale]/(storefront)/account/callback/[provider]/route.ts b/src/app/[country]/[locale]/(storefront)/account/callback/[provider]/route.ts
+index d9af136..4493b40 100644
+--- a/src/app/[country]/[locale]/(storefront)/account/callback/[provider]/route.ts
++++ b/src/app/[country]/[locale]/(storefront)/account/callback/[provider]/route.ts
+@@ -39,8 +39,19 @@ export async function GET(
+     redirectTo(`${basePath}/account?social_error=${encodeURIComponent(code)}`);
+ 
+   if (!PROVIDER_KEY.test(provider)) return fail("invalid_provider");
+-  // The shopper cancelled at the provider, or it refused on its own terms.
+-  if (request.nextUrl.searchParams.get("error")) return fail("access_denied");
++
++  // `access_denied` is the shopper closing the consent screen; any other
++  // `error` value (server_error, temporarily_unavailable, invalid_request) is
++  // the provider failing, and telling the shopper they cancelled would be
++  // both wrong and unactionable.
++  const providerError = request.nextUrl.searchParams.get("error");
++  if (providerError) {
++    return fail(
++      providerError === "access_denied"
++        ? "access_denied"
++        : "provider_unavailable",
++    );
++  }
+ 
+   const code = request.nextUrl.searchParams.get("code");
+   const state = request.nextUrl.searchParams.get("state");
+diff --git a/src/components/account/CompleteRegistrationForm.tsx b/src/components/account/CompleteRegistrationForm.tsx
+index 954f1fd..d9bfd40 100644
+--- a/src/components/account/CompleteRegistrationForm.tsx
++++ b/src/components/account/CompleteRegistrationForm.tsx
+@@ -73,6 +73,16 @@ export function CompleteRegistrationForm() {
+     }
+ 
+     setSubmitting(false);
++
++    // The pending registration is gone or too old to use, and the action has
++    // cleared it — staying here would only offer a form that cannot succeed.
++    if (result.error === "invalid_registration_token") {
++      router.replace(
++        `${basePath}/account?social_error=invalid_registration_token`,
++      );
++      return;
++    }
++
+     setError(t(socialAuthMessageKey(result.error)));
+   };
+ 
+diff --git a/src/lib/data/__tests__/customer.test.ts b/src/lib/data/__tests__/customer.test.ts
+index 8b4594c..537ae72 100644
+--- a/src/lib/data/__tests__/customer.test.ts
++++ b/src/lib/data/__tests__/customer.test.ts
+@@ -45,6 +45,7 @@ vi.mock("@/lib/spree", () => ({
+   setSocialLoginContext: vi.fn(),
+   clearSocialLoginContext: vi.fn(),
+   getRegistrationToken: vi.fn(),
++  setRegistrationToken: vi.fn(),
+   clearRegistrationToken: vi.fn(),
+   getCartToken: vi.fn().mockResolvedValue(undefined),
+   getCartId: vi.fn().mockResolvedValue(undefined),
+@@ -77,6 +78,7 @@ vi.mock("@spree/sdk", () => ({
+ 
+ vi.mock("next/cache", () => ({
+   updateTag: vi.fn(),
++  revalidateTag: vi.fn(),
+ }));
+ 
+ import {
+@@ -455,6 +457,7 @@ describe("customer server actions", () => {
+       expect(setSocialLoginContext).toHaveBeenCalledWith({
+         state: "signed-state",
+         returnTo: undefined,
++        redirectUri: "https://store.example/account/callback/wechat",
+       });
+       expect(result).toEqual({ url: AUTHORIZATION_URL });
+     });
+@@ -470,6 +473,7 @@ describe("customer server actions", () => {
+       expect(setSocialLoginContext).toHaveBeenCalledWith({
+         state: "signed-state",
+         returnTo: "/us/en/checkout/cart-1",
++        redirectUri: "https://store.example/account/callback/wechat",
+       });
+     });
+ 
+@@ -511,9 +515,7 @@ describe("customer server actions", () => {
+       (getSocialLoginContext as ReturnType<typeof vi.fn>).mockResolvedValue({
+         state: "signed-state",
+         returnTo: "/us/en/checkout/cart-1",
+-      });
+-      mockClient.auth.providers.mockResolvedValue({
+-        providers: [redirectProvider],
++        redirectUri: "https://store.example/account/callback/wechat",
+       });
+       mockClient.auth.loginWithRedirect.mockResolvedValue({
+         token: "jwt-token",
+@@ -540,6 +542,58 @@ describe("customer server actions", () => {
+       });
+     });
+ 
++    it("sends no callback URL when the cookie carried none", async () => {
++      const { getSocialLoginContext } = await import("@/lib/spree");
++      (getSocialLoginContext as ReturnType<typeof vi.fn>).mockResolvedValue({
++        state: "signed-state",
++      });
++      mockClient.auth.loginWithRedirect.mockResolvedValue({
++        token: "jwt-token",
++        refresh_token: "refresh-token",
++        user: mockUser,
++      });
++
++      await loginWithProvider({
++        provider: "wechat",
++        code: "code-1",
++        state: "signed-state",
++      });
++
++      expect(mockClient.auth.loginWithRedirect).toHaveBeenCalledWith({
++        provider: "wechat",
++        code: "code-1",
++        state: "signed-state",
++        redirect_uri: undefined,
++      });
++    });
++
++    // Next refuses updateTag outside a Server Action, so a callback that used it
++    // reported every successful sign-in as a failure.
++    it("expires the session caches the way a route handler may", async () => {
++      const { getSocialLoginContext } = await import("@/lib/spree");
++      const { revalidateTag } = await import("next/cache");
++      (getSocialLoginContext as ReturnType<typeof vi.fn>).mockResolvedValue({
++        state: "signed-state",
++      });
++      mockClient.auth.loginWithRedirect.mockResolvedValue({
++        token: "jwt-token",
++        refresh_token: "refresh-token",
++        user: mockUser,
++      });
++
++      const result = await loginWithProvider({
++        provider: "wechat",
++        code: "code-1",
++        state: "signed-state",
++      });
++
++      expect(result).toEqual({ status: "authenticated", returnTo: null });
++      expect(revalidateTag).toHaveBeenCalledWith("customer", "max");
++      expect(revalidateTag).toHaveBeenCalledWith("cart", "max");
++      const { updateTag } = await import("next/cache");
++      expect(updateTag).not.toHaveBeenCalled();
++    });
++
+     it("reports the registration step instead of a session", async () => {
+       const { getSocialLoginContext, setAccessToken } = await import(
+         "@/lib/spree"
+@@ -547,9 +601,6 @@ describe("customer server actions", () => {
+       (getSocialLoginContext as ReturnType<typeof vi.fn>).mockResolvedValue({
+         state: "signed-state",
+       });
+-      mockClient.auth.providers.mockResolvedValue({
+-        providers: [redirectProvider],
+-      });
+       mockClient.auth.loginWithRedirect.mockResolvedValue({
+         status: "registration_required",
+         registration_token: "registration-token",
+diff --git a/src/lib/data/customer.ts b/src/lib/data/customer.ts
+index 9574927..4117099 100644
+--- a/src/lib/data/customer.ts
++++ b/src/lib/data/customer.ts
+@@ -1,8 +1,13 @@
+ "use server";
+ 
+-import type { AuthProvider, Customer } from "@spree/sdk";
++import type {
++  AuthProvider,
++  AuthTokens,
++  Customer,
++  LoginResult,
++} from "@spree/sdk";
+ import { isRegistrationRequired, SpreeError } from "@spree/sdk";
+-import { updateTag } from "next/cache";
++import { revalidateTag, updateTag } from "next/cache";
+ import {
+   cacheTagSuffix,
+   clearAccessToken,
+@@ -24,6 +29,7 @@ import {
+   SURFACES,
+   setAccessToken,
+   setRefreshToken,
++  setRegistrationToken,
+   setSocialLoginContext,
+   withAuthRefresh,
+ } from "@/lib/spree";
+@@ -37,11 +43,25 @@ async function fetchCustomer(): Promise<Customer> {
+   return withAuthRefresh((options) => getClient().customer.get(options));
+ }
+ 
++/**
++ * How a completed login expires the cached session data.
++ *
++ * `updateTag` expires a tag for the caller's own follow-up read, which is what
++ * a Server Action wants — and Next refuses it everywhere else. The social
++ * callback is a Route Handler, where the supported call is `revalidateTag`
++ * with the `max` profile: the same immediate expiry, for the next request.
++ */
++type SessionCacheMode = "immediate" | "revalidate";
++
+ /**
+  * Post-auth bootstrap: store tokens, associate guest cart, invalidate caches.
+- * Shared by login, register, and resetPassword.
++ * Shared by login, register, resetPassword and the social callback.
+  */
+-async function finalizeAuth(token: string, refreshToken: string) {
++async function finalizeAuth(
++  token: string,
++  refreshToken: string,
++  cacheMode: SessionCacheMode = "immediate",
++) {
+   await setAccessToken(token);
+   await setRefreshToken(refreshToken);
+ 
+@@ -60,8 +80,13 @@ async function finalizeAuth(token: string, refreshToken: string) {
+     }
+   }
+ 
+-  updateTag("customer");
+-  updateTag("cart");
++  for (const tag of ["customer", "cart"]) {
++    if (cacheMode === "revalidate") {
++      revalidateTag(tag, "max");
++    } else {
++      updateTag(tag);
++    }
++  }
+ }
+ 
+ /**
+@@ -205,30 +230,16 @@ export async function getAuthProviders(): Promise<AuthProvider[]> {
+ }
+ 
+ /**
+- * The callback URL registered with the provider, read back from the
+- * authorization URL the API minted — never from the caller, which would let a
+- * visitor point the exchange at a URL the merchant never registered.
+- */
+-async function registeredRedirectUri(
+-  provider: string,
+-): Promise<string | undefined> {
+-  const providers = await getAuthProviders();
+-  const authorizationUrl = providers.find(
+-    (candidate) => candidate.key === provider,
+-  )?.authorization_url;
+-
+-  if (!authorizationUrl) return undefined;
+-
+-  return (
+-    new URL(authorizationUrl).searchParams.get("redirect_uri") ?? undefined
+-  );
+-}
+-
+-/**
+- * Begin a social sign-in: keep the API-signed state and the shopper's
+- * destination in a cookie, then hand the browser the provider's authorization
+- * URL. The destination is re-validated by the callback, which knows the market
+- * it belongs to.
++ * Begin a social sign-in: keep the API-signed state, the callback URL the API
++ * registered and the shopper's destination in a cookie, then hand the browser
++ * the provider's authorization URL. The destination is re-validated by the
++ * callback, which knows the market it belongs to.
++ *
++ * The callback URL travels with the state because the exchange has to send it
++ * back, and the API accepts only the one registered on the integration. Reading
++ * it from the authorization URL here — on the server, from the API's own
++ * answer — keeps a caller-chosen URL out of the flow, and saves the callback a
++ * second provider lookup that a rate limit could refuse after the code is spent.
+  */
+ export async function startSocialLogin(
+   provider: string,
+@@ -239,13 +250,15 @@ export async function startSocialLogin(
+     (candidate) => candidate.key === provider,
+   )?.authorization_url;
+ 
+-  const state = authorizationUrl
+-    ? new URL(authorizationUrl).searchParams.get("state")
++  const authorizationParams = authorizationUrl
++    ? new URL(authorizationUrl).searchParams
+     : null;
++  const state = authorizationParams?.get("state");
++  const redirectUri = authorizationParams?.get("redirect_uri") ?? undefined;
+ 
+   if (!authorizationUrl || !state) return { error: "invalid_provider" };
+ 
+-  await setSocialLoginContext({ state, returnTo });
++  await setSocialLoginContext({ state, returnTo, redirectUri });
+ 
+   return { url: authorizationUrl };
+ }
+@@ -278,22 +291,12 @@ export async function loginWithProvider(params: {
+     return { status: "failed", error: "invalid_oauth_state" };
+   }
+ 
++  let exchanged: LoginResult;
+   try {
+-    const result = await getClient().auth.loginWithRedirect({
++    exchanged = await getClient().auth.loginWithRedirect({
+       ...params,
+-      redirect_uri: await registeredRedirectUri(params.provider),
++      redirect_uri: context.redirectUri,
+     });
+-
+-    if (isRegistrationRequired(result)) {
+-      return {
+-        status: "registration_required",
+-        registrationToken: result.registration_token,
+-        returnTo: context.returnTo ?? null,
+-      };
+-    }
+-
+-    await finalizeAuth(result.token, result.refresh_token);
+-    return { status: "authenticated", returnTo: context.returnTo ?? null };
+   } catch (error) {
+     console.error("loginWithProvider: exchange failed", error);
+ 
+@@ -302,6 +305,25 @@ export async function loginWithProvider(params: {
+       error: error instanceof SpreeError ? error.code : "authentication_failed",
+     };
+   }
++
++  if (isRegistrationRequired(exchanged)) {
++    return {
++      status: "registration_required",
++      registrationToken: exchanged.registration_token,
++      returnTo: context.returnTo ?? null,
++    };
++  }
++
++  // The API has already issued the session, so a failure on this side is ours
++  // to log, not the shopper's to retry: the tokens are set and the redirect
++  // that follows is what finishes the sign-in.
++  try {
++    await finalizeAuth(exchanged.token, exchanged.refresh_token, "revalidate");
++  } catch (error) {
++    console.error("loginWithProvider: session bootstrap failed", error);
++  }
++
++  return { status: "authenticated", returnTo: context.returnTo ?? null };
+ }
+ 
+ /**
+@@ -329,23 +351,45 @@ export async function completeSocialRegistration(params: {
+     return { success: false, error: "invalid_registration_token" };
+   }
+ 
++  // Claim the token before the call. The API accepts it for its whole fifteen
++  // minutes, so a double submit would otherwise create a second account and
++  // strand it when the identity lands on the first.
++  await clearRegistrationToken();
++
++  let result: AuthTokens;
+   try {
+-    const result = await getClient().auth.completeRegistration({
++    result = await getClient().auth.completeRegistration({
+       registration_token: registrationToken,
+       ...params,
+     });
+-    await clearRegistrationToken();
+-    await finalizeAuth(result.token, result.refresh_token);
+-
+-    return { success: true, user: result.user };
+   } catch (error) {
+     console.error("completeSocialRegistration: registration failed", error);
+ 
+-    return {
+-      success: false,
+-      error: error instanceof SpreeError ? error.code : "registration_failed",
+-    };
++    const code =
++      error instanceof SpreeError ? error.code : "registration_failed";
++
++    // A refused address is the shopper's to correct, and an expired token has
++    // nothing left to correct — either way the screen must not keep a token
++    // whose next use can only fail.
++    if (code === "email_taken" || code === "validation_error") {
++      await setRegistrationToken(registrationToken);
++    }
++
++    return { success: false, error: code };
++  }
++
++  try {
++    await finalizeAuth(result.token, result.refresh_token);
++  } catch (error) {
++    // The account exists and the API issued the session; a local bootstrap
++    // failure is ours to log, not a reason to tell the shopper it failed.
++    console.error(
++      "completeSocialRegistration: session bootstrap failed",
++      error,
++    );
+   }
++
++  return { success: true, user: result.user };
+ }
+ 
+ /**
+diff --git a/src/lib/spree/cookies.ts b/src/lib/spree/cookies.ts
+index e6062f1..495ad64 100644
+--- a/src/lib/spree/cookies.ts
++++ b/src/lib/spree/cookies.ts
+@@ -253,6 +253,8 @@ export interface SocialLoginContext {
+   state: string;
+   /** Where the shopper was headed, for the callback to send them on. */
+   returnTo?: string;
++  /** The callback URL the API registered with the provider, for the exchange. */
++  redirectUri?: string;
+ }
+ 
+ export function oauthStateCookieOptions() {
+@@ -286,12 +288,14 @@ export async function getSocialLoginContext(): Promise<
+     const parsed: unknown = JSON.parse(raw);
+     if (!parsed || typeof parsed !== "object") return undefined;
+ 
+-    const { state, returnTo } = parsed as Partial<SocialLoginContext>;
++    const { state, returnTo, redirectUri } =
++      parsed as Partial<SocialLoginContext>;
+     if (typeof state !== "string") return undefined;
+ 
+     return {
+       state,
+       returnTo: typeof returnTo === "string" ? returnTo : undefined,
++      redirectUri: typeof redirectUri === "string" ? redirectUri : undefined,
+     };
+   } catch {
+     return undefined;
+diff --git a/src/lib/utils/social-auth.ts b/src/lib/utils/social-auth.ts
+index 5537842..f9b3781 100644
+--- a/src/lib/utils/social-auth.ts
++++ b/src/lib/utils/social-auth.ts
+@@ -10,6 +10,7 @@ const ERROR_MESSAGE_KEYS = {
+   invalid_oauth_state: "socialErrorExpired",
+   invalid_registration_token: "socialErrorExpired",
+   invalid_provider: "socialErrorUnavailable",
++  provider_unavailable: "socialErrorUnavailable",
+   redirect_url_not_allowed: "socialErrorUnavailable",
+   authentication_failed: "socialLoginFailed",
+   registration_failed: "socialLoginFailed",
 -- 
 2.43.0
 

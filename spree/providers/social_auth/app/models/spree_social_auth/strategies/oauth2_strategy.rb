@@ -56,19 +56,50 @@ module SpreeSocialAuth
         return failure(Spree.t('spree_social_auth.errors.redirect_uri_mismatch')) unless redirect_uri_matches?
 
         profile = normalize_profile(*exchange(params[:code]))
+
+        # Nothing may touch the database with half an identity: an account
+        # created for a profile with no uid would be orphaned by the identity
+        # that could not be attached to it.
+        unless profile.valid?
+          return failure(
+            Spree.t('spree_social_auth.errors.identity_incomplete', errors: profile.errors.full_messages.to_sentence)
+          )
+        end
+
         resolution = resolve_account(profile)
 
         return success(resolution.user) if resolution.authenticated?
         return registration_required(profile) if resolution.registration_required?
 
-        failure(
-          resolution.email_taken? ? Spree.t('errors.messages.email_taken') : Spree.t('spree_social_auth.errors.authentication_failed')
-        )
+        failure(failure_message(resolution))
       rescue SpreeSocialAuth::ApiError, SpreeSocialAuth::ConnectionError => e
+        log_failure(e)
         failure(e.message)
+      rescue ActiveRecord::RecordInvalid => e
+        log_failure(e)
+        failure(e.record.errors.full_messages.to_sentence.presence || Spree.t('spree_social_auth.errors.authentication_failed'))
       end
 
       private
+
+      # The shopper can act on a taken address or a shop policy that refused
+      # the sign-up; anything else is ours. Naming the reason saves a support
+      # round trip.
+      def failure_message(resolution)
+        return Spree.t('errors.messages.email_taken') if resolution.email_taken?
+        return resolution.message if resolution.message.present?
+
+        Spree.t('spree_social_auth.errors.authentication_failed')
+      end
+
+      # One line naming the provider, the store and the provider's own code, so
+      # a merchant can see why sign-ins fail without reading a 500.
+      def log_failure(error)
+        code = error.respond_to?(:code) ? error.code : error.class.name
+        Rails.logger.warn(
+          "[spree_social_auth] #{provider} sign-in failed for store #{Spree::Current.store&.id}: #{code} — #{error.message}"
+        )
+      end
 
       # The merchant's registered callback, never a value chosen by the caller:
       # the provider requires the two halves of the flow to match, and relaying

@@ -6,5 +6,7 @@ en:
         credentials_missing: Add the app ID, the app secret and the callback URL before activating this provider.
         missing_code: The provider did not return an authorization code.
         provider_unavailable: This provider is not configured for this store.
+        redirect_uri_invalid: The callback URL is not a valid URL.
         redirect_uri_mismatch: The callback URL does not match the one configured for this provider.
+        identity_incomplete: "The provider did not return an account identifier (%{errors})."
         redirect_uri_must_not_have_query: Douyin rejects a callback URL that carries query parameters. Register the plain URL and pass anything else in the state.

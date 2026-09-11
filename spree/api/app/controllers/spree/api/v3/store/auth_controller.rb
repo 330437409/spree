@@ -297,7 +297,7 @@ module Spree
 
               render_error(
                 code: ERROR_CODES[:resource_invalid],
-                message: 'Registration failed',
+                message: resolution.message.presence || 'Registration failed',
                 status: :unprocessable_content
               )
             end

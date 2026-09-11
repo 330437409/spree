@@ -18,7 +18,7 @@ module SpreeSocialAuth
         self.connection_error_message = Spree.t('spree_social_auth.errors.redirect_uri_must_not_have_query')
         false
       rescue URI::InvalidURIError
-        self.connection_error_message = Spree.t('spree_social_auth.errors.credentials_missing')
+        self.connection_error_message = Spree.t('spree_social_auth.errors.redirect_uri_invalid')
         false
       end
     end

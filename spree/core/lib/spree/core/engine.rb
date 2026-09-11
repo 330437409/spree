@@ -641,7 +641,12 @@ module Spree
           :verification_value,
           :client_id,
           :client_secret,
-          :refresh_token
+          :refresh_token,
+          # The social-login registration step hands the API a bearer token that
+          # creates an account, and the identity tokens are provider
+          # credentials — neither belongs in a log line.
+          :access_token,
+          :registration_token
         ]
       end
 

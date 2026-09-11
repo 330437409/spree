@@ -58,6 +58,28 @@ describe Spree::Authentication::RegisterAccount do
     expect(result.record_errors).to be_present
   end
 
+  # A shop's registration policy rejects a sign-up before any customer exists,
+  # so the workflow answers with errors and no record. Reading the record
+  # unconditionally is how that became a 500 instead of a 422.
+  context 'when the shop policy refuses the sign-up' do
+    before do
+      Spree.hooks.register('customers.create.validate') do |workflow|
+        workflow.reject!('we do not accept sign-ups from this provider')
+      end
+    end
+
+    after { Spree.hooks.clear! }
+
+    it 'reports the refusal instead of crashing on the missing record' do
+      result = service.call(email: 'ada@example.com')
+
+      expect(result).to be_invalid
+      expect(result.record).to be_nil
+      expect(result.message).to eq('we do not accept sign-ups from this provider')
+      expect(Spree.customer_class.where(email: 'ada@example.com')).to be_empty
+    end
+  end
+
   it 'prefers a name the shopper supplied over the provider claim' do
     result = service.call(email: 'ada@example.com', first_name: 'Augusta')
 

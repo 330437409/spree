@@ -17,6 +17,10 @@ module Spree
       attr_accessor :profile
       # The unsaved customer behind +email_taken?+ / +invalid?+.
       attr_accessor :record
+      # Why a registration was refused when there is no record to read errors
+      # from — a registration policy rejecting the sign-up before the customer
+      # was built.
+      attr_accessor :message
 
       validate :status_is_known
 
@@ -36,8 +40,8 @@ module Spree
       end
 
       # @return [Spree::Authentication::Resolution]
-      def self.invalid(record, profile)
-        new(status: 'invalid', record: record, profile: profile)
+      def self.invalid(record, profile, message: nil)
+        new(status: 'invalid', record: record, profile: profile, message: message)
       end
 
       # @return [Spree::Authentication::Resolution]

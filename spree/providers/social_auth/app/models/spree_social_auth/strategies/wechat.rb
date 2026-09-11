@@ -70,9 +70,9 @@ module SpreeSocialAuth
       # merchant's to fix, and saying which saves a support round trip.
       def explain(code, message)
         case code
-        when '40029', '40163', '42003'
+        when '40029', '40163', '42003', '41008'
           "The WeChat authorization code was no longer usable (#{message}). A code is single use and expires after ten minutes, so the shopper needs to start again."
-        when '40013', '40001', '40125', '41002', '41004', '41008'
+        when '40013', '40001', '40125', '41002', '41004'
           "WeChat rejected the application credentials (#{message}). Check that the AppID and AppSecret belong to the same account."
         when '-1'
           "WeChat was too busy to answer (#{message}). Try again."
@@ -103,7 +103,7 @@ module SpreeSocialAuth
             access_token: token['access_token'],
             refresh_token: token['refresh_token'],
             expires_at: expires_at(token)
-          }
+          }.compact
         )
       end
 

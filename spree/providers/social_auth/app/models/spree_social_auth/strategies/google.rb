@@ -85,7 +85,7 @@ module SpreeSocialAuth
             access_token: token['access_token'],
             refresh_token: token['refresh_token'],
             expires_at: expires_at(token)
-          }
+          }.compact
         )
       end
 

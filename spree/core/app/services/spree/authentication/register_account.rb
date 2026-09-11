@@ -40,15 +40,19 @@ module Spree
 
         return Resolution.authenticated(Spree::UserIdentity.attach_to(result.value, @profile).user) if result.success?
 
-        resolution_for_failure(result.value)
+        resolution_for_failure(result)
       end
 
       private
 
-      # A taken address is the shopper's to resolve (sign in the way they
-      # already do); anything else is a rejected registration and carries the
-      # workflow's own errors for the form.
-      def resolution_for_failure(customer)
+      # A refused registration either carries the unsaved customer — a
+      # validation failure the form can show — or only the workflow's own
+      # errors, which is how a registration policy rejects a sign-up before a
+      # customer exists. Both are the shopper's to act on; neither is a 500.
+      def resolution_for_failure(result)
+        customer = result.value
+        return Resolution.invalid(nil, @profile, message: result.error.to_s) if customer.blank?
+
         return Resolution.email_taken(customer, @profile) if customer.errors.of_kind?(:email, :taken)
 
         Resolution.invalid(customer, @profile)
