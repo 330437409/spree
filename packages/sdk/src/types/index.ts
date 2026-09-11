@@ -95,7 +95,54 @@ export interface AuthTokens {
   }
 }
 
-export type { EmailPasswordLogin, LoginCredentials, ProviderLogin } from '@spree/sdk-core'
+export type {
+  EmailPasswordLogin,
+  LoginCredentials,
+  ProviderLogin,
+  RedirectLogin,
+} from '@spree/sdk-core'
+
+/**
+ * One way a store lets a shopper sign in, as its login page should present it:
+ * the password form for `password`, a button for `redirect`.
+ */
+export interface AuthProvider {
+  key: string
+  kind: 'password' | 'redirect'
+  /** Button label for a redirect provider. */
+  label?: string
+  /**
+   * The provider returns no email, so the shopper is asked for one before the
+   * account exists — `completeRegistration` finishes the sign-in.
+   */
+  requires_email?: boolean
+  /** Where to send the browser, with the signed `state` already in it. */
+  authorization_url?: string
+}
+
+export interface AuthProvidersResponse {
+  providers: AuthProvider[]
+}
+
+/**
+ * A provider authenticated the shopper but returned no email, so nothing was
+ * created: the account needs one, and `auth.completeRegistration` supplies it.
+ */
+export interface RegistrationRequired {
+  status: 'registration_required'
+  registration_token: string
+}
+
+export type LoginResult = AuthTokens | RegistrationRequired
+
+export interface CompleteRegistrationParams {
+  registration_token: string
+  email: string
+  first_name?: string
+  last_name?: string
+  /** Whether the shopper ticked the store's terms box. */
+  terms_of_service?: boolean
+}
 
 export interface RequestPasswordResetParams {
   email: string

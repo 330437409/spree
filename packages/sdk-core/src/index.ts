@@ -26,5 +26,6 @@ export type {
   PaginatedResponse,
   PaginationMeta,
   ProviderLogin,
+  RedirectLogin,
   ValidationErrorDetail,
 } from './types'

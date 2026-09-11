@@ -1,5 +1,6 @@
 import { HttpResponse, http } from 'msw'
 import { describe, expect, it } from 'vitest'
+import { isRegistrationRequired } from '../src'
 import { createTestClient, TEST_BASE_URL } from './helpers'
 import { server } from './mocks/server'
 
@@ -124,6 +125,129 @@ describe('auth', () => {
       const client = createTestClient()
       await client.auth.logout({ refresh_token: 'rt_login' })
       // 204 No Content — no error means success
+    })
+  })
+
+  describe('providers', () => {
+    it('lists the password provider and the configured redirect providers', async () => {
+      const client = createTestClient()
+      const result = await client.auth.providers()
+
+      expect(result.providers).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ key: 'email', kind: 'password' }),
+          expect.objectContaining({ key: 'wechat', kind: 'redirect', requires_email: true }),
+        ]),
+      )
+    })
+  })
+
+  describe('loginWithRedirect', () => {
+    it('sends the code and state the provider returned, and signs the shopper in', async () => {
+      let capturedBody: Record<string, unknown> = {}
+      server.use(
+        http.post(`${API_PREFIX}/auth/login`, async ({ request }) => {
+          capturedBody = (await request.json()) as Record<string, unknown>
+          return HttpResponse.json({
+            token: 'test-jwt-token',
+            refresh_token: 'rt_login',
+            user: { id: 'user_1', email: 'ada@example.com', first_name: 'Ada', last_name: null },
+          })
+        }),
+      )
+
+      const client = createTestClient()
+      const result = await client.auth.loginWithRedirect({
+        provider: 'google',
+        code: 'auth-code',
+        state: 'state-1',
+        redirect_uri: 'https://shop.example.com/account/callback/google',
+      })
+
+      expect(capturedBody).toEqual({
+        provider: 'google',
+        code: 'auth-code',
+        state: 'state-1',
+        redirect_uri: 'https://shop.example.com/account/callback/google',
+      })
+      if (isRegistrationRequired(result)) throw new Error('expected tokens')
+      expect(result.token).toBe('test-jwt-token')
+    })
+
+    // WeChat and Douyin return no email, so the account does not exist yet.
+    it('reports a registration step when the provider returned no email', async () => {
+      server.use(
+        http.post(`${API_PREFIX}/auth/login`, () =>
+          HttpResponse.json({ status: 'registration_required', registration_token: 'reg-token-1' }),
+        ),
+      )
+
+      const client = createTestClient()
+      const result = await client.auth.loginWithRedirect({
+        provider: 'wechat',
+        code: 'auth-code',
+        state: 'state-1',
+      })
+
+      expect(isRegistrationRequired(result)).toBe(true)
+      if (!isRegistrationRequired(result)) throw new Error('expected a registration step')
+      expect(result.registration_token).toBe('reg-token-1')
+    })
+  })
+
+  describe('completeRegistration', () => {
+    it('creates the account with the supplied email and returns tokens', async () => {
+      let capturedBody: Record<string, unknown> = {}
+      server.use(
+        http.post(`${API_PREFIX}/auth/complete`, async ({ request }) => {
+          capturedBody = (await request.json()) as Record<string, unknown>
+          return HttpResponse.json(
+            {
+              token: 'test-jwt-token',
+              refresh_token: 'rt_complete',
+              user: { id: 'user_1', email: 'ada@example.com', first_name: 'Ada', last_name: null },
+            },
+            { status: 201 },
+          )
+        }),
+      )
+
+      const client = createTestClient()
+      const result = await client.auth.completeRegistration({
+        registration_token: 'reg-token-1',
+        email: 'ada@example.com',
+        terms_of_service: true,
+      })
+
+      expect(capturedBody).toEqual({
+        registration_token: 'reg-token-1',
+        email: 'ada@example.com',
+        terms_of_service: true,
+      })
+      expect(result.token).toBe('test-jwt-token')
+      expect(result.refresh_token).toBe('rt_complete')
+    })
+
+    it('throws SpreeError when the email already belongs to an account', async () => {
+      server.use(
+        http.post(`${API_PREFIX}/auth/complete`, () =>
+          HttpResponse.json(
+            {
+              error: { code: 'email_taken', message: 'An account with this email already exists.' },
+            },
+            { status: 422 },
+          ),
+        ),
+      )
+
+      const client = createTestClient()
+
+      await expect(
+        client.auth.completeRegistration({
+          registration_token: 'reg-token-1',
+          email: 'ada@example.com',
+        }),
+      ).rejects.toThrow('An account with this email already exists.')
     })
   })
 })

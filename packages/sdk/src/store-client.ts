@@ -10,6 +10,7 @@ import { getParams, transformListParams } from '@spree/sdk-core'
 import type {
   AddLineItemParams,
   Address,
+  AuthProvidersResponse,
   AuthTokens,
   Cart,
   Category,
@@ -24,6 +25,7 @@ import type {
   CompanyMembership,
   CompletePaymentSessionParams,
   CompletePaymentSetupSessionParams,
+  CompleteRegistrationParams,
   Country,
   CreateCartParams,
   CreatePaymentParams,
@@ -37,6 +39,7 @@ import type {
   GiftCard,
   Locale,
   LoginCredentials,
+  LoginResult,
   Market,
   NewsletterSubscriber,
   Order,
@@ -49,6 +52,7 @@ import type {
   ProductFiltersParams,
   ProductFiltersResponse,
   ProductListParams,
+  RedirectLogin,
   RegisterParams,
   RequestPasswordResetParams,
   ResetPasswordParams,
@@ -87,10 +91,37 @@ export class StoreClient {
 
   readonly auth = {
     /**
-     * Login with email and password
+     * Login with email and password, or with a custom provider that takes its
+     * own credentials.
      */
     login: (credentials: LoginCredentials): Promise<AuthTokens> =>
       this.request<AuthTokens>('POST', '/auth/login', { body: credentials }),
+
+    /**
+     * List the providers this store has configured, so a login page can render
+     * itself: the password form, plus a button per redirect provider.
+     */
+    providers: (options?: RequestOptions): Promise<AuthProvidersResponse> =>
+      this.request<AuthProvidersResponse>('GET', '/auth/providers', options),
+
+    /**
+     * Complete a login a provider's browser redirect started.
+     *
+     * Send the `code` and `state` the provider returned; the API exchanges the
+     * code because only it holds the client secret. A provider that returns an
+     * email signs the shopper in here. One that does not answers
+     * `{ status: 'registration_required', registration_token }` — narrow it with
+     * `isRegistrationRequired` and finish with `completeRegistration`.
+     */
+    loginWithRedirect: (credentials: RedirectLogin): Promise<LoginResult> =>
+      this.request<LoginResult>('POST', '/auth/login', { body: credentials }),
+
+    /**
+     * Create the account a provider could not, with the email the shopper
+     * supplies. Returns the same token pair as any other login.
+     */
+    completeRegistration: (params: CompleteRegistrationParams): Promise<AuthTokens> =>
+      this.request<AuthTokens>('POST', '/auth/complete', { body: params }),
 
     /**
      * Refresh access token using a refresh token.

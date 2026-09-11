@@ -158,6 +158,29 @@ export const handlers = [
     HttpResponse.json({ token: 'test-jwt-token', refresh_token: 'rt_login', user: fixtures.user }),
   ),
 
+  http.get(`${API_PREFIX}/auth/providers`, () =>
+    HttpResponse.json({
+      providers: [
+        { key: 'email', kind: 'password' },
+        {
+          key: 'wechat',
+          kind: 'redirect',
+          label: 'WeChat',
+          requires_email: true,
+          authorization_url:
+            'https://open.weixin.qq.com/connect/qrconnect?appid=wx_appid&state=state-1',
+        },
+      ],
+    }),
+  ),
+
+  http.post(`${API_PREFIX}/auth/complete`, () =>
+    HttpResponse.json(
+      { token: 'test-jwt-token', refresh_token: 'rt_complete', user: fixtures.user },
+      { status: 201 },
+    ),
+  ),
+
   http.post(`${API_PREFIX}/customers`, () =>
     HttpResponse.json({
       token: 'test-jwt-token',

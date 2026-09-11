@@ -120,4 +120,24 @@ export interface ProviderLogin {
   [key: string]: unknown
 }
 
-export type LoginCredentials = EmailPasswordLogin | ProviderLogin
+/**
+ * Login with the authorization code a provider's browser redirect returned.
+ *
+ * The exchange happens server-side — only the API holds the client secret — so
+ * the client sends the code, never a token. `state` is the value the API put in
+ * the authorization URL; the API refuses a callback that does not match it.
+ *
+ * Some providers return no email (WeChat, Douyin). The API then answers
+ * `{ status: 'registration_required', registration_token }` instead of tokens,
+ * and the account is created by `auth.completeRegistration` with an address the
+ * shopper supplies. Narrow the result with `isRegistrationRequired`.
+ */
+export interface RedirectLogin {
+  provider: string
+  code: string
+  state: string
+  /** The callback URL the provider redirected to; must be the store's registered one. */
+  redirect_uri?: string
+}
+
+export type LoginCredentials = RedirectLogin | EmailPasswordLogin | ProviderLogin

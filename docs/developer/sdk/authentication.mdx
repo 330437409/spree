@@ -43,6 +43,39 @@ const { token, user } = await client.customers.create({
 })
 ```
 
+## Social Login
+
+Providers are configured per store in the dashboard, so ask the API which ones this store offers before rendering any buttons:
+
+```typescript
+const { providers } = await client.auth.providers()
+// [{ key: 'email', kind: 'password' },
+//  { key: 'wechat', kind: 'redirect', label: 'WeChat', requires_email: true, authorization_url: '…' }]
+```
+
+Send the shopper's browser to a redirect provider's `authorization_url` (it already carries a signed `state`). The provider returns them to your callback route with a `code`, and the API exchanges it — only the API holds the client secret:
+
+```typescript
+import { isRegistrationRequired } from '@spree/sdk'
+
+const result = await client.auth.loginWithRedirect({
+  provider: 'wechat',
+  code,
+  state,
+  redirect_uri, // the callback URL registered for this provider
+})
+
+if (isRegistrationRequired(result)) {
+  const { token, user } = await client.auth.completeRegistration({
+    registration_token: result.registration_token,
+    email, // collected from the shopper
+    terms_of_service: true,
+  })
+}
+```
+
+WeChat, Douyin, QQ, Weibo and Alipay return no email, so their sign-in stops at that second step — no account is created until the shopper supplies an address. Google, Apple, Facebook and GitHub return one, and `loginWithRedirect` answers with the token pair directly.
+
 ## Guest Checkout
 
 For guest checkout, use the `token` returned when creating a cart. The SDK automatically sends it via the `x-spree-token` header:
