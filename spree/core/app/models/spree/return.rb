@@ -14,6 +14,7 @@ module Spree
     has_prefix_id :ret
 
     has_spree_number prefix: 'RET'
+    include Spree::ActedBy
     include Spree::NumberIdentifier
     include Spree::SingleStoreResource
     include Spree::HasStatus
@@ -31,7 +32,7 @@ module Spree
     belongs_to :reason, class_name: 'Spree::ReturnReason', optional: true, inverse_of: :returns
     # Staff only. Customer-initiated returns leave this nil — the requester
     # is always order.customer, so no second association is needed.
-    belongs_to :created_by, class_name: Spree.admin_user_class.to_s, optional: true
+    acted_by :created_by
 
     has_many :return_line_items, class_name: 'Spree::ReturnLineItem',
                                  dependent: :destroy, inverse_of: :return
@@ -113,6 +114,19 @@ module Spree
     # What the customer is owed for the items being returned.
     def refund_total
       return_line_items.sum(&:pre_tax_amount)
+    end
+
+    # What a refund from this return paid for, line by line. Counts what the
+    # warehouse received rather than what the customer announced, so it agrees
+    # with the amount {Spree::Returns::Refund} works out for itself.
+    #
+    # @return [Hash{Integer => BigDecimal}] line item id => amount
+    def refunded_line_amounts
+      return_line_items.each_with_object(Hash.new(0)) do |line, amounts|
+        next if line.quantity.to_i.zero? || line.received_quantity.to_i.zero?
+
+        amounts[line.line_item_id] += (line.pre_tax_amount / line.quantity) * line.received_quantity.to_i
+      end
     end
 
     # What has actually been refunded so far — a return can be refunded in

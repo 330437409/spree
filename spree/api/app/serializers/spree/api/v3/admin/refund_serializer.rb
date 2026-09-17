@@ -6,10 +6,16 @@ module Spree
           typelize status: [:string, enum: Spree::Refund.statuses, enum_type_name: 'RefundStatus'],
                    payment_id: [:string, nullable: true],
                    refund_reason_id: [:string, nullable: true],
+                   refunder_id: [:string, nullable: true],
+                   refunder_type: [:string, nullable: true, enum: Spree::Actor::BUILT_IN_KINDS, enum_type_name: 'ActorKind'],
                    metadata: 'Record<string, unknown>'
 
           attributes :status, :metadata,
                      created_at: :iso8601, updated_at: :iso8601
+
+          # Who issued it — an admin user, or the API key an integration
+          # refunded through.
+          actor_attributes :refunder
 
           one :payment,
               resource: proc { Spree.api.admin_payment_serializer },

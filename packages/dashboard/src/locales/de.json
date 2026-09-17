@@ -4,6 +4,10 @@
       "delete_image": "Bild löschen",
       "edit_media": "Medien bearbeiten"
     },
+    "actors": {
+      "api_key": "API-Schlüssel",
+      "unnamed": "Ohne Namen"
+    },
     "allowed_origins": {
       "add_cta": "Erlaubten Ursprung hinzufügen",
       "create_description": "Browser, die von diesem Ursprung geladen werden, können die Admin-API aufrufen. Sowohl die CORS-Zulassungsliste als auch die Admin-Cookie-Sitzung stützen sich auf diese Liste – halten Sie sie restriktiv.",
@@ -30,10 +34,10 @@
         "never_used": "Nie",
         "revoked": "Widerrufen"
       },
-      "by_email": "von {{email}}",
       "create_key_cta": "Schlüssel erstellen",
       "create_sheet_description": "Wählen Sie einen Schlüsseltyp und anschließend die Berechtigungen aus, die er verwenden darf.",
       "create_sheet_title": "API-Schlüssel erstellen",
+      "created_by": "von {{actor}}",
       "delete_confirm": {
         "message": "Dadurch wird der Schlüssel dauerhaft entfernt. Bevorzugen Sie das Widerrufen, falls Sie den Zugriff später wiederherstellen möchten.",
         "title": "Schlüssel löschen?"
@@ -2076,6 +2080,11 @@
           "help": "Die Steuer anhand der Lieferadresse des Kunden berechnen. Deaktivieren Sie diese Option, um stattdessen die Rechnungsadresse zu verwenden.",
           "label": "Steuer nach Lieferadresse"
         },
+        "low_stock_threshold": {
+          "help": "Eine bestandsgeführte Variante mit höchstens so vielen Einheiten gilt auf der Startseite als niedriger Bestand. 0 schaltet den Hinweis aus.",
+          "label": "Schwelle für niedrigen Bestand",
+          "suffix": "Stück"
+        },
         "track_inventory_levels": {
           "help": "Bestände zählen. Ausschalten, um jedes Produkt als immer verfügbar zu behandeln.",
           "label": "Lagerbestand verfolgen"
@@ -2085,8 +2094,6 @@
           "label": "Preisverlauf aufzeichnen"
         },
         "payouts": {
-          "title": "Auszahlungen an Verkäufer",
-          "description": "Wie dieser Marktplatz die Verkäufer bezahlt, die auf ihm handeln.",
           "provider": {
             "label": "Bezahlt über",
             "help": "Wer das Geld bewegt. Bei eigener Buchführung überweisen Sie selbst und markieren jede Zahlung als erledigt.",
@@ -2586,7 +2593,10 @@
       "translations": "Übersetzungen",
       "purchase_orders": "Bestellungen",
       "inventory": "Lagerbestand",
-      "suppliers": "Lieferanten"
+      "suppliers": "Lieferanten",
+      "loyalty": "Treue",
+      "store_credits": "Guthaben",
+      "commission_rates": "Provisionssätze"
     },
     "option_types": {
       "columns": {
@@ -2720,6 +2730,8 @@
         "confirm": {
           "approve_message": "Diesen Auftrag genehmigen?",
           "cancel_message": "Möchten Sie diesen Auftrag wirklich stornieren?",
+          "cancel_shipment_confirm": "Lieferung stornieren",
+          "cancel_shipment_dismiss": "Lieferung behalten",
           "cancel_shipment_message": "Diese Lieferung stornieren?",
           "capture_message": "Diese Zahlung einziehen?",
           "complete_message": "Diesen Auftragsentwurf jetzt abschließen?",
@@ -3009,10 +3021,17 @@
         "use_default_addresses": "Standard-Rechnungs- und Lieferadresse des Kunden verwenden"
       },
       "payment_statuses": {
+        "none": "Unbezahlt",
+        "authorized": "Autorisiert",
+        "partially_paid": "Teilweise bezahlt",
+        "paid": "Bezahlt",
+        "partially_refunded": "Teilweise erstattet",
+        "refunded": "Erstattet",
+        "overcharged": "Überzahlt",
+        "voided": "Storniert",
         "balance_due": "Offener Betrag",
         "credit_owed": "Guthaben",
         "failed": "Fehlgeschlagen",
-        "paid": "Bezahlt",
         "void": "Storniert"
       },
       "statuses": {
@@ -3150,22 +3169,102 @@
         "columns": {
           "price": "Preis",
           "product": "Produkt",
-          "sold": "Verkauft"
+          "sold": "Verkauft",
+          "trend": "Trend"
         },
         "metric_short": {
           "avg_order_value": "Ø-Wert",
           "orders": "Bestellungen",
-          "sales": "Umsatz"
+          "sales": "Umsatz",
+          "units": "Stück",
+          "customers": "Kunden"
         },
         "metrics": {
           "avg_order_value": "Ø Bestellwert",
           "orders": "Bestellungen gesamt",
-          "sales": "Gesamtumsatz"
+          "sales": "Gesamtumsatz",
+          "units": "Verkaufte Stück",
+          "customers": "Kunden"
         },
         "subtitle": "Überblick über die Leistung Ihres Shops",
         "title": "Dashboard",
         "top_products": "Top-Produkte",
-        "top_products_description": "Meistverkaufte Produkte in Ihrem Shop."
+        "top_products_description": "Meistverkaufte Produkte in Ihrem Shop.",
+        "legend": {
+          "current": "Dieser Zeitraum",
+          "previous": "Vorheriger Zeitraum"
+        },
+        "growth": {
+          "new": "Neu",
+          "vs_previous": "vs. vorheriger Zeitraum"
+        },
+        "operations": {
+          "title": "Aufgaben",
+          "subtitle": "Was gerade Ihre Aufmerksamkeit braucht.",
+          "failed": "Diese Zahlen konnten nicht geladen werden.",
+          "empty": "Für Ihre Rolle gibt es hier nichts zu sehen.",
+          "counters": {
+            "low_stock_items": {
+              "label": "Niedriger Bestand",
+              "description_zero": "Deaktiviert. Legen Sie in den Shop-Einstellungen eine Schwelle fest.",
+              "description_one": "Höchstens 1 Einheit an einem Standort verkäuflich.",
+              "description_other": "Höchstens {{count}} Einheiten an einem Standort verkäuflich."
+            },
+            "open_claims": {
+              "label": "Offene Reklamationen",
+              "description": "Reklamationen, die noch nicht abgeschlossen sind."
+            },
+            "open_exchanges": {
+              "label": "Offener Umtausch",
+              "description": "Umtausch, der noch nicht abgewickelt wurde."
+            },
+            "open_returns": {
+              "label": "Offene Retouren",
+              "description": "Retouren, die noch nicht erstattet wurden."
+            },
+            "orders_to_fulfill": {
+              "label": "Zu versendende Bestellungen",
+              "description": "Aufgegebene Bestellungen, von denen noch nichts versandt wurde."
+            },
+            "out_of_stock_items": {
+              "label": "Nicht vorrätig",
+              "description": "An diesem Standort ist nichts mehr verkäuflich."
+            },
+            "payments_to_collect": {
+              "label": "Ausstehende Zahlungen",
+              "description": "Aufgegebene Bestellungen, die noch nicht bezahlt sind."
+            }
+          }
+        },
+        "rankings": {
+          "title": "Rangliste",
+          "subtitle": "Top-Performer im ausgewählten Zeitraum.",
+          "tabs": {
+            "customers": "Kunden",
+            "categories": "Kategorien",
+            "companies": "Firmen",
+            "sellers": "Verkäufer"
+          },
+          "orders_count_one": "{{count}} Bestellung",
+          "orders_count_other": "{{count}} Bestellungen",
+          "units_count_one": "{{count}} Stück",
+          "units_count_other": "{{count}} Stück",
+          "empty": "Noch keine Daten für diesen Zeitraum.",
+          "view_report": "Bericht ansehen",
+          "report_names": {
+            "seller_payouts": "Verkäuferauszahlungen",
+            "top_categories": "Top-Kategorien",
+            "top_companies": "Top-Firmen",
+            "top_customers": "Top-Kunden"
+          }
+        },
+        "unavailable": {
+          "title": "Berichte sind für Ihre Rolle nicht verfügbar",
+          "description": "Bitten Sie einen Administrator um die Berechtigung „Berichte“ (mit Zugriff auf Bestellungen), um hier Verkaufszahlen zu sehen."
+        },
+        "currency": {
+          "search": "Währungen suchen"
+        }
       },
       "orders": {
         "detail": {
@@ -3186,6 +3285,8 @@
               "resolve_replacement": "Mit Ersatz lösen"
             },
             "confirm": {
+              "cancel_confirm": "Reklamation stornieren",
+              "cancel_dismiss": "Reklamation behalten",
               "deny": "Diese Reklamation ablehnen? Die Kundin oder der Kunde erhält weder eine Rückerstattung noch Ersatz."
             },
             "create_title": "Neue Reklamation",
@@ -3213,6 +3314,10 @@
               "create": "Neuer Umtausch",
               "fulfill": "Ersatz versenden"
             },
+            "confirm": {
+              "cancel_confirm": "Umtausch stornieren",
+              "cancel_dismiss": "Umtausch behalten"
+            },
             "create_title": "Neuer Umtausch",
             "empty": "Kein Umtausch für diese Bestellung.",
             "price_difference": "Preisdifferenz",
@@ -3229,7 +3334,9 @@
             "buy_label": "Rücksendeetikett kaufen",
             "buy_label_confirm": "Ein vorfrankiertes Rücksendeetikett kaufen? Ihr Konto wird belastet, sobald das Etikett ausgestellt ist.",
             "confirm": {
-              "cancel": "Diese Retoure stornieren? Es wird nichts eingelagert und kein Geld bewegt."
+              "cancel": "Diese Retoure stornieren? Es wird nichts eingelagert und kein Geld bewegt.",
+              "cancel_confirm": "Retoure stornieren",
+              "cancel_dismiss": "Retoure behalten"
             },
             "create_title": "Neue Retoure",
             "empty": "Keine Retouren für diese Bestellung.",
@@ -3985,8 +4092,10 @@
         "analytics": "Analysen",
         "catalog": "Katalog",
         "customers": "Kunden",
+        "loyalty": "Treue",
         "marketing": "Marketing",
         "orders": "Bestellungen",
+        "sellers": "Verkäufer",
         "settings": "Einstellungen"
       },
       "labels": {
@@ -4111,6 +4220,12 @@
       "percent": "Prozent",
       "preferred_amount": "Betrag",
       "preferred_percent": "Prozent",
+      "terms_body": "Bedingungen",
+      "terms_body_description": "Was der Verkäufer vor der Zustimmung liest. Wird in seiner Einrichtungscheckliste angezeigt.",
+      "terms_effective_from": "Bedingungen gültig ab",
+      "terms_effective_from_description": "Verkäufer, die davor zugestimmt haben, werden erneut gefragt.",
+      "terms_url": "URL der Bedingungen",
+      "terms_url_description": "Optionale veröffentlichte Fassung derselben Bedingungen, öffnet in einem neuen Tab.",
       "webhook_secret": "Webhook-Signaturschlüssel",
       "webhook_secret_description": "Das Geheimnis, das Sie im EasyPost-Webhook festgelegt haben. Ohne es werden Carrier-Updates abgelehnt."
     },
@@ -4759,6 +4874,7 @@
         },
         "all_done": "Alles erledigt 🎉",
         "download": "Datei herunterladen",
+        "manage_requirements": "Anforderungen verwalten",
         "policy_empty": "Diese Richtlinie hat noch keinen Inhalt.",
         "policy_updated": "Zuletzt aktualisiert am {{date}}",
         "progress": "{{done}} von {{total}} erledigt",
@@ -4986,10 +5102,70 @@
       }
     },
     "stock_levels": {
+      "column_hints": {
+        "allocated": "Einheiten, die bereits aufgegebenen Bestellungen zugesagt sind und noch nicht versandt wurden. Sie liegen weiterhin im Lager.",
+        "available": "Was ein neuer Kunde noch kaufen kann: vorrätig, abzüglich zugewiesener und reservierter Einheiten.",
+        "incoming": "Einheiten auf dem Weg hierher, über eine Lieferantenbestellung oder einen laufenden Transfer.",
+        "on_hand": "Einheiten, die an diesem Lagerort physisch vorhanden sind. Zum Korrigieren anklicken.",
+        "reserved": "Einheiten, die von Kunden im laufenden Checkout gehalten werden."
+      },
+      "columns": {
+        "allocated": "Zugewiesen",
+        "available": "Verfügbar",
+        "incoming": "Eingehend",
+        "location": "Lagerort",
+        "on_hand": "Vorrätig",
+        "product": "Produkt",
+        "reserved": "Reserviert",
+        "sku": "SKU",
+        "stock_status": "Bestandsstatus"
+      },
+      "filters": {
+        "has_incoming": "Eingehend",
+        "has_reserved": "Reserviert",
+        "in_stock": "Auf Lager",
+        "low_stock": "Niedriger Bestand",
+        "out_of_stock": "Nicht auf Lager"
+      },
+      "incoming": {
+        "open_aria": "Eingehenden Bestand hinzufügen",
+        "create_transfer": "Transfer erstellen",
+        "create_purchase_order": "Bestellung erstellen"
+      },
+      "location_filter": {
+        "placeholder": "Lagerorte suchen…",
+        "empty": "Keine Lagerorte gefunden"
+      },
       "messages": {
         "stock_level_deleted": "Lagerbestand gelöscht",
         "stock_updated": "Bestand aktualisiert"
-      }
+      },
+      "no_sku": "Keine SKU",
+      "quick_edit": {
+        "modes": {
+          "set": "Setzen auf",
+          "adjust": "Anpassen um"
+        },
+        "open_aria": "Vorrätigen Bestand für {{name}} bearbeiten",
+        "mode_aria": "Art der Änderung",
+        "amount_aria": "Menge",
+        "reason_aria": "Grund",
+        "confirm": "Übernehmen"
+      },
+      "reasons": {
+        "correction": "Korrektur",
+        "count": "Zählung",
+        "received": "Erhalten",
+        "return_restock": "Retoure eingelagert",
+        "damaged": "Beschädigt",
+        "theft_or_loss": "Diebstahl oder Verlust",
+        "promotion_or_donation": "Aktion oder Spende"
+      },
+      "table": {
+        "search_placeholder": "SKU oder Produkt suchen…",
+        "empty": "Noch keine Lagerbestände. Bestand erscheint hier, sobald eine Variante an einem Lagerort geführt wird."
+      },
+      "title": "Bestand"
     },
     "stock_locations": {
       "add_cta": "Lagerort hinzufügen",
@@ -5184,7 +5360,32 @@
       "product_types": "Vorlagen, die neuen Produkten ihre Felder und Optionen geben.",
       "stock_transfers": "Bestand, der zwischen Ihren Lagern bewegt wird, und was angekommen ist.",
       "purchase_orders": "Ware, die Sie bei Lieferanten bestellt haben, und was eingetroffen ist",
-      "suppliers": "Ihr Lieferanten-Adressbuch"
+      "suppliers": "Ihr Lieferanten-Adressbuch",
+      "stock_levels": "Was Sie an jedem Lagerort haben: vorrätig, Bestellungen zugewiesen, durch Kassen gehalten, verkäuflich und unterwegs.",
+      "allowed_origins": "Die Webadressen, die die API Ihres Shops aus dem Browser aufrufen dürfen.",
+      "channels": "Wo Sie verkaufen — jeder Storefront, jede App und jedes Portal mit eigenem Katalog und eigenen Vorgaben.",
+      "commission_rates": "Was der Marktplatz bei jedem Verkauf berechnet, in Listenreihenfolge angewendet.",
+      "custom_field_definitions": "Zusätzliche Felder, die Sie an Produkte, Bestellungen, Kunden und andere Datensätze anhängen.",
+      "customers": "Alle, die in Ihrem Shop gekauft oder sich registriert haben.",
+      "gift_cards": "Vorausbezahlte Karten, die Kunden an der Kasse einlösen.",
+      "imports": "Hochgeladene CSV-Dateien und wie jede verarbeitet wurde.",
+      "markets": "Die Regionen, in die Sie verkaufen, jeweils mit eigener Währung, Steuer und Lieferung.",
+      "orders": "Jede Bestellung in Ihrem Shop und ihr aktueller Stand.",
+      "draft_orders": "Bestellungen, die Ihr Team im Namen eines Kunden anlegt und die noch nicht aufgegeben sind.",
+      "payment_methods": "Wie Kunden bezahlen können und welche Anbieter dahinterstehen.",
+      "policies": "Ihre AGB sowie Datenschutz-, Rückgabe- und Versandrichtlinien, veröffentlicht im Storefront.",
+      "products": "Alles, was Sie verkaufen, mit Varianten, Preisen und Bestand.",
+      "promotions": "Rabatte und Angebote und die Regeln, die entscheiden, wann sie gelten.",
+      "seller_requirements": "Die Checkliste, die Verkäufer abschließen, bevor sie freigegeben werden können.",
+      "sellers": "Die Drittanbieter auf Ihrem Marktplatz und der Stand jedes einzelnen.",
+      "store_credits": "Guthaben, das Kunden an der Kasse ausgeben können, und wie es ausgestellt wurde.",
+      "tax_categories": "Gruppen, die entscheiden, welcher Steuersatz für ein Produkt gilt.",
+      "tax_rates": "Die je Kategorie und Region berechnete Steuer.",
+      "webhook_deliveries": "Jedes an diesen Endpunkt gesendete Ereignis und ob es empfangen wurde.",
+      "webhook_endpoints": "Wohin Ihre anderen Systeme benachrichtigt werden, wenn im Shop etwas passiert.",
+      "returns": "Zurückkommende Ware, von der Anfrage bis zur Erstattung.",
+      "exchanges": "Käufe, die gegen eine andere Größe, Farbe oder ein anderes Produkt getauscht werden.",
+      "claims": "Fehlgeschlagene Lieferungen — beschädigte, fehlende oder falsche Artikel — und wie sie gelöst wurden."
     },
     "tax_categories": {
       "add_cta": "Steuerkategorie hinzufügen",
@@ -5400,7 +5601,9 @@
         "owed": "Offen ({{currency}})",
         "earned": "Verdient",
         "paid": "Ausgezahlt",
-        "pending": "Unterwegs"
+        "pending": "Unterwegs",
+        "earned_in": "Verdient ({{currency}})",
+        "payable": "Auszahlbar"
       },
       "complete": {
         "title": "Auszahlung als bezahlt markieren",
@@ -5663,6 +5866,130 @@
         "confirm": "Vorzeitig abschließen"
       },
       "load_failed": "Die Lieferungen konnten nicht geladen werden."
+    },
+    "reports": {
+      "title": "Berichte",
+      "subtitle": "Gespeicherte Berichte zu Umsatz, Produkten und Kunden.",
+      "new_cta": "Neuer Bericht",
+      "new_title": "Neuer Bericht",
+      "copy_name": "Kopie von {{name}}",
+      "table": {
+        "search_placeholder": "Berichte durchsuchen…",
+        "empty": "Noch keine Berichte. Erstellen Sie einen, um loszulegen.",
+        "columns": {
+          "name": "Name",
+          "kind": "Typ",
+          "author": "Erstellt von"
+        }
+      },
+      "kind": {
+        "built_in": "Integriert",
+        "custom": "Benutzerdefiniert"
+      },
+      "builder": {
+        "metrics": "Kennzahlen",
+        "no_metrics": "Wählen Sie mindestens eine Kennzahl.",
+        "one_family_only": "Ein Bericht umfasst eine Metrikgruppe. Die Auswahl einer Metrik aus einer anderen Gruppe wechselt den Bericht zu dieser Gruppe.",
+        "switches_family": "Wechselt diesen Bericht zu {{family}}",
+        "group_by": "Gruppieren nach",
+        "none": "Keine (nur Summen)",
+        "grain": "Intervall",
+        "time_range": "Zeitraum",
+        "custom_range": "Benutzerdefinierter Zeitraum",
+        "compare": "Mit Vorperiode vergleichen",
+        "filters": "Filter",
+        "add_filter": "Filter hinzufügen",
+        "remove_filter": "Filter entfernen",
+        "sort": "Sortieren nach",
+        "direction": "Reihenfolge",
+        "sort_desc": "Höchste zuerst",
+        "sort_asc": "Niedrigste zuerst",
+        "limit": "Zeilen",
+        "ids_placeholder": "Kommagetrennte IDs",
+        "title": "Berichtseinstellungen"
+      },
+      "grains": {
+        "hour": "Stündlich",
+        "day": "Täglich",
+        "week": "Wöchentlich",
+        "month": "Monatlich"
+      },
+      "view": {
+        "empty": "Keine Daten für diesen Zeitraum.",
+        "total": "Gesamt",
+        "change": "Veränderung",
+        "error": "Dieser Bericht konnte nicht geladen werden"
+      },
+      "actions": {
+        "save": "Speichern",
+        "save_copy": "Kopie speichern",
+        "export_csv": "CSV exportieren",
+        "rename": "Umbenennen"
+      },
+      "save_dialog": {
+        "title_create": "Bericht speichern",
+        "title_copy": "Kopie speichern",
+        "title_rename": "Bericht umbenennen",
+        "name_label": "Name",
+        "description_label": "Beschreibung"
+      },
+      "seeded_hint": "Integrierte Berichte können nicht geändert werden. Passen Sie die Einstellungen an und speichern Sie eine Kopie.",
+      "delete_confirm": "Bericht „{{name}}“ löschen? Dies kann nicht rückgängig gemacht werden.",
+      "messages": {
+        "created": "Bericht gespeichert",
+        "create_failed": "Bericht konnte nicht gespeichert werden",
+        "updated": "Bericht aktualisiert",
+        "update_failed": "Bericht konnte nicht aktualisiert werden",
+        "deleted": "Bericht gelöscht",
+        "delete_failed": "Bericht konnte nicht gelöscht werden"
+      }
+    },
+    "store_credits": {
+      "columns": {
+        "customer": "Kunde",
+        "used": "Verbraucht",
+        "remaining": "Verbleibend",
+        "authorized": "Reserviert",
+        "standing": "Stand",
+        "origin": "Herkunft",
+        "issued_by": "Ausgestellt von"
+      },
+      "origins": {
+        "manual": "Manuell ausgestellt",
+        "gift_card": "Geschenkkarte",
+        "return": "Rückgabe",
+        "exchange": "Umtausch",
+        "claim": "Reklamation",
+        "refund": "Rückerstattung"
+      },
+      "filters": {
+        "outstanding": "Offen",
+        "spent": "Verbraucht",
+        "not_from_gift_card": "Alles andere"
+      },
+      "totals": {
+        "outstanding": "Offen",
+        "issued": "Ausgestellt",
+        "used": "Verbraucht"
+      },
+      "ledger": {
+        "title": "Buchungen",
+        "empty": "Noch keine Bewegungen erfasst.",
+        "load_failed": "Die Buchungen konnten nicht geladen werden."
+      },
+      "sheet": {
+        "description": "Wie dieses Guthaben entstanden ist und wie es verwendet wurde.",
+        "open_customer": "Kundenprofil öffnen",
+        "load_failed": "Dieses Guthaben konnte nicht geladen werden."
+      },
+      "table": {
+        "search_placeholder": "Notizen durchsuchen…",
+        "empty": "Noch kein Guthaben. Stellen Sie eines im Kundenprofil aus."
+      },
+      "no_customer": "Kein Kunde",
+      "page": {
+        "subtitle": "Was der Shop an Guthaben schuldet, über alle Kunden hinweg."
+      }
     }
   }
 }

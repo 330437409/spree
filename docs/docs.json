@@ -33,6 +33,14 @@
   },
   "redirects": [
     {
+      "source": "/user/orders/order-states",
+      "destination": "/user/orders/order-statuses"
+    },
+    {
+      "source": "/user/orders/order-adjustments",
+      "destination": "/user/orders/discounts-fees-and-taxes"
+    },
+    {
       "source": "/developer/core-concepts/companies-and-catalogs",
       "destination": "/developer/core-concepts/companies"
     },
@@ -130,11 +138,11 @@
     },
     {
       "source": "/api-reference/introduction",
-      "destination": "/api-reference"
+      "destination": "/api-reference/store-api/introduction"
     },
     {
       "source": "/developer/tutorial/rich-text",
-      "destination": "/developer/tutorial/model"
+      "destination": "/developer/tutorial/model-and-api"
     },
     {
       "source": "/developer/tutorial/file-uploads",
@@ -142,7 +150,7 @@
     },
     {
       "source": "/developer/tutorial/store-api",
-      "destination": "/v5/developer/tutorial/api"
+      "destination": "/developer/tutorial/model-and-api"
     },
     {
       "source": "/developer/multi-store/quickstart",
@@ -238,11 +246,11 @@
     },
     {
       "source": "/developer/tutorial/api",
-      "destination": "/v5/developer/tutorial/api"
+      "destination": "/developer/tutorial/model-and-api"
     },
     {
       "source": "/developer/tutorial/sdk",
-      "destination": "/v5/developer/tutorial/sdk"
+      "destination": "/developer/tutorial/storefront"
     },
     {
       "source": "/developer/tutorial/extending-models",
@@ -382,7 +390,7 @@
     },
     {
       "source": "/developer/core-concepts/adjustments",
-      "destination": "/developer/core-concepts/taxes-discounts-fees"
+      "destination": "/developer/core-concepts/fees"
     },
     {
       "source": "/developer/core-concepts/shipments",
@@ -390,7 +398,11 @@
     },
     {
       "source": "/developer/core-concepts/reports",
-      "destination": "/v5/developer/core-concepts/reports"
+      "destination": "/developer/core-concepts/reporting"
+    },
+    {
+      "source": "/developer/how-to/custom-report",
+      "destination": "/developer/how-to/extend-reporting"
     },
     {
       "source": "/developer/multi-vendor/quickstart",
@@ -419,6 +431,158 @@
     {
       "source": "/developer/multi-vendor",
       "destination": "/developer/how-to/build-a-marketplace"
+    },
+    {
+      "source": "/user/promotions/gift-cards",
+      "destination": "/user/loyalty/gift-cards"
+    },
+    {
+      "source": "/user/customers/issue-gift-card",
+      "destination": "/user/loyalty/issue-gift-card"
+    },
+    {
+      "source": "/user/customers/assign-store-credits",
+      "destination": "/user/loyalty/store-credits"
+    },
+    {
+      "source": "/user/manage-products/stock-levels",
+      "destination": "/user/inventory/stock-levels"
+    },
+    {
+      "source": "/user/manage-products/stock-transfers",
+      "destination": "/user/inventory/stock-transfers"
+    },
+    {
+      "source": "/user/manage-products/price-lists",
+      "destination": "/user/pricing/price-lists"
+    },
+    {
+      "source": "/user/manage-products/translations",
+      "destination": "/user/translations/translations"
+    },
+    {
+      "source": "/user/manage-products/product-taxonomies",
+      "destination": "/user/products/categories"
+    },
+    {
+      "source": "/user/returns/returns-processing",
+      "destination": "/user/orders/returns"
+    },
+    {
+      "source": "/user/vendors/vendor-management",
+      "destination": "/user/sellers/managing-sellers"
+    },
+    {
+      "source": "/user/vendors/vendor-onboarding-manual",
+      "destination": "/user/sellers/onboarding"
+    },
+    {
+      "source": "/user/vendors/vendor-onboarding-shopify",
+      "destination": "/user/sellers/onboarding"
+    },
+    {
+      "source": "/user/vendors/vendor-onboarding-woocommerce",
+      "destination": "/user/sellers/onboarding"
+    },
+    {
+      "source": "/user/vendors/commission-rates",
+      "destination": "/user/sellers/commission-rates"
+    },
+    {
+      "source": "/user/vendors/vendor-payouts",
+      "destination": "/user/sellers/payouts"
+    },
+    {
+      "source": "/user/vendors/multi-vendor-checkout",
+      "destination": "/user/sellers/orders"
+    },
+    {
+      "source": "/user/settings/marketplace",
+      "destination": "/user/sellers/payouts"
+    },
+    {
+      "source": "/use-case/b2b/b2b-admin-capabilities",
+      "destination": "/user/how-to/selling-to-businesses"
+    },
+    {
+      "source": "/use-case/b2b/b2b-buyer-capabilities",
+      "destination": "/user/how-to/selling-to-businesses"
+    },
+    {
+      "source": "/use-case/b2b/b2b-capabilities",
+      "destination": "/user/how-to/selling-to-businesses"
+    },
+    {
+      "source": "/use-case/b2b/b2b-commerce-model",
+      "destination": "/user/how-to/selling-to-businesses"
+    },
+    {
+      "source": "/use-case/digital-products/admin-capabilities",
+      "destination": "/developer/how-to/sell-digital-products"
+    },
+    {
+      "source": "/use-case/digital-products/capabilities",
+      "destination": "/developer/how-to/sell-digital-products"
+    },
+    {
+      "source": "/use-case/digital-products/model",
+      "destination": "/developer/how-to/sell-digital-products"
+    },
+    {
+      "source": "/use-case/marketplace/admin-dashboard",
+      "destination": "/user/sellers/managing-sellers"
+    },
+    {
+      "source": "/use-case/marketplace/capabilities",
+      "destination": "/developer/how-to/build-a-marketplace"
+    },
+    {
+      "source": "/use-case/marketplace/customer-ux",
+      "destination": "/developer/how-to/build-a-marketplace"
+    },
+    {
+      "source": "/use-case/marketplace/model",
+      "destination": "/developer/how-to/build-a-marketplace"
+    },
+    {
+      "source": "/use-case/marketplace/vendor-dashboard",
+      "destination": "/user/sellers/sellers"
+    },
+    {
+      "source": "/use-case/multi-tenant/franchises-and-reseller-networks",
+      "destination": "/developer/multi-tenant/quickstart"
+    },
+    {
+      "source": "/use-case/multi-tenant/multi-brand-enterprise-model",
+      "destination": "/developer/multi-tenant/quickstart"
+    },
+    {
+      "source": "/use-case/multi-tenant/multi-tenant-capabilities",
+      "destination": "/developer/multi-tenant/quickstart"
+    },
+    {
+      "source": "/use-case/multi-tenant/multi-tenant-model",
+      "destination": "/developer/multi-tenant/quickstart"
+    },
+    {
+      "source": "/use-case/multi-tenant/super-admin-capabilities",
+      "destination": "/developer/multi-tenant/quickstart"
+    },
+    {
+      "source": "/use-case/multi-tenant/tenant-capabilities",
+      "destination": "/developer/multi-tenant/quickstart"
+    },
+    {
+      "source": "/use-case/multi-tenant/white-label-saas",
+      "destination": "/developer/multi-tenant/quickstart"
+    },
+    {
+      "source": "/use-case/overview",
+      "destination": "/"
+    },
+    {
+      "source": "/developer/tutorial/dashboard-plugin",
+      "destination": "/developer/tutorial/dashboard"
     }
   ],
   "contextual": {
@@ -457,10 +621,8 @@
                     "group": "Tutorial",
                     "pages": [
                       "developer/tutorial/introduction",
-                      "developer/tutorial/model",
-                      "developer/tutorial/admin-api",
-                      "developer/tutorial/dashboard-plugin",
-                      "developer/tutorial/store-api",
+                      "developer/tutorial/model-and-api",
+                      "developer/tutorial/dashboard",
                       "developer/tutorial/storefront",
                       "developer/tutorial/events",
                       "developer/tutorial/testing"
@@ -538,7 +700,8 @@
                           "developer/core-concepts/translations",
                           "developer/core-concepts/slugs",
                           "developer/core-concepts/metafields",
-                          "developer/core-concepts/imports-exports"
+                          "developer/core-concepts/imports-exports",
+                          "developer/core-concepts/reporting"
                         ]
                       }
                     ],
@@ -583,6 +746,13 @@
                           "integrations/authentication/wechat",
                           "integrations/authentication/douyin",
                           "integrations/authentication/google"
+                        ]
+                      },
+                      {
+                        "group": "Marketplace",
+                        "pages": [
+                          "developer/providers/payouts",
+                          "integrations/payments/stripe-connect"
                         ]
                       },
                       {
@@ -752,7 +922,7 @@
                         ]
                       },
                       "developer/how-to/custom-promotion",
-                      "developer/how-to/custom-report",
+                      "developer/how-to/extend-reporting",
                       "developer/how-to/custom-document-numbers",
                       "developer/how-to/custom-order-routing",
                       "developer/how-to/custom-stock-splitter"
@@ -926,82 +1096,74 @@
                     ]
                   },
                   {
-                    "group": "Migration",
-                    "pages": [
-                      "user/migration/migrate-from-shopify"
-                    ],
-                    "icon": "arrow-right-left"
-                  },
-                  {
-                    "group": "How-to Guides",
-                    "pages": [
-                      "user/how-to/multi-currency-pricing",
-                      "user/how-to/multiple-languages",
-                      "user/how-to/multi-region-pricing",
-                      "user/how-to/wholesale-pricing",
-                      "user/how-to/volume-pricing",
-                      "user/how-to/regional-wholesale",
-                      "user/how-to/regional-volume",
-                      "user/how-to/schedule-sale-pricing"
-                    ],
-                    "icon": "compass"
-                  },
-                  {
                     "group": "Products",
+                    "icon": "package",
                     "pages": [
-                      {
-                        "group": "Create & Edit Products",
-                        "pages": [
-                          "user/products/creating-products",
-                          "user/products/deleting-products",
-                          "user/products/editing-products",
-                          "user/products/editing-multi-variant-products",
-                          "user/products/cloning-products"
-                        ]
-                      },
-                      {
-                        "group": "Manage Products",
-                        "pages": [
-                          "user/manage-products/search-products",
-                          "user/manage-products/bulk-product-operations",
-                          "user/manage-products/price-lists",
-                          "user/manage-products/export-products",
-                          "user/manage-products/import-products",
-                          "user/manage-products/multi-currency-import-export",
-                          "user/manage-products/product-import-file-template",
-                          "user/manage-products/translations",
-                          "user/manage-products/stock-levels",
-                          "user/manage-products/stock-transfers",
-                          "user/manage-products/product-taxonomies",
-                          "user/manage-products/product-options",
-                          "user/manage-products/product-metafields"
-                        ]
-                      }
-                    ],
-                    "icon": "package"
+                      "user/products/creating-products",
+                      "user/products/editing-products",
+                      "user/products/editing-multi-variant-products",
+                      "user/products/cloning-products",
+                      "user/products/deleting-products",
+                      "user/manage-products/search-products",
+                      "user/manage-products/bulk-product-operations",
+                      "user/products/categories",
+                      "user/products/collections",
+                      "user/manage-products/product-options",
+                      "user/manage-products/product-metafields",
+                      "user/manage-products/import-products",
+                      "user/manage-products/export-products",
+                      "user/manage-products/product-import-file-template",
+                      "user/manage-products/multi-currency-import-export"
+                    ]
+                  },
+                  {
+                    "group": "Inventory",
+                    "icon": "warehouse",
+                    "pages": [
+                      "user/inventory/stock-levels",
+                      "user/inventory/stock-transfers",
+                      "user/inventory/purchase-orders",
+                      "user/inventory/suppliers"
+                    ]
+                  },
+                  {
+                    "group": "Pricing",
+                    "icon": "tag",
+                    "pages": [
+                      "user/pricing/price-lists"
+                    ]
+                  },
+                  {
+                    "group": "Catalogs",
+                    "icon": "book-marked",
+                    "pages": [
+                      "user/catalogs/catalogs"
+                    ]
+                  },
+                  {
+                    "group": "Translations",
+                    "icon": "languages",
+                    "pages": [
+                      "user/translations/translations"
+                    ]
                   },
                   {
                     "group": "Orders",
                     "pages": [
-                      "user/orders/order-states",
+                      "user/orders/order-statuses",
                       "user/orders/processing-orders",
                       "user/orders/creating-orders",
                       "user/orders/editing-orders",
-                      "user/orders/order-adjustments",
+                      "user/orders/discounts-fees-and-taxes",
                       "user/orders/exporting-orders",
                       "user/orders/cancelling-orders",
                       "user/orders/refunding-orders",
-                      "user/orders/searching-orders"
+                      "user/orders/searching-orders",
+                      "user/orders/returns",
+                      "user/orders/exchanges",
+                      "user/orders/claims"
                     ],
                     "icon": "shopping-cart"
-                  },
-                  {
-                    "group": "Returns",
-                    "pages": [
-                      "user/settings/returns-configuration",
-                      "user/returns/returns-processing"
-                    ],
-                    "icon": "undo-2"
                   },
                   {
                     "group": "Customers",
@@ -1009,37 +1171,51 @@
                       "user/customers/create-customer",
                       "user/customers/customer-profile",
                       "user/customers/edit-customer",
-                      "user/customers/issue-gift-card",
-                      "user/customers/assign-store-credits",
                       "user/customers/searching-customers",
                       "user/customers/exporting-customers",
-                      "user/customers/customer-groups"
+                      "user/customers/customer-groups",
+                      "user/customers/companies"
                     ],
                     "icon": "users"
+                  },
+                  {
+                    "group": "Sellers",
+                    "icon": "store",
+                    "pages": [
+                      "user/sellers/sellers",
+                      "user/sellers/onboarding",
+                      "user/sellers/managing-sellers",
+                      "user/sellers/products",
+                      "user/sellers/orders",
+                      "user/sellers/commission-rates",
+                      "user/sellers/payouts"
+                    ]
+                  },
+                  {
+                    "group": "Loyalty",
+                    "pages": [
+                      "user/loyalty/gift-cards",
+                      "user/loyalty/issue-gift-card",
+                      "user/loyalty/store-credits",
+                      "user/loyalty/store-credits-list"
+                    ],
+                    "icon": "gift"
                   },
                   {
                     "group": "Promotions",
                     "pages": [
                       "user/promotions/create-a-promotion",
                       "user/promotions/promotion-rules",
-                      "user/promotions/promotion-actions",
-                      "user/promotions/gift-cards"
+                      "user/promotions/promotion-actions"
                     ],
                     "icon": "ticket-percent"
                   },
                   {
-                    "group": "Vendors",
+                    "group": "Reports",
+                    "icon": "chart-column",
                     "pages": [
-                      "user/settings/marketplace",
-                      "user/vendors/vendor-onboarding-shopify",
-                      "user/vendors/vendor-onboarding-woocommerce",
-                      "user/vendors/vendor-onboarding-manual",
-                      "user/vendors/vendor-management",
-                      "user/vendors/commission-rates",
-                      "user/vendors/vendor-payouts",
-                      "user/vendors/multi-vendor-checkout"
-                    ],
-                    "icon": "store"
+                      "user/reports/reports"
+                    ]
                   },
                   {
                     "group": "Settings",
@@ -1055,9 +1231,38 @@
                       "user/settings/shipping-methods",
                       "user/settings/tax",
                       "user/settings/locations",
-                      "user/settings/metafields"
+                      "user/settings/metafields",
+                      "user/settings/returns-configuration",
+                      "user/settings/product-types",
+                      "user/settings/package-types",
+                      "user/settings/integrations",
+                      "user/settings/api-keys",
+                      "user/settings/webhooks",
+                      "user/settings/allowed-origins"
                     ],
                     "icon": "settings"
+                  },
+                  {
+                    "group": "How-to Guides",
+                    "pages": [
+                      "user/how-to/selling-to-businesses",
+                      "user/how-to/multi-currency-pricing",
+                      "user/how-to/multiple-languages",
+                      "user/how-to/multi-region-pricing",
+                      "user/how-to/wholesale-pricing",
+                      "user/how-to/volume-pricing",
+                      "user/how-to/regional-wholesale",
+                      "user/how-to/regional-volume",
+                      "user/how-to/schedule-sale-pricing"
+                    ],
+                    "icon": "compass"
+                  },
+                  {
+                    "group": "Migration",
+                    "pages": [
+                      "user/migration/migrate-from-shopify"
+                    ],
+                    "icon": "arrow-right-left"
                   },
                   {
                     "group": "Security",
@@ -1806,56 +2011,6 @@
                 ]
               }
             ]
-          },
-          {
-            "tab": "Solutions",
-            "groups": [
-              {
-                "group": "Overview",
-                "pages": [
-                  "use-case/overview"
-                ]
-              },
-              {
-                "group": "B2B Commerce",
-                "pages": [
-                  "use-case/b2b/b2b-commerce-model",
-                  "use-case/b2b/b2b-capabilities",
-                  "use-case/b2b/b2b-admin-capabilities",
-                  "use-case/b2b/b2b-buyer-capabilities"
-                ]
-              },
-              {
-                "group": "Digital Products",
-                "pages": [
-                  "use-case/digital-products/model",
-                  "use-case/digital-products/capabilities",
-                  "use-case/digital-products/admin-capabilities"
-                ]
-              },
-              {
-                "group": "Multi-Tenant Platform",
-                "pages": [
-                  "use-case/multi-tenant/multi-tenant-model",
-                  "use-case/multi-tenant/multi-tenant-capabilities",
-                  "use-case/multi-tenant/super-admin-capabilities",
-                  "use-case/multi-tenant/tenant-capabilities",
-                  "use-case/multi-tenant/franchises-and-reseller-networks",
-                  "use-case/multi-tenant/multi-brand-enterprise-model",
-                  "use-case/multi-tenant/white-label-saas"
-                ]
-              },
-              {
-                "group": "Multi-Vendor Marketplace",
-                "pages": [
-                  "use-case/marketplace/model",
-                  "use-case/marketplace/capabilities",
-                  "use-case/marketplace/admin-dashboard",
-                  "use-case/marketplace/vendor-dashboard",
-                  "use-case/marketplace/customer-ux"
-                ]
-              }
-            ]
           }
         ]
       }
@@ -1939,7 +2094,8 @@
                   "developer/core-concepts/translations",
                   "developer/core-concepts/slugs",
                   "developer/core-concepts/metafields",
-                  "developer/core-concepts/imports-exports"
+                  "developer/core-concepts/imports-exports",
+                  "developer/core-concepts/reporting"
                 ]
               }
             ]
@@ -2003,12 +2159,10 @@
                 "icon": "graduation-cap",
                 "pages": [
                   "developer/tutorial/introduction",
-                  "developer/tutorial/model",
-                  "developer/tutorial/admin",
-                  "developer/tutorial/extending-models",
-                  "developer/tutorial/api",
+                  "developer/tutorial/model-and-api",
+                  "developer/tutorial/dashboard",
+                  "developer/tutorial/storefront",
                   "developer/tutorial/events",
-                  "developer/tutorial/sdk",
                   "developer/tutorial/testing"
                 ]
               },
@@ -2085,7 +2239,7 @@
                 "group": "Reports",
                 "icon": "chart-bar",
                 "pages": [
-                  "developer/how-to/custom-report"
+                  "developer/how-to/extend-reporting"
                 ]
               },
               {
@@ -2560,6 +2714,7 @@
           {
             "group": "How-to Guides",
             "pages": [
+              "user/how-to/selling-to-businesses",
               "user/how-to/multi-currency-pricing",
               "user/how-to/multiple-languages",
               "user/how-to/multi-region-pricing",
@@ -2572,56 +2727,71 @@
           },
           {
             "group": "Products",
+            "icon": "package",
             "pages": [
-              {
-                "group": "Create & Edit Products",
-                "pages": [
-                  "user/products/creating-products",
-                  "user/products/deleting-products",
-                  "user/products/editing-products",
-                  "user/products/editing-multi-variant-products",
-                  "user/products/cloning-products"
-                ]
-              },
-              {
-                "group": "Manage Products",
-                "pages": [
-                  "user/manage-products/search-products",
-                  "user/manage-products/bulk-product-operations",
-                  "user/manage-products/price-lists",
-                  "user/manage-products/export-products",
-                  "user/manage-products/import-products",
-                  "user/manage-products/multi-currency-import-export",
-                  "user/manage-products/product-import-file-template",
-                  "user/manage-products/translations",
-                  "user/manage-products/stock-levels",
-                  "user/manage-products/stock-transfers",
-                  "user/manage-products/product-taxonomies",
-                  "user/manage-products/product-options",
-                  "user/manage-products/product-metafields"
-                ]
-              }
+              "user/products/creating-products",
+              "user/products/editing-products",
+              "user/products/editing-multi-variant-products",
+              "user/products/cloning-products",
+              "user/products/deleting-products",
+              "user/manage-products/search-products",
+              "user/manage-products/bulk-product-operations",
+              "user/products/categories",
+              "user/products/collections",
+              "user/manage-products/product-options",
+              "user/manage-products/product-metafields",
+              "user/manage-products/import-products",
+              "user/manage-products/export-products",
+              "user/manage-products/product-import-file-template",
+              "user/manage-products/multi-currency-import-export"
+            ]
+          },
+          {
+            "group": "Inventory",
+            "icon": "warehouse",
+            "pages": [
+              "user/inventory/stock-levels",
+              "user/inventory/stock-transfers",
+              "user/inventory/purchase-orders",
+              "user/inventory/suppliers"
+            ]
+          },
+          {
+            "group": "Pricing",
+            "icon": "tag",
+            "pages": [
+              "user/pricing/price-lists"
+            ]
+          },
+          {
+            "group": "Catalogs",
+            "icon": "book-marked",
+            "pages": [
+              "user/catalogs/catalogs"
+            ]
+          },
+          {
+            "group": "Translations",
+            "icon": "languages",
+            "pages": [
+              "user/translations/translations"
             ]
           },
           {
             "group": "Orders",
             "pages": [
-              "user/orders/order-states",
+              "user/orders/order-statuses",
               "user/orders/processing-orders",
               "user/orders/creating-orders",
               "user/orders/editing-orders",
-              "user/orders/order-adjustments",
+              "user/orders/discounts-fees-and-taxes",
               "user/orders/exporting-orders",
               "user/orders/cancelling-orders",
               "user/orders/refunding-orders",
-              "user/orders/searching-orders"
-            ]
-          },
-          {
-            "group": "Returns",
-            "pages": [
-              "user/settings/returns-configuration",
-              "user/returns/returns-processing"
+              "user/orders/searching-orders",
+              "user/orders/returns",
+              "user/orders/exchanges",
+              "user/orders/claims"
             ]
           },
           {
@@ -2630,11 +2800,32 @@
               "user/customers/create-customer",
               "user/customers/customer-profile",
               "user/customers/edit-customer",
-              "user/customers/issue-gift-card",
-              "user/customers/assign-store-credits",
               "user/customers/searching-customers",
               "user/customers/exporting-customers",
-              "user/customers/customer-groups"
+              "user/customers/customer-groups",
+              "user/customers/companies"
+            ]
+          },
+          {
+            "group": "Sellers",
+            "icon": "store",
+            "pages": [
+              "user/sellers/sellers",
+              "user/sellers/onboarding",
+              "user/sellers/managing-sellers",
+              "user/sellers/products",
+              "user/sellers/orders",
+              "user/sellers/commission-rates",
+              "user/sellers/payouts"
+            ]
+          },
+          {
+            "group": "Loyalty",
+            "pages": [
+              "user/loyalty/gift-cards",
+              "user/loyalty/issue-gift-card",
+              "user/loyalty/store-credits",
+              "user/loyalty/store-credits-list"
             ]
           },
           {
@@ -2642,21 +2833,14 @@
             "pages": [
               "user/promotions/create-a-promotion",
               "user/promotions/promotion-rules",
-              "user/promotions/promotion-actions",
-              "user/promotions/gift-cards"
+              "user/promotions/promotion-actions"
             ]
           },
           {
-            "group": "Vendors",
+            "group": "Reports",
+            "icon": "chart-column",
             "pages": [
-              "user/settings/marketplace",
-              "user/vendors/vendor-onboarding-shopify",
-              "user/vendors/vendor-onboarding-woocommerce",
-              "user/vendors/vendor-onboarding-manual",
-              "user/vendors/vendor-management",
-              "user/vendors/commission-rates",
-              "user/vendors/vendor-payouts",
-              "user/vendors/multi-vendor-checkout"
+              "user/reports/reports"
             ]
           },
           {
@@ -2673,63 +2857,20 @@
               "user/settings/shipping-methods",
               "user/settings/tax",
               "user/settings/locations",
-              "user/settings/metafields"
+              "user/settings/metafields",
+              "user/settings/returns-configuration",
+              "user/settings/product-types",
+              "user/settings/package-types",
+              "user/settings/integrations",
+              "user/settings/api-keys",
+              "user/settings/webhooks",
+              "user/settings/allowed-origins"
             ]
           },
           {
             "group": "Security",
             "pages": [
               "user/security"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Solutions",
-        "groups": [
-          {
-            "group": "Overview",
-            "pages": [
-              "use-case/overview"
-            ]
-          },
-          {
-            "group": "B2B Commerce",
-            "pages": [
-              "use-case/b2b/b2b-commerce-model",
-              "use-case/b2b/b2b-capabilities",
-              "use-case/b2b/b2b-admin-capabilities",
-              "use-case/b2b/b2b-buyer-capabilities"
-            ]
-          },
-          {
-            "group": "Digital Products",
-            "pages": [
-              "use-case/digital-products/model",
-              "use-case/digital-products/capabilities",
-              "use-case/digital-products/admin-capabilities"
-            ]
-          },
-          {
-            "group": "Multi-Tenant Platform",
-            "pages": [
-              "use-case/multi-tenant/multi-tenant-model",
-              "use-case/multi-tenant/multi-tenant-capabilities",
-              "use-case/multi-tenant/super-admin-capabilities",
-              "use-case/multi-tenant/tenant-capabilities",
-              "use-case/multi-tenant/franchises-and-reseller-networks",
-              "use-case/multi-tenant/multi-brand-enterprise-model",
-              "use-case/multi-tenant/white-label-saas"
-            ]
-          },
-          {
-            "group": "Multi-Vendor Marketplace",
-            "pages": [
-              "use-case/marketplace/model",
-              "use-case/marketplace/capabilities",
-              "use-case/marketplace/admin-dashboard",
-              "use-case/marketplace/vendor-dashboard",
-              "use-case/marketplace/customer-ux"
             ]
           }
         ]

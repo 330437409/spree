@@ -1,7 +1,9 @@
 // Request parameter types for Admin API endpoints
 // Based on the Admin API OpenAPI specification
 
-import type { SellerRequirementStatus } from './types'
+import type { PaginationMeta } from '@spree/sdk-core'
+import type { ReportingQuery } from './admin-client'
+import type { SellerRequirementStatus, StoreCredit } from './types'
 
 /** One pricing or inventory engine a store can choose between. */
 export interface StoreDataSourceProvider {
@@ -70,6 +72,8 @@ export interface StoreUpdateParams {
   preferred_track_inventory_levels?: boolean
   /** Holds stock for shoppers while they check out, so the same item can't be sold twice. */
   preferred_stock_reservations_enabled?: boolean
+  /** On-hand units at or below which a tracked variant counts as low stock on the home screen; 0 turns the warning off. */
+  preferred_low_stock_threshold?: number
   /** Records price changes for the EU Omnibus lowest-price-in-30-days display. */
   preferred_track_price_history?: boolean
   /** Whether products with no price in the shopper's currency still appear in listings. */
@@ -1036,11 +1040,11 @@ export type CollectionSortOrder =
   | 'name asc'
   | 'name desc'
 
-export type CollectionRuleType =
-  | 'Spree::CollectionRules::Tag'
-  | 'Spree::CollectionRules::Sale'
-  | 'Spree::CollectionRules::AvailableOn'
-  | (string & {})
+/**
+ * Wire shorthand (`api_type`) for an automatic-collection rule — what
+ * `collectionRules.types()` returns. Ruby class names are not accepted.
+ */
+export type CollectionRuleType = 'tag' | 'sale' | 'available_on' | (string & {})
 
 export type CollectionRuleMatchPolicy =
   | 'is_equal_to'
@@ -1462,6 +1466,13 @@ export interface StockLevelUpdateParams {
    * of zero or more.
    */
   count_on_hand?: number
+  /**
+   * A signed change to the shelf instead of a target count — "three more",
+   * "two fewer" — applied by the API to the count it holds at that moment.
+   * Recorded as an `adjusted` movement the same way. Must be a whole number;
+   * a fraction is refused. Cannot be sent together with `count_on_hand`.
+   */
+  adjustment?: number
   /** Whether this location sells the variant beyond what it holds. */
   backorderable?: boolean
   /** Labels the correction in the stock history. Defaults to "Manual adjustment". */
@@ -2323,7 +2334,11 @@ export interface PriceBulkUpsertRow {
 }
 
 export interface PaymentMethodCreateParams {
-  /** Fully-qualified STI subclass name, e.g. 'Spree::PaymentMethod::Check'. */
+  /**
+   * Wire shorthand (`Spree::PaymentMethod.api_type`), not the Ruby class
+   * name — e.g. `'check'`, not `'Spree::PaymentMethod::Check'`. Discover the
+   * available values from `paymentMethods.types()`.
+   */
   type: string
   name: string
   description?: string | null
@@ -2410,10 +2425,8 @@ export interface IntegrationUpdateParams {
  * (`Spree::Export.available_types`); a plugin can register additional types,
  * which arrive here as the trailing `string & {}` arm.
  *
- * Creating an export still accepts the fully-qualified class name for
- * backwards compatibility, but responses always use the shorthand. Note that
- * Ransack filters (`type_eq`) match the database column, so those still take
- * the class name.
+ * Note that Ransack filters (`type_eq`) match the database column, so those
+ * still take the class name.
  */
 export type ExportType =
   | 'products'
@@ -2451,8 +2464,7 @@ export interface ExportCreateParams {
 
 /**
  * API shorthand for an import type (`Spree::Import.api_type`), not the Ruby
- * class name. Creating an import still accepts the fully-qualified class name
- * for backwards compatibility, but responses always use the shorthand.
+ * class name.
  */
 export type ImportType =
   | 'products'
@@ -2745,7 +2757,7 @@ export interface DeliveryMethodParams {
   estimated_transit_business_days_max?: number | null
   /** Prefixed tax category ID (`taxcat_...`), or null to clear. */
   tax_category_id?: string | null
-  /** Delivery calculator class name (see `deliveryMethods.calculators()`). */
+  /** Wire shorthand for the calculator, e.g. `'flat_rate'` (see `deliveryMethods.calculators()`). */
   calculator_type?: string
   calculator_preferences?: Record<string, unknown>
   /** Prefixed delivery zone ID (`dz_...`) narrowing destinations, or null for no restriction. Must belong to the method's profile. */
@@ -3036,4 +3048,48 @@ export interface TaxRateParams {
   included_in_price?: boolean
   show_rate_in_label?: boolean
   calculator_type?: string
+}
+
+// ============================================
+// Saved reports (semantic reporting layer)
+// ============================================
+
+export interface SavedReportCreateParams {
+  name: string
+  description?: string | null
+  /** A reporting contract query — validated against the registry on save. */
+  query: ReportingQuery
+}
+
+export type SavedReportUpdateParams = Partial<SavedReportCreateParams>
+
+/**
+ * The outstanding balance for one currency, summed over the filter the list
+ * request used. Amounts are canonical decimal strings; the `display_*` twins
+ * are pre-formatted in that currency.
+ */
+export interface StoreCreditCurrencyTotal {
+  currency: string
+  /** Everything ever issued in this currency. */
+  amount: string
+  /** How much of it has been spent. */
+  amount_used: string
+  /** How much is committed to an in-flight authorization. */
+  amount_authorized: string
+  /** What the store still owes: issued minus used minus authorized. */
+  amount_remaining: string
+  display_amount: string
+  display_amount_used: string
+  display_amount_authorized: string
+  display_amount_remaining: string
+}
+
+export interface StoreCreditListMeta extends PaginationMeta {
+  /** One row per currency present in the filtered scope, ordered by currency. */
+  totals: StoreCreditCurrencyTotal[]
+}
+
+export interface StoreCreditListResponse {
+  data: StoreCredit[]
+  meta: StoreCreditListMeta
 }

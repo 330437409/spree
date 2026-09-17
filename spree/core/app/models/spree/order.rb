@@ -23,6 +23,7 @@ module Spree
 
     extend Spree::DisplayMoney
 
+    include Spree::ActedBy
     include Spree::SingleStoreResource
     include Spree::SanitizableRichText
     include Spree::Purchase::Channel
@@ -169,9 +170,7 @@ module Spree
     # Whose sale this is. Nil on the operator's own goods, including the
     # first-party child of a mixed marketplace checkout.
     belongs_to :seller, class_name: 'Spree::Seller', optional: true
-    belongs_to :created_by, class_name: "::#{Spree.admin_user_class}", optional: true
-    belongs_to :approver, class_name: "::#{Spree.admin_user_class}", optional: true
-    belongs_to :canceler, class_name: "::#{Spree.admin_user_class}", optional: true
+    acted_by :created_by, :approver, :canceler
     belongs_to :cancel_reason, class_name: 'Spree::OrderCancellationReason', optional: true, inverse_of: :orders
 
     belongs_to :preferred_stock_location, class_name: 'Spree::StockLocation', optional: true
@@ -280,6 +279,8 @@ module Spree
     scope :incomplete, -> { where(completed_at: nil) }
     scope :canceled, -> { where(status: 'canceled') }
     scope :not_canceled, -> { where.not(status: 'canceled') }
+    # Nil-tolerant channel filter for optional scoping (nil means all channels).
+    scope :for_channel, ->(channel) { channel ? where(channel_id: channel.id) : all }
     scope :ready_to_ship, -> { where(fulfillment_status: %w[unfulfilled]) }
     scope :partially_shipped, -> { where(fulfillment_status: %w[partial]) }
     scope :not_shipped, -> { where(fulfillment_status: %w[unfulfilled partial]) }
@@ -695,6 +696,29 @@ module Spree
       order_group_id.present? ? order_group.payments : payments
     end
 
+    # What has been captured against this order, net of refunds.
+    #
+    # An order placed in a split checkout owns no payments, so its own
+    # +payment_total+ stays at zero however much the customer paid — the
+    # figure comes from its share of the group's payments instead, the same
+    # way {Spree::Orders::UpdateStatuses} derives +payment_status+. The
+    # group's own total will not do: once one seller has been captured and
+    # another has not, no proportion of it describes either.
+    #
+    # @return [BigDecimal]
+    def net_captured_total
+      return payment_total unless grouped?
+
+      payment_splits.sum(&:net_captured_amount)
+    end
+
+    # Payments still to be collected for this order, wherever they live.
+    #
+    # @return [ActiveRecord::Relation<Spree::Payment>, Array<Spree::Payment>]
+    def settlement_pending_payments
+      grouped? ? settlement_payments.pending : pending_payments
+    end
+
     # @return [Boolean] whether this order was placed alongside others in one
     #   checkout, and therefore shares their payment
     def grouped?
@@ -1064,10 +1088,11 @@ module Spree
     # Approves the order and records the approver.
     # Delegates to {Spree::Orders::Approve} service.
     #
-    # @param user [Spree.customer_class, nil] the user who approved the order
+    # @param actor [Object, nil] who approved it — an admin user or an API
+    #   key (see Spree.actor_classes)
     # @return [Spree::ServiceModule::Result]
-    def approved_by(user = nil)
-      Spree.order_approve_service.call(order: self, approver: user)
+    def approved_by(actor = nil)
+      Spree.order_approve_service.call(order: self, approver: actor)
     end
 
     def approved?

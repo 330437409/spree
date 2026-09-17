@@ -4,6 +4,10 @@
       "delete_image": "Delete image",
       "edit_media": "Edit media"
     },
+    "actors": {
+      "api_key": "API key",
+      "unnamed": "Unnamed"
+    },
     "allowed_origins": {
       "add_cta": "Add allowed origin",
       "create_description": "Browsers loaded from this origin can call the admin API. The CORS allowlist and admin cookie session both rely on this list — keep it tight.",
@@ -30,10 +34,10 @@
         "never_used": "Never",
         "revoked": "Revoked"
       },
-      "by_email": "by {{email}}",
       "create_key_cta": "Create key",
       "create_sheet_description": "Choose a key type, then pick the scopes it can use.",
       "create_sheet_title": "Create API key",
+      "created_by": "by {{actor}}",
       "delete_confirm": {
         "message": "This permanently removes the key. Prefer revoke if you might restore access later.",
         "title": "Delete key?"
@@ -2076,6 +2080,11 @@
           "help": "Calculate tax from the customer's shipping address. Turn this off to tax by the billing address instead.",
           "label": "Tax by shipping address"
         },
+        "low_stock_threshold": {
+          "help": "A tracked variant with this many units or fewer on hand counts as low stock on the home screen. 0 turns the warning off.",
+          "label": "Low stock threshold",
+          "suffix": "units"
+        },
         "track_inventory_levels": {
           "help": "Count on-hand quantities. Turn off to treat every product as always available.",
           "label": "Track stock levels"
@@ -2085,8 +2094,6 @@
           "label": "Record price history"
         },
         "payouts": {
-          "title": "Seller payouts",
-          "description": "How this marketplace pays the sellers who trade on it.",
           "provider": {
             "label": "Paid through",
             "help": "Who moves the money. Keeping your own books means you send the transfers yourself and mark each one paid.",
@@ -2586,7 +2593,10 @@
       "translations": "Translations",
       "purchase_orders": "Purchase orders",
       "inventory": "Inventory",
-      "suppliers": "Suppliers"
+      "suppliers": "Suppliers",
+      "loyalty": "Loyalty",
+      "store_credits": "Store Credits",
+      "commission_rates": "Commission rates"
     },
     "option_types": {
       "columns": {
@@ -2720,6 +2730,8 @@
         "confirm": {
           "approve_message": "Approve this order?",
           "cancel_message": "Are you sure you want to cancel this order?",
+          "cancel_shipment_confirm": "Cancel fulfillment",
+          "cancel_shipment_dismiss": "Keep fulfillment",
           "cancel_shipment_message": "Cancel this fulfillment?",
           "capture_message": "Capture this payment?",
           "complete_message": "Complete this draft order now?",
@@ -3009,10 +3021,17 @@
         "use_default_addresses": "Use customer's default billing & shipping addresses"
       },
       "payment_statuses": {
+        "none": "Unpaid",
+        "authorized": "Authorized",
+        "partially_paid": "Partially paid",
+        "paid": "Paid",
+        "partially_refunded": "Partially refunded",
+        "refunded": "Refunded",
+        "overcharged": "Overcharged",
+        "voided": "Voided",
         "balance_due": "Balance due",
         "credit_owed": "Credit owed",
         "failed": "Failed",
-        "paid": "Paid",
         "void": "Void"
       },
       "statuses": {
@@ -3150,22 +3169,102 @@
         "columns": {
           "price": "Price",
           "product": "Product",
-          "sold": "Sold"
+          "sold": "Sold",
+          "trend": "Trend"
         },
         "metric_short": {
           "avg_order_value": "AOV",
           "orders": "Orders",
-          "sales": "Sales"
+          "sales": "Sales",
+          "units": "Units",
+          "customers": "Customers"
         },
         "metrics": {
           "avg_order_value": "Avg Order Value",
           "orders": "Total Orders",
-          "sales": "Total Sales"
+          "sales": "Total Sales",
+          "units": "Units Sold",
+          "customers": "Customers"
         },
         "subtitle": "Overview of your store performance",
         "title": "Dashboard",
         "top_products": "Top Products",
-        "top_products_description": "Best-selling products in your store."
+        "top_products_description": "Best-selling products in your store.",
+        "legend": {
+          "current": "This period",
+          "previous": "Previous period"
+        },
+        "growth": {
+          "new": "New",
+          "vs_previous": "vs previous period"
+        },
+        "operations": {
+          "title": "Operations",
+          "subtitle": "What needs your attention right now.",
+          "failed": "Could not load these counts.",
+          "empty": "Nothing here is visible to your role.",
+          "counters": {
+            "low_stock_items": {
+              "label": "Low stock",
+              "description_zero": "Turned off. Set a low stock threshold in store settings to use this.",
+              "description_one": "1 unit or fewer left to sell at a location.",
+              "description_other": "{{count}} units or fewer left to sell at a location."
+            },
+            "open_claims": {
+              "label": "Open claims",
+              "description": "Claims still open or approved and not yet resolved."
+            },
+            "open_exchanges": {
+              "label": "Open exchanges",
+              "description": "Exchanges not yet fulfilled."
+            },
+            "open_returns": {
+              "label": "Open returns",
+              "description": "Returns not yet refunded."
+            },
+            "orders_to_fulfill": {
+              "label": "Orders to fulfill",
+              "description": "Placed orders with nothing shipped yet."
+            },
+            "out_of_stock_items": {
+              "label": "Out of stock",
+              "description": "Nothing left to sell at a location."
+            },
+            "payments_to_collect": {
+              "label": "Payments to collect",
+              "description": "Placed orders still owed money."
+            }
+          }
+        },
+        "rankings": {
+          "title": "Rankings",
+          "subtitle": "Top performers in the selected period.",
+          "tabs": {
+            "customers": "Customers",
+            "categories": "Categories",
+            "companies": "Companies",
+            "sellers": "Sellers"
+          },
+          "orders_count_one": "{{count}} order",
+          "orders_count_other": "{{count}} orders",
+          "units_count_one": "{{count}} unit",
+          "units_count_other": "{{count}} units",
+          "empty": "No data for this period yet.",
+          "view_report": "View report",
+          "report_names": {
+            "seller_payouts": "Seller payouts",
+            "top_categories": "Top categories",
+            "top_companies": "Top companies",
+            "top_customers": "Top customers"
+          }
+        },
+        "unavailable": {
+          "title": "Reports are unavailable for your role",
+          "description": "Ask an administrator for the “Reports” permission (with access to orders) to see sales figures here."
+        },
+        "currency": {
+          "search": "Search currencies"
+        }
       },
       "orders": {
         "detail": {
@@ -3186,6 +3285,8 @@
               "resolve_replacement": "Resolve with replacement"
             },
             "confirm": {
+              "cancel_confirm": "Cancel claim",
+              "cancel_dismiss": "Keep claim",
               "deny": "Deny this claim? The customer will not receive a refund or replacement."
             },
             "create_title": "New claim",
@@ -3213,6 +3314,10 @@
               "create": "New exchange",
               "fulfill": "Ship replacement"
             },
+            "confirm": {
+              "cancel_confirm": "Cancel exchange",
+              "cancel_dismiss": "Keep exchange"
+            },
             "create_title": "New exchange",
             "empty": "No exchanges for this order.",
             "price_difference": "Price difference",
@@ -3229,7 +3334,9 @@
             "buy_label": "Buy return label",
             "buy_label_confirm": "Buy a prepaid return label? Your carrier account is charged as soon as the label is issued.",
             "confirm": {
-              "cancel": "Cancel this return? Nothing will be restocked and no money will move."
+              "cancel": "Cancel this return? Nothing will be restocked and no money will move.",
+              "cancel_confirm": "Cancel return",
+              "cancel_dismiss": "Keep return"
             },
             "create_title": "New return",
             "empty": "No returns for this order.",
@@ -3985,8 +4092,10 @@
         "analytics": "Analytics",
         "catalog": "Catalog",
         "customers": "Customers",
+        "loyalty": "Loyalty",
         "marketing": "Marketing",
         "orders": "Orders",
+        "sellers": "Sellers",
         "settings": "Settings"
       },
       "labels": {
@@ -4111,6 +4220,12 @@
       "percent": "Percent",
       "preferred_amount": "Amount",
       "preferred_percent": "Percent",
+      "terms_body": "Terms",
+      "terms_body_description": "What the seller reads before they accept. Shown in their setup checklist.",
+      "terms_effective_from": "Terms effective from",
+      "terms_effective_from_description": "Sellers who accepted before this date are asked again.",
+      "terms_url": "Terms URL",
+      "terms_url_description": "Optional published copy of the same terms, opened in a new tab.",
       "webhook_secret": "Webhook signing secret",
       "webhook_secret_description": "The secret you set on the EasyPost webhook. Carrier updates are refused without it."
     },
@@ -4759,6 +4874,7 @@
         },
         "all_done": "All done 🎉",
         "download": "Download file",
+        "manage_requirements": "Manage requirements",
         "policy_empty": "This policy has no content yet.",
         "policy_updated": "Last updated {{date}}",
         "progress": "{{done}} of {{total}} done",
@@ -4986,10 +5102,70 @@
       }
     },
     "stock_levels": {
+      "column_hints": {
+        "allocated": "Units promised to orders that have been placed but not yet shipped. They are still on the shelf.",
+        "available": "What a new customer can still buy: on hand, minus allocated, minus reserved.",
+        "incoming": "Units on their way here on a purchase order placed with a supplier, or a transfer in transit.",
+        "on_hand": "Units physically on the shelf at this location. Click to correct the count.",
+        "reserved": "Units held by customers who are in checkout right now."
+      },
+      "columns": {
+        "allocated": "Allocated",
+        "available": "Available",
+        "incoming": "Incoming",
+        "location": "Location",
+        "on_hand": "On hand",
+        "product": "Product",
+        "reserved": "Reserved",
+        "sku": "SKU",
+        "stock_status": "Stock status"
+      },
+      "filters": {
+        "has_incoming": "Incoming",
+        "has_reserved": "Reserved",
+        "in_stock": "In stock",
+        "low_stock": "Low stock",
+        "out_of_stock": "Out of stock"
+      },
+      "incoming": {
+        "open_aria": "Add incoming stock",
+        "create_transfer": "Create transfer",
+        "create_purchase_order": "Create purchase order"
+      },
+      "location_filter": {
+        "placeholder": "Search locations…",
+        "empty": "No locations found"
+      },
       "messages": {
         "stock_level_deleted": "Stock level deleted",
         "stock_updated": "Stock updated"
-      }
+      },
+      "no_sku": "No SKU",
+      "quick_edit": {
+        "modes": {
+          "set": "Set to",
+          "adjust": "Adjust by"
+        },
+        "open_aria": "Edit on-hand count for {{name}}",
+        "mode_aria": "How to change the count",
+        "amount_aria": "Amount",
+        "reason_aria": "Reason",
+        "confirm": "Apply"
+      },
+      "reasons": {
+        "correction": "Correction",
+        "count": "Count",
+        "received": "Received",
+        "return_restock": "Return restock",
+        "damaged": "Damaged",
+        "theft_or_loss": "Theft or loss",
+        "promotion_or_donation": "Promotion or donation"
+      },
+      "table": {
+        "search_placeholder": "Search SKU or product…",
+        "empty": "No stock levels yet. Stock appears here once a variant is stocked at a location."
+      },
+      "title": "Inventory"
     },
     "stock_locations": {
       "add_cta": "Add stock location",
@@ -5184,7 +5360,32 @@
       "product_types": "Templates that give new products their fields and options.",
       "stock_transfers": "Stock moving between your locations, and what has arrived.",
       "purchase_orders": "Stock you have ordered from suppliers, and what has arrived",
-      "suppliers": "Your supplier address book"
+      "suppliers": "Your supplier address book",
+      "stock_levels": "What you have at each location: on hand, allocated to orders, held by checkouts, available to sell, and on its way.",
+      "allowed_origins": "The web addresses allowed to call your store's API from a browser.",
+      "channels": "Where you sell — each storefront, app or portal, with its own catalog and defaults.",
+      "commission_rates": "What the marketplace charges on each sale, applied in list order.",
+      "custom_field_definitions": "Extra fields you attach to products, orders, customers and other records.",
+      "customers": "Everyone who has shopped with or registered at your store.",
+      "gift_cards": "Prepaid cards customers redeem at checkout.",
+      "imports": "CSV files you have uploaded, and how each one went.",
+      "markets": "The regions you sell to, each with its own currency, tax and delivery setup.",
+      "orders": "Every order placed with your store, and where each one stands.",
+      "draft_orders": "Orders your team is building on a customer's behalf, not yet placed.",
+      "payment_methods": "How customers can pay, and the providers behind each option.",
+      "policies": "Your terms, privacy, returns and shipping policies, published on the storefront.",
+      "products": "Everything you sell, with its variants, prices and stock.",
+      "promotions": "Discounts and offers, and the rules that decide when they apply.",
+      "seller_requirements": "The checklist sellers complete before they can be approved.",
+      "sellers": "The third-party sellers trading on your marketplace, and where each one stands.",
+      "store_credits": "Balances customers can spend at checkout, and how each was issued.",
+      "tax_categories": "Groupings that decide which tax rate a product gets.",
+      "tax_rates": "The tax charged per category and region.",
+      "webhook_deliveries": "Each event sent to this endpoint, and whether it was received.",
+      "webhook_endpoints": "Where your other systems are notified when something happens in the store.",
+      "returns": "Goods coming back, from request to refund.",
+      "exchanges": "Purchases swapped for a different size, colour or product.",
+      "claims": "Deliveries that went wrong — damaged, missing or wrong items — and how each was resolved."
     },
     "tax_categories": {
       "add_cta": "Add tax category",
@@ -5400,7 +5601,9 @@
         "owed": "Owed ({{currency}})",
         "earned": "Earned",
         "paid": "Paid out",
-        "pending": "On its way"
+        "pending": "On its way",
+        "earned_in": "Earned ({{currency}})",
+        "payable": "Payable"
       },
       "complete": {
         "title": "Mark this payout as paid",
@@ -5663,6 +5866,130 @@
         "confirm": "Close short"
       },
       "load_failed": "The deliveries could not be loaded."
+    },
+    "reports": {
+      "title": "Reports",
+      "subtitle": "Saved reports over your sales, products and customers.",
+      "new_cta": "New report",
+      "new_title": "New report",
+      "copy_name": "Copy of {{name}}",
+      "table": {
+        "search_placeholder": "Search reports…",
+        "empty": "No reports yet. Create one to get started.",
+        "columns": {
+          "name": "Name",
+          "kind": "Type",
+          "author": "Created by"
+        }
+      },
+      "kind": {
+        "built_in": "Built-in",
+        "custom": "Custom"
+      },
+      "builder": {
+        "metrics": "Metrics",
+        "no_metrics": "Pick at least one metric.",
+        "one_family_only": "One report covers one metric group. Picking a metric from another group switches the report to it.",
+        "switches_family": "Switches this report to {{family}}",
+        "group_by": "Group by",
+        "none": "None (totals only)",
+        "grain": "Interval",
+        "time_range": "Time range",
+        "custom_range": "Custom range",
+        "compare": "Compare with previous period",
+        "filters": "Filters",
+        "add_filter": "Add filter",
+        "remove_filter": "Remove filter",
+        "sort": "Sort by",
+        "direction": "Order",
+        "sort_desc": "Highest first",
+        "sort_asc": "Lowest first",
+        "limit": "Rows",
+        "ids_placeholder": "Comma-separated IDs",
+        "title": "Report settings"
+      },
+      "grains": {
+        "hour": "Hourly",
+        "day": "Daily",
+        "week": "Weekly",
+        "month": "Monthly"
+      },
+      "view": {
+        "empty": "No data for this period.",
+        "total": "Total",
+        "change": "Change",
+        "error": "Could not load this report"
+      },
+      "actions": {
+        "save": "Save",
+        "save_copy": "Save a copy",
+        "export_csv": "Export CSV",
+        "rename": "Rename"
+      },
+      "save_dialog": {
+        "title_create": "Save report",
+        "title_copy": "Save a copy",
+        "title_rename": "Rename report",
+        "name_label": "Name",
+        "description_label": "Description"
+      },
+      "seeded_hint": "Built-in reports can't be changed. Adjust the settings and save a copy to keep your version.",
+      "delete_confirm": "Delete report \"{{name}}\"? This can't be undone.",
+      "messages": {
+        "created": "Report saved",
+        "create_failed": "Could not save the report",
+        "updated": "Report updated",
+        "update_failed": "Could not update the report",
+        "deleted": "Report deleted",
+        "delete_failed": "Could not delete the report"
+      }
+    },
+    "store_credits": {
+      "columns": {
+        "customer": "Customer",
+        "used": "Used",
+        "remaining": "Remaining",
+        "authorized": "On hold",
+        "standing": "Standing",
+        "origin": "Origin",
+        "issued_by": "Issued by"
+      },
+      "origins": {
+        "manual": "Issued by hand",
+        "gift_card": "Gift card",
+        "return": "Return",
+        "exchange": "Exchange",
+        "claim": "Claim",
+        "refund": "Refund"
+      },
+      "filters": {
+        "outstanding": "Outstanding",
+        "spent": "Spent",
+        "not_from_gift_card": "Everything else"
+      },
+      "totals": {
+        "outstanding": "Outstanding",
+        "issued": "Issued",
+        "used": "Used"
+      },
+      "ledger": {
+        "title": "Ledger",
+        "empty": "No movements recorded yet.",
+        "load_failed": "Could not load the ledger."
+      },
+      "sheet": {
+        "description": "How this balance was issued and how it has been spent.",
+        "open_customer": "Open customer profile",
+        "load_failed": "Could not load this store credit."
+      },
+      "table": {
+        "search_placeholder": "Search memos…",
+        "empty": "No store credits yet. Issue one from a customer profile."
+      },
+      "no_customer": "No customer",
+      "page": {
+        "subtitle": "What the store owes in prepaid balances, across every customer."
+      }
     }
   }
 }

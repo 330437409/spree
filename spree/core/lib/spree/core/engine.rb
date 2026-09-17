@@ -45,7 +45,9 @@ module Spree
                                :reports,
                                :translatable_resources,
                                :taggable_types,
+                               :actor_classes,
                                :custom_fields,
+                               :reporting,
                                :analytics_events,
                                :analytics_event_handlers,
                                :integrations,
@@ -102,6 +104,13 @@ module Spree
       initializer 'spree.register.subscribers', before: :load_config_initializers do |app|
         # Initialize subscribers array early so engines can add subscribers via initializers
         app.config.spree.subscribers = []
+      end
+
+      # Seeded before application initializers so an extension registering an
+      # actor class has something to append to. The defaults are unioned in
+      # after initialization, where Spree.admin_user_class is finally known.
+      initializer 'spree.register.actor_classes', before: :load_config_initializers do |app|
+        app.config.spree.actor_classes = []
       end
 
       initializer 'spree.register.calculators', before: :after_initialize do |app|
@@ -190,6 +199,14 @@ module Spree
         app.config.spree.custom_fields = CustomFieldsEnvironment.new
         app.config.spree.custom_fields.types = []
         app.config.spree.custom_fields.enabled_resources = []
+      end
+
+      # Seed the reporting vocabulary before app initializers so applications
+      # and extensions can register their own metrics/dimensions in
+      # config/initializers (see docs/plans/6.0-analytics-semantic-layer.md).
+      initializer 'spree.register.reporting', before: :load_config_initializers do |app|
+        app.config.spree.reporting = Spree::Reporting::Registry.new
+        Spree::Reporting::DefaultVocabulary.install(app.config.spree.reporting)
       end
 
       # We need to define promotions rules here so extensions and existing apps
@@ -459,7 +476,8 @@ module Spree
           Spree::Exports::NewsletterSubscribers,
           Spree::Exports::CouponCodes,
           Spree::Exports::PriceListPrices,
-          Spree::Exports::PurchaseOrders
+          Spree::Exports::PurchaseOrders,
+          Spree::Exports::Report
         ]
 
         Rails.application.config.spree.import_types = [
@@ -491,11 +509,6 @@ module Spree
           Spree::CollectionRules::AvailableOn,
         ]
 
-        Rails.application.config.spree.reports = [
-          Spree::Reports::ProductsPerformance,
-          Spree::Reports::SalesTotal
-        ]
-
         Rails.application.config.spree.translatable_resources = [
           Spree::OptionType,
           Spree::OptionValue,
@@ -518,6 +531,19 @@ module Spree
           'Spree::Product',
           'Spree::Order',
           Spree.customer_class.to_s
+        ]
+
+        # Models that may be recorded as having performed an action — the
+        # vocabulary an `acted_by` association's `*_type` column is validated
+        # against. Extend in an app initializer to register an App or bot
+        # class, which must include Spree::Actor:
+        #   Rails.application.config.spree.actor_classes << 'MyApp::App'.
+        #
+        # Unioned rather than assigned, so what an initializer registered
+        # above survives.
+        Rails.application.config.spree.actor_classes |= [
+          Spree.admin_user_class.to_s,
+          'Spree::ApiKey'
         ]
 
         Rails.application.config.spree.custom_fields.types = [
@@ -608,7 +634,6 @@ module Spree
           Spree::SellerTransferSubscriber,
           Spree::SellerTransferReversalSubscriber,
           Spree::ExportSubscriber,
-          Spree::ReportSubscriber,
           Spree::InvitationEmailSubscriber,
           Spree::SellerOnboardingSubscriber,
           Spree::AdminUserEmailSubscriber,
