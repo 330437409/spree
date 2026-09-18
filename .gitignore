@@ -86,3 +86,11 @@ miniprogram/
 # Local tooling output and the pnpm store (large, machine-specific)
 .tooling/
 .pnpm-store/
+
+# Spree agent skills, a local snapshot of the separate spree/agent-skills repo —
+# re-synced by hand, deliberately not version controlled
+.agents/skills/spree-*
+.claude/skills/spree-*
+.claude/agents/spree-expert.md
+.claude/commands/doctor.md
+.claude/commands/audit-upgrade.md
