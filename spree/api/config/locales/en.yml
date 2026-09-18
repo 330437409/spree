@@ -17,6 +17,7 @@ en:
         media_not_deleted: "The file could not be deleted. Nothing was changed."
         media_in_use: "This file is still in use (%{places}). Pass detach=true to remove it everywhere and delete it, or clear those places first."
         media_url_import_requires_product: Importing media from a URL needs a product to import it into. Upload the file instead, or post it to a product's media.
+        seller_not_found: The requested site does not exist in this store.
         store_mismatch: The requested store does not match the store this API key belongs to.
         storefront_login_required: Authentication required to access this store.
       negative_quantity: quantity is negative

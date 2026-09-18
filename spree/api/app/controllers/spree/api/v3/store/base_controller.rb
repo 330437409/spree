@@ -11,6 +11,10 @@ module Spree
           # this here keeps the +X-Spree-Channel+ header from accidentally
           # narrowing admin queries.
           include Spree::Api::V3::ChannelResolution
+          # The seller a storefront request is scoped to, beside the channel —
+          # the two members of one request scope that pricing and catalogue
+          # reads resolve through. Mirrors Store::ResourceController.
+          include Spree::Api::V3::Store::SellerResolution
           # Mirrors Store::ResourceController. Both branches must carry the gate so
           # login_required / prices_hidden apply to every Store endpoint, not just
           # ResourceController ones. Public endpoints opt out with

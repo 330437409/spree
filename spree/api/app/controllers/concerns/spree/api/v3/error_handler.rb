@@ -33,6 +33,11 @@ module Spree
           channel_mismatch: 'channel_mismatch',
           channel_inactive: 'channel_inactive',
 
+          # Seller errors
+          # The site header named a seller this store does not have — a stale
+          # siteId, not a permission problem.
+          seller_not_found: 'seller_not_found',
+
           # Cart errors
           cart_not_found: 'cart_not_found',
           cart_cannot_transition: 'cart_cannot_transition',

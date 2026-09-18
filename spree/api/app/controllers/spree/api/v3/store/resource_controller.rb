@@ -8,6 +8,10 @@ module Spree
         class ResourceController < Spree::Api::V3::ResourceController
           include Spree::Api::V3::KeyStoreContext
           include Spree::Api::V3::ChannelResolution
+          # The seller a storefront request is scoped to, beside the channel.
+          # Registered with the includes above, so it runs before the
+          # re-registered +set_parent+/+set_resource+ lookups below.
+          include Spree::Api::V3::Store::SellerResolution
           include Spree::Api::V3::StorefrontGating
           include Spree::Api::V3::StorefrontAccess
 
