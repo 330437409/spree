@@ -1,3 +1,21 @@
+## 2026-09-16: Two catalogs on one company charge the best of them, and every order line says which agreement priced it
+
+**Context:** Nothing stopped an operator assigning a second catalog to a company — the audience picker offered the company again with no warning — and once both were active the buyer was charged from whichever catalog sorted first, not the cheaper one. Reported against a company holding a 5%-off catalog and a contract catalog with a quantity break: at 24 units the buyer paid $2,280.00 where the company's other agreement said $1,200.00, and reversing the two catalogs' order reversed the outcome (V-3635). The tie-break was the documented design — `Catalog#position`, which is the order of the store-wide catalogs screen — so a merchant dragging that list to tidy it changed what companies paid, with no screen anywhere listing a company's catalogs to show it had happened.
+
+**Decision:** Precedence between nodes is real and unchanged: a division's own agreement still answers over its parent's, cheaper or not, because someone negotiated it. Precedence *within* a node is not real, so it is gone — catalogs assigned to the same company node rank equally and the buyer pays the **best price any of them gives**. Equal amounts keep list order, so the answer stays stable. `Spree::Catalog.groups_for_company` / `groups_for_context` / `groups_for_buyer` return the catalogs grouped by assigning node and the flat `for_*` readers are derived from them, so visibility and quantity terms keep the union they always had while pricing alone sees the rank boundaries. `Spree::Current` memoizes the grouped form and derives the flat set from it, so the two cannot disagree about one buyer. Position keeps ordering the catalogs screen and nothing else.
+
+Rejected: refusing the second assignment, which would delete a shipped feature (two catalogs on one company is how an operator unions two assortments) and invalidate stores already doing it; and warning the operator while leaving the money alone, which does not stop the overcharge. Best-price is also the rule a merchant can state in one sentence to the buyer they overcharged.
+
+**Consequences:** The admin line-item serializer gains `price_list_id`, `price_list_name`, `catalog_id` and `catalog_name`, and the dashboard's order item rows link to the agreement that priced them. This is read off the price list the line was stamped with at pricing time, never re-resolved — so it reports what the buyer was actually charged from rather than what would apply today, and it keeps the order read path provider-free (2026-08-30, which is why `catalog_price` on the same serializer is a base price). Provenance stays admin-only, off the store serializers, like `price_source`. The orders controller preloads `line_items: { price_list: :catalog }` so a page of orders does not pay two queries per line.
+
+Deliberately not done: an **effective-price view** on the company or customer page — what a named buyer would pay for a product before any order exists. Raised on the issue after the fix was scoped, with figures: one variant offered at $111.11 by a company catalog, $329.99 by a standalone list and $549.99 as the shop price, with no screen anywhere reconciling the three (the customer page shows groups only, the company page no pricing at all). It is a real gap and a larger one than the original report's "show which catalog applies". The link added above answers only after the fact. A preview needs a new admin endpoint taking company-or-customer plus variant and quantity — the quantity matters, since a break can reverse which agreement wins — and cards on two dashboard pages. `Spree::Pricing::Context` already takes exactly those inputs and the storefront resolves through it per variant, so this is a new surface over an existing resolver, not a second one; the provider-free rule it must respect is about order and listing serializers, not a deliberate preview call. Held out so an urgent money fix is not gated on a feature.
+
+The same walk confirmed the tier order — company catalog, then standalone lists by their own rules, then shop price — is consistent and worth preserving. It is: best-price applies only within one node, never across tiers, and a test over that scenario charges $111.11 at every quantity.
+
+The same first-wins shape remains in `Catalogs::ResolveQuantityRules`, where the fields are minimums and multiples rather than money and "best" has no obvious meaning; V-3592 is the same class of problem on commission rates and is untouched here.
+
+**Plans amended:** `6.0-b2b-companies-and-catalogs.md` (Key Decisions, the `Catalog#position` note, and Pricing).
+
 ## 2026-09-12: Reporting scopes money to one currency and never converts; counts are not scoped at all
 
 **Context:** Every sales and payments base filtered `currency` unconditionally, so a multi-currency store could not ask how many orders it took — only how many were priced in one currency. That is a wrong answer rather than a partial one. The wider question of cross-currency totals came up at the same time, so both were settled together after looking at how other platforms handle it.
@@ -5416,49 +5434,6 @@ audience; and a new `q[<column>_eq]` filter on either ledger model needs that
 column in `whitelisted_ransackable_attributes` — a whitelisted association
 name does not make its foreign key filterable.
 
-## 2026-09-10 — WeChat Pay lands as a gateway gem; async refunds become an opt-in gateway capability
-
-Two decisions from `6.0-wechat-pay-gateway.md`, both of which reach past that
-plan.
-
-**Payment gateway credentials stay on `PaymentMethod` rows, and a gateway is
-not an `Spree::Integration`.** This restates the 2026-07-30 cardinality
-decision because `6.0-integrations-admin.md` carries a blanket constraint —
-"new provider gems must ship an Integration subclass" — that reads as covering
-payment gateways. It does not: integrations are the store-level singleton
-connection (delivery rates, tax, fulfillment, pickup points), where one
-credential serves many config rows, and their `(store, type)` uniqueness
-actively fights the merchant-entity model that payments need. A gateway
-subclassing `Spree::Integration` is wrong, not merely redundant. A scope note
-was added to that plan's constraint.
-
-**A gateway may declare asynchronous refunds, and only such a gateway's refund
-rows carry a status.** `spree_refunds` has no status column today — a refund is
-either credited (`transaction_id` present) or destroyed on failure — and
-`credit_allowed` sums every row. WeChat Pay accepts a refund request and settles
-it later, sometimes failing after acceptance, so the truth cannot be recorded in
-that shape. Core gains `Spree::PaymentMethod#async_refunds?`, **false by
-default**, plus a `processing`/`completed`/`canceled` status on `spree_refunds`
-and a `credit_allowed` that ignores no-longer-live refunds.
-
-**Constraints now:** with `async_refunds?` false nothing about the refund path
-may change — Stripe's existing refund specs are the guard, and they must pass
-untouched; and nothing is added to the refund path that cannot be expressed for
-both kinds of gateway. WeChat's own statuses map non-trivially and the mapping
-is deliberate: only `SUCCESS` and `CLOSED` are terminal per WeChat's own
-documentation, so `SUCCESS` is `completed`, `CLOSED` is `canceled`, and — the
-part worth stating — **`ABNORMAL` stays `processing`, not `failed`**. An abnormal
-refund is non-terminal and can still succeed, so calling it failed would both
-misstate the money to the operator and corrupt the balance: `credit_allowed`
-excludes failed refunds, so a still-live refund marked failed would free that
-amount as creditable while WeChat could still complete it — a double-refund
-path. The provider's own status goes in the refund's `metadata`, which the model
-and the admin serializer already carry.
-
-The general rule, which any future async-refund gateway inherits: **a
-non-terminal provider state must never be mapped onto a terminal canonical one,
-however alarming the provider's wording is.**
-
 ## 2026-09-12 — Reporting: the carts family, and abandonment is not the reaper's population
 
 The reporting vocabulary gains a fourth family. A cart is its own table in 6.0,
@@ -5727,3 +5702,38 @@ call from core is cached, run from a job, short-timeout, failure-cached.
 Env-backed booleans read through `Spree::Config` must be cast: the `env:`
 option on `preference` returns the raw string. Cross-page notices go through
 the `AppShell` `banner` slot, nowhere else.
+## 2026-09-15 — Store setup is one step, shared by self-hosted and hosted signup
+
+Plans: `6.0-store-context-and-first-run-setup.md`, `6.0-cli-configurator.md`.
+
+Creating a store asks the same four questions wherever it happens — name,
+country, currency, language — and provisions the same things from the
+answers. Two flows ask them:
+
+- **Self-hosted:** account setup, then store setup. No email confirmation.
+- **Hosted signup:** account setup, then confirmation (instant with an OAuth
+  provider), then store setup.
+
+Only the middle step differs, so the store step is shared rather than
+reimplemented.
+
+**Frontend.** The four fields live in `StoreSetupFields`, exported from
+`@spree/dashboard` at `./components/spree/store-setup-fields`. It is headless
+about submission: the caller owns the form, the countries query and what
+happens on submit, because those genuinely differ (a one-time setup token
+versus an authenticated session). The country drives the currency and
+language defaults, and both stay editable.
+
+**Backend.** `Spree::Stores::ProvisionDefaults` is the one provisioning path,
+already called by the first-run setup endpoint. Anything else that creates a
+store calls it too, rather than hand-rolling a subset: it builds the default
+market, the warehouse, the delivery zones, the package type and pickup, and a
+store missing those cannot ship. The earlier hosted sandbox created only a
+market, which is why its stores could not fulfil.
+
+**Consequences for other work.** A new flow that creates a store mounts
+`StoreSetupFields` and calls `ProvisionDefaults`; it does not write its own
+country picker or its own provisioning. `ProvisionDefaults` previously
+documented exactly two callers — that list grows as flows are added, but the
+rule it protects stands: never wire it to a settings screen, since re-running
+it against a configured store is a data reset.

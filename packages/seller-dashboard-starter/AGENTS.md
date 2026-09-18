@@ -34,6 +34,7 @@ uses internally.
 | `src/hooks/` | Admin API wrappers | `use-brands.ts` |
 | `src/tables/` | `defineTable` calls | `brands.tsx` |
 | `src/schemas/` | Zod schema + `FormValues` | `brand.ts` |
+| `src/slots/` | Widgets injected into built-in pages | `seller-payout-card.tsx` |
 | `src/locales/` | Your `admin.*` translation keys | `en.json` |
 
 Adding a resource touches one file in each directory. Keep `plugins.ts` a map
@@ -67,5 +68,8 @@ of what exists, not an implementation.
 ```bash
 pnpm typecheck
 pnpm lint
+pnpm test        # unit tests (Vitest, Node environment)
 pnpm build
 ```
+
+Test the logic between the UI and the API — query keys, payload mapping, permission predicates. Do not write tests that render a component to assert its markup; that tests React. Use `pnpm test:e2e` when a browser is genuinely needed.

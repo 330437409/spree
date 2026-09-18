@@ -1864,6 +1864,10 @@
         "password_confirmation": {
           "label": "确认密码"
         },
+        "sample_data": {
+          "help": "在后台添加演示商品、分类、客户和订单，方便您浏览后台。需要几分钟并会下载商品图片。",
+          "label": "加载示例数据"
+        },
         "store_name": {
           "label": "商店名称"
         }
@@ -1918,6 +1922,10 @@
         "address_requires_phone": {
           "help": "将电话号码设为客户地址的必填项。",
           "label": "要求填写电话号码"
+        },
+        "always_include_confirm_step": {
+          "help": "在下单前始终为顾客提供最终确认步骤，即使没有任何支付方式要求该步骤。",
+          "label": "始终显示确认步骤"
         },
         "capture_method": {
           "help": "所有支付方式的默认设置。单个支付方式可覆盖此设置。",
@@ -2882,6 +2890,7 @@
           "shared_help": "该购物车横跨多个卖家，只支付了一次。本订单占其中一部分。",
           "load_error": "无法加载此订单的付款信息。"
         },
+        "priced_by": "定价来自 {{name}}",
         "purchase_order": {
           "document": "采购订单文件",
           "document_help": "PDF、图片或 Word 文件，最大 10 MB。",
@@ -5052,7 +5061,9 @@
       "required_notice_message": "尚无管理员账户。请使用安装输出中的设置链接创建。",
       "required_notice_title": "此安装尚未完成设置",
       "subtitle": "创建您的管理员账户并介绍您的商店。此处的所有设置之后均可更改。",
-      "title": "设置 Spree"
+      "title": "设置 Spree",
+      "welcome_description": "完成下方清单即可让 {{store}} 正式开业。",
+      "welcome_title": "欢迎，您的商店已就绪！"
     },
     "staff": {
       "actions": {

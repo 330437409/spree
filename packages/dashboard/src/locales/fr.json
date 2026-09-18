@@ -1869,6 +1869,10 @@
         "password_confirmation": {
           "label": "Confirmer le mot de passe"
         },
+        "sample_data": {
+          "help": "Ajoute en arrière-plan des produits, catégories, clients et commandes de démonstration pour explorer le tableau de bord. Le chargement prend quelques minutes et télécharge les images des produits.",
+          "label": "Charger des données d’exemple"
+        },
         "store_name": {
           "label": "Nom de la boutique"
         }
@@ -1923,6 +1927,10 @@
         "address_requires_phone": {
           "help": "Rendre le numéro de téléphone obligatoire dans les adresses des clients.",
           "label": "Numéro de téléphone obligatoire"
+        },
+        "always_include_confirm_step": {
+          "help": "Proposer toujours aux clients une étape de vérification finale avant de valider la commande, même lorsqu’aucun moyen de paiement ne l’exige.",
+          "label": "Toujours afficher l’étape de confirmation"
         },
         "capture_method": {
           "help": "La valeur par défaut pour tous les moyens de paiement. Un moyen de paiement peut la remplacer.",
@@ -2890,6 +2898,7 @@
           "shared_help": "Payé en une fois pour un panier réparti entre plusieurs vendeurs. Cette commande en détient une part.",
           "load_error": "Impossible de charger les paiements de cette commande."
         },
+        "priced_by": "Tarifé par {{name}}",
         "purchase_order": {
           "document": "Document de bon de commande",
           "document_help": "Fichier PDF, image ou Word, jusqu’à 10 Mo.",
@@ -5063,7 +5072,9 @@
       "required_notice_message": "Aucun compte administrateur n'existe. Utilisez le lien de configuration affiché lors de l'installation pour en créer un.",
       "required_notice_title": "Cette installation n'est pas encore configurée",
       "subtitle": "Créez votre compte administrateur et présentez votre boutique. Tout ceci est modifiable par la suite.",
-      "title": "Configurer Spree"
+      "title": "Configurer Spree",
+      "welcome_description": "Suivez la liste ci-dessous pour ouvrir {{store}}.",
+      "welcome_title": "Bienvenue, votre boutique est prête !"
     },
     "staff": {
       "actions": {

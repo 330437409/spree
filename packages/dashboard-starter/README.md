@@ -51,6 +51,8 @@ src/
 ├── hooks/         one file per resource      use-brands.ts
 ├── tables/        one file per resource      brands.tsx
 ├── schemas/       one file per resource      brand.ts
+├── slots/         widgets injected into      product-brand-card.tsx
+│                  built-in pages
 └── locales/       your translations          en.json
 ```
 
@@ -101,6 +103,11 @@ type (`Product`, `Order`) in a form-values type — React Hook Form walks every
 nested key and the SDK's object graph overflows the TypeScript compiler.
 Inline a short single-file schema instead.
 
+**`slots/`** — components you inject into pages the dashboard already
+renders, one file per widget. A slot widget takes its data from the slot's
+context and, on a page with a host form, binds its inputs to that form with
+`useHostForm()` rather than saving anything itself.
+
 **`locales/`** — every visible string goes through i18next, including column
 labels and button text. Keys live under a top-level `admin` object. Load the
 bundle once at the top of `plugins.ts`:
@@ -111,6 +118,23 @@ import en from './locales/en.json'
 
 i18n.addResourceBundle('en', 'translation', en, true, true)
 ```
+
+## Test
+
+Vitest and Playwright are configured. Playwright needs its browser once:
+
+```bash
+pnpm exec playwright install chromium
+```
+
+```bash
+pnpm test        # unit tests: src/**/*.test.ts
+pnpm test:e2e    # end-to-end, through a browser
+```
+
+Unit tests run in Node rather than a DOM, because what is worth testing here is the logic between your UI and the API: query keys, payload mapping, permission predicates. Rendering a component to assert its markup tests React, not your feature — use an end-to-end test when you need a browser.
+
+`pnpm test:e2e` starts the dashboard itself and reuses one you already have running, but expects your API to be up (`spree dev`). Point it elsewhere with `E2E_BASE_URL`.
 
 ## Build & deploy
 

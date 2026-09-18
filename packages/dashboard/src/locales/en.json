@@ -1869,6 +1869,10 @@
         "password_confirmation": {
           "label": "Confirm password"
         },
+        "sample_data": {
+          "help": "Adds demo products, categories, customers and orders in the background so you can explore the dashboard. Takes a few minutes and downloads product images.",
+          "label": "Load sample data"
+        },
         "store_name": {
           "label": "Store name"
         }
@@ -1923,6 +1927,10 @@
         "address_requires_phone": {
           "help": "Make a phone number mandatory on customer addresses.",
           "label": "Require phone number"
+        },
+        "always_include_confirm_step": {
+          "help": "Always give shoppers a final review step before placing the order, even when no payment method requires one.",
+          "label": "Always show confirmation step"
         },
         "capture_method": {
           "help": "The default for every payment method. An individual payment method can override it.",
@@ -2890,6 +2898,7 @@
           "shared_help": "Paid once for a basket spanning several sellers. This order has a share of it.",
           "load_error": "Could not load the payments for this order."
         },
+        "priced_by": "Priced by {{name}}",
         "purchase_order": {
           "document": "Purchase order document",
           "document_help": "PDF, image or Word file, up to 10 MB.",
@@ -5063,7 +5072,9 @@
       "required_notice_message": "No admin account exists. Use the setup link from the install output to create one.",
       "required_notice_title": "This installation isn't set up yet",
       "subtitle": "Create your admin account and tell us about your store. Everything here can be changed later.",
-      "title": "Set up Spree"
+      "title": "Set up Spree",
+      "welcome_description": "Work through the checklist below to open {{store}} for business.",
+      "welcome_title": "Welcome, your store is now ready!"
     },
     "staff": {
       "actions": {
