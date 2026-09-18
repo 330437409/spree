@@ -59,6 +59,108 @@
       "source": "shadcn/ui",
       "sourceType": "github",
       "computedHash": "873c67922d80775a9fdf596db7964b579f0408c30ec6e3d11989f6055bbec89f"
+    },
+    "spree-api-v3": {
+      "source": "spree/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spree-api-v3/SKILL.md",
+      "computedHash": "2eac4384579f8e6149aaaaf89227315c76cabc7eba79c4b1d44ebae7a5a2f071"
+    },
+    "spree-catalog": {
+      "source": "spree/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spree-catalog/SKILL.md",
+      "computedHash": "4bbde213154350e637bd8584dd522acf6e6528dc1209b32b3b5ed20b9e8d824f"
+    },
+    "spree-checkout": {
+      "source": "spree/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spree-checkout/SKILL.md",
+      "computedHash": "afb4e1953d5f6439e7a117bd56a9dc851caea9164f0203dbb5e534d53c809e2f"
+    },
+    "spree-customization": {
+      "source": "spree/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spree-customization/SKILL.md",
+      "computedHash": "d5314b9864354a75479da4009900a42910eae5fbdf4332993672c0cce15da36e"
+    },
+    "spree-data-model": {
+      "source": "spree/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spree-data-model/SKILL.md",
+      "computedHash": "22e250d09869800a87726ebd16925e35af8811952cdd871c2f1bb1cc49525c2b"
+    },
+    "spree-dependencies": {
+      "source": "spree/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spree-dependencies/SKILL.md",
+      "computedHash": "53b32a7d07a618860e8a7388a3505b0cf0322ff8621e3047c9ec3aad4a1060df"
+    },
+    "spree-events-webhooks": {
+      "source": "spree/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spree-events-webhooks/SKILL.md",
+      "computedHash": "a37995952f71ff3e1293e7f6adf63a41c32325e8fa58f8c6ad4dbd5ffb0fb5af"
+    },
+    "spree-i18n": {
+      "source": "spree/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spree-i18n/SKILL.md",
+      "computedHash": "27a6d8b24fca45d2701d5f01c6882eb5164e3ac57d43d3e20f3da7be9ea2fc28"
+    },
+    "spree-payments": {
+      "source": "spree/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spree-payments/SKILL.md",
+      "computedHash": "08ea42d370cc640af2c213440da3302bd0e6d39f63df5b9e76582b452239f1c8"
+    },
+    "spree-performance": {
+      "source": "spree/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spree-performance/SKILL.md",
+      "computedHash": "2c0055b37a3de2f4e73b3259dd67aa6457eb82a530a2e6f6edaab8880b658f5d"
+    },
+    "spree-pricing": {
+      "source": "spree/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spree-pricing/SKILL.md",
+      "computedHash": "885c655aea7f7365f8b759e94bd7d0f48abd3ba778fb477d3884dedef47e266e"
+    },
+    "spree-promotions": {
+      "source": "spree/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spree-promotions/SKILL.md",
+      "computedHash": "62a9d54a81fab62c7099505cbc2ff3fcd06ee7b6570fe67dd47ca5470bc7ed88"
+    },
+    "spree-resource": {
+      "source": "spree/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spree-resource/SKILL.md",
+      "computedHash": "64a992d36993b1d0c318062ea788ae4adf41d4beac9d75eefccbdf70bfdb050a"
+    },
+    "spree-security": {
+      "source": "spree/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spree-security/SKILL.md",
+      "computedHash": "ec30ed850fca7a7595bd8c9e352b9c432cd0573198f570f31a046756459082bb"
+    },
+    "spree-shipping-fulfillment": {
+      "source": "spree/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spree-shipping-fulfillment/SKILL.md",
+      "computedHash": "2646160f1a1f4b2b187ba0880596934516cbc35d32b8457a833114dbe4669283"
+    },
+    "spree-testing": {
+      "source": "spree/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spree-testing/SKILL.md",
+      "computedHash": "17b1a159fe38964851d64e104036ae1d51e5febd9eb37eb1c9b40a21d84cedcd"
+    },
+    "spree-typescript-sdk": {
+      "source": "spree/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spree-typescript-sdk/SKILL.md",
+      "computedHash": "e7473accc07fd83297e4915552cc78e9a8c389616fe8b296539154ce266c4290"
     }
   }
 }

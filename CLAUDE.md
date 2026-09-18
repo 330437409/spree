@@ -4,6 +4,10 @@
 
 All feature plans live in `docs/plans/` using the template at `docs/plans/_template.md`. Never create plans elsewhere.
 
+**`docs/plans/` holds two sets, and they must not be confused.** The **tracked** files are **upstream's** — they come from `spree/spree`, they change on every upstream release, and they are **read-only to us**: never edit one, never annotate one, never append to `decisions.md`. Our own plans are the untracked files, and each carries a `**Fork-only plan.**` marker line under its title; the three we committed earlier (`6.0-social-login.md`, `6.0-wechat-pay-gateway.md`, its storefront patch) are ours too. Before writing a plan, check `git status --short docs/plans/` when in doubt: untracked means ours.
+
+Our decisions live in **`docs/plans/fork-decisions.md`**, cited by dated heading rather than by line number. Upstream's decisions live in `docs/plans/decisions.md` — read them there, and cite them as `decisions.md` (upstream, date). A plan that consumes an upstream plan names it in its `Depends on:` header like any other dependency, and records a deliberate divergence in `fork-decisions.md` rather than "amending" a document we do not own.
+
 When proposing significant architectural changes:
 
 1. Check existing plans in `docs/plans/` for conflicts

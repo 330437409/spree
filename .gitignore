@@ -77,3 +77,12 @@ packages/cli/templates/seller-dashboard-starter
 *.tsbuildinfo
 .claude/scheduled_tasks.lock
 CLAUDE.local.md
+
+# Local custom extensions (developed outside the core monorepo tree)
+.custom-extensions/
+# Restored WeChat mini program source (third-party code kept for reference)
+miniprogram/
+
+# Local tooling output and the pnpm store (large, machine-specific)
+.tooling/
+.pnpm-store/
