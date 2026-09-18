@@ -224,6 +224,31 @@ curl -X POST 'https://marketplace.example.com/api/v3/seller/products/prod_xxx/su
 
 Stores that trust their vendors can turn auto-approval on and skip the queue.
 
+## Shopping at one seller's storefront
+
+A customer browsing a single seller's storefront — a shop-inside-the-marketplace page, a local site, a brand page — sends `X-Spree-Seller-Id` on every Store API request. The seller is then the scope the request is answered in: catalogue reads, prices and delivery areas all resolve for it, the same way a channel scopes them.
+
+```bash cURL
+# The storefront that serves this seller sends this on every request
+curl 'https://marketplace.example.com/api/v3/store/products' \
+  -H 'X-Spree-API-Key: pk_xxx' \
+  -H 'X-Spree-Seller-Id: sel_xxx'
+```
+
+<Note>
+Two rules differ from the channel header beside it, and both are deliberate.
+
+**Naming no seller is not an error.** The request is simply unscoped, and a read that needs a seller answers nothing rather than falling back to a default one — a price or a stock figure answered for the wrong seller is worse than an empty page.
+
+**Naming a seller this store does not have is a 404** (`seller_not_found`), never a silent fall back to the marketplace's own catalogue.
+</Note>
+
+On the Ruby side the resolved seller is `Spree::Current.seller`, beside `Spree::Current.store` and `Spree::Current.channel`. Read it rather than resolving the seller again — [Channels](/developer/core-concepts/channels) covers how the sibling scope resolves.
+
+<Note>
+The Store SDK sends `X-Spree-Channel` from its `channel` config option but has no equivalent for the seller yet, so a storefront using the SDK calls the API directly for now.
+</Note>
+
 ## One checkout, several sellers
 
 This is the part that makes a marketplace different from a shop, and it's worth understanding before you build a storefront against it.
