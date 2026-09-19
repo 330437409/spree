@@ -2144,6 +2144,31 @@
         "preferred_default_package_weight": {
           "help": "计算配送费率时加到每个包裹内容上的包装重量(纸箱与填充物)。设为 0 可停用。",
           "label": "默认包裹重量"
+        },
+        "location_services": {
+          "title": "定位与地图",
+          "description": "顾客的坐标如何变成地址，以及服务范围编辑器用来作图的地图。"
+        },
+        "reverse_geocode_provider": {
+          "label": "反向地理编码供应商",
+          "help": "由哪家把顾客坐标落到行政区树上。目前内置的是腾讯位置服务。"
+        },
+        "reverse_geocode_fallback_provider": {
+          "label": "备用供应商",
+          "help": "上面那家答不出来时改问这家。还没配置第二家的密钥前留空即可。"
+        },
+        "reverse_geocode_tencent_key": {
+          "label": "腾讯位置服务密钥",
+          "help": "WebService 类型的密钥，服务端用它查坐标。"
+        },
+        "reverse_geocode_ttl_days": {
+          "label": "结果缓存",
+          "help": "查过的坐标保留多久后重新查询。",
+          "suffix": "天"
+        },
+        "tencent_maps_js_key": {
+          "label": "腾讯地图密钥",
+          "help": "JavaScript API 类型的密钥，浏览器里用它绘制仓库的服务范围。与上面的位置服务密钥是两个服务。"
         }
       },
       "store_credit": {

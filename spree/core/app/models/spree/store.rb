@@ -118,6 +118,11 @@ module Spree
     preference :reverse_geocode_provider, :string, default: 'tencent'
     preference :reverse_geocode_fallback_provider, :string
     preference :reverse_geocode_tencent_key, :string
+    # The key the dashboard's service-area editor draws with. A browser key
+    # rather than a server one — the map runs in the panel — and Tencent issues
+    # it for the JavaScript API rather than for the geocoding service, so it is
+    # a second key beside the one reverse geocoding uses.
+    preference :tencent_maps_js_key, :string
     preference :reverse_geocode_ttl_days, :integer, default: 30
     # Where prices and stock levels come from. 'internal' is Spree's own
     # catalog and stock records; a connector gem registers others.

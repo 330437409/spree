@@ -2149,6 +2149,31 @@
         "preferred_default_package_weight": {
           "help": "Poids d'emballage (carton et calage) ajouté au contenu de chaque colis lors du calcul des tarifs de livraison. 0 pour désactiver.",
           "label": "Poids de colis par défaut"
+        },
+        "location_services": {
+          "title": "Services de localisation",
+          "description": "Comment la coordonnée d’un acheteur devient une adresse, et la carte avec laquelle l’éditeur de zone dessine."
+        },
+        "reverse_geocode_provider": {
+          "label": "Fournisseur de géocodage inverse",
+          "help": "Quel fournisseur situe la coordonnée d’un client dans l’arbre administratif. Tencent LBS est celui qui est fourni."
+        },
+        "reverse_geocode_fallback_provider": {
+          "label": "Fournisseur de secours",
+          "help": "Interrogé lorsque le fournisseur ci-dessus ne peut pas répondre. À laisser vide tant qu’aucune seconde clé n’existe."
+        },
+        "reverse_geocode_tencent_key": {
+          "label": "Clé Tencent LBS",
+          "help": "Une clé WebService, utilisée côté serveur pour retrouver les coordonnées."
+        },
+        "reverse_geocode_ttl_days": {
+          "label": "Cache des réponses",
+          "help": "Combien de temps une coordonnée retrouvée est conservée.",
+          "suffix": "jours"
+        },
+        "tencent_maps_js_key": {
+          "label": "Clé Tencent Maps",
+          "help": "Une clé JavaScript API, utilisée dans le navigateur pour dessiner la zone desservie. Distincte de la clé LBS ci-dessus."
         }
       },
       "store_credit": {
