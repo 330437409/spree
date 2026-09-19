@@ -94,6 +94,16 @@ The two coverage reads answer a verdict rather than a record — `{"serves": tru
 
 `getCount` and `getOftenHot` are deliberately not here: they are the existing `GET /api/v3/store/sellers`, whose page `meta.count` is the count and whose `data` is the list.
 
+## Requiring a service area
+
+A seller with no binding serves nowhere, and the routing says so at the first order — later than a seller should learn it. The checklist asks earlier:
+
+```bash
+bin/rails spree:service_areas:install_requirement
+```
+
+That adds a required *Service area* item to every store's seller onboarding requirements; a seller clears it by binding an active warehouse. The kind is contributed to core's checklist registry rather than baked into core, so a marketplace that does not want it simply never creates the row — and the dashboard adds or removes it like any other requirement.
+
 ## Configuration
 
 One setting per store, plus the key for the vendor:
