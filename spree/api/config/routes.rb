@@ -30,6 +30,12 @@ Spree::Core::Engine.add_routes do
         # Current channel context (never a list — see Store::ChannelController)
         resource :channel, only: [:show], controller: 'channel'
 
+        # What a basket would cost, before there is a cart to put it in. The
+        # one price calculation the Store API offers: a plan that needs another
+        # field adds it here rather than opening a second one
+        # (docs/plans/6.1-store-api-miniprogram-gaps.md).
+        resource :price_preview, only: [:create], controller: 'price_preview'
+
         # Catalog
         resources :products, only: [:index, :show] do
           collection do

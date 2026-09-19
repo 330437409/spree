@@ -48,6 +48,8 @@ import type {
   PaymentSession,
   PaymentSetupSession,
   Policy,
+  PricePreview,
+  PricePreviewParams,
   Product,
   ProductFiltersParams,
   ProductFiltersResponse,
@@ -481,6 +483,23 @@ export class StoreClient {
   // ============================================
   // Carts
   // ============================================
+
+  readonly pricePreview = {
+    /**
+     * Price a set of variants and quantities, with no cart created — what the
+     * product page asks before anything exists.
+     *
+     * Prices are resolved in this client's own context: the channel it points
+     * at, its currency, and the customer when it is authenticated. It is the
+     * one price calculation the Store API offers, so the price it answers is
+     * the price the cart writes.
+     */
+    create: (params: PricePreviewParams, options?: RequestOptions): Promise<PricePreview> =>
+      this.request<PricePreview>('POST', '/price_preview', {
+        ...options,
+        body: params,
+      }),
+  }
 
   readonly carts = {
     /**

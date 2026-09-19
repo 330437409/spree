@@ -139,6 +139,29 @@ export const fixtures = {
     quantity: 1,
     variant_id: 'var_1',
   },
+  pricePreview: {
+    currency: 'USD',
+    total: 200.0,
+    quantity: 2,
+    purchasable: true,
+    items: [
+      {
+        variant_id: 'variant_1',
+        product_id: 'prod_1',
+        quantity: 2,
+        unit_amount: 100.0,
+        compare_at_amount: null,
+        total: 200.0,
+        price_list_id: null,
+        price_source: null,
+        in_stock: true,
+        backorderable: false,
+        purchasable: true,
+        available_quantity: 7,
+      },
+    ],
+  },
+
   newsletterSubscriber: {
     id: 'sub_1',
     email: 'subscriber@example.com',
@@ -751,4 +774,7 @@ export const handlers = [
     `${API_PREFIX}/newsletter_subscribers/:id`,
     () => new HttpResponse(null, { status: 204 }),
   ),
+
+  // Price preview — the one price calculation, answered for whatever was asked
+  http.post(`${API_PREFIX}/price_preview`, () => HttpResponse.json(fixtures.pricePreview)),
 ]

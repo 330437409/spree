@@ -1,0 +1,140 @@
+# frozen_string_literal: true
+
+require 'swagger_helper'
+
+RSpec.describe 'Price Preview API', type: :request, swagger_doc: 'api-reference/store.yaml' do
+  include_context 'API v3 Store'
+
+  let(:product) { create(:product, store: store, price: 100) }
+  let(:variant) { product.default_variant }
+  let(:other_store_variant) { create(:product, store: create(:store)).default_variant }
+
+  path '/api/v3/store/price_preview' do
+    post 'Preview the price of a basket' do
+      tags 'Price Preview'
+      consumes 'application/json'
+      produces 'application/json'
+      security [api_key: []]
+      description <<~DESC
+        Prices a set of variants and quantities, with no cart created — what the product page
+        asks before anything exists, and what the settlement page asks with a cart later.
+
+        Prices are resolved in the context the request carries: the channel it resolved, its
+        currency, the country the buyer is taxed in, and the customer when there is one. It is
+        the one price calculation the Store API offers, and the price it answers is the price
+        the cart writes.
+      DESC
+
+      parameter name: 'x-spree-api-key', in: :header, type: :string, required: true,
+                description: 'Publishable API key'
+      parameter name: 'x-spree-channel', in: :header, type: :string, required: false,
+                description: 'Channel code or prefixed ID the prices are resolved for'
+      parameter name: 'Authorization', in: :header, type: :string, required: false,
+                description: 'Bearer JWT token (optional — for a signed-in customer)'
+      parameter name: :body, in: :body, required: true, schema: {
+        type: :object,
+        properties: {
+          currency: { type: :string, example: 'USD', description: 'Currency to price in; defaults to the request’s' },
+          items: {
+            type: :array,
+            description: 'The variants to price, with how many of each',
+            items: {
+              type: :object,
+              properties: {
+                variant_id: { type: :string, example: 'variant_abc123', description: 'Prefixed variant ID' },
+                quantity: { type: :integer, example: 2, description: 'Quantity (defaults to 1)' }
+              },
+              required: %w[variant_id]
+            }
+          }
+        },
+        required: %w[items]
+      }
+
+      response '200', 'priced' do
+        let(:'x-spree-api-key') { api_key.token }
+        let(:body) { { items: [{ variant_id: variant.prefixed_id, quantity: 2 }] } }
+
+        schema Spree::Api::OpenAPI::SchemaHelper.ref('StorePricePreview')
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+
+          expect(data['items'].first['unit_amount']).to eq(100.0)
+          expect(data['total']).to eq(200.0)
+          expect(data['items'].first['variant_id']).to eq(variant.prefixed_id)
+        end
+      end
+
+      response '404', 'a variant this store does not have' do
+        let(:'x-spree-api-key') { api_key.token }
+        let(:body) { { items: [{ variant_id: 'variant_doesnotexist', quantity: 1 }] } }
+
+        schema Spree::Api::OpenAPI::SchemaHelper.error_response
+
+        run_test! do |response|
+          expect(JSON.parse(response.body)['error']['code']).to be_present
+        end
+      end
+
+      # A variant from another tenant is a 404 rather than a price — the same
+      # rule every store-scoped lookup follows.
+      response '404', 'a variant belonging to another store' do
+        let(:'x-spree-api-key') { api_key.token }
+        let(:body) { { items: [{ variant_id: other_store_variant.prefixed_id, quantity: 1 }] } }
+
+        schema Spree::Api::OpenAPI::SchemaHelper.error_response
+
+        run_test!
+      end
+
+      # Nor is a product the storefront does not show quotable by its variant id.
+      response '404', 'a variant of a product the storefront does not show' do
+        let(:draft_variant) { create(:product, status: 'draft', store: store).default_variant }
+        let(:'x-spree-api-key') { api_key.token }
+        let(:body) { { items: [{ variant_id: draft_variant.prefixed_id, quantity: 1 }] } }
+
+        schema Spree::Api::OpenAPI::SchemaHelper.error_response
+
+        run_test!
+      end
+
+      response '422', 'a payload that is not a list of items' do
+        let(:'x-spree-api-key') { api_key.token }
+        let(:body) { { items: {} } }
+
+        schema Spree::Api::OpenAPI::SchemaHelper.error_response
+
+        run_test!
+      end
+
+      response '422', 'a quantity that is not a positive whole number' do
+        let(:'x-spree-api-key') { api_key.token }
+        let(:body) { { items: [{ variant_id: variant.prefixed_id, quantity: -2 }] } }
+
+        schema Spree::Api::OpenAPI::SchemaHelper.error_response
+
+        run_test!
+      end
+
+      # A storefront that hides prices answers no amounts — the same posture the
+      # product read applies — while the shelf's verdict still travels.
+      response '200', 'no amounts on a storefront that hides prices' do
+        let(:'x-spree-api-key') { api_key.token }
+        let(:body) { { items: [{ variant_id: variant.prefixed_id, quantity: 1 }] } }
+
+        before { store.update!(preferred_storefront_access: 'prices_hidden') }
+
+        schema Spree::Api::OpenAPI::SchemaHelper.ref('StorePricePreview')
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+
+          expect(data['total']).to be_nil
+          expect(data['items'].first['unit_amount']).to be_nil
+          expect(data['items'].first).to have_key('in_stock')
+        end
+      end
+    end
+  end
+end
