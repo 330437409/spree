@@ -35,8 +35,13 @@ module Spree
         resolution = Spree::ReverseGeocode::Resolve.call(
           latitude: @latitude, longitude: @longitude, source: COORDINATE_SYSTEM, store: @store
         )
+        path = resolution.path
 
-        decision_for(candidates(resolution.path).find { |location| covers?(location) }, stale: resolution.stale?)
+        warehouse = candidates(path).find do |location|
+          Coverage.covers?(location: location, path: path, latitude: @latitude, longitude: @longitude)
+        end
+
+        decision_for(warehouse, stale: resolution.stale?)
       end
 
       private
@@ -62,25 +67,6 @@ module Spree
         return [] if codes.empty?
 
         Spree::AdministrativeDivision.where(code: codes).pluck(:id)
-      end
-
-      # No polygon means the binding's node is the whole coverage. With one, the
-      # stored bounding box answers first, so a candidate whose box excludes the
-      # point never has its geometry parsed at all.
-      def covers?(location)
-        return true if location.polygon.blank?
-        return false unless bounding_box_covers?(location)
-
-        Spree::SellerRouting::Polygon.new(location.polygon).
-          contains?(latitude: @latitude, longitude: @longitude)
-      end
-
-      def bounding_box_covers?(location)
-        box = location.polygon_bbox
-        return true if box.blank?
-
-        @longitude.to_f.between?(box['min_lng'].to_f, box['max_lng'].to_f) &&
-          @latitude.to_f.between?(box['min_lat'].to_f, box['max_lat'].to_f)
       end
 
       def decision_for(location, stale:)

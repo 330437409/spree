@@ -2,18 +2,32 @@ module Spree
   module Api
     module V3
       module Store
-        # The record of the site a request belongs to.
+        # The sites a customer can shop at, and the record of the one a request
+        # belongs to.
         #
-        # The client assigns this payload wholesale to its global site object
-        # and every screen reads fields off that, so it is the seller's public
-        # profile plus how the shop is operated and what it enables. Which site
-        # it describes is the request's own scope — the `X-Spree-Seller-Id`
-        # header, resolved once at the boundary — and a request that named none
-        # is refused rather than answered for an arbitrary site.
+        # Two reads of one resource: `index` answers where there are sites at
+        # all, from a coordinate, and `show` answers for the site the request was
+        # scoped to. Both are public — a customer reads them before they have an
+        # account, and before they know which shop to ask about.
         class SitesController < Store::BaseController
           include Spree::Api::V3::HttpCaching
+          include CoordinateLookups
+          include SiteScope
 
           allow_guest_storefront_access!
+
+          # GET /api/v3/store/sites?latitude=&longitude=
+          def index
+            return render_out_of_range_error unless coordinates_in_range?
+
+            sellers = Spree::SellerRouting::Sites.around(
+              latitude: latitude, longitude: longitude, store: current_store
+            )
+
+            render json: {
+              data: sellers.map { |seller| Spree.api.seller_serializer.new(seller, params: serializer_params).to_h }
+            }
+          end
 
           # GET /api/v3/store/site
           def show
@@ -24,18 +38,6 @@ module Spree
           end
 
           private
-
-          # The request named no site. That is a client that skipped the lookup
-          # rather than a missing record, so the message says which call settles
-          # it — the alternative, falling back to a store-wide site, would serve
-          # one shop's record to a customer standing in another's.
-          def render_missing_site
-            render_error(
-              code: ErrorHandler::ERROR_CODES[:seller_not_found],
-              message: 'This request did not name a site. Resolve one with GET /api/v3/store/location/resolve_seller and send it as X-Spree-Seller-Id.',
-              status: :not_found
-            )
-          end
 
           def serializer_class
             Spree::Api::V3::Store::SiteSerializer
