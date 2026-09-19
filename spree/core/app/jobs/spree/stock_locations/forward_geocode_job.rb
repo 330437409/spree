@@ -23,17 +23,9 @@ module Spree
         # it stands rather than marked one.
         return unless stock_location.postable?
 
-        address = stock_location.address
+        latitude, longitude = coordinates_for(stock_location)
 
-        coordinates = Geocoder.coordinates(address.geocoder_address, country: address.country_iso3)
-
-        if coordinates.present?
-          latitude, longitude = Spree::CoordinateNormalizer.normalize(
-            latitude: coordinates[0],
-            longitude: coordinates[1],
-            source: Spree::CoordinateNormalizer.source_for_lookup(Geocoder.config.lookup)
-          )
-
+        if latitude.present?
           stock_location.update_columns(
             latitude: latitude,
             longitude: longitude,
@@ -43,22 +35,52 @@ module Spree
             updated_at: Time.current
           )
         else
-          # The geocoder's own reason is only in the log, so the row carries the
-          # part an operator can act on: this address produced no coordinates,
-          # and it was tried.
-          stock_location.update_columns(
-            geocode_status: 'failed',
-            geocode_provider: Geocoder.config.lookup.to_s,
-            updated_at: Time.current
-          )
-
-          Rails.error.report(
-            GeocodeError.new("Cannot geocode stock location ID: #{stock_location.id}"),
-            handled: false,
-            context: { stock_location_id: stock_location.id },
-            source: 'spree.core'
-          )
+          mark_failed(stock_location)
         end
+      end
+
+      private
+
+      # The lookup is somebody else's network, and this job runs on every
+      # address change: a refusal, a timeout, or a connection something else
+      # has closed is recorded on the row rather than raised, because a
+      # warehouse whose geocoding fails must not take the queue down with it —
+      # and the status is what tells an operator to look.
+      #
+      # @return [Array(Float, Float), nil] the pair in GCJ-02, nil when the
+      #   lookup answered nothing or could not be made
+      def coordinates_for(stock_location)
+        address = stock_location.address
+        coordinates = Geocoder.coordinates(address.geocoder_address, country: address.country_iso3)
+        return nil if coordinates.blank?
+
+        Spree::CoordinateNormalizer.normalize(
+          latitude: coordinates[0],
+          longitude: coordinates[1],
+          source: Spree::CoordinateNormalizer.source_for_lookup(Geocoder.config.lookup)
+        )
+      rescue StandardError => error
+        Rails.error.report(error, handled: true, context: { stock_location_id: stock_location.id }, source: 'spree.core')
+
+        nil
+      end
+
+      def mark_failed(stock_location)
+        # The geocoder's own reason is only in the log, so the row carries the
+        # part an operator can act on: this address produced no coordinates,
+        # and it was tried.
+        stock_location.update_columns(
+          geocode_status: 'failed',
+          geocode_provider: Geocoder.config.lookup.to_s,
+          updated_at: Time.current
+        )
+
+        Rails.error.report(
+          GeocodeError.new("Cannot geocode stock location ID: #{stock_location.id}"),
+          handled: false,
+          context: { stock_location_id: stock_location.id },
+          source: 'spree.core'
+        )
       end
     end
   end

@@ -46,6 +46,35 @@ RSpec.describe Spree::StockLocations::ForwardGeocodeJob do
     end
   end
 
+  # The lookup is somebody else's network, and this job runs on every address
+  # change: a suite that drains jobs must not turn into a suite that makes
+  # requests, and a warehouse must not take the queue down with it.
+  context 'when the lookup itself fails' do
+    before do
+      allow(Geocoder).to receive(:coordinates).
+        and_raise(StandardError.new('Real HTTP connections are disabled'))
+    end
+
+    it 'records the failure rather than raising' do
+      expect { geocode }.not_to raise_error
+
+      expect(stock_location.reload.geocode_status).to eq('failed')
+    end
+
+    it 'reports the error it caught, so a broken lookup is visible' do
+      allow(Rails.error).to receive(:report)
+
+      geocode
+
+      expect(Rails.error).to have_received(:report).with(
+        an_instance_of(StandardError),
+        handled: true,
+        context: { stock_location_id: stock_location.id },
+        source: 'spree.core'
+      )
+    end
+  end
+
   context 'when the location has no address to geocode' do
     let(:stock_location) { create(:stock_location, address1: nil, city: nil) }
 
