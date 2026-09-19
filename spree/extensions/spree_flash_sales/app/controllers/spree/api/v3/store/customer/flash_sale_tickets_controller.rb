@@ -23,6 +23,14 @@ module Spree
                 where(store: current_store, customer: current_user).
                 order(:expires_at)
             end
+
+            # Ordered by when each ticket lapses, and nothing is joined, so the
+            # DISTINCT the base adds would buy nothing — while costing something
+            # on PostgreSQL, which refuses `SELECT DISTINCT ... ORDER BY expires_at`
+            # unless the ordered expression is in the select list.
+            def collection_distinct?
+              false
+            end
           end
         end
       end
