@@ -1406,7 +1406,17 @@
         "variant_count_one": "{{count}} variante",
         "variant_count_other": "{{count}} variantes"
       },
-      "description": "Les entrepôts et boutiques où vous détenez du stock et depuis lesquels vous expédiez les commandes."
+      "description": "Les entrepôts et boutiques où vous détenez du stock et depuis lesquels vous expédiez les commandes.",
+      "section_service_area": "Zone desservie",
+      "service_area": {
+        "any": "Partout",
+        "levels": {
+          "province": "Province",
+          "city": "Ville",
+          "district": "District",
+          "township": "Canton"
+        }
+      }
     },
     "validation": {
       "codes": {

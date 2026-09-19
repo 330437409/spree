@@ -30,6 +30,7 @@ import { Controller, type UseFormReturn, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod/v4'
 import type { PanelStockLocation } from '../api-client'
+import { AdministrativeDivisionFields } from '../components/administrative-division-fields'
 import { Can } from '../components/can'
 import { CountryCombobox } from '../components/country-combobox'
 import { StateCombobox, useCountryStates } from '../components/country-state-fields'
@@ -548,6 +549,20 @@ function StockLocationFormFields({ form }: { form: UseFormReturn<StockLocationFo
           />
           <FieldError errors={[errors.company]} />
         </Field>
+      </FormSection>
+
+      <FormSection title={t('admin.stock_locations.section_service_area')}>
+        <Controller
+          control={form.control}
+          name="administrative_division_code"
+          render={({ field }) => (
+            <AdministrativeDivisionFields
+              value={field.value ?? null}
+              onValueChange={field.onChange}
+              idPrefix="stock-location-administrative-division"
+            />
+          )}
+        />
       </FormSection>
 
       <FormSection title={t('admin.stock_locations.section_returns')}>

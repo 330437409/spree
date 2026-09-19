@@ -38,6 +38,9 @@ export const stockLocationFormSchema = z.object({
     z.coerce.number().int().min(0).optional().nullable(),
   ),
   pickup_instructions: z.string().optional(),
+  // The node of the administrative tree this warehouse covers, by the code the
+  // tree addresses it by — a code survives a re-import of the dataset.
+  administrative_division_code: z.string().optional(),
 })
 
 export type StockLocationFormValues = z.infer<typeof stockLocationFormSchema>
@@ -66,6 +69,7 @@ export const STOCK_LOCATION_DEFAULTS: StockLocationFormValues = {
   pickup_stock_policy: 'local',
   pickup_ready_in_minutes: null,
   pickup_instructions: '',
+  administrative_division_code: '',
 }
 
 export function stockLocationToFormValues(sl: PanelStockLocation): StockLocationFormValues {
@@ -95,6 +99,7 @@ export function stockLocationToFormValues(sl: PanelStockLocation): StockLocation
       : 'local',
     pickup_ready_in_minutes: sl.pickup_ready_in_minutes ?? null,
     pickup_instructions: sl.pickup_instructions ?? '',
+    administrative_division_code: sl.administrative_division_code ?? '',
   }
 }
 
@@ -122,5 +127,6 @@ export function formValuesToParams(v: StockLocationFormValues): PanelStockLocati
     pickup_stock_policy: v.pickup_stock_policy,
     pickup_ready_in_minutes: v.pickup_ready_in_minutes ?? null,
     pickup_instructions: blankToUndefined(v.pickup_instructions),
+    administrative_division_code: blankToUndefined(v.administrative_division_code),
   }
 }

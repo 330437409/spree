@@ -1423,7 +1423,17 @@
         "variant_count_one": "{{count}} wariant",
         "variant_count_other": "{{count}} wariantów"
       },
-      "description": "Magazyny i sklepy, w których trzymasz towar i z których realizujesz zamówienia."
+      "description": "Magazyny i sklepy, w których trzymasz towar i z których realizujesz zamówienia.",
+      "section_service_area": "Obszar działania",
+      "service_area": {
+        "any": "Wszędzie",
+        "levels": {
+          "province": "Prowincja",
+          "city": "Miasto",
+          "district": "Dystrykt",
+          "township": "Gmina"
+        }
+      }
     },
     "validation": {
       "codes": {

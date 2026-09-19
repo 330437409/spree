@@ -1408,7 +1408,17 @@
         "variant_count_one": "{{count}} variant",
         "variant_count_other": "{{count}} variants"
       },
-      "description": "The warehouses and shops you hold stock in and fulfil orders from."
+      "description": "The warehouses and shops you hold stock in and fulfil orders from.",
+      "section_service_area": "Service area",
+      "service_area": {
+        "any": "Anywhere",
+        "levels": {
+          "province": "Province",
+          "city": "City",
+          "district": "District",
+          "township": "Township"
+        }
+      }
     },
     "validation": {
       "codes": {
