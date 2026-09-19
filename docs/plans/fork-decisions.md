@@ -696,3 +696,11 @@ The plan had both adapters shipping with a configured primary and fallback. **Th
 **What the mapping turned out to be, once a vendor was actually read.** The plan (and this entry's own first draft) assumed a translation table: vendor code in, bureau code out, shipped as versioned data beside the tree. Tencent does not need one — **its `adcode` is the bureau's own code at the level it resolved**, so the mapper walks the imported tree from that code instead of translating it, and matches a township by name inside the district. `data/administrative/tencent/` is therefore an exceptions file with nothing in it: it earns its first row the day a vendor name and a bureau name disagree about the same place. The township check the plan owed is unchanged, and it is now the only thing standing between a district-level match and a township-level one.
 
 **Consequences recorded rather than discovered.** The administrative gem's mapping debt is now a single file — `data/administrative/tencent/` — and the plan's township-coverage check narrows to Tencent, with the same check owed for Amap only if it ships. The `preferred_reverse_geocode_fallback_provider` setting stays in the store preferences, unused, because removing and re-adding it would be a migration for a column that costs nothing.
+
+## 2026-09-19 (later) — The fork's features are documented in their gem, not in upstream's docs tree
+
+Decided while shipping `spree_service_areas`, and it applies to every gem this fork builds.
+
+`CLAUDE.md` says a new model or entity gets a page under `docs/developer/`, and `docs/developer` is upstream's Mintlify tree — deployed to the public documentation site and rewritten by every upstream sync. **For the fork's own features the documentation is the gem's `README.md` plus the plan** (`docs/plans/6.1-*.md`), which is what `spree_administrative_divisions` already does and what this ruling makes deliberate rather than accidental. A page there would be a merge conflict on every sync, for content that describes software nobody outside this deployment runs.
+
+**What still goes in `docs/developer`** is anything that belongs to upstream's own surface: a core or API behaviour this fork changes, or a page upstream's readers expect to find. That is the original rule's real subject, and it is unchanged.
