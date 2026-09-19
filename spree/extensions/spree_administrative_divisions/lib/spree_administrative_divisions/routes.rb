@@ -13,6 +13,16 @@ Spree::Core::Engine.add_routes do
       namespace :store do
         resources :administrative_divisions, only: [:index]
       end
+
+      # The same read for the two panels that bind a node: the dashboard's
+      # warehouse form and the seller's own.
+      namespace :admin do
+        resources :administrative_divisions, only: [:index]
+      end
+
+      namespace :seller do
+        resources :administrative_divisions, only: [:index]
+      end
     end
   end
 end
