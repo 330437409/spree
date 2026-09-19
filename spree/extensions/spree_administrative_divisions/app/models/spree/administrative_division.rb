@@ -28,5 +28,22 @@ module Spree
     validates :name, :first_pinyin, :source, presence: true
 
     scope :at_level, ->(level) { where(level: level) }
+
+    CURRENT_DATASET_VERSION_KEY = 'spree_administrative_divisions/dataset_version'.freeze
+
+    # The release the table currently holds. Read through the cache because
+    # every cached read keys on it: the tree changes only when the import writes
+    # a release, which clears this one key — the entries themselves are keyed by
+    # release and simply age out.
+    #
+    # @return [String, nil]
+    def self.current_dataset_version
+      Rails.cache.fetch(CURRENT_DATASET_VERSION_KEY) { maximum(:dataset_version) }
+    end
+
+    # @return [String] the key the current release is memoised under
+    def self.current_dataset_version_key
+      CURRENT_DATASET_VERSION_KEY
+    end
   end
 end

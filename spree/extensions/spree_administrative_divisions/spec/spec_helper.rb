@@ -14,6 +14,7 @@ Dir['./spec/support/**/*.rb'].sort.each { |f| require f }
 
 require 'spree/testing_support/factories'
 require 'spree/testing_support/jobs'
+require 'spree/api/testing_support/v3/base'
 require 'spree/testing_support/store'
 require 'spree/testing_support/preferences'
 require 'spree/testing_support/url_helpers'
