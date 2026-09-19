@@ -565,5 +565,57 @@ module Spree
         expect(stock_location).to be_valid
       end
     end
+
+    context 'the geocoded address' do
+      it 'asks for coordinates when the address changes' do
+        location = create(:stock_location)
+
+        expect { location.update!(city: '北京市') }.
+          to have_enqueued_job(Spree::StockLocations::ForwardGeocodeJob).
+          with(location.id).
+          on_queue(Spree.queues.addresses)
+      end
+
+      it 'asks once for a save that touches several address columns' do
+        location = create(:stock_location)
+
+        expect { location.update!(address1: 'A', city: 'B', zipcode: 'C') }.
+          to have_enqueued_job(Spree::StockLocations::ForwardGeocodeJob).exactly(:once)
+      end
+
+      it 'asks when a location is created with an address' do
+        expect { create(:stock_location) }.to have_enqueued_job(Spree::StockLocations::ForwardGeocodeJob)
+      end
+
+      it 'does not ask when something other than the address changes' do
+        location = create(:stock_location)
+
+        expect { location.update!(name: 'Renamed') }.
+          not_to have_enqueued_job(Spree::StockLocations::ForwardGeocodeJob)
+      end
+
+      it 'does not ask when geocoding is switched off' do
+        location = create(:stock_location)
+        Spree::Config[:geocode_addresses] = false
+
+        expect { location.update!(city: '北京市') }.
+          not_to have_enqueued_job(Spree::StockLocations::ForwardGeocodeJob)
+      end
+
+      it 'does not ask about a location that has no address yet' do
+        location = create(:stock_location)
+        location.update_columns(address1: nil, city: nil)
+
+        expect { location.update!(zipcode: '100006') }.
+          not_to have_enqueued_job(Spree::StockLocations::ForwardGeocodeJob)
+      end
+
+      it 'says the coordinates are waiting rather than never asked for' do
+        location = create(:stock_location)
+        location.update!(city: '北京市')
+
+        expect(location.reload.geocode_status).to eq('pending')
+      end
+    end
   end
 end
