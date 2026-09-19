@@ -18,7 +18,13 @@ module Spree
     # discount rides the ordinary product page with a badge. One activity with
     # two presentations.
     CODES = %w[seckill discount].freeze
-    STATUSES = %w[scheduled live ended].freeze
+
+    include Spree::HasStatus
+
+    # The stored status is the operator's own lifecycle, moved by a workflow.
+    # What a storefront may buy from is the *window*, answered from the server's
+    # clock — see #window_status, which is what the reads render.
+    has_status :scheduled, :live, :ended, default: :scheduled
 
     belongs_to :store, class_name: 'Spree::Store'
     belongs_to :seller, class_name: 'Spree::Seller', optional: true
@@ -30,13 +36,9 @@ module Spree
 
     normalizes :code, with: ->(value) { value.to_s.strip.presence }
 
-    validates :title, :code, :status, :starts_at, :ends_at, presence: true
+    validates :title, :code, :starts_at, :ends_at, presence: true
     validates :code, inclusion: { in: CODES }
-    validates :status, inclusion: { in: STATUSES }
     validate :ends_after_it_starts
-
-    scope :scheduled, -> { where(status: 'scheduled') }
-    scope :live_now, -> { where(status: 'live') }
 
     # What the window says, from the server's clock. `ended` is not a state the
     # reads render: an activity whose window has closed is simply not offered.
@@ -47,10 +49,6 @@ module Spree
       return 'live' if starts_at <= now
 
       'scheduled'
-    end
-
-    def live?(now: Time.current)
-      window_status(now: now) == 'live'
     end
 
     # The slot whose window is open, which is the one a claim belongs to when
