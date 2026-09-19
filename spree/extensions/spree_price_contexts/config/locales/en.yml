@@ -1,0 +1,8 @@
+---
+en:
+  spree:
+    price_contexts:
+      contexts:
+        area: Area price
+        scene: On-site promotion
+        offline: Offline activity

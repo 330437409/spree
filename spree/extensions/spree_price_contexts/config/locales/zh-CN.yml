@@ -1,0 +1,8 @@
+---
+zh-CN:
+  spree:
+    price_contexts:
+      contexts:
+        area: 区域
+        scene: 现场推广
+        offline: 线下
