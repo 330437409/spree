@@ -670,7 +670,10 @@ The binding is now real: `spree_stock_locations` carries `administrative_divisio
 
 **The geometry is hand-rolled rather than RGeo's.** The plan chose in-memory RGeo for portability across the three databases; the same portability arrives without adding a dependency to core, because the shapes are hand-drawn and small — self-intersection is a segment-crossing test, containment is a ray cast, and winding is a signed area. `rgeo` stays available to the gem if routing turns out to need more geometry than this, but core does not carry a geometry library to validate one column.
 
+**The coordinates needed a scale, and MySQL is where that showed.** `t.decimal` with no scale is scale 0 on MySQL, which rounds silently: a warehouse at 39.9089 was stored as 39 — a hundred kilometres from where it is — while the other two engines kept the decimals, so nothing local noticed and the MySQL lane in CI did. The columns are now `decimal(10, 7)` through a migration of their own rather than an edit to the one that added them, because that one has run where this has not. **Upstream's `spree_addresses.latitude`/`longitude` carry the same defect** — the same `t.decimal` with no scale, on the same three-engine support — so address geocoding rounds to whole degrees on MySQL today. It is upstream's migration rather than ours to change, and the fork's own copy of that table is not worth a permanent divergence; recorded here because the first person to compare a geocoded address against a map on MySQL will otherwise spend a day on it.
+
 **What the write path guarantees, and the one thing it deliberately does not.** A polygon arrives either way round and is canonicalised rather than refused — an operator's map editor should not fail over an orientation nobody chose — while genuinely unusable geometry (too few points, an open ring, a non-finite or off-map coordinate, a ring that crosses itself) is refused with a readable message. The bounding box is derived on write, because the match path tests it before parsing anything and a box computed per candidate is a box computed thousands of times.
+
 ## 2026-09-19 (later) — The administrative tree is readable: one public collection, cached by release
 
 Plan: `6.1-administrative-division-gem.md` — **implemented**, except for the vendor code maps.
@@ -682,3 +685,32 @@ Plan: `6.1-administrative-division-gem.md` — **implemented**, except for the v
 **One edge case was worth the spec that found it, and it is now a regression test.** The obvious implementation of `parent_code` resolves the code and matches on the id; a code that resolves to nothing makes that `where(parent_id: NULL)` — which is the root's own predicate — so a question about a node that does not exist would have answered the top of the tree. It answers an empty list instead: a picker whose step disappeared shows nothing, which is the truth.
 
 **What the plan still owes is the Tencent and Amap mapping files.** They ship beside the tree — the ruling moved them here — but nothing reads them until the routing slice's reverse geocoder does, and inventing mapping data before it is needed would be guessing at a shape the mapper should decide.
+## 2026-09-19 (later) — The reverse geocoder ships Tencent first, and the seam is what makes that cheap
+
+Plan: `6.1-seller-service-area-routing.md` — Decision 8 amended, Open Question 3 narrowed.
+
+The plan had both adapters shipping with a configured primary and fallback. **The first version ships the Tencent LBS adapter only.** The decision is about a resource rather than a design: a vendor account and its quota belong to the operator, and the second vendor earns its place the day someone holds a key for it — while the pluggable seam is worth nothing if it is only written down and never travelled.
+
+**What is deliberately unchanged is everything that makes a late arrival cheap.** The provider interface, the store-level provider and fallback configuration, and the cache key carrying the provider all stay exactly as written; the fallback path stays in the code even though, in the first version, there is no second provider to try — that is the state a fallback is in most of the time, and `Resolve` handles it. Adding Amap later is one adapter class and one mapping file under `data/administrative/amap/`, not a change to the orchestration, the cache key or the API.
+
+**What the mapping turned out to be, once a vendor was actually read.** The plan (and this entry's own first draft) assumed a translation table: vendor code in, bureau code out, shipped as versioned data beside the tree. Tencent does not need one — **its `adcode` is the bureau's own code at the level it resolved**, so the mapper walks the imported tree from that code instead of translating it, and matches a township by name inside the district. `data/administrative/tencent/` is therefore an exceptions file with nothing in it: it earns its first row the day a vendor name and a bureau name disagree about the same place. The township check the plan owed is unchanged, and it is now the only thing standing between a district-level match and a township-level one.
+
+**Consequences recorded rather than discovered.** The administrative gem's mapping debt is now a single file — `data/administrative/tencent/` — and the plan's township-coverage check narrows to Tencent, with the same check owed for Amap only if it ships. The `preferred_reverse_geocode_fallback_provider` setting stays in the store preferences, unused, because removing and re-adding it would be a migration for a column that costs nothing.
+
+## 2026-09-19 (later) — The fork's features are documented in their gem, not in upstream's docs tree
+
+Decided while shipping `spree_service_areas`, and it applies to every gem this fork builds.
+
+`CLAUDE.md` says a new model or entity gets a page under `docs/developer/`, and `docs/developer` is upstream's Mintlify tree — deployed to the public documentation site and rewritten by every upstream sync. **For the fork's own features the documentation is the gem's `README.md` plus the plan** (`docs/plans/6.1-*.md`), which is what `spree_administrative_divisions` already does and what this ruling makes deliberate rather than accidental. A page there would be a merge conflict on every sync, for content that describes software nobody outside this deployment runs.
+
+**What still goes in `docs/developer`** is anything that belongs to upstream's own surface: a core or API behaviour this fork changes, or a page upstream's readers expect to find. That is the original rule's real subject, and it is unchanged.
+
+## 2026-09-19 (later) — A seller can serve abroad, and the store's market is not how we say so
+
+Plan: `6.1-seller-service-area-routing.md` — its new Decision 23 and the boundary in its constraints. Raised by the author, asking whether a seller that faces other countries can be scoped to a region.
+
+**Today's answer is no, and not by oversight.** Spree's `Spree::Market` is the *store's* region: which countries it sells into, with currency, tax and return window, resolved per request from the country header. **Nothing links a seller to a market** — and upstream records that a market-scoped assortment waits for its own regional-assortment design (`catalog_assignment.rb`). This fork's coverage is a node of the Chinese administrative tree, and that tree's `country` level holds exactly one node. A seller with no Chinese warehouse therefore binds nothing, and `resolve_seller` says so honestly: `matched: false`, which the client renders as 当前城市未开通服务.
+
+**What was ruled instead of built.** Coverage gains a second form on the same row: beside the node and the polygon, a warehouse may carry **the countries it serves**, defaulting to the country it stands in — because a seller shipping from abroad has no shape worth drawing, and its coverage genuinely is a country list. Routing needs no new path for it: the algorithm already walks up to the country level, and `match_type: 'country'` already exists in the decision. **It stays unbuilt** because this client is China-domestic (no cross-border flow appears in the mini program or in any plan beside this one), and a branch nothing exercises is a branch nobody maintains. What it waits on when the need arrives is named in the plan: the vendor's nation name mapped to ISO, since Tencent answers a name and the normalizer currently hard-codes the `CN` root.
+
+**The boundary, written down because it is the tempting mistake.** A store's market must not become the switch for which sellers a customer sees. That question is seller discovery, it belongs to this binding, and a market's countries describe the store's commerce rather than any shop's coverage.

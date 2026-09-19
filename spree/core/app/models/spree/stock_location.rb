@@ -11,6 +11,10 @@ module Spree
     # (ship-to-store). See docs/plans/6.0-fulfillment-and-delivery.md.
     PICKUP_STOCK_POLICIES = %w[local any].freeze
 
+    # What `#address` is built from, and therefore what a change to it means the
+    # coordinates no longer describe the shop.
+    GEOCODED_ADDRESS_COLUMNS = %w[address1 address2 city state_code state_name country_code zipcode company].freeze
+
     include Spree::SingleStoreResource
     include Spree::HasExternalReferences
     if defined?(Spree::Security::StockLocations)
@@ -74,6 +78,14 @@ module Spree
     after_create :create_stock_levels, if: :propagate_all_variants?
     after_save :ensure_one_default
     after_update :conditional_touch_records
+
+    # The coordinates are derived from the address columns, so a save that
+    # touches several of them is still one save and enqueues one job — the two
+    # callbacks below are two moments of it, not one per field. `pending` is
+    # written with the save, which is what tells a location waiting on the
+    # queue apart from one nobody ever asked about.
+    before_save :mark_geocode_pending, if: :geocodable_address_changed?
+    after_commit :enqueue_forward_geocode, if: :geocodable_address_changed?
 
     delegate :name, :iso3, :iso_name, to: :country, prefix: true, allow_nil: true
 
@@ -289,6 +301,24 @@ module Spree
     end
 
     private
+
+    # The two callbacks sit on either side of one save, so this reads `changes`
+    # before the write and `saved_changes` after it. Geocoding is off by the same
+    # switch that turns it off for addresses, and a location with no address yet
+    # is not worth asking about.
+    def geocodable_address_changed?
+      return false unless Spree::Config[:geocode_addresses]
+
+      postable? && (changes.presence&.keys || saved_changes.keys).intersect?(GEOCODED_ADDRESS_COLUMNS)
+    end
+
+    def mark_geocode_pending
+      self.geocode_status = 'pending'
+    end
+
+    def enqueue_forward_geocode
+      Spree::StockLocations::ForwardGeocodeJob.perform_later(id)
+    end
 
     # A drawn ring arrives either way round, and GeoJSON wants the outline
     # counter-clockwise — so the orientation is corrected rather than refused.
