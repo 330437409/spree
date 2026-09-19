@@ -335,10 +335,10 @@ module Spree
       self.polygon_bbox = geometry.bounding_box
     end
 
-    # A partial unique index enforces this over active, non-deleted rows; the
-    # validation is what turns it into something an operator can read, and on
-    # MySQL — which has no partial indexes — it is the only enforcement. A
-    # deactivated or deleted warehouse releases its node for another seller.
+    # A unique index over active, non-deleted rows enforces this on every
+    # engine — MySQL reaches the same predicate through a stored generated
+    # column — and the validation is what turns it into something an operator
+    # can read. A deactivated or deleted warehouse releases its node.
     def service_area_node_not_taken
       taken = self.class.where(administrative_division_id: administrative_division_id, active: true).where.not(id: id)
       errors.add(:administrative_division_id, :taken) if taken.exists?

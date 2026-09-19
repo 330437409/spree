@@ -26,9 +26,10 @@ class AddServiceAreaToSpreeStockLocations < ActiveRecord::Migration[8.1]
     # the candidate query and impossible to rebind. Deactivating a warehouse is
     # therefore also what releases its node for a different seller.
     #
-    # MySQL has no partial indexes, so there the rule degrades to "one binding
-    # per node" and the active-only half is the service's — stated rather than
-    # discovered per engine, the same branch core's own API-key migration takes.
+    # MySQL has no partial indexes, and this migration first settled for the
+    # plain unique index core's API-key migration takes — which turned out to be
+    # stricter than the rule. The next migration puts it behind a stored
+    # generated column so all three engines mean the same thing by it.
     if ActiveRecord::Base.connection.adapter_name == 'Mysql2'
       add_index :spree_stock_locations, :administrative_division_id,
                 unique: true, name: 'index_spree_stock_locations_on_service_area'
