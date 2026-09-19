@@ -129,6 +129,34 @@ RSpec.describe SpreeAdministrativeDivisions::Import do
     end
   end
 
+  describe 'the conflict target' do
+    before { write_release('test-2026-01-01', divisions: three_levels) }
+
+    it 'names the unique index, which PostgreSQL and SQLite require' do
+      seen = []
+      allow(Spree::AdministrativeDivision).to receive(:upsert_all).and_wrap_original do |original, rows, **options|
+        seen << options
+        original.call(rows, **options)
+      end
+
+      expect(import.call('test-2026-01-01')).to be_success
+      expect(seen).to all(include(unique_by: :code))
+    end
+
+    # MySQL infers the conflict target from the table's own unique index and
+    # rejects an explicit `unique_by`. This suite runs on neither adapter, so
+    # the statement is not handed to one: only the options are asserted.
+    it 'leaves it to the adapter on MySQL' do
+      allow(Spree).to receive(:mysql?).and_return(true)
+      seen = []
+      allow(Spree::AdministrativeDivision).to receive(:upsert_all) { |_rows, **options| seen << options }
+
+      expect(import.call('test-2026-01-01')).to be_success
+      expect(seen).to be_present
+      expect(seen).to all(satisfy { |options| !options.key?(:unique_by) })
+    end
+  end
+
   describe 'refusals' do
     it 'fails when the release directory does not exist' do
       expect(import.call('test-2020-01-01')).to be_failure
