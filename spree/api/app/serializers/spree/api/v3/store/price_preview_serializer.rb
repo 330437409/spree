@@ -12,13 +12,15 @@ module Spree
           include Alba::Resource
           include Typelizer::DSL
 
-          typelize currency: :string, total: :number, quantity: :number,
+          typelize currency: :string, total: [:number, nullable: true], quantity: :number,
                    purchasable: :boolean, items: 'StorePricePreviewItem[]'
 
           attributes :currency
 
           attribute :total do |preview|
-            preview.total.to_f
+            next nil if params[:hide_prices]
+
+            preview.total&.to_f
           end
 
           attribute :quantity do |preview|

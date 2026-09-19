@@ -19,10 +19,7 @@ module Spree
       attribute :backorderable, :boolean
       attribute :purchasable, :boolean
       attribute :available_quantity, :integer
-
-      def price_list_id
-        price&.price_list_id
-      end
+      attribute :price_list_id
 
       def price_source
         price&.price_source

@@ -13,7 +13,7 @@ module Spree
                    quantity: :number,
                    unit_amount: [:number, nullable: true],
                    compare_at_amount: [:number, nullable: true],
-                   total: :number,
+                   total: [:number, nullable: true],
                    price_list_id: [:string, nullable: true],
                    price_source: [:string, nullable: true],
                    in_stock: :boolean, backorderable: :boolean, purchasable: :boolean,
@@ -32,22 +32,32 @@ module Spree
           end
 
           attribute :unit_amount do |row|
+            next nil if params[:hide_prices]
+
             row.unit_amount&.to_f
           end
 
           attribute :compare_at_amount do |row|
+            next nil if params[:hide_prices]
+
             row.compare_at_amount&.to_f
           end
 
           attribute :total do |row|
-            row.total.to_f
+            next nil if params[:hide_prices]
+
+            row.total&.to_f
           end
 
           attribute :price_list_id do |row|
-            row.price_list_id&.to_s
+            next nil if params[:hide_prices]
+
+            row.price_list_id
           end
 
           attribute :price_source do |row|
+            next nil if params[:hide_prices]
+
             row.price_source
           end
 

@@ -4,7 +4,7 @@ import { StorePricePreviewItemSchema } from './StorePricePreviewItem';
 
 export const StorePricePreviewSchema = z.object({
   currency: z.string(),
-  total: z.number(),
+  total: z.number().nullable(),
   quantity: z.number(),
   purchasable: z.boolean(),
   items: z.array(StorePricePreviewItemSchema),

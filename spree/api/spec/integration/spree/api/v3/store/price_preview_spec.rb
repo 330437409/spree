@@ -87,6 +87,54 @@ RSpec.describe 'Price Preview API', type: :request, swagger_doc: 'api-reference/
 
         run_test!
       end
+
+      # Nor is a product the storefront does not show quotable by its variant id.
+      response '404', 'a variant of a product the storefront does not show' do
+        let(:draft_variant) { create(:product, status: 'draft', store: store).default_variant }
+        let(:'x-spree-api-key') { api_key.token }
+        let(:body) { { items: [{ variant_id: draft_variant.prefixed_id, quantity: 1 }] } }
+
+        schema Spree::Api::OpenAPI::SchemaHelper.error_response
+
+        run_test!
+      end
+
+      response '422', 'a payload that is not a list of items' do
+        let(:'x-spree-api-key') { api_key.token }
+        let(:body) { { items: {} } }
+
+        schema Spree::Api::OpenAPI::SchemaHelper.error_response
+
+        run_test!
+      end
+
+      response '422', 'a quantity that is not a positive whole number' do
+        let(:'x-spree-api-key') { api_key.token }
+        let(:body) { { items: [{ variant_id: variant.prefixed_id, quantity: -2 }] } }
+
+        schema Spree::Api::OpenAPI::SchemaHelper.error_response
+
+        run_test!
+      end
+
+      # A storefront that hides prices answers no amounts — the same posture the
+      # product read applies — while the shelf's verdict still travels.
+      response '200', 'no amounts on a storefront that hides prices' do
+        let(:'x-spree-api-key') { api_key.token }
+        let(:body) { { items: [{ variant_id: variant.prefixed_id, quantity: 1 }] } }
+
+        before { store.update!(preferred_storefront_access: 'prices_hidden') }
+
+        schema Spree::Api::OpenAPI::SchemaHelper.ref('StorePricePreview')
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+
+          expect(data['total']).to be_nil
+          expect(data['items'].first['unit_amount']).to be_nil
+          expect(data['items'].first).to have_key('in_stock')
+        end
+      end
     end
   end
 end

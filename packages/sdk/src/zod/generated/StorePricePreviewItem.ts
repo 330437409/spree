@@ -7,7 +7,7 @@ export const StorePricePreviewItemSchema = z.object({
   quantity: z.number(),
   unit_amount: z.number().nullable(),
   compare_at_amount: z.number().nullable(),
-  total: z.number(),
+  total: z.number().nullable(),
   price_list_id: z.string().nullable(),
   price_source: z.string().nullable(),
   in_stock: z.boolean(),
