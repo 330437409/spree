@@ -132,24 +132,28 @@ RSpec.describe SpreeAdministrativeDivisions::Import do
   describe 'the conflict target' do
     before { write_release('test-2026-01-01', divisions: three_levels) }
 
-    it 'names the unique index, which PostgreSQL and SQLite require' do
-      seen = []
-      allow(Spree::AdministrativeDivision).to receive(:upsert_all).and_wrap_original do |original, rows, **options|
-        seen << options
-        original.call(rows, **options)
+    # Both examples assert which options are chosen rather than handing the
+    # statement to an adapter: this suite runs on all three engines, and the
+    # branch under test is exactly the one the running engine does not take.
+    # That the chosen options work is what every other example in this file
+    # proves, on whichever engine it is running.
+    def seen_upsert_options
+      [].tap do |seen|
+        allow(Spree::AdministrativeDivision).to receive(:upsert_all) { |_rows, **options| seen << options }
       end
+    end
+
+    it 'names the unique index, which PostgreSQL and SQLite require' do
+      allow(Spree).to receive(:mysql?).and_return(false)
+      seen = seen_upsert_options
 
       expect(import.call('test-2026-01-01')).to be_success
       expect(seen).to all(include(unique_by: :code))
     end
 
-    # MySQL infers the conflict target from the table's own unique index and
-    # rejects an explicit `unique_by`. This suite runs on neither adapter, so
-    # the statement is not handed to one: only the options are asserted.
-    it 'leaves it to the adapter on MySQL' do
+    it 'leaves it to the adapter on MySQL, which infers it and rejects an explicit one' do
       allow(Spree).to receive(:mysql?).and_return(true)
-      seen = []
-      allow(Spree::AdministrativeDivision).to receive(:upsert_all) { |_rows, **options| seen << options }
+      seen = seen_upsert_options
 
       expect(import.call('test-2026-01-01')).to be_success
       expect(seen).to be_present
