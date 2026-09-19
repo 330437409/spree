@@ -85,6 +85,30 @@ named in each store's admin locale and falling back to the application default
 for a locale this gem ships no file for. Safe to run again; channels that
 already exist — by code — are left exactly as they are, including their names.
 
+## Reading which price a line carries
+
+The reporting layer's vocabulary (the admin report builder, saved reports, and
+anything that queries `POST /api/v3/admin/reporting/query`) gains two dimensions
+from this gem:
+
+| Dimension | Answers |
+| --- | --- |
+| `price_list` | Which list priced the line. A context's prices live on one, so "what did the offline channel sell at" is gross sales grouped by this |
+| `price_source` | What answered the price — the platform's own pricing, a price an admin negotiated, or a pricing provider |
+
+```bash
+curl -X POST 'https://example.com/api/v3/admin/reporting/query' \
+  -H 'X-Spree-API-Key: sk_…' -H 'Content-Type: application/json' \
+  -d '{"metrics":["gross_sales"],"dimensions":["price_list"],"time_range":{"preset":"last_30_days"}}'
+```
+
+**A line with no price list carries a base price** — the seller's own (its offer
+variant's price) or the operator's. That is the category the EU Omnibus rule
+tracks, and a price list's price is segmentation, so a report that reads one
+must not be read as the other. Which seller a line belongs to is the `seller`
+dimension the platform already publishes, so the two answers together say whose
+price it was and what set it.
+
 ## What the operator configures
 
 The installer creates the channel and nothing more, because the rest is pricing

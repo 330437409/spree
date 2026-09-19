@@ -728,3 +728,15 @@ Plan: `6.1-seller-scoped-pricing.md`, whose last open question this settles. Fou
 **The gem is `spree_price_contexts`.** Routing (`spree_service_areas`) resolves *which seller* serves a coordinate; this one prices *for which context* a request asks. Two gems because they are two questions, and because the second is mostly convention: what ships is the channels' naming, the sellers read (`GET /api/v3/store/products/:id/sellers`, answering which sellers hold an offer a shopper could buy today — never whether one serves the customer's location), and the naming in the panels.
 
 **Kept apart deliberately:** the sellers read has no eligibility rule of its own (the routing plan owns that), the three contexts are not Ruby classes, and the seckill stays out — `6.1-flash-sales.md` prices it as a discount, not as a channel.
+
+## 2026-09-19 (later) — A price's provenance is two reporting dimensions, and the base price is its own group
+
+Plan: `6.1-seller-scoped-pricing.md`, which named the requirement and left the shape open. It matters beyond that plan: any report about money has to say which price it read.
+
+**The platform's reporting vocabulary gains `price_list` and `price_source`, registered by `spree_price_contexts`.** Grouping gross sales by `price_list` answers "what did the offline channel sell at" — a context's prices live on a list, and the order line already records which one priced it. `price_source` answers who quoted the price: nil for the platform's own walk, `manual` for a price an admin negotiated on the line, anything else a pricing provider's key.
+
+**A line with no list is a group of its own, not a missing value.** It carries a base price — the seller's own (its offer variant's price) or the operator's — which is the category the EU Omnibus rule tracks, and a price list's price is internal segmentation. Every report this fork writes about money must say which of the two it is reading; the `price_list` dimension is where that distinction is expressed rather than in prose.
+
+**The seller is not a third dimension here.** `spree_line_items.seller_id` already has a `seller` dimension in the platform's vocabulary, so whose price a line carries is answered beside the provenance rather than by reaching through the variant.
+
+**Where a plan should record its reporting needs:** a plan that introduces a money figure registers its dimensions through `Spree.reporting`, in an initializer, the way this one does — the registry is the extension point, and the dashboard reads it, so a new dimension needs no dashboard release.

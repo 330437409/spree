@@ -6,3 +6,11 @@ zh-CN:
         area: 区域
         scene: 现场推广
         offline: 线下
+    reporting:
+      dimensions:
+        price_list:
+          label: 价格表
+          description: 给这一行定价的价格表——价格上下文的价格就挂在一张表上。为空表示用的是基础价，也就是卖家自己的价或平台自己的价。
+        price_source:
+          label: 价格来源
+          description: 价格由谁给出——平台自身的定价、后台议定的价格，或第三方定价服务。

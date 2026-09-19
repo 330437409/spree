@@ -6,3 +6,11 @@ en:
         area: Area price
         scene: On-site promotion
         offline: Offline activity
+    reporting:
+      dimensions:
+        price_list:
+          label: Price list
+          description: The price list that priced the line — a context's prices live on one. A line with none carries a base price, the seller's own or the operator's.
+        price_source:
+          label: Price source
+          description: What answered the price — the platform's own pricing, a price an admin negotiated, or a pricing provider.
