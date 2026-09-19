@@ -46,7 +46,11 @@ module Spree
               :address1, :address2, :city, :zipcode, :phone, :company,
               :country_code, :state_code, :state_name,
               :pickup_enabled, :pickup_stock_policy, :returns_enabled,
-              :pickup_ready_in_minutes, :pickup_instructions
+              :pickup_ready_in_minutes, :pickup_instructions,
+              # Where this warehouse delivers, which is the seller's own
+              # decision: the division by the code the tree addresses it by, and
+              # a polygon that narrows it further.
+              :administrative_division_code, :polygon
             )
           end
         end
