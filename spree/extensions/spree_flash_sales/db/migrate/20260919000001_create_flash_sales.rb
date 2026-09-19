@@ -83,6 +83,8 @@ class CreateFlashSales < ActiveRecord::Migration[8.1]
       t.timestamps
       t.index :active_key, unique: true
       t.index [:customer_id, :status]
+      # What the expiry sweep walks, and what a claim reads before counting.
+      t.index [:status, :expires_at]
     end
 
     # The hold, and it knows a pool rather than a flash sale: a quantity, an

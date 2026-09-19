@@ -6,7 +6,7 @@ module Spree
       has_prefix_id :fslot
 
       belongs_to :flash_sale, class_name: 'Spree::FlashSale', inverse_of: :slots
-      has_many :pools, class_name: 'Spree::FlashSale::Pool', dependent: :destroy, inverse_of: :flash_sale_slot
+      has_many :pools, class_name: 'Spree::FlashSale::Pool', dependent: :destroy, inverse_of: :slot
       has_many :tickets, class_name: 'Spree::FlashSaleTicket', dependent: :nullify,
                          inverse_of: :flash_sale_slot
       has_many :reminders, class_name: 'Spree::FlashSale::Reminder', dependent: :destroy, inverse_of: :flash_sale_slot

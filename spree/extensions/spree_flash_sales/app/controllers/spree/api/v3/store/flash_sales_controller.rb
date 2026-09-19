@@ -23,12 +23,25 @@ module Spree
 
             raise ActiveRecord::RecordNotFound if sale.nil?
 
-            return unless cache_resource(sale)
-
             render json: serialize_resource(sale)
           end
 
           protected
+
+          # `server_now`, the window's status and every pool figure are read at
+          # the moment of the answer, and neither the activity's `updated_at`
+          # nor a counter's moves when a claim does — so a shared cache holding
+          # this body would serve a countdown anchored to a stale instant and a
+          # 剩余 that contradicts the claim it then refuses. The reads are cheap;
+          # they are simply not cached. (The concern is still included, because
+          # its Vary headers are what keeps a cache from mixing channels.)
+          def cache_collection(_collection, **_options)
+            true
+          end
+
+          def cache_resource(_resource, **_options)
+            true
+          end
 
           def model_class
             Spree::FlashSale

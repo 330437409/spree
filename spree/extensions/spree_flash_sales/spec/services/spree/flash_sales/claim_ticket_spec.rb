@@ -117,4 +117,20 @@ RSpec.describe Spree::FlashSales::ClaimTicket do
 
     expect(claim(quantity: 1, slot: nil).value).to eq(:slot_required)
   end
+
+  # An item that carries no share of its own is not an item with none left: the
+  # activity's own figures are the pool, and the item's is an addition to them.
+  it 'sells an item that has no share of its own' do
+    item.update!(pool: 0)
+
+    expect(claim(quantity: 2)).to be_success
+  end
+
+  # Losing the race to a customer's own second request is a refusal they have
+  # copy for, not a 500 from the unique index.
+  it 'answers a duplicate claim as a refusal rather than as an error' do
+    allow_any_instance_of(Spree::FlashSaleTicket).to receive(:save).and_raise(ActiveRecord::RecordNotUnique)
+
+    expect(claim(quantity: 1).value).to eq(:already_holding)
+  end
 end

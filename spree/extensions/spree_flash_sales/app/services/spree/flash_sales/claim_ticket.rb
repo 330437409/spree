@@ -45,6 +45,10 @@ module Spree
 
         result = nil
         Spree::FlashSale.transaction do
+          # What lapsed is released before anything is counted: a dead claim
+          # still counted against a cap, or still holding pool units, is a
+          # customer refused for a claim they no longer have.
+          Spree::FlashSaleTicket.release_lapsed!(Spree::FlashSaleTicket.lapsed_for(@flash_sale))
           @replacing&.release!(reason: 'replaced')
           result = claim
           raise ActiveRecord::Rollback if result.failure?
@@ -67,11 +71,17 @@ module Spree
           variant: @item.variant, customer: @customer, quantity: @quantity,
           status: 'holding', expires_at: @now + Spree::FlashSaleTicket::DEFAULT_TTL
         )
-        unless ticket.save
-          return failure(:already_holding) if ticket.errors.of_kind?(:active_key, :taken)
-
-          return failure(ticket.errors.full_messages.to_sentence)
+        begin
+          saved = ticket.save
+        rescue ActiveRecord::RecordNotUnique
+          # The validation catches the sequential case; the unique index is what
+          # catches two requests for the same customer at once, and losing that
+          # race is a refusal the client has copy for rather than a 500.
+          return failure(:already_holding)
         end
+
+        return failure(:already_holding) if !saved && ticket.errors.of_kind?(:active_key, :taken)
+        return failure(:invalid_claim) unless saved
 
         # Every scope takes the same units, so a claim that runs out on the third
         # counter holds nothing on the first two.
@@ -84,12 +94,18 @@ module Spree
       end
 
       def pools
-        @pools ||= [
-          Spree::FlashSale::Pool.for!(flash_sale: @flash_sale, kind: 'all'),
-          Spree::FlashSale::Pool.for!(flash_sale: @flash_sale, kind: 'day', on_date: @now.to_date),
-          Spree::FlashSale::Pool.for!(flash_sale: @flash_sale, kind: 'slot', slot: @slot),
-          Spree::FlashSale::Pool.for!(flash_sale: @flash_sale, kind: 'item', item: @item)
-        ]
+        @pools ||= begin
+          scopes = [
+            Spree::FlashSale::Pool.for!(flash_sale: @flash_sale, kind: 'all'),
+            Spree::FlashSale::Pool.for!(flash_sale: @flash_sale, kind: 'day', on_date: @now.to_date),
+            Spree::FlashSale::Pool.for!(flash_sale: @flash_sale, kind: 'slot', slot: @slot)
+          ]
+          # An item with no share of its own is not an item with none left.
+          if @item.pool.to_i.positive?
+            scopes << Spree::FlashSale::Pool.for!(flash_sale: @flash_sale, kind: 'item', item: @item)
+          end
+          scopes
+        end
       end
 
       # The purchase caps are per customer, not per pool: how much this shopper

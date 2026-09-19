@@ -47,10 +47,18 @@ module Spree
 
       # @return [Integer] the units this scope allows, zero when it allows none
       def cap
-        case kind
+        self.class.cap_for(kind: kind, flash_sale: flash_sale, slot: slot, item: item)
+      end
+
+      # What one scope allows. A slot that sets no cap of its own inherits the
+      # activity's per-slot figure, and an item's share is optional — so zero
+      # means "unset" at those two levels, while the activity's own three
+      # figures are the ones the client reads, where zero is sold out.
+      def self.cap_for(kind:, flash_sale:, slot: nil, item: nil)
+        case kind.to_s
         when 'all' then flash_sale.pool_all
         when 'day' then flash_sale.pool_per_day
-        when 'slot' then slot&.pool || flash_sale.pool_per_slot
+        when 'slot' then slot&.pool.to_i.positive? ? slot.pool : flash_sale.pool_per_slot
         when 'item' then item&.pool
         end.to_i
       end

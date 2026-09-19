@@ -31,6 +31,7 @@ module Spree
     scope :holding, -> { where(status: 'holding') }
     scope :unpaid, -> { holding.order(:expires_at) }
     scope :lapsed, -> { holding.where(expires_at: ..Time.current) }
+    scope :lapsed_for, ->(flash_sale) { lapsed.where(flash_sale: flash_sale) }
 
     def holding?
       status == 'holding'
@@ -61,6 +62,25 @@ module Spree
 
     def expired?(now: Time.current)
       holding? && expires_at <= now
+    end
+
+    # Releases every claim whose payment window has closed.
+    #
+    # The ticket is what expires, not the hold: a hold released on its own would
+    # give the units back while the ticket still said it held them, so the next
+    # customer could take the same units and the customer who lapsed would stay
+    # blocked by a claim nobody cleared.
+    #
+    # @param scope [ActiveRecord::Relation, nil] narrows the sweep, which is how
+    #   a claim clears its own activity before counting what is held
+    # @return [Integer] how many claims were released
+    def self.release_lapsed!(scope = lapsed)
+      scope.find_each.count(&:release_expired!)
+    end
+
+    # @return [Boolean] whether this call was the one that released
+    def release_expired!(now: Time.current)
+      release!(reason: 'expired') if expired?(now: now)
     end
 
     private

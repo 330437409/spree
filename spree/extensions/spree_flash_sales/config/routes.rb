@@ -28,9 +28,12 @@ Spree::Core::Engine.add_routes do
           resources :flash_sale_tickets, only: [:index]
         end
 
-        resources :flash_sale_slots, only: [] do
-          resource :reminder, only: [:create, :destroy], controller: 'flash_sale_slots/reminders'
-        end
+        # One wait per customer per stretch, so both verbs name the same
+        # collection the plan's contract does.
+        post 'flash_sale_slots/:flash_sale_slot_id/reminders',
+             to: 'flash_sale_slots/reminders#create', as: :flash_sale_slot_reminders
+        delete 'flash_sale_slots/:flash_sale_slot_id/reminders',
+               to: 'flash_sale_slots/reminders#destroy'
       end
     end
   end

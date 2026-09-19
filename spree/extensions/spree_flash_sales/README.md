@@ -75,11 +75,22 @@ because every release is guarded by its own row).
 ## Expiry
 
 A ticket lapses after five minutes — the client's own 请在5分钟内完成支付 — and
-that lapse is what releases the pool. Sweep on a schedule:
+that lapse is what releases the pool. **The ticket is what expires, not the
+hold**: releasing a hold on its own would give the units back while the ticket
+still said it held them, so the next customer could take the same units and the
+customer who lapsed would stay blocked by a claim nobody cleared.
+
+Schedule the sweep (sidekiq-cron, solid_queue recurring, a system cron calling
+the rake task):
 
 ```ruby
-Spree::PoolHold.sweep_expired!
+Spree::FlashSales::ExpireTicketsJob.perform_later
 ```
+
+Nothing depends on the schedule being exact — every release is guarded by its
+own row, so a late sweep delays a release rather than miscounting one. A claim
+also clears its own activity's lapsed claims before it counts anything, so the
+busiest activity is never the one waiting for the sweep.
 
 ## What this gem does not do
 

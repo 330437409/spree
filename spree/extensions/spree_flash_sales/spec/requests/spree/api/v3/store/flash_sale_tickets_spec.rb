@@ -98,7 +98,7 @@ RSpec.describe 'the flash-sale ticket endpoints', type: :request do
 
   describe '开售提醒' do
     def remind
-      post "/api/v3/store/flash_sale_slots/#{slot.prefixed_id}/reminder", headers: headers
+      post "/api/v3/store/flash_sale_slots/#{slot.prefixed_id}/reminders", headers: headers
     end
 
     it 'remembers a customer waiting for a stretch to open' do
@@ -119,7 +119,7 @@ RSpec.describe 'the flash-sale ticket endpoints', type: :request do
     it 'takes the wait back' do
       remind
 
-      delete "/api/v3/store/flash_sale_slots/#{slot.prefixed_id}/reminder", headers: headers
+      delete "/api/v3/store/flash_sale_slots/#{slot.prefixed_id}/reminders", headers: headers
 
       expect(response).to have_http_status(:no_content)
       expect(Spree::FlashSale::Reminder.where(flash_sale_slot: slot, customer: user).count).to eq(0)

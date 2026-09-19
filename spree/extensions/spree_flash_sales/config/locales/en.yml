@@ -12,3 +12,4 @@ en:
         stock_short: There is not enough of this product left.
         cap_reached: You have reached the limit for this activity.
         already_holding: You already hold a ticket for this activity — replace it instead.
+        invalid_claim: That claim could not be taken — try again.

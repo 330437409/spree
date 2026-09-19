@@ -88,9 +88,15 @@ module Spree
           end
 
           def render_refusal(reason)
+            message = if reason.is_a?(Symbol)
+                        Spree.t("flash_sales.refusals.#{reason}")
+                      else
+                        reason.to_s
+                      end
+
             render_error(
               code: ErrorHandler::ERROR_CODES[:validation_error],
-              message: Spree.t("flash_sales.refusals.#{reason}"),
+              message: message,
               status: :unprocessable_content,
               details: { reason: reason.to_s }
             )

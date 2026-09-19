@@ -89,15 +89,16 @@ module Spree
     def pool_scopes(item: nil, slot: nil, now: Time.current)
       slot ||= current_slot(now: now)
       scopes = [
-        { kind: :all, cap: pool_all, key: 'all' },
-        { kind: :day, cap: pool_per_day, key: "day:#{now.to_date}" },
-        { kind: :slot, cap: slot&.pool || pool_per_slot, key: "slot:#{slot&.id}" }
+        { kind: :all, key: 'all' },
+        { kind: :day, key: "day:#{now.to_date}" },
+        { kind: :slot, key: "slot:#{slot&.id}" }
       ]
-      scopes << { kind: :item, cap: item.pool, key: "item:#{item.id}" } if item.present?
+      scopes << { kind: :item, key: "item:#{item.id}" } if item.present? && item.pool.to_i.positive?
 
       scopes.map do |scope|
+        cap = Spree::FlashSale::Pool.cap_for(kind: scope[:kind], flash_sale: self, slot: slot, item: item)
         held = pools.where(kind: scope[:kind].to_s, key: scope[:key]).pick(:held).to_i
-        scope.merge(remaining: scope[:cap].to_i - held)
+        scope.merge(cap: cap, remaining: cap - held)
       end
     end
 
