@@ -56,7 +56,7 @@ jobs:
 
       - name: Install all project dependencies
         run: |
-          for project in core api emails providers/easypost providers/meilisearch providers/stripe providers/wechat_pay providers/social_auth extensions/spree_administrative_divisions extensions/spree_service_areas dashboard opentelemetry; do
+          for project in core api emails providers/easypost providers/meilisearch providers/stripe providers/wechat_pay providers/social_auth extensions/spree_administrative_divisions extensions/spree_flash_sales extensions/spree_service_areas dashboard opentelemetry; do
             echo "--- Installing gems for $project ---"
             cd spree/$project
             bundle config set --local path ${{ github.workspace }}/vendor/bundle
@@ -101,7 +101,7 @@ jobs:
 
       - name: Install all project dependencies
         run: |
-          for project in core api emails providers/easypost providers/meilisearch providers/stripe providers/wechat_pay providers/social_auth extensions/spree_administrative_divisions extensions/spree_service_areas dashboard opentelemetry; do
+          for project in core api emails providers/easypost providers/meilisearch providers/stripe providers/wechat_pay providers/social_auth extensions/spree_administrative_divisions extensions/spree_flash_sales extensions/spree_service_areas dashboard opentelemetry; do
             echo "--- Installing gems for $project ---"
             cd spree/$project
             bundle config set --local path ${{ github.workspace }}/vendor/bundle
@@ -136,7 +136,7 @@ jobs:
           # The fork's own gems ride this lane too: the two provider gems that
           # were missing from the matrix, and the extension gems built under
           # spree/extensions.
-          - { project: providers, dirs: "providers/easypost providers/meilisearch providers/stripe providers/wechat_pay providers/social_auth extensions/spree_administrative_divisions extensions/spree_service_areas", shard: 1, total_shards: 1, procs: 2 }
+          - { project: providers, dirs: "providers/easypost providers/meilisearch providers/stripe providers/wechat_pay providers/social_auth extensions/spree_administrative_divisions extensions/spree_flash_sales extensions/spree_service_areas", shard: 1, total_shards: 1, procs: 2 }
           # dashboard: 1 runner × 2 procs (tiny suite — SPA host)
           - { project: dashboard, shard: 1, total_shards: 1, procs: 2 }
           # opentelemetry: 1 runner × 2 procs (tiny suite — optional tracing gem)
@@ -299,7 +299,7 @@ jobs:
           # The fork's own gems ride this lane too: the two provider gems that
           # were missing from the matrix, and the extension gems built under
           # spree/extensions.
-          - { project: providers, dirs: "providers/easypost providers/meilisearch providers/stripe providers/wechat_pay providers/social_auth extensions/spree_administrative_divisions extensions/spree_service_areas", shard: 1, total_shards: 1, procs: 2 }
+          - { project: providers, dirs: "providers/easypost providers/meilisearch providers/stripe providers/wechat_pay providers/social_auth extensions/spree_administrative_divisions extensions/spree_flash_sales extensions/spree_service_areas", shard: 1, total_shards: 1, procs: 2 }
           # dashboard: 1 runner × 2 procs (tiny suite — SPA host)
           - { project: dashboard, shard: 1, total_shards: 1, procs: 2 }
           # opentelemetry: 1 runner × 2 procs (tiny suite — optional tracing gem)

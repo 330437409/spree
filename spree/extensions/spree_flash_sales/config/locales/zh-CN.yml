@@ -1,0 +1,14 @@
+---
+zh-CN:
+  spree:
+    flash_sales:
+      refusals:
+        invalid_quantity: 请至少选择一件。
+        not_in_activity: 该活动不包含这个商品。
+        slot_required: 该活动按时段开售，请指定时段。
+        not_started: 活动尚未开始。
+        ended: 活动已结束。
+        sold_out: 活动库存已抢光。
+        stock_short: 该商品库存不足。
+        cap_reached: 已达活动限购数量。
+        already_holding: 你已持有该活动的抢购资格，请改用重新抢购。

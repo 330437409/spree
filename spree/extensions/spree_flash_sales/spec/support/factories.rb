@@ -64,7 +64,7 @@ FactoryBot.define do
   factory :flash_sale_reminder, class: 'Spree::FlashSale::Reminder' do
     store { Spree::Store.default || create(:store) }
     flash_sale
-    slot { association(:flash_sale_slot, flash_sale: flash_sale) }
+    flash_sale_slot { association(:flash_sale_slot, flash_sale: flash_sale) }
     customer
   end
 end

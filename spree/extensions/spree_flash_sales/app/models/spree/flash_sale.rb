@@ -60,43 +60,48 @@ module Spree
       slots.select { |slot| slot.starts_at <= now && slot.ends_at > now }.min_by(&:position)
     end
 
-    # How much of the activity is left, in every scope the client intersects:
-    # the smallest remaining pool wins, and zero means sold out.
-    # @return [Integer]
-    def remaining_pools(now: Time.current)
-      scopes = [pool_remaining(:all), pool_remaining(:day, on_date: now.to_date), pool_remaining(:slot)]
-      scopes = scopes.compact
-      return 0 if scopes.empty?
+    # The figures the client renders — 已抢光 and its bar — for one goods and one
+    # stretch: the tightest scope decides, because the client intersects all
+    # three and the smallest pool is the one that runs out first.
+    #
+    # @param item [Spree::FlashSale::Item, nil] the goods the page is about
+    # @param slot [Spree::FlashSale::Slot, nil] defaults to the open one
+    # @return [Hash{Symbol => Integer}] remaining units and how full the bar is
+    def progress(item: nil, slot: nil, now: Time.current)
+      slot ||= current_slot(now: now)
+      scopes = pool_scopes(item: item, slot: slot, now: now)
+      tightest = scopes.min_by { |scope| scope[:remaining] }
 
-      scopes.min
+      return { remaining: 0, percentage: 100 } if tightest.nil? || tightest[:cap].to_i <= 0
+
+      taken = tightest[:cap].to_i - tightest[:remaining]
+      { remaining: tightest[:remaining],
+        percentage: ((taken.to_f / tightest[:cap]) * 100).round.clamp(0, 100) }
     end
 
-    # @return [Integer, nil] units left in one scope, nil when the scope has no
-    #   cap at all
-    def pool_remaining(kind, on_date: nil, slot: nil)
-      cap = pool_cap(kind, slot: slot)
-      return nil if cap.nil?
-
-      cap - pools.where(kind: kind.to_s, key: pool_key(kind, on_date: on_date, slot: slot)).pick(:held).to_i
-    end
-
-    def pool_cap(kind, slot: nil)
-      case kind.to_s
-      when 'all' then pool_all
-      when 'day' then pool_per_day
-      when 'slot' then (slot || current_slot)&.pool || pool_per_slot
-      end
-    end
-
-    def pool_key(kind, on_date: nil, slot: nil)
-      case kind.to_s
-      when 'all' then 'all'
-      when 'day' then "day:#{on_date}"
-      when 'slot' then "slot:#{(slot || current_slot)&.id}"
-      end
+    # What each scope has left, as the client asks it: all time, today, this
+    # stretch, and the goods' own share when the page is about one goods.
+    # @return [Hash{Symbol => Integer}]
+    def pool_figures(item: nil, slot: nil, now: Time.current)
+      pool_scopes(item: item, slot: slot, now: now).to_h { |scope| [scope[:kind], scope[:remaining]] }
     end
 
     private
+
+    def pool_scopes(item: nil, slot: nil, now: Time.current)
+      slot ||= current_slot(now: now)
+      scopes = [
+        { kind: :all, cap: pool_all, key: 'all' },
+        { kind: :day, cap: pool_per_day, key: "day:#{now.to_date}" },
+        { kind: :slot, cap: slot&.pool || pool_per_slot, key: "slot:#{slot&.id}" }
+      ]
+      scopes << { kind: :item, cap: item.pool, key: "item:#{item.id}" } if item.present?
+
+      scopes.map do |scope|
+        held = pools.where(kind: scope[:kind].to_s, key: scope[:key]).pick(:held).to_i
+        scope.merge(remaining: scope[:cap].to_i - held)
+      end
+    end
 
     def ends_after_it_starts
       return if starts_at.blank? || ends_at.blank?

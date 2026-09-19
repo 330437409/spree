@@ -1,0 +1,14 @@
+---
+en:
+  spree:
+    flash_sales:
+      refusals:
+        invalid_quantity: Ask for at least one.
+        not_in_activity: This activity does not sell that product.
+        slot_required: This activity runs in time slots — say which one.
+        not_started: This activity has not started yet.
+        ended: This activity has ended.
+        sold_out: The activity's stock has run out.
+        stock_short: There is not enough of this product left.
+        cap_reached: You have reached the limit for this activity.
+        already_holding: You already hold a ticket for this activity — replace it instead.
