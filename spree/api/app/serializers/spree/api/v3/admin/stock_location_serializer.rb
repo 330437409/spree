@@ -14,13 +14,24 @@ module Spree
                    kind: [:string, enum: Spree::StockLocation::KINDS, enum_type_name: 'StockLocationKind'],
                    pickup_stock_policy: [:string, enum: Spree::StockLocation::PICKUP_STOCK_POLICIES],
                    pickup_ready_in_minutes: [:number, nullable: true],
-                   pickup_instructions: [:string, nullable: true]
+                   pickup_instructions: [:string, nullable: true],
+                   administrative_division_code: [:string, nullable: true],
+                   polygon: [:array, nullable: true],
+                   geocode_status: [:string, nullable: true],
+                   geocoded_at: [:string, nullable: true]
 
           attributes :admin_name, :address2, :state_name, :phone, :company,
                      :active, :default, :backorderable_default, :propagate_all_variants,
                      :kind, :pickup_enabled, :pickup_stock_policy, :returns_enabled,
                      :pickup_ready_in_minutes, :pickup_instructions,
+                     :administrative_division_code, :polygon, :geocode_status,
                      created_at: :iso8601, updated_at: :iso8601
+
+          # When the coordinates were last produced, and by which provider — the
+          # pair an operator reads to see why a warehouse has none.
+          attribute :geocoded_at do |stock_location|
+            stock_location.geocoded_at&.iso8601
+          end
 
           attribute :seller_id do |stock_location|
             stock_location.seller&.prefixed_id

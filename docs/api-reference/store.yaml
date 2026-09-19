@@ -278,6 +278,73 @@ paths:
                 refresh_token:
                   type: string
                   description: Refresh token to revoke
+  "/api/v3/store/auth/providers":
+    get:
+      summary: List authentication providers
+      tags:
+      - Authentication
+      security:
+      - api_key: []
+      description: |
+        Lists the authentication providers this store has configured, for a
+        storefront to render its login page: the password form when `email` is
+        registered, a button per redirect provider.
+
+        A redirect provider's `authorization_url` already carries a signed
+        `state`; the storefront stores it and sends it back with the
+        authorization code. `requires_email` warns that the provider cannot
+        return an email, so the shopper will be asked for one before the
+        account is created.
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: providers listed
+          content:
+            application/json:
+              example:
+                providers:
+                - key: email
+                  kind: password
+                - key: wechat
+                  kind: redirect
+                  label: WeChat
+                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--89984eeb01d29e6bd9a5b7fe3d95d3c31fd70ab3
+                  requires_email: true
+              schema:
+                type: object
+                properties:
+                  providers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        key:
+                          type: string
+                          example: wechat
+                        kind:
+                          type: string
+                          enum:
+                          - password
+                          - redirect
+                        label:
+                          type: string
+                          nullable: true
+                          example: WeChat
+                        requires_email:
+                          type: boolean
+                        authorization_url:
+                          type: string
+                          nullable: true
+                      required:
+                      - key
+                      - kind
+                required:
+                - providers
   "/api/v3/store/auth/complete":
     post:
       summary: Complete a social registration
@@ -371,73 +438,6 @@ paths:
               required:
               - registration_token
               - email
-  "/api/v3/store/auth/providers":
-    get:
-      summary: List authentication providers
-      tags:
-      - Authentication
-      security:
-      - api_key: []
-      description: |
-        Lists the authentication providers this store has configured, for a
-        storefront to render its login page: the password form when `email` is
-        registered, a button per redirect provider.
-
-        A redirect provider's `authorization_url` already carries a signed
-        `state`; the storefront stores it and sends it back with the
-        authorization code. `requires_email` warns that the provider cannot
-        return an email, so the shopper will be asked for one before the
-        account is created.
-      parameters:
-      - name: x-spree-api-key
-        in: header
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: providers listed
-          content:
-            application/json:
-              example:
-                providers:
-                - key: email
-                  kind: password
-                - key: wechat
-                  kind: redirect
-                  label: WeChat
-                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--e0dd6db3ecc1507a0eac42666713a26c74352769
-                  requires_email: true
-              schema:
-                type: object
-                properties:
-                  providers:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        key:
-                          type: string
-                          example: wechat
-                        kind:
-                          type: string
-                          enum:
-                          - password
-                          - redirect
-                        label:
-                          type: string
-                          nullable: true
-                          example: WeChat
-                        requires_email:
-                          type: boolean
-                        authorization_url:
-                          type: string
-                          nullable: true
-                      required:
-                      - key
-                      - kind
-                required:
-                - providers
   "/api/v3/store/password_resets":
     post:
       summary: Request a password reset

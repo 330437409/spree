@@ -52,9 +52,33 @@ module Spree
     # this table: a host without it simply never binds a node.
     belongs_to :administrative_division, class_name: 'Spree::AdministrativeDivision', optional: true
 
+    # The binding is stored as the division's row and addressed by its code: a
+    # code survives a re-import of the tree and a row id does not, so a saved
+    # form — or a client holding one — stays valid across one. The model owns the
+    # bridge, so the API reads and writes the same name and no client translates.
+    #
+    # Both ends guard the tree's constant: the association cannot be read in a
+    # host without that gem — Rails raises rather than answering nil — so nothing
+    # in core may touch `#administrative_division` directly. The gem's own code,
+    # which cannot load without the tree, reads the association all it likes.
+    #
+    # @return [String, nil]
+    def administrative_division_code
+      return @administrative_division_code.presence unless defined?(Spree::AdministrativeDivision)
+
+      administrative_division&.code || @administrative_division_code.presence
+    end
+
+    # @param code [String, nil] a code this release carries, or nil to unbind
+    def administrative_division_code=(code)
+      @administrative_division_code = code.to_s.strip.presence
+      self.administrative_division = @administrative_division_code && division_for_code(@administrative_division_code)
+    end
+
     before_validation :normalize_service_area, if: :polygon_changed?
     validates :polygon, 'Spree::SellerRouting::Polygon' => true
     validate :service_area_node_not_taken, if: -> { administrative_division_id_changed? && administrative_division_id? }
+    validate :administrative_division_code_resolves, if: -> { @administrative_division_code.present? }
 
     self.whitelisted_ransackable_attributes = %w[
       name active default kind pickup_enabled returns_enabled
@@ -303,6 +327,23 @@ module Spree
 
       self.polygon = geometry.canonicalized
       self.polygon_bbox = geometry.bounding_box
+    end
+
+    # A code this release does not carry is refused rather than silently
+    # unbinding the warehouse: a caller that named a division has asked for a
+    # binding, not for none, and a quiet nil would read as "no service area".
+    def administrative_division_code_resolves
+      return if administrative_division.present?
+
+      errors.add(:administrative_division_code, :invalid)
+    end
+
+    # The tree is a dependent gem's — a host without it simply never binds a
+    # node — so a code it cannot resolve is a refusal, never a NameError.
+    def division_for_code(code)
+      return nil unless defined?(Spree::AdministrativeDivision)
+
+      Spree::AdministrativeDivision.find_by(code: code)
     end
 
     # A partial unique index enforces this over active, non-deleted rows; the

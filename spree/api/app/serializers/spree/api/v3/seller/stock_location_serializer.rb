@@ -6,10 +6,14 @@ module Spree
           typelize address2: [:string, nullable: true], state_name: [:string, nullable: true],
                    phone: [:string, nullable: true], company: [:string, nullable: true],
                    active: :boolean, default: :boolean, kind: [:string, enum: Spree::StockLocation::KINDS, enum_type_name: 'StockLocationKind'],
-                   returns_enabled: :boolean
+                   returns_enabled: :boolean,
+                   administrative_division_code: [:string, nullable: true],
+                   polygon: [:array, nullable: true],
+                   geocode_status: [:string, nullable: true]
 
           attributes :address2, :state_name, :phone, :company, :active, :default, :kind,
-                     :returns_enabled, created_at: :iso8601, updated_at: :iso8601
+                     :returns_enabled, :administrative_division_code, :polygon, :geocode_status,
+                     created_at: :iso8601, updated_at: :iso8601
         end
       end
     end
