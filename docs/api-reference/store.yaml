@@ -313,7 +313,7 @@ paths:
                 - key: wechat
                   kind: redirect
                   label: WeChat
-                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--89984eeb01d29e6bd9a5b7fe3d95d3c31fd70ab3
+                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--32aae41ae6f1d2501f91357517e67a979983585a
                   requires_email: true
               schema:
                 type: object
@@ -1787,7 +1787,7 @@ paths:
                   po_document_filename:
                   po_document_byte_size:
                   number: cart_gbHJdmfrXB
-                  token: pvLw1ZWLLQNxh1uvSPUCdSmt
+                  token: pKEkRfo2yoowhVSHGhDLYtPT
                   email:
                   customer_note:
                   po_number:
@@ -3009,7 +3009,7 @@ paths:
                 payments:
                 - id: py_UkLWZg9DAJ
                   payment_method_id: pm_UkLWZg9DAJ
-                  response_code: BGS-518d4ef9738e
+                  response_code: BGS-449038697740
                   number: R1001-P1
                   status: completed
                   amount: '20.0'
@@ -4932,9 +4932,9 @@ paths:
                 id: ps_gbHJdmfrXB
                 status: pending
                 currency: USD
-                external_id: bogus_208a8eb2883f955fd5c07616
+                external_id: bogus_a8b3afe691c933c1077a4098
                 external_data:
-                  client_secret: bogus_secret_a8b3afe691c933c1
+                  client_secret: bogus_secret_c8459e29d7e3219c
                 customer_external_id:
                 expires_at:
                 amount: '10.0'
@@ -5033,7 +5033,7 @@ paths:
                 id: ps_UkLWZg9DAJ
                 status: pending
                 currency: USD
-                external_id: bogus_96d0ebf0a4300304c930f3c0
+                external_id: bogus_f51dc67c03940c37ef8ece9d
                 external_data:
                   client_secret: secret_123
                 customer_external_id:
@@ -5101,7 +5101,7 @@ paths:
                 id: ps_UkLWZg9DAJ
                 status: pending
                 currency: USD
-                external_id: bogus_8a53bedc6c12205d0e31f231
+                external_id: bogus_9ab2cbad1f93cd5fc6666f78
                 external_data:
                   client_secret: secret_123
                 customer_external_id:
@@ -5209,7 +5209,7 @@ paths:
                 id: ps_UkLWZg9DAJ
                 status: completed
                 currency: USD
-                external_id: bogus_f6de6a6c7dddf8f63c45a3f0
+                external_id: bogus_ed21f33e5157a013bc6b223e
                 external_data:
                   client_secret: secret_123
                 customer_external_id:
@@ -9605,7 +9605,7 @@ paths:
               example:
                 id: wl_gbHJdmfrXB
                 name: Birthday Ideas
-                token: 9QwEwKPqhv9b6g6vN3mSu4Pm
+                token: wqY1UeyRZCMQkasa29rgmhzU
                 is_default: false
                 is_private: true
               schema:
