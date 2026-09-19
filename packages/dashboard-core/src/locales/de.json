@@ -1406,7 +1406,17 @@
         "variant_count_one": "{{count}} Variante",
         "variant_count_other": "{{count}} Varianten"
       },
-      "description": "Die Lager und Läden, in denen Sie Bestand halten und aus denen Sie Bestellungen erfüllen."
+      "description": "Die Lager und Läden, in denen Sie Bestand halten und aus denen Sie Bestellungen erfüllen.",
+      "section_service_area": "Einsatzgebiet",
+      "service_area": {
+        "any": "Überall",
+        "levels": {
+          "province": "Provinz",
+          "city": "Stadt",
+          "district": "Bezirk",
+          "township": "Gemeinde"
+        }
+      }
     },
     "validation": {
       "codes": {

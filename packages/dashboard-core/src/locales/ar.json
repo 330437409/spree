@@ -1406,7 +1406,17 @@
         "variant_count_one": "{{count}} متغير",
         "variant_count_other": "{{count}} متغيرات"
       },
-      "description": "المستودعات والمتاجر التي تحتفظ فيها بالمخزون وتنفذ الطلبات منها."
+      "description": "المستودعات والمتاجر التي تحتفظ فيها بالمخزون وتنفذ الطلبات منها.",
+      "section_service_area": "منطقة الخدمة",
+      "service_area": {
+        "any": "في أي مكان",
+        "levels": {
+          "province": "مقاطعة",
+          "city": "مدينة",
+          "district": "منطقة",
+          "township": "بلدة"
+        }
+      }
     },
     "validation": {
       "codes": {

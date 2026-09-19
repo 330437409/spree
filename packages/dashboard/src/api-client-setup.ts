@@ -19,6 +19,7 @@ setApiClient({
     return { rules: response.permissions, keys: response.permission_keys ?? [] }
   },
   listCountries: () => adminClient.countries.list({ expand: ['states'] }),
+  listAdministrativeDivisions: (params) => adminClient.administrativeDivisions.list(params),
   createDirectUpload: (params) => adminClient.directUploads.create(params),
   // Backs the shared CSV import wizard, which both panels render. The
   // operator imports every registered dataset; a seller's client narrows

@@ -13,6 +13,28 @@ export type {
 // drift apart silently.
 export * from './generated'
 
+/**
+ * One node of the administrative tree the service-area picker cascades through,
+ * as `GET /administrative_divisions` answers it. Hand-written because the
+ * serializer lives in the administrative-divisions gem rather than in the
+ * Seller API, so the type generator never sees it.
+ */
+export interface AdministrativeDivision {
+  /** GB/T 2260 for a province, city or district; the statistics bureau's code deeper. */
+  code: string
+  name: string
+  /** `country` | `province` | `city` | `district` | `township` */
+  level: string
+  first_pinyin: string
+  has_children: boolean
+}
+
+export type AdministrativeDivisionListParams = {
+  parent_code?: string
+  keywords?: string
+  level?: string
+}
+
 import type { default as TeamMember } from './generated/TeamMember'
 
 /**

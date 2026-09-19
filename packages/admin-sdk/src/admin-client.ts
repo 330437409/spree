@@ -392,6 +392,8 @@ import type {
 } from './params'
 import type {
   Address,
+  AdministrativeDivision,
+  AdministrativeDivisionListParams,
   AdminUser,
   AllowedOrigin,
   ApiKey,
@@ -5115,6 +5117,28 @@ export class AdminClient {
 
     delete: (id: string, options?: RequestOptions): Promise<void> =>
       this.request<void>('DELETE', `/markets/${id}`, options),
+  }
+
+  // ============================================
+  // Administrative Divisions
+  // ============================================
+
+  /**
+   * The administrative tree the service-area pickers cascade through.
+   *
+   * Read-only: it is imported reference data, and a correction to it is a new
+   * released dataset rather than an edit. A node is addressed by its `code`,
+   * which survives a re-import — the row id does not.
+   */
+  readonly administrativeDivisions = {
+    list: (
+      params?: AdministrativeDivisionListParams,
+      options?: RequestOptions,
+    ): Promise<{ data: AdministrativeDivision[] }> =>
+      this.request<{ data: AdministrativeDivision[] }>('GET', '/administrative_divisions', {
+        ...options,
+        params,
+      }),
   }
 
   // ============================================
