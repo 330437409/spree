@@ -714,3 +714,29 @@ Plan: `6.1-seller-service-area-routing.md` — its new Decision 23 and the bound
 **What was ruled instead of built.** Coverage gains a second form on the same row: beside the node and the polygon, a warehouse may carry **the countries it serves**, defaulting to the country it stands in — because a seller shipping from abroad has no shape worth drawing, and its coverage genuinely is a country list. Routing needs no new path for it: the algorithm already walks up to the country level, and `match_type: 'country'` already exists in the decision. **It stays unbuilt** because this client is China-domestic (no cross-border flow appears in the mini program or in any plan beside this one), and a branch nothing exercises is a branch nobody maintains. What it waits on when the need arrives is named in the plan: the vendor's nation name mapped to ISO, since Tencent answers a name and the normalizer currently hard-codes the `CN` root.
 
 **The boundary, written down because it is the tempting mistake.** A store's market must not become the switch for which sellers a customer sees. That question is seller discovery, it belongs to this binding, and a market's countries describe the store's commerce rather than any shop's coverage.
+
+## 2026-09-19 (later) — A price context is the client's own word, and the offline price is the operator's cost
+
+Plan: `6.1-seller-scoped-pricing.md`, whose last open question this settles. Four rulings, all daily questions for whoever runs this deployment.
+
+**The seller axis needed no schema, and that is the whole design.** A seller's price is its offer variant's **base** price (`price_list_id IS NULL`) — the offer *is* the seller's participation in the catalogue — so `spree_prices` gains no `seller_id`, no list gains one, and `Spree::Pricing::Context` (the platform's hottest read path, and its cache key) gains no seller axis. The three pages the client draws — 区域, 现场推广/分销, 线下 — differ in **which context the request is in**, and that is a channel, which is what core's `ChannelRule` already names as the forward path and what `Spree::Api::V3::ChannelResolution` already resolves at the request boundary. So the product read the client already calls is untouched: no parameter, no second route, no per-context endpoint.
+
+**The three contexts go on the wire under the client's own names — `area`, `scene`, `offline`.** Those are the values the client already sends as `cartType`, they are the channel `code` the operator creates, and they are what a rewritten client puts in `X-Spree-Channel`. The channel's human name is the operator's own text, so 区域 / 现场推广 / 线下 live in the admin as data rather than as a wire value, and no mapping layer sits between the two. A fourth context is a row the operator creates, not a release.
+
+**The offline context's price is the operator's cost.** 线下 activities are run by the platform, so the platform bears the difference and the seller's payout follows the price it agreed to — through the `subsidy` transfer kind the membership plan already carries. **This is a ruling, not a build**: nothing is wired for it here, because the capability belongs to `6.1-membership-tiers-and-rights.md` and re-opening it would fork the ledger's design. The alternative — that an offline price is the seller's own concession — was refused because it changes what the books say about who paid for the promotion.
+
+**The gem is `spree_price_contexts`.** Routing (`spree_service_areas`) resolves *which seller* serves a coordinate; this one prices *for which context* a request asks. Two gems because they are two questions, and because the second is mostly convention: what ships is the channels' naming, the sellers read (`GET /api/v3/store/products/:id/sellers`, answering which sellers hold an offer a shopper could buy today — never whether one serves the customer's location), and the naming in the panels.
+
+**Kept apart deliberately:** the sellers read has no eligibility rule of its own (the routing plan owns that), the three contexts are not Ruby classes, and the seckill stays out — `6.1-flash-sales.md` prices it as a discount, not as a channel.
+
+## 2026-09-19 (later) — A price's provenance is two reporting dimensions, and the base price is its own group
+
+Plan: `6.1-seller-scoped-pricing.md`, which named the requirement and left the shape open. It matters beyond that plan: any report about money has to say which price it read.
+
+**The platform's reporting vocabulary gains `price_list` and `price_source`, registered by `spree_price_contexts`.** Grouping gross sales by `price_list` answers "what did the offline channel sell at" — a context's prices live on a list, and the order line already records which one priced it. `price_source` answers who quoted the price: nil for the platform's own walk, `manual` for a price an admin negotiated on the line, anything else a pricing provider's key.
+
+**A line with no list is a group of its own, not a missing value.** It carries a base price — the seller's own (its offer variant's price) or the operator's — which is the category the EU Omnibus rule tracks, and a price list's price is internal segmentation. Every report this fork writes about money must say which of the two it is reading; the `price_list` dimension is where that distinction is expressed rather than in prose.
+
+**The seller is not a third dimension here.** `spree_line_items.seller_id` already has a `seller` dimension in the platform's vocabulary, so whose price a line carries is answered beside the provenance rather than by reaching through the variant.
+
+**Where a plan should record its reporting needs:** a plan that introduces a money figure registers its dimensions through `Spree.reporting`, in an initializer, the way this one does — the registry is the extension point, and the dashboard reads it, so a new dimension needs no dashboard release.
