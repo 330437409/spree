@@ -62,4 +62,35 @@ RSpec.describe Spree::AdministrativeDivision, type: :model do
       expect(division.prefixed_id).to start_with('adm_')
     end
   end
+
+  describe '#subtree_code_prefix' do
+    # The digits are the level's: a province is two, a city four, a district
+    # six. Everything under a node shares them, which is what makes a subtree
+    # read one indexed `LIKE` rather than a walk.
+    {
+      'country' => 'CN',
+      'province' => '110000',
+      'city' => '110100',
+      'district' => '110110',
+      'township' => '110110001'
+    }.each do |level, code|
+      it "answers the shared digits for a #{level}" do
+        division = create(:administrative_division, code: code, level: level)
+
+        expect(division.subtree_code_prefix).to eq(code[0, described_class::PREFIX_LENGTHS[level]])
+      end
+    end
+
+    it 'answers nothing at the root, where every code is below' do
+      nation = create(:administrative_division, code: 'CN', level: 'country')
+
+      expect(nation.subtree_code_prefix).to eq('')
+    end
+
+    it 'keeps a district that ends in a zero whole, so it does not match its siblings' do
+      district = create(:administrative_division, code: '110110', level: 'district')
+
+      expect(district.subtree_code_prefix).to eq('110110')
+    end
+  end
 end

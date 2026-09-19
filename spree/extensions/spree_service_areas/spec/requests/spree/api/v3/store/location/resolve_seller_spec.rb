@@ -150,7 +150,7 @@ RSpec.describe 'GET /api/v3/store/location/resolve_seller', type: :request do
 
       expect(Spree::SellerRouting::RateLimit).to have_received(:allow?).with(
         hash_including(key: "spree_seller_routing/#{store.id}/127.0.0.1",
-                       limit: Spree::Api::V3::Store::Location::ResolveSellerController::RATE_LIMIT_CALLS)
+                       limit: Spree::Api::V3::Store::CoordinateLookups::RATE_LIMIT_CALLS)
       )
     end
   end

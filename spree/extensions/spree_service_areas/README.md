@@ -67,6 +67,43 @@ Which site it describes comes from the request's own scope — the `X-Spree-Sell
 
 `business_model` is `joint_venture`, `franchise` or `direct`. `site_svip` is whether this site sells memberships: the entitlement belongs to the customer, and this is the site's own switch — more than twenty screens read it off the record they already hold.
 
+## The reads around a location
+
+A client that has no site yet asks where there are any; one that has a site checks it before taking an address. Five reads, all public — a customer makes them before they have an account.
+
+| Request | Answers |
+| --- | --- |
+| `GET /api/v3/store/sites?latitude=&longitude=` | the sellers serving the province the point falls in — the "what exists around here" list |
+| `GET /api/v3/store/sites/cities` | the cities a site is bound in, for the location list (no parameters) |
+| `GET /api/v3/store/site/coverage` | where *this* site delivers, as the divisions its warehouses are bound to |
+| `GET /api/v3/store/location/coverage?latitude=&longitude=&warehouse_id=` | whether that warehouse serves the point — and, without a warehouse, whether the seller does |
+| `GET /api/v3/store/service_areas/taken?division_code=` | whether an active warehouse already holds that node, for the seller-join form |
+
+```bash
+curl 'https://example.com/api/v3/store/sites?latitude=39.9089&longitude=116.40347' \
+  -H 'X-Spree-API-Key: pk_xxx'
+```
+
+```json
+{ "data": [ { "id": "sel_8Kd2…", "name": "南山区水果店", "slug": "nanshan-fruit" } ] }
+```
+
+The two coverage reads answer a verdict rather than a record — `{"serves": true}`, `{"taken": false}` — because a verdict is what the client asks for.
+
+**A subtree is a code prefix, and that is what keeps these reads cheap.** The codes are hierarchical by construction — province two digits, city four, district six, township nine — so "this node or anything under it" is one indexed `LIKE '1101%'`, not a walk down the tree; the cities read is the same arithmetic on the codes it finds, and a binding above the city level puts no city on that list (it covers a province, and the province read is what answers for it).
+
+`getCount` and `getOftenHot` are deliberately not here: they are the existing `GET /api/v3/store/sellers`, whose page `meta.count` is the count and whose `data` is the list.
+
+## Requiring a service area
+
+A seller with no binding serves nowhere, and the routing says so at the first order — later than a seller should learn it. The checklist asks earlier:
+
+```bash
+bin/rails spree:service_areas:install_requirement
+```
+
+That adds a required *Service area* item to every store's seller onboarding requirements; a seller clears it by binding an active warehouse. The kind is contributed to core's checklist registry rather than baked into core, so a marketplace that does not want it simply never creates the row — and the dashboard adds or removes it like any other requirement.
+
 ## What it tells you
 
 Every lookup publishes one event — `locate.spree_seller_routing` — on `ActiveSupport::Notifications`, so a deployment reads it as a log line, a span or a counter without this gem knowing which:
