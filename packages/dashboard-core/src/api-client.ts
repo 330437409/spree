@@ -68,6 +68,18 @@ export interface PanelApiClient {
    */
   listCountries?(): Promise<{ data: PanelCountry[] }>
   /**
+   * The administrative tree the service-area picker cascades through, one
+   * level at a time.
+   *
+   * Registered like the country list and for the same reason: both panels
+   * bind a warehouse's service area, so reaching for one panel's client would
+   * leave the other's picker empty. The tree is global reference data, so both
+   * endpoints answer exactly this shape.
+   */
+  listAdministrativeDivisions?(
+    params: PanelAdministrativeDivisionListParams,
+  ): Promise<{ data: PanelAdministrativeDivision[] }>
+  /**
    * Stock locations, for the shared management page.
    *
    * Both panels manage the same records against their own branch — the
@@ -562,6 +574,12 @@ export interface PanelStockLocation {
   pickup_stock_policy?: string
   pickup_ready_in_minutes?: number | null
   pickup_instructions?: string | null
+  /**
+   * The node of the administrative tree this warehouse covers, by the code the
+   * tree addresses it by. Null is a warehouse that has bound nothing yet — the
+   * routing answers "no service here" for it rather than guessing.
+   */
+  administrative_division_code?: string | null
 }
 
 /**
@@ -598,6 +616,30 @@ export interface PanelCountry {
   states_required?: boolean
   zipcode_required?: boolean
   states?: Array<{ abbr: string; name: string }>
+}
+
+/**
+ * One node of the administrative tree, as a picker reads it. Structural, like
+ * `PanelCountry`: both panels' endpoints answer this shape, and typing either
+ * SDK's node here would bind core to a package the other panel does not
+ * install.
+ */
+export interface PanelAdministrativeDivision {
+  /** GB/T 2260 for a province, city or district; the statistics bureau's code deeper. */
+  code: string
+  name: string
+  /** `country` | `province` | `city` | `district` | `township` */
+  level: string
+  first_pinyin: string
+  /** Whether asking again for this node's children is worth a round trip. */
+  has_children: boolean
+}
+
+export interface PanelAdministrativeDivisionListParams {
+  /** The node whose children to answer. Omit for the top of the tree. */
+  parent_code?: string
+  keywords?: string
+  level?: string
 }
 
 /** What a sign-in returns, whichever panel asked. */

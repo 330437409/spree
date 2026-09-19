@@ -7,6 +7,11 @@ export type {
   PaginatedResponse,
   PaginationMeta,
 } from '@spree/sdk-core'
+// The administrative tree a service-area picker cascades through.
+export type {
+  AdministrativeDivision,
+  AdministrativeDivisionListParams,
+} from './administrative-divisions'
 // Hand-written discovery-endpoint types (controller-shaped, not generated):
 // entries returned by the delivery-method provider discovery endpoints.
 export type {

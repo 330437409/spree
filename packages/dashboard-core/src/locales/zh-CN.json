@@ -1406,7 +1406,17 @@
         "variant_count_one": "{{count}} 个变体",
         "variant_count_other": "{{count}} 个变体"
       },
-      "description": "您存放库存并从中履行订单的仓库和门店。"
+      "description": "您存放库存并从中履行订单的仓库和门店。",
+      "section_service_area": "服务范围",
+      "service_area": {
+        "any": "不限",
+        "levels": {
+          "province": "省",
+          "city": "市",
+          "district": "区/县",
+          "township": "街道/乡镇"
+        }
+      }
     },
     "validation": {
       "codes": {

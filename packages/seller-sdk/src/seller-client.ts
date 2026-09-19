@@ -1,6 +1,8 @@
 import type { ListParams, PaginatedResponse, RequestFn, RequestOptions } from '@spree/sdk-core'
 import { transformListParams } from '@spree/sdk-core'
 import type {
+  AdministrativeDivision,
+  AdministrativeDivisionListParams,
   AuthTokens,
   Balance,
   Claim,
@@ -213,6 +215,25 @@ export class SellerClient {
   readonly countries = {
     list: (options?: RequestOptions): Promise<{ data: SellerCountry[] }> =>
       this.request<{ data: SellerCountry[] }>('GET', '/countries', options),
+  }
+
+  /**
+   * The administrative tree a service-area picker cascades through.
+   *
+   * Read-only, and the same reference data the operator's panel reads: a seller
+   * binds their own warehouse's service area, so they need the same list. A
+   * node is addressed by its `code`, which survives a re-import of the dataset
+   * — the row id does not.
+   */
+  readonly administrativeDivisions = {
+    list: (
+      params?: AdministrativeDivisionListParams,
+      options?: RequestOptions,
+    ): Promise<{ data: AdministrativeDivision[] }> =>
+      this.request<{ data: AdministrativeDivision[] }>('GET', '/administrative_divisions', {
+        ...options,
+        params,
+      }),
   }
 
   /**

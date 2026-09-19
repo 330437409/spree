@@ -35,13 +35,21 @@ module Spree
         resolution = Spree::ReverseGeocode::Resolve.call(
           latitude: @latitude, longitude: @longitude, source: COORDINATE_SYSTEM, store: @store
         )
-        path = resolution.path
+        offered = candidates(resolution.path).to_a
+        # Counted rather than stopped at: a shop whose polygon turned a customer
+        # away is the first thing anyone asks about when routing looks wrong.
+        matched = nil
+        rejections = 0
+        offered.each do |location|
+          if Coverage.covers?(location: location, path: resolution.path, latitude: @latitude, longitude: @longitude)
+            matched = location
+            break
+          end
 
-        warehouse = candidates(path).find do |location|
-          Coverage.covers?(location: location, path: path, latitude: @latitude, longitude: @longitude)
+          rejections += 1 if location.polygon.present?
         end
 
-        decision_for(warehouse, stale: resolution.stale?)
+        decision_for(matched, resolution: resolution, candidate_count: offered.size, polygon_rejections: rejections)
       end
 
       private
@@ -69,19 +77,28 @@ module Spree
         Spree::AdministrativeDivision.where(code: codes).pluck(:id)
       end
 
-      def decision_for(location, stale:)
-        return Decision.new(stale: stale) if location.nil?
+      def decision_for(location, resolution:, candidate_count:, polygon_rejections:)
+        working = {
+          stale: resolution.stale?,
+          cached: resolution.cached?,
+          provider: resolution.provider,
+          candidate_count: candidate_count,
+          polygon_rejections: polygon_rejections,
+          resolved_division_code: resolution.path.values.compact.last
+        }
+
+        return Decision.new(**working) if location.nil?
 
         division = location.administrative_division
 
         Decision.new(
+          **working,
           seller: location.seller,
           stock_location: location,
           division: division,
           match_type: division.level,
           polygon_result: location.polygon.present? ? 'matched' : 'not_required',
-          distance_km: distance_to(location),
-          stale: stale
+          distance_km: distance_to(location)
         )
       end
 
