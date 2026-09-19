@@ -124,7 +124,8 @@ function storeToFormValues(store: Store): StoreSettingsFormValues {
     preferred_tax_using_ship_address: store.preferred_tax_using_ship_address ?? true,
     preferred_track_inventory_levels: store.preferred_track_inventory_levels ?? true,
     preferred_reverse_geocode_provider: store.preferred_reverse_geocode_provider || 'tencent',
-    preferred_reverse_geocode_fallback_provider: store.preferred_reverse_geocode_fallback_provider ?? '',
+    preferred_reverse_geocode_fallback_provider:
+      store.preferred_reverse_geocode_fallback_provider ?? '',
     preferred_reverse_geocode_tencent_key: store.preferred_reverse_geocode_tencent_key ?? '',
     preferred_reverse_geocode_ttl_days: store.preferred_reverse_geocode_ttl_days ?? 30,
     preferred_tencent_maps_js_key: store.preferred_tencent_maps_js_key ?? '',

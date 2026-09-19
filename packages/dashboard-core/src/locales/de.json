@@ -1415,7 +1415,12 @@
           "city": "Stadt",
           "district": "Bezirk",
           "township": "Gemeinde"
-        }
+        },
+        "map_help": "Klicken Sie auf die Karte, um eine Ecke hinzuzufügen. Ab drei Punkten schließt sich die Form; das Einsatzgebiet ist dieses Polygon innerhalb der oben gewählten Fläche.",
+        "map_clear": "Leeren",
+        "map_undo": "Letzten Punkt zurücknehmen",
+        "map_needs_key": "Hinterlegen Sie in den Shop-Einstellungen einen Tencent-Maps-Schlüssel, um ein Einsatzgebiet zu zeichnen.",
+        "map_unavailable": "Die Karte konnte nicht geladen werden. Prüfen Sie den Tencent-Maps-Schlüssel in den Shop-Einstellungen."
       }
     },
     "validation": {
