@@ -1,5 +1,6 @@
 require 'spree_core'
 require 'spree_administrative_divisions/engine'
+require 'spree_administrative_divisions/routes'
 
 # The Chinese administrative tree as reference data: five levels deep
 # (country → province → city → district → township), imported from a versioned
