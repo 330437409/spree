@@ -1,6 +1,7 @@
 require 'spree_core'
 require 'spree_administrative_divisions'
 require 'spree_service_areas/engine'
+require 'spree_service_areas/routes'
 
 # Which seller serves a coordinate — the answer a storefront needs before it can
 # show a catalogue, a price or a delivery promise, read by the client's location
