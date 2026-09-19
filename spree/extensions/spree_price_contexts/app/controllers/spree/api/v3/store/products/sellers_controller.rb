@@ -55,6 +55,14 @@ module Spree
               end
             end
 
+            # The collection is a plain `spree_sellers` relation with no joins,
+            # so it cannot repeat a row and the DISTINCT the base adds buys
+            # nothing — while costing something on PostgreSQL, which refuses
+            # `SELECT DISTINCT ... ORDER BY id` on a translated model.
+            def collection_distinct?
+              false
+            end
+
             # The inherited key is built from the returned sellers and the
             # request's own params, so two lists that look alike at the same
             # second would share a validator — and a validator has to identify
