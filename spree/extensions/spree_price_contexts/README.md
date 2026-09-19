@@ -62,10 +62,12 @@ curl 'https://example.com/api/v3/store/products/prod_86Rf07xd4z/sellers' \
 }
 ```
 
-The product is resolved by prefixed ID or by slug, from the store's own
-products, so an id from another store is a 404. The list answers *who could sell
-this today* — a seller still onboarding, suspended or away is left out, the same
-gate a catalogue read applies.
+The product is resolved by prefixed ID or by slug, the way the product read
+resolves one — published, and inside the catalogue the request resolves — so a
+product the storefront answers 404 for answers 404 here too, and an id from
+another store never answers at all. The list answers *who could sell this today*
+— a seller still onboarding, suspended or away is left out, the same gate a
+catalogue read applies.
 
 It deliberately does **not** answer whether a seller serves the customer's
 location: that is a different question, answered by the seller routing read
@@ -79,8 +81,9 @@ bin/rails spree:price_contexts:install_channels
 ```
 
 Creates a channel per context under every store that does not have one yet,
-named in each store's admin locale. Safe to run again; channels that already
-exist — by code — are left exactly as they are, including their names.
+named in each store's admin locale and falling back to the application default
+for a locale this gem ships no file for. Safe to run again; channels that
+already exist — by code — are left exactly as they are, including their names.
 
 ## What the operator configures
 

@@ -1,6 +1,5 @@
 require 'spree_core'
 require 'spree_price_contexts/engine'
-require 'spree_price_contexts/routes'
 require 'spree_price_contexts/contexts'
 
 # The price contexts a storefront asks in — 区域, 现场推广 and 线下 — as the
