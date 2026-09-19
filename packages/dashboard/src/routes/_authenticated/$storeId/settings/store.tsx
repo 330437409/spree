@@ -123,6 +123,12 @@ function storeToFormValues(store: Store): StoreSettingsFormValues {
       'fallback',
     preferred_tax_using_ship_address: store.preferred_tax_using_ship_address ?? true,
     preferred_track_inventory_levels: store.preferred_track_inventory_levels ?? true,
+    preferred_reverse_geocode_provider: store.preferred_reverse_geocode_provider || 'tencent',
+    preferred_reverse_geocode_fallback_provider:
+      store.preferred_reverse_geocode_fallback_provider ?? '',
+    preferred_reverse_geocode_tencent_key: store.preferred_reverse_geocode_tencent_key ?? '',
+    preferred_reverse_geocode_ttl_days: store.preferred_reverse_geocode_ttl_days ?? 30,
+    preferred_tencent_maps_js_key: store.preferred_tencent_maps_js_key ?? '',
     preferred_stock_reservations_enabled: store.preferred_stock_reservations_enabled ?? true,
     preferred_low_stock_threshold: store.preferred_low_stock_threshold ?? 5,
     preferred_track_price_history: store.preferred_track_price_history ?? true,
@@ -249,6 +255,12 @@ function StoreSettingsForm({ store }: { store: Store }) {
           values.preferred_inventory_provider_failure_policy,
         preferred_tax_using_ship_address: values.preferred_tax_using_ship_address,
         preferred_track_inventory_levels: values.preferred_track_inventory_levels,
+        preferred_reverse_geocode_provider: values.preferred_reverse_geocode_provider,
+        preferred_reverse_geocode_fallback_provider:
+          values.preferred_reverse_geocode_fallback_provider || null,
+        preferred_reverse_geocode_tencent_key: values.preferred_reverse_geocode_tencent_key || null,
+        preferred_reverse_geocode_ttl_days: values.preferred_reverse_geocode_ttl_days,
+        preferred_tencent_maps_js_key: values.preferred_tencent_maps_js_key || null,
         preferred_stock_reservations_enabled: values.preferred_stock_reservations_enabled,
         preferred_low_stock_threshold: values.preferred_low_stock_threshold,
         preferred_track_price_history: values.preferred_track_price_history,
@@ -747,6 +759,96 @@ function StoreSettingsForm({ store }: { store: Store }) {
                       {t('admin.fields.store.data_sources.inventory_provider.docs_link')}
                     </ExternalLink>
                   </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('admin.fields.store.location_services.title')}</CardTitle>
+                  <CardDescription>
+                    {t('admin.fields.store.location_services.description')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <FieldGroup>
+                    <Field>
+                      <FieldLabel htmlFor="store-reverse-geocode-provider">
+                        {t('admin.fields.store.reverse_geocode_provider.label')}
+                      </FieldLabel>
+                      <Input
+                        id="store-reverse-geocode-provider"
+                        placeholder="tencent"
+                        aria-invalid={!!errors.preferred_reverse_geocode_provider || undefined}
+                        {...form.register('preferred_reverse_geocode_provider')}
+                      />
+                      <FieldDescription>
+                        {t('admin.fields.store.reverse_geocode_provider.help')}
+                      </FieldDescription>
+                      <FieldError errors={[errors.preferred_reverse_geocode_provider]} />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="store-reverse-geocode-fallback-provider">
+                        {t('admin.fields.store.reverse_geocode_fallback_provider.label')}
+                      </FieldLabel>
+                      <Input
+                        id="store-reverse-geocode-fallback-provider"
+                        {...form.register('preferred_reverse_geocode_fallback_provider')}
+                      />
+                      <FieldDescription>
+                        {t('admin.fields.store.reverse_geocode_fallback_provider.help')}
+                      </FieldDescription>
+                      <FieldError errors={[errors.preferred_reverse_geocode_fallback_provider]} />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="store-reverse-geocode-key">
+                        {t('admin.fields.store.reverse_geocode_tencent_key.label')}
+                      </FieldLabel>
+                      <Input
+                        id="store-reverse-geocode-key"
+                        {...form.register('preferred_reverse_geocode_tencent_key')}
+                      />
+                      <FieldDescription>
+                        {t('admin.fields.store.reverse_geocode_tencent_key.help')}
+                      </FieldDescription>
+                      <FieldError errors={[errors.preferred_reverse_geocode_tencent_key]} />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="store-reverse-geocode-ttl">
+                        {t('admin.fields.store.reverse_geocode_ttl_days.label')}
+                      </FieldLabel>
+                      <InputGroup>
+                        <InputGroupInput
+                          id="store-reverse-geocode-ttl"
+                          type="number"
+                          min={1}
+                          step={1}
+                          aria-invalid={!!errors.preferred_reverse_geocode_ttl_days || undefined}
+                          {...form.register('preferred_reverse_geocode_ttl_days')}
+                        />
+                        <InputGroupAddon align="inline-end">
+                          <InputGroupText>
+                            {t('admin.fields.store.reverse_geocode_ttl_days.suffix')}
+                          </InputGroupText>
+                        </InputGroupAddon>
+                      </InputGroup>
+                      <FieldDescription>
+                        {t('admin.fields.store.reverse_geocode_ttl_days.help')}
+                      </FieldDescription>
+                      <FieldError errors={[errors.preferred_reverse_geocode_ttl_days]} />
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="store-tencent-maps-key">
+                        {t('admin.fields.store.tencent_maps_js_key.label')}
+                      </FieldLabel>
+                      <Input
+                        id="store-tencent-maps-key"
+                        {...form.register('preferred_tencent_maps_js_key')}
+                      />
+                      <FieldDescription>
+                        {t('admin.fields.store.tencent_maps_js_key.help')}
+                      </FieldDescription>
+                      <FieldError errors={[errors.preferred_tencent_maps_js_key]} />
+                    </Field>
+                  </FieldGroup>
                 </CardContent>
               </Card>
               <Card>

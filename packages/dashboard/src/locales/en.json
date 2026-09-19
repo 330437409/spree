@@ -2149,6 +2149,31 @@
         "preferred_default_package_weight": {
           "help": "Packaging weight (box and filler) added to every package's contents when calculating delivery rates. Set to 0 to disable.",
           "label": "Default package weight"
+        },
+        "location_services": {
+          "title": "Location services",
+          "description": "How a buyer’s coordinate is turned into an address, and the map the service-area editor draws with."
+        },
+        "reverse_geocode_provider": {
+          "label": "Reverse geocoding provider",
+          "help": "Which vendor places a customer’s coordinate in the administrative tree. Tencent LBS is the one that ships."
+        },
+        "reverse_geocode_fallback_provider": {
+          "label": "Fallback provider",
+          "help": "Asked when the provider above cannot answer. Leave blank until a second vendor’s key exists."
+        },
+        "reverse_geocode_tencent_key": {
+          "label": "Tencent LBS key",
+          "help": "A WebService key, used server-side to look coordinates up."
+        },
+        "reverse_geocode_ttl_days": {
+          "label": "Answer cache",
+          "help": "How long a looked-up coordinate is kept before it is asked again.",
+          "suffix": "days"
+        },
+        "tencent_maps_js_key": {
+          "label": "Tencent Maps key",
+          "help": "A JavaScript API key, used in the browser to draw a warehouse’s service area. Separate from the LBS key above."
         }
       },
       "store_credit": {

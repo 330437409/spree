@@ -2149,6 +2149,31 @@
         "preferred_default_package_weight": {
           "help": "Verpackungsgewicht (Karton und Füllmaterial), das bei der Berechnung von Versandtarifen zum Inhalt jedes Pakets addiert wird. 0 deaktiviert es.",
           "label": "Standard-Paketgewicht"
+        },
+        "location_services": {
+          "title": "Standortdienste",
+          "description": "Wie die Koordinate eines Käufers zu einer Adresse wird und mit welcher Karte der Einsatzgebiets-Editor zeichnet."
+        },
+        "reverse_geocode_provider": {
+          "label": "Anbieter der Rückwärtsgeokodierung",
+          "help": "Welcher Anbieter die Koordinate eines Kunden im Verwaltungsbaum verortet. Mitgeliefert wird Tencent LBS."
+        },
+        "reverse_geocode_fallback_provider": {
+          "label": "Ausweichanbieter",
+          "help": "Wird gefragt, wenn der obige Anbieter nicht antworten kann. Leer lassen, solange kein zweiter Schlüssel existiert."
+        },
+        "reverse_geocode_tencent_key": {
+          "label": "Tencent-LBS-Schlüssel",
+          "help": "Ein WebService-Schlüssel, serverseitig für die Koordinatensuche."
+        },
+        "reverse_geocode_ttl_days": {
+          "label": "Antwort-Cache",
+          "help": "Wie lange eine nachgeschlagene Koordinate behalten wird.",
+          "suffix": "Tage"
+        },
+        "tencent_maps_js_key": {
+          "label": "Tencent-Maps-Schlüssel",
+          "help": "Ein JavaScript-API-Schlüssel, im Browser zum Zeichnen des Einsatzgebiets. Getrennt vom LBS-Schlüssel oben."
         }
       },
       "store_credit": {

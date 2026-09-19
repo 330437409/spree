@@ -68,6 +68,16 @@ export interface StoreUpdateParams {
   preferred_auto_capture?: boolean
   /** @deprecated Use `preferred_capture_method`; removed in 6.1. */
   preferred_auto_capture_on_dispatch?: boolean
+  /** Which vendor places a buyer's coordinate in the administrative tree. Tencent LBS is the built-in one. */
+  preferred_reverse_geocode_provider?: string
+  /** Asked when the provider above cannot answer; blank until a second vendor's key exists. */
+  preferred_reverse_geocode_fallback_provider?: string | null
+  /** The Tencent LBS WebService key, used server-side to look coordinates up. */
+  preferred_reverse_geocode_tencent_key?: string | null
+  /** How many days a looked-up coordinate is cached before it is asked again. */
+  preferred_reverse_geocode_ttl_days?: number
+  /** The Tencent Maps JavaScript API key, used in the browser to draw a warehouse's service area. A separate Tencent service from the LBS key. */
+  preferred_tencent_maps_js_key?: string | null
   /** Calculates tax from the shipping address. When false, calculates tax from the billing address. */
   preferred_tax_using_ship_address?: boolean
   /** Counts on-hand quantities. Off means everything is treated as always available. */

@@ -90,6 +90,13 @@ module Spree
               #   maps them onto it. Removed in 6.1.
               :preferred_auto_capture,
               :preferred_auto_capture_on_dispatch,
+              # Where a buyer's coordinate is placed in the administrative tree,
+              # and the key the service-area editor draws its map with.
+              :preferred_reverse_geocode_provider,
+              :preferred_reverse_geocode_fallback_provider,
+              :preferred_reverse_geocode_tencent_key,
+              :preferred_reverse_geocode_ttl_days,
+              :preferred_tencent_maps_js_key,
               :preferred_track_inventory_levels,
               :preferred_stock_reservations_enabled,
               :preferred_low_stock_threshold,

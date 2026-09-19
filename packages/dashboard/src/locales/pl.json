@@ -2167,6 +2167,31 @@
         "preferred_default_package_weight": {
           "help": "Waga opakowania (karton i wypełnienie) dodawana do zawartości każdej paczki przy wyliczaniu stawek dostawy. 0 wyłącza.",
           "label": "Domyślna waga paczki"
+        },
+        "location_services": {
+          "title": "Usługi lokalizacyjne",
+          "description": "Jak współrzędna kupującego staje się adresem i na jakiej mapie rysuje edytor obszaru działania."
+        },
+        "reverse_geocode_provider": {
+          "label": "Dostawca geokodowania odwrotnego",
+          "help": "Który dostawca umieszcza współrzędną klienta w drzewie administracyjnym. Wbudowany jest Tencent LBS."
+        },
+        "reverse_geocode_fallback_provider": {
+          "label": "Dostawca zapasowy",
+          "help": "Pytany, gdy powyższy dostawca nie może odpowiedzieć. Zostaw puste, dopóki nie ma klucza drugiego dostawcy."
+        },
+        "reverse_geocode_tencent_key": {
+          "label": "Klucz Tencent LBS",
+          "help": "Klucz WebService, używany po stronie serwera do wyszukiwania współrzędnych."
+        },
+        "reverse_geocode_ttl_days": {
+          "label": "Pamięć podręczna odpowiedzi",
+          "help": "Jak długo przechowywana jest znaleziona współrzędna.",
+          "suffix": "dni"
+        },
+        "tencent_maps_js_key": {
+          "label": "Klucz Tencent Maps",
+          "help": "Klucz JavaScript API, używany w przeglądarce do rysowania obszaru działania. Odrębny od klucza LBS powyżej."
         }
       },
       "store_credit": {

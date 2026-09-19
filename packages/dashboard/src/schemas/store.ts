@@ -87,6 +87,14 @@ export const storeSettingsFormSchema = z.object({
     .number()
     .int()
     .min(1, { error: requiredMessage('store.preferred_digital_asset_authorized_days') }),
+  // Where a buyer's coordinate is placed in the administrative tree, and the
+  // key the service-area editor draws its map with. Two vendors rather than
+  // one because the map and the geocoder are separate Tencent services.
+  preferred_reverse_geocode_provider: z.string(),
+  preferred_reverse_geocode_fallback_provider: z.string().optional(),
+  preferred_reverse_geocode_tencent_key: z.string().optional(),
+  preferred_reverse_geocode_ttl_days: z.coerce.number().int().min(1),
+  preferred_tencent_maps_js_key: z.string().optional(),
 })
 
 export type StoreSettingsFormValues = z.infer<typeof storeSettingsFormSchema>
