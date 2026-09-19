@@ -67,6 +67,20 @@ Which site it describes comes from the request's own scope — the `X-Spree-Sell
 
 `business_model` is `joint_venture`, `franchise` or `direct`. `site_svip` is whether this site sells memberships: the entitlement belongs to the customer, and this is the site's own switch — more than twenty screens read it off the record they already hold.
 
+## What it tells you
+
+Every lookup publishes one event — `locate.spree_seller_routing` — on `ActiveSupport::Notifications`, so a deployment reads it as a log line, a span or a counter without this gem knowing which:
+
+```ruby
+ActiveSupport::Notifications.subscribe('locate.spree_seller_routing') do |*, payload|
+  Rails.logger.info(payload)
+end
+```
+
+It carries which provider placed the point, whether that answer came from the cache, how many warehouses were considered, which one won, whether a polygon turned the customer away, the decision's own latency — and **the coordinate as a five-character cell, never as itself**: the log answers "why did this customer land on this seller", and that question does not need to know where they were standing. A request nobody could answer publishes the same event with the provider's error code instead of a decision.
+
+The metrics a dashboard wants are this event read the other way round: `cache_hit: false` is a cache miss, `matched: false` is a no-match, `polygon_rejections` counts shops whose polygon excluded the customer, `error_code` separates an expired key from a dead network, and `latency_ms` is the histogram.
+
 ## Configuration
 
 One setting per store, plus the key for the vendor:

@@ -28,12 +28,21 @@ module Spree
               return render_out_of_range_error unless coordinates_in_range?
               return unless stale?(etag: decision_etag, public: true)
 
+              started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
               decision = Spree::SellerRouting::Locate.call(
                 latitude: latitude, longitude: longitude, source: coordinate_system, store: current_store
               )
 
+              log(decision, started_at)
+
               render json: serializer_class.new(decision, params: serializer_params).to_h
             rescue Spree::ReverseGeocode::Error => error
+              Spree::SellerRouting::DecisionLog.publish_failure(
+                error: error, latitude: latitude, longitude: longitude,
+                request_id: request.request_id, latency_ms: elapsed_ms(started_at)
+              )
+
               # The provider's own words travel: "此key每日调用量已达到上限" tells
               # an operator what to fix, and "geocoding failed" does not.
               render_error(
@@ -44,6 +53,22 @@ module Spree
             end
 
             private
+
+            # Why this customer landed on this seller, for whoever has to answer
+            # that question later — the endpoint's own latency included, since a
+            # slow provider is invisible in a decision that succeeded.
+            def log(decision, started_at)
+              Spree::SellerRouting::DecisionLog.publish(
+                decision: decision, latitude: latitude, longitude: longitude,
+                request_id: request.request_id, latency_ms: elapsed_ms(started_at)
+              )
+            end
+
+            def elapsed_ms(started_at)
+              return nil if started_at.nil?
+
+              ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000).round(1)
+            end
 
             def enforce_rate_limit
               return if Spree::SellerRouting::RateLimit.allow?(
