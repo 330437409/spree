@@ -12,6 +12,11 @@ module Spree
 
     LEVELS = %w[country province city district township].freeze
 
+    # The code the root carries in the shipped dataset, and therefore the code a
+    # resolved path starts at. It is a constant rather than a query because the
+    # tree has exactly one root and every reader would otherwise ask for it.
+    ROOT_CODE = 'CN'.freeze
+
     belongs_to :parent, class_name: 'Spree::AdministrativeDivision', optional: true, inverse_of: :children
     has_many :children, class_name: 'Spree::AdministrativeDivision', foreign_key: :parent_id,
                         dependent: :destroy, inverse_of: :parent

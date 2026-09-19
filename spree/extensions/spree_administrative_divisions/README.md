@@ -75,3 +75,5 @@ division.dataset_version   # which release this row came from
 ## Vendor codes are mapping assets, never columns
 
 Tencent and Amap codes belong beside the dataset, not on it: the mapping is versioned data, and the division's own `code` is what anything persists. A vendor code that reaches a stored field is a bug.
+
+**Tencent needs no translation at all**, which is not what the plan assumed when it asked for this directory: its `adcode` *is* the bureau's code at the level it resolved. So the reverse geocoder reads that code, walks this tree for the levels above it and matches a township by name inside the district — and `data/administrative/tencent/` is an exceptions file that stays empty until a vendor name and a bureau name disagree about the same place.

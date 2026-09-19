@@ -92,6 +92,13 @@ module Spree
           # Request errors
           request_too_large: 'request_too_large',
 
+          # Location errors
+          # The seller lookup behind a coordinate could not be answered: the
+          # geocoding provider was unreachable or refused and nothing was cached
+          # for that cell. A 503, because the point is unknowable right now
+          # rather than broken.
+          reverse_geocode_unavailable: 'reverse_geocode_unavailable',
+
           # General errors
           processing_error: 'processing_error',
           invalid_request: 'invalid_request'

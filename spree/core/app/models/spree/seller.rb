@@ -45,6 +45,12 @@ module Spree
     TAX_REMITTANCES = %w[seller platform].freeze
     PAYOUT_INTERVALS = %w[daily weekly biweekly monthly manual].freeze
 
+    # How a site is operated — a joint venture, a franchise or the operator's
+    # own shop. It travels on the site record beside whether the site sells
+    # memberships; both describe the site rather than the marketplace's running
+    # of it (docs/plans/6.1-seller-service-area-routing.md).
+    BUSINESS_MODELS = %w[joint_venture franchise direct].freeze
+
     TRANSLATABLE_FIELDS = %i[name about].freeze
     RICH_TEXT_TRANSLATABLE_FIELDS = %i[about].freeze
     translates(*TRANSLATABLE_FIELDS, column_fallback: Spree.mobility_column_fallback)
@@ -200,6 +206,7 @@ module Spree
     # Validations
     #
     validates :name, presence: true
+    validates :business_model, inclusion: { in: BUSINESS_MODELS }, allow_nil: true
     # Scoped to the store, not global: two marketplaces on one installation
     # may each have a "sparks". Backed by the unique index on the pair.
     validates :slug, presence: true,
