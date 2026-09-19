@@ -667,3 +667,13 @@ The binding is now real: `spree_stock_locations` carries `administrative_divisio
 **The geometry is hand-rolled rather than RGeo's.** The plan chose in-memory RGeo for portability across the three databases; the same portability arrives without adding a dependency to core, because the shapes are hand-drawn and small — self-intersection is a segment-crossing test, containment is a ray cast, and winding is a signed area. `rgeo` stays available to the gem if routing turns out to need more geometry than this, but core does not carry a geometry library to validate one column.
 
 **What the write path guarantees, and the one thing it deliberately does not.** A polygon arrives either way round and is canonicalised rather than refused — an operator's map editor should not fail over an orientation nobody chose — while genuinely unusable geometry (too few points, an open ring, a non-finite or off-map coordinate, a ring that crosses itself) is refused with a readable message. The bounding box is derived on write, because the match path tests it before parsing anything and a box computed per candidate is a box computed thousands of times.
+
+## 2026-09-19 (later) — The reverse geocoder ships Tencent first, and the seam is what makes that cheap
+
+Plan: `6.1-seller-service-area-routing.md` — Decision 8 amended, Open Question 3 narrowed.
+
+The plan had both adapters shipping with a configured primary and fallback. **The first version ships the Tencent LBS adapter only.** The decision is about a resource rather than a design: a vendor account and its quota belong to the operator, and the second vendor earns its place the day someone holds a key for it — while the pluggable seam is worth nothing if it is only written down and never travelled.
+
+**What is deliberately unchanged is everything that makes a late arrival cheap.** The provider interface, the store-level provider and fallback configuration, and the cache key carrying the provider all stay exactly as written; the fallback path stays in the code even though, in the first version, there is no second provider to try — that is the state a fallback is in most of the time, and `Resolve` handles it. Adding Amap later is one adapter class and one mapping file under `data/administrative/amap/`, not a change to the orchestration, the cache key or the API.
+
+**Consequences recorded rather than discovered.** The administrative gem's mapping debt is now a single file — `data/administrative/tencent/` — and the plan's township-coverage check narrows to Tencent, with the same check owed for Amap only if it ships. The `preferred_reverse_geocode_fallback_provider` setting stays in the store preferences, unused, because removing and re-adding it would be a migration for a column that costs nothing.
