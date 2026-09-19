@@ -38,7 +38,11 @@ module Spree
       def seller_ids
         return [@product.seller_id] if @product.seller_id.present?
 
-        @product.variants.where.not(seller_id: nil).distinct.pluck(:seller_id)
+        # `reorder(nil)` because the variants relation carries its own ordering
+        # by position, and both PostgreSQL and MySQL refuse a DISTINCT whose
+        # ORDER BY expression is not in the select list — which a pluck of one
+        # column is. The order is not wanted here in any case.
+        @product.variants.where.not(seller_id: nil).reorder(nil).distinct.pluck(:seller_id)
       end
     end
   end
