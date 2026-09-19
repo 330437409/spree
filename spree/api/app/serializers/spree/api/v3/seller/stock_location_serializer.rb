@@ -9,10 +9,13 @@ module Spree
                    returns_enabled: :boolean,
                    administrative_division_code: [:string, nullable: true],
                    polygon: 'number[][][] | null',
-                   geocode_status: [:string, nullable: true]
+                   geocode_status: [:string, nullable: true],
+                   latitude: [:number, nullable: true],
+                   longitude: [:number, nullable: true]
 
           attributes :address2, :state_name, :phone, :company, :active, :default, :kind,
                      :returns_enabled, :administrative_division_code, :polygon, :geocode_status,
+                     :latitude, :longitude,
                      created_at: :iso8601, updated_at: :iso8601
         end
       end

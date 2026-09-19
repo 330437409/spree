@@ -1415,7 +1415,12 @@
           "city": "Ville",
           "district": "District",
           "township": "Canton"
-        }
+        },
+        "map_help": "Cliquez sur la carte pour ajouter un coin. À partir de trois points, la forme se ferme ; la zone desservie est ce polygone à l’intérieur de l’aire choisie ci-dessus.",
+        "map_clear": "Effacer",
+        "map_undo": "Annuler le dernier point",
+        "map_needs_key": "Ajoutez une clé Tencent Maps dans les réglages de la boutique pour dessiner une zone desservie.",
+        "map_unavailable": "La carte n’a pas pu être chargée. Vérifiez la clé Tencent Maps dans les réglages."
       }
     },
     "validation": {

@@ -18,13 +18,16 @@ module Spree
                    administrative_division_code: [:string, nullable: true],
                    polygon: 'number[][][] | null',
                    geocode_status: [:string, nullable: true],
-                   geocoded_at: [:string, nullable: true]
+                   geocoded_at: [:string, nullable: true],
+                   latitude: [:number, nullable: true],
+                   longitude: [:number, nullable: true]
 
           attributes :admin_name, :address2, :state_name, :phone, :company,
                      :active, :default, :backorderable_default, :propagate_all_variants,
                      :kind, :pickup_enabled, :pickup_stock_policy, :returns_enabled,
                      :pickup_ready_in_minutes, :pickup_instructions,
                      :administrative_division_code, :polygon, :geocode_status,
+                     :latitude, :longitude,
                      created_at: :iso8601, updated_at: :iso8601
 
           # When the coordinates were last produced, and by which provider — the
