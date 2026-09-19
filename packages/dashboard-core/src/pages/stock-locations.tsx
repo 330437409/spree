@@ -35,6 +35,7 @@ import { Can } from '../components/can'
 import { CountryCombobox } from '../components/country-combobox'
 import { StateCombobox, useCountryStates } from '../components/country-state-fields'
 import { ResourceTable, resourceSearchSchema } from '../components/resource-table'
+import { ServiceAreaMap, type ServiceAreaVertex } from '../components/service-area-map'
 import {
   canDeleteStockLocations,
   listStockLocations,
@@ -46,6 +47,7 @@ import {
 import { mapSpreeErrorsToForm } from '../lib/form-errors'
 import { Subject } from '../lib/permissions'
 import { usePermissions } from '../providers/permission-provider'
+import { useOptionalStore } from '../providers/store-provider'
 import {
   formValuesToParams,
   PICKUP_STOCK_POLICIES,
@@ -314,7 +316,14 @@ function EditStockLocationSheet({
         ) : (
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
             <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
-              <StockLocationFormFields form={form} />
+              <StockLocationFormFields
+                form={form}
+                coordinates={
+                  stockLocation?.latitude != null && stockLocation?.longitude != null
+                    ? { lat: stockLocation.latitude, lng: stockLocation.longitude }
+                    : null
+                }
+              />
               {StockLevelsPanel && <StockLevelsPanel stockLocationId={id} />}
               {ActivityPanel && <ActivityPanel stockLocationId={id} />}
             </div>
@@ -345,8 +354,17 @@ function EditStockLocationSheet({
 // Shared form fields
 // ============================================================================
 
-function StockLocationFormFields({ form }: { form: UseFormReturn<StockLocationFormValues> }) {
+function StockLocationFormFields({
+  form,
+  coordinates,
+}: {
+  form: UseFormReturn<StockLocationFormValues>
+  /** Where the warehouse stands, when it has been geocoded — the map opens here. */
+  coordinates?: ServiceAreaVertex | null
+}) {
   const { t } = useTranslation()
+  const currentStore = useOptionalStore()?.store
+  // The map key is the store's own setting; the seller panel has no store context, so its map waits on the operator.
   const { errors } = form.formState
   const countryCode = form.watch('country_code')
   const { states } = useCountryStates(countryCode)
@@ -560,6 +578,18 @@ function StockLocationFormFields({ form }: { form: UseFormReturn<StockLocationFo
               value={field.value ?? null}
               onValueChange={field.onChange}
               idPrefix="stock-location-administrative-division"
+            />
+          )}
+        />
+        <Controller
+          control={form.control}
+          name="polygon"
+          render={({ field }) => (
+            <ServiceAreaMap
+              value={(field.value as number[][][] | null) ?? null}
+              onValueChange={field.onChange}
+              apiKey={currentStore?.preferred_tencent_maps_js_key}
+              center={coordinates}
             />
           )}
         />

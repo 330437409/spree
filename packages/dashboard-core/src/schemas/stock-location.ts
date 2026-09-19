@@ -41,6 +41,9 @@ export const stockLocationFormSchema = z.object({
   // The node of the administrative tree this warehouse covers, by the code the
   // tree addresses it by — a code survives a re-import of the dataset.
   administrative_division_code: z.string().optional(),
+  // The ring the merchant drew inside that node, in GeoJSON order — the API
+  // reads and writes the same shape the validator does.
+  polygon: z.array(z.array(z.array(z.number()))).nullish(),
 })
 
 export type StockLocationFormValues = z.infer<typeof stockLocationFormSchema>
@@ -70,6 +73,7 @@ export const STOCK_LOCATION_DEFAULTS: StockLocationFormValues = {
   pickup_ready_in_minutes: null,
   pickup_instructions: '',
   administrative_division_code: '',
+  polygon: null,
 }
 
 export function stockLocationToFormValues(sl: PanelStockLocation): StockLocationFormValues {
@@ -100,6 +104,7 @@ export function stockLocationToFormValues(sl: PanelStockLocation): StockLocation
     pickup_ready_in_minutes: sl.pickup_ready_in_minutes ?? null,
     pickup_instructions: sl.pickup_instructions ?? '',
     administrative_division_code: sl.administrative_division_code ?? '',
+    polygon: (sl.polygon as number[][][] | null | undefined) ?? null,
   }
 }
 
@@ -128,5 +133,6 @@ export function formValuesToParams(v: StockLocationFormValues): PanelStockLocati
     pickup_ready_in_minutes: v.pickup_ready_in_minutes ?? null,
     pickup_instructions: blankToUndefined(v.pickup_instructions),
     administrative_division_code: blankToUndefined(v.administrative_division_code),
+    polygon: v.polygon ?? null,
   }
 }

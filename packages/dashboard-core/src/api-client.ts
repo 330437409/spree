@@ -580,6 +580,11 @@ export interface PanelStockLocation {
    * routing answers "no service here" for it rather than guessing.
    */
   administrative_division_code?: string | null
+  /** The drawn ring that narrows that node, in GeoJSON order; null when the node is the whole coverage. */
+  polygon?: number[][][] | null
+  /** Where the warehouse is, geocoded from its address — the map opens here. */
+  latitude?: number | null
+  longitude?: number | null
 }
 
 /**

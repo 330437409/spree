@@ -1432,7 +1432,12 @@
           "city": "Miasto",
           "district": "Dystrykt",
           "township": "Gmina"
-        }
+        },
+        "map_help": "Kliknij mapę, aby dodać wierzchołek. Od trzech punktów kształt się zamyka; obszar działania to ten wielokąt wewnątrz wybranego powyżej obszaru.",
+        "map_clear": "Wyczyść",
+        "map_undo": "Cofnij ostatni punkt",
+        "map_needs_key": "Dodaj klucz Tencent Maps w ustawieniach sklepu, aby narysować obszar działania.",
+        "map_unavailable": "Nie udało się wczytać mapy. Sprawdź klucz Tencent Maps w ustawieniach sklepu."
       }
     },
     "validation": {

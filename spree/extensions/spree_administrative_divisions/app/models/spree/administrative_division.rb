@@ -17,6 +17,12 @@ module Spree
     # tree has exactly one root and every reader would otherwise ask for it.
     ROOT_CODE = 'CN'.freeze
 
+    # How many digits of a code name this level, and therefore how many every
+    # code below it shares: a province is two, a city four, a district six, a
+    # township all nine. That is what makes "this node or anything under it" a
+    # single indexed prefix match rather than a walk down the tree.
+    PREFIX_LENGTHS = { 'country' => 0, 'province' => 2, 'city' => 4, 'district' => 6, 'township' => 9 }.freeze
+
     belongs_to :parent, class_name: 'Spree::AdministrativeDivision', optional: true, inverse_of: :children
     has_many :children, class_name: 'Spree::AdministrativeDivision', foreign_key: :parent_id,
                         dependent: :destroy, inverse_of: :parent
@@ -28,6 +34,13 @@ module Spree
     validates :name, :first_pinyin, :source, presence: true
 
     scope :at_level, ->(level) { where(level: level) }
+
+    # @return [String] the digits every node under this one shares, empty at the
+    #   root — where every code in the tree matches and the whole country is the
+    #   subtree
+    def subtree_code_prefix
+      code.to_s[0, PREFIX_LENGTHS.fetch(level, 0)].to_s
+    end
 
     CURRENT_DATASET_VERSION_KEY = 'spree_administrative_divisions/dataset_version'.freeze
 

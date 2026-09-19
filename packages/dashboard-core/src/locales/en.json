@@ -1417,7 +1417,12 @@
           "city": "City",
           "district": "District",
           "township": "Township"
-        }
+        },
+        "map_help": "Click the map to add a corner. Three or more close the shape; the coverage is this polygon inside the area chosen above.",
+        "map_clear": "Clear",
+        "map_undo": "Undo last point",
+        "map_needs_key": "Add a Tencent Maps key in the store settings to draw a service area.",
+        "map_unavailable": "The map could not be loaded. Check the Tencent Maps key in the store settings."
       }
     },
     "validation": {
