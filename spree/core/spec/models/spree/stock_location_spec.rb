@@ -13,6 +13,10 @@ module Spree
       before do
         Spree::StockLevel.delete_all
         described_class.delete_all
+        # Draining the queue also runs the forward geocoding a saved warehouse
+        # enqueues, and that lookup is outbound — this spec is about stock
+        # levels, so the lookup answers nothing rather than reaching a network.
+        allow(Geocoder).to receive(:coordinates).and_return(nil)
       end
 
       it 'creates stock_levels for all variants' do
