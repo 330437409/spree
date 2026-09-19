@@ -740,3 +740,14 @@ Plan: `6.1-seller-scoped-pricing.md`, which named the requirement and left the s
 **The seller is not a third dimension here.** `spree_line_items.seller_id` already has a `seller` dimension in the platform's vocabulary, so whose price a line carries is answered beside the provenance rather than by reaching through the variant.
 
 **Where a plan should record its reporting needs:** a plan that introduces a money figure registers its dimensions through `Spree.reporting`, in an initializer, the way this one does — the registry is the extension point, and the dashboard reads it, so a new dimension needs no dashboard release.
+## 2026-09-19 (later) — The seckill pool never overrides the shelf, and the queue is the plan's
+
+Plan: `6.1-flash-sales.md`, whose last two open questions these settle.
+
+**A seckill sells neither what the shelf does not hold nor more than the activity promised.** Effective availability for a seckill line is the smaller of the pool's remaining units and the goods' own stock — the pool is an additional cap, never a substitute for stock. The ruling matches the check order the client already applies (商品库存不足, then 活动库存不足, then the per-customer caps) and puts it where the write happens, so an activity can read 已抢光 with pool left: the pool was right and the shelf was empty. The alternative — letting the pool authorise a sale the shelf cannot fill — would need the oversell/backorder machinery this fork has not built, and it would make a 秒杀 an unbounded promise to the customer.
+
+**The ticket queue is this plan's, not a gap.** `promotion/addTicket`, `promotion/getTicket` and the 开售提醒 pair are owned by the flash-sales gem. The inventory's ambiguous "~4" is read as those four: without a claim path the pool is a counter nobody draws from, and the alternative reading would leave the only mechanism that makes the pool work unowned by any plan.
+
+**The hold is still the gem's own, and it is built to be lifted.** Group buying generalises it into core when it arrives (ruled 2026-09-18); this run builds it against the four questions that lift depends on — owner, TTL, visibility to `Stock::Quantifier`, and the backorderable case that a pool-scoped hold answers by owning no `StockLevel` at all. Two implementations of a hold must not diverge in the meantime.
+
+**What is deliberately not built here: the settlement discount and the activity's 积分/优惠券 refusal flags.** Both attach to the price preview, which `6.1-store-api-miniprogram-gaps.md` owns as one of three shared surfaces — a second price calculation is exactly what that plan forbids. A seckill therefore prices at the preview's work, and this gem stops at the claim.
