@@ -35,6 +35,11 @@ module SpreeAdministrativeDivisions
         removed = remove_previous_releases
       end
 
+      # Every cached read keys on the release, so the memo of which release the
+      # table holds has to forget the old one. The entries themselves are keyed
+      # by release and simply age out.
+      Rails.cache.delete(Spree::AdministrativeDivision.current_dataset_version_key)
+
       success(summary(rows, removed))
     end
 

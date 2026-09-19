@@ -44,6 +44,25 @@ A host whose pickers stop at the district level can leave the 41,000 townships o
 LEVELS=country,province,city,district bin/rails spree:administrative_divisions:import
 ```
 
+## Reading it over HTTP
+
+One collection answers the pickers, and it is public — a customer's address form reads it before they have signed in:
+
+```bash
+# The province list, which is what a picker opens with
+curl 'https://example.com/api/v3/store/administrative_divisions' -H 'X-Spree-API-Key: pk_xxx'
+
+# One node's children, as the cascade opens them
+curl '.../administrative_divisions?parent_code=110000' -H 'X-Spree-API-Key: pk_xxx'
+
+# The search box: by name, or by the romanisation the dataset carries
+curl '.../administrative_divisions?keywords=beijing' -H 'X-Spree-API-Key: pk_xxx'
+```
+
+Each node answers `{ code, name, level, first_pinyin, has_children }` — `has_children` is what tells a picker whether asking again is worth a round trip. `level` filters to one level (`country`, `province`, `city`, `district`, `township`), and a `parent_code` this release does not carry answers an empty list rather than an error.
+
+Responses are cached per release and filter, so a new `dataset_version` is a new cache entry rather than an invalidation.
+
 ## Reading it
 
 ```ruby
