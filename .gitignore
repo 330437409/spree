@@ -21,6 +21,7 @@ doc/**/*
 spree/Gemfile.lock
 spree/*/Gemfile.lock
 spree/providers/*/Gemfile.lock
+spree/extensions/*/Gemfile.lock
 log/*.log
 pkg
 public/assets

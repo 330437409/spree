@@ -77,7 +77,10 @@ module WechatPaySpecHelpers
   # A saved gateway with a full credential set. `validate_credentials` does not
   # run in the test environment, so saving never reaches the network.
   def wechat_gateway(**preferences)
-    gateway = SpreeWechatPay::Gateway.new(store: wechat_store, name: 'WeChat Pay', active: true)
+    # Not a fixed name: a store refuses a second gateway under the same one, and
+    # the job's specs deliberately build two — one failing, one healthy.
+    @wechat_gateway_sequence = (@wechat_gateway_sequence || 0) + 1
+    gateway = SpreeWechatPay::Gateway.new(store: wechat_store, name: "WeChat Pay #{@wechat_gateway_sequence}", active: true)
     gateway.preferred_merchant_id = MERCHANT_ID
     gateway.preferred_merchant_private_key = merchant_key_pair.to_pem
     gateway.preferred_merchant_certificate_serial = MERCHANT_SERIAL

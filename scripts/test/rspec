@@ -6,7 +6,8 @@
 #   scripts/test/rspec api spec/controllers/spree/api/v3/admin/orders_controller_spec.rb:12
 #                                                         # targeted: background priority, no queue
 #
-# Engines: core, api, emails, dashboard, opentelemetry, easypost, meilisearch, stripe.
+# Engines: core, api, emails, dashboard, opentelemetry, easypost, meilisearch, stripe,
+# plus the fork's own gems under spree/providers and spree/extensions.
 # Everything after the engine is passed to rspec; with nothing after it the whole
 # suite runs through parallel_rspec.
 #
@@ -31,8 +32,10 @@ if [ -d "$root/spree/$engine/spec" ]; then
   engine_dir="$root/spree/$engine"
 elif [ -d "$root/spree/providers/$engine/spec" ]; then
   engine_dir="$root/spree/providers/$engine"
+elif [ -d "$root/spree/extensions/$engine/spec" ]; then
+  engine_dir="$root/spree/extensions/$engine"
 else
-  echo "scripts/test/rspec: unknown engine '$engine' (no spree/$engine/spec or spree/providers/$engine/spec)" >&2
+  echo "scripts/test/rspec: unknown engine '$engine' (no spree/$engine/spec, spree/providers/$engine/spec or spree/extensions/$engine/spec)" >&2
   exit 64
 fi
 
