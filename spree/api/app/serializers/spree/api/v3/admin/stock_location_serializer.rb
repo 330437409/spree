@@ -16,7 +16,7 @@ module Spree
                    pickup_ready_in_minutes: [:number, nullable: true],
                    pickup_instructions: [:string, nullable: true],
                    administrative_division_code: [:string, nullable: true],
-                   polygon: [:array, nullable: true],
+                   polygon: 'number[][][] | null',
                    geocode_status: [:string, nullable: true],
                    geocoded_at: [:string, nullable: true]
 

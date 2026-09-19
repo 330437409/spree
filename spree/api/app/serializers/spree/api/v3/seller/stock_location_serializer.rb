@@ -8,7 +8,7 @@ module Spree
                    active: :boolean, default: :boolean, kind: [:string, enum: Spree::StockLocation::KINDS, enum_type_name: 'StockLocationKind'],
                    returns_enabled: :boolean,
                    administrative_division_code: [:string, nullable: true],
-                   polygon: [:array, nullable: true],
+                   polygon: 'number[][][] | null',
                    geocode_status: [:string, nullable: true]
 
           attributes :address2, :state_name, :phone, :company, :active, :default, :kind,
