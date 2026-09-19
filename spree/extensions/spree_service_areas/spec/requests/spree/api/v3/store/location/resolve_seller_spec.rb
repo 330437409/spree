@@ -63,6 +63,23 @@ RSpec.describe 'GET /api/v3/store/location/resolve_seller', type: :request do
     expect(response).to have_http_status(:ok)
   end
 
+  it 'records why this customer landed on this seller' do
+    events = []
+    subscription = ActiveSupport::Notifications.subscribe(Spree::SellerRouting::DecisionLog::NOTIFICATION) do |*args|
+      events << args.last
+    end
+
+    resolve
+
+    expect(events.length).to eq(1)
+    expect(events.first).to include(
+      matched: true, resolved_division: '110101', match_type: 'district',
+      request_id: be_present, latency_ms: be_a(Numeric)
+    )
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscription)
+  end
+
   it 'refuses a request with no publishable key' do
     get '/api/v3/store/location/resolve_seller', params: params
 
