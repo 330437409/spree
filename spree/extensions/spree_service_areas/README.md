@@ -35,6 +35,38 @@ coordinates ──► coordinate system ──► administrative path ──► 
 2. **The point is placed in the tree** by `Spree::ReverseGeocode::Resolve`: the cache answers first, the store's provider is asked when it does not, the store's fallback is asked when the first refuses, and an expired answer is served before a request fails.
 3. **The deepest binding wins** in `Spree::SellerRouting::Locate`. A warehouse covers a point when its bound division is on the point's own chain of ancestors, and — when it also carries a polygon — when the polygon contains it. Candidates are ordered deepest first, so a township binding beats the district above it and the same coordinate always answers the same warehouse.
 
+## The site record
+
+A "site" is a seller, and the client holds its record globally — every screen reads fields off the object it assigns once. The record is the seller's public profile plus how the shop is operated and what it enables:
+
+```bash
+curl 'https://example.com/api/v3/store/site' \
+  -H 'X-Spree-API-Key: pk_xxx' \
+  -H 'X-Spree-Seller-Id: sel_8Kd2…'
+```
+
+```json
+{
+  "id": "sel_8Kd2…",
+  "name": "南山区水果店",
+  "slug": "nanshan-fruit",
+  "about": "…",
+  "logo_url": "…",
+  "site_svip": true,
+  "operator": {
+    "id": "sel_8Kd2…",
+    "site_name": "南山区水果店",
+    "company_name": "深圳南山区水果有限公司",
+    "image_url": "…",
+    "business_model": "franchise"
+  }
+}
+```
+
+Which site it describes comes from the request's own scope — the `X-Spree-Seller-Id` header, carrying the id `resolve_seller` answered with or the site's slug. A request that names none is refused rather than answered for an arbitrary site, because the alternative is showing one shop's record to a customer standing in another's.
+
+`business_model` is `joint_venture`, `franchise` or `direct`. `site_svip` is whether this site sells memberships: the entitlement belongs to the customer, and this is the site's own switch — more than twenty screens read it off the record they already hold.
+
 ## Configuration
 
 One setting per store, plus the key for the vendor:

@@ -12,6 +12,11 @@ Spree::Core::Engine.add_routes do
     namespace :v3 do
       namespace :store do
         get 'location/resolve_seller', to: 'location/resolve_seller#show'
+
+        # The record of the site a request belongs to — a singleton, because
+        # which site it is comes from the request's own scope rather than a path
+        # segment (see the seller resolution concern).
+        resource :site, only: [:show]
       end
     end
   end
