@@ -15,6 +15,14 @@ module Spree
 
             COORDINATE_SYSTEMS = %w[gcj02 wgs84].freeze
 
+            # Per store and per caller: the cache already collapses a
+            # neighbourhood to one vendor call, and this bounds what one client
+            # can spend through it.
+            RATE_LIMIT_CALLS = 60
+            RATE_LIMIT_WINDOW = 1.minute
+
+            before_action :enforce_rate_limit, only: :show
+
             # GET /api/v3/store/location/resolve_seller?latitude=&longitude=&coordinate_system=
             def show
               return render_out_of_range_error unless coordinates_in_range?
@@ -36,6 +44,20 @@ module Spree
             end
 
             private
+
+            def enforce_rate_limit
+              return if Spree::SellerRouting::RateLimit.allow?(
+                key: "spree_seller_routing/#{current_store.id}/#{request.remote_ip}",
+                limit: RATE_LIMIT_CALLS,
+                window: RATE_LIMIT_WINDOW
+              )
+
+              render_error(
+                code: ErrorHandler::ERROR_CODES[:rate_limit_exceeded],
+                message: 'Too many location lookups from this client. Try again in a minute.',
+                status: :too_many_requests
+              )
+            end
 
             def latitude
               @latitude ||= coordinate(:latitude)

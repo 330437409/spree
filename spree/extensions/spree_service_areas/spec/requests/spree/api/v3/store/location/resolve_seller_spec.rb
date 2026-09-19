@@ -116,6 +116,28 @@ RSpec.describe 'GET /api/v3/store/location/resolve_seller', type: :request do
     end
   end
 
+  describe 'a client that asks too often' do
+    before do
+      allow(Spree::SellerRouting::RateLimit).to receive(:allow?).and_return(false)
+    end
+
+    it 'answers 429 with the code the client can switch on' do
+      resolve
+
+      expect(response).to have_http_status(:too_many_requests)
+      expect(response.parsed_body['error']['code']).to eq('rate_limit_exceeded')
+    end
+
+    it 'counts per store and per caller, so one client cannot spend another’s' do
+      resolve
+
+      expect(Spree::SellerRouting::RateLimit).to have_received(:allow?).with(
+        hash_including(key: "spree_seller_routing/#{store.id}/127.0.0.1",
+                       limit: Spree::Api::V3::Store::Location::ResolveSellerController::RATE_LIMIT_CALLS)
+      )
+    end
+  end
+
   describe 'when the point cannot be placed' do
     let(:provider) { instance_double(Spree::ReverseGeocode::Tencent) }
 

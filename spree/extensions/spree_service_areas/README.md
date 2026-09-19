@@ -72,3 +72,6 @@ A warehouse with **no coordinates** still serves customers — routing matches o
 | 422 | `validation_error` | the coordinate is not a point on Earth |
 | 503 | `reverse_geocode_unavailable` | no provider could answer and nothing was cached for that cell — the message is the provider's own |
 | 200 + `"stale": true` | — | the provider was unreachable and an expired answer was served |
+| 429 | `rate_limit_exceeded` | too many lookups from one client in a minute |
+
+One limit, per store and per caller: the cache already collapses a neighbourhood into a single vendor call, and this bounds what one client can spend through it. It fails open — a cache that cannot count does not take the endpoint down with it.
