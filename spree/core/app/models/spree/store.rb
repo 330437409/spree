@@ -109,6 +109,16 @@ module Spree
     # follows the destination keep this on; billing-address jurisdictions turn
     # it off.
     preference :tax_using_ship_address, :boolean, default: true
+    # Which vendor places a buyer's coordinates in the administrative tree, and
+    # what is tried when the first one cannot answer. The settings live here
+    # rather than in the extension that reads them because a gem may not add an
+    # attribute to a core class — see
+    # docs/plans/6.1-seller-service-area-routing.md (Decision 8, and the
+    # constraints on current work).
+    preference :reverse_geocode_provider, :string, default: 'tencent'
+    preference :reverse_geocode_fallback_provider, :string
+    preference :reverse_geocode_tencent_key, :string
+    preference :reverse_geocode_ttl_days, :integer, default: 30
     # Where prices and stock levels come from. 'internal' is Spree's own
     # catalog and stock records; a connector gem registers others.
     preference :pricing_provider, :string, default: 'internal'
