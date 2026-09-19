@@ -45,6 +45,17 @@ module Spree
               numericality: { only_integer: true, greater_than_or_equal_to: 0 },
               allow_nil: true
 
+    # The warehouse's service area: an administrative node at any level, and a
+    # polygon that narrows it further. The column is core's and so is the model
+    # it points at — `spree_administrative_divisions` ships it — which makes the
+    # divisions gem a soft dependency of these two attributes rather than of
+    # this table: a host without it simply never binds a node.
+    belongs_to :administrative_division, class_name: 'Spree::AdministrativeDivision', optional: true
+
+    before_validation :normalize_service_area, if: :polygon_changed?
+    validates :polygon, 'Spree::SellerRouting::Polygon' => true
+    validate :service_area_node_not_taken, if: -> { administrative_division_id_changed? && administrative_division_id? }
+
     self.whitelisted_ransackable_attributes = %w[
       name active default kind pickup_enabled returns_enabled
       country_code state_code created_at updated_at
@@ -278,6 +289,30 @@ module Spree
     end
 
     private
+
+    # A drawn ring arrives either way round, and GeoJSON wants the outline
+    # counter-clockwise — so the orientation is corrected rather than refused.
+    # The bounding box is derived here because the match path tests it before
+    # it parses anything, and a box computed per candidate is a box computed
+    # thousands of times.
+    def normalize_service_area
+      return if polygon.blank?
+
+      geometry = Spree::SellerRouting::Polygon.new(polygon)
+      return unless geometry.valid?
+
+      self.polygon = geometry.canonicalized
+      self.polygon_bbox = geometry.bounding_box
+    end
+
+    # A partial unique index enforces this over active, non-deleted rows; the
+    # validation is what turns it into something an operator can read, and on
+    # MySQL — which has no partial indexes — it is the only enforcement. A
+    # deactivated or deleted warehouse releases its node for another seller.
+    def service_area_node_not_taken
+      taken = self.class.where(administrative_division_id: administrative_division_id, active: true).where.not(id: id)
+      errors.add(:administrative_division_id, :taken) if taken.exists?
+    end
 
     # One cause in, the foreign keys it implies out. A fulfillment brings its
     # order with it because "which order was this for?" must not cost a join.

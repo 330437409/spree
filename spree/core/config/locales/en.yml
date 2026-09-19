@@ -250,8 +250,16 @@ en:
         blank: can't be blank
         must_apply_to_products: must be a custom field definition for products
         must_belong_to_same_store: must belong to the same store
+        not_a_point: must be a pair of coordinates
+        not_an_array: must be a list of coordinate rings
+        not_closed: must close — the first point has to be the last one
         not_registered: is not a registered provider
+        out_of_range: has a coordinate off the map
+        polygon: is not a usable outline
+        polygon_hole: is not a usable hole
+        self_intersecting: crosses itself
         spree_content_type_not_allowed: is not a file type we accept
+        too_few_points: needs at least four points
       models:
         spree/allowed_origin:
           attributes:

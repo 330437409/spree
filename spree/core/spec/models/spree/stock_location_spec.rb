@@ -506,5 +506,64 @@ module Spree
         expect(stock_location.state).to be_nil
       end
     end
+
+    context 'the service area' do
+      # The outline drawn clockwise, which is not how GeoJSON wants it.
+      let(:clockwise_square) do
+        [[[116.40, 39.96], [116.44, 39.96], [116.44, 39.90], [116.40, 39.90], [116.40, 39.96]]]
+      end
+
+      let(:stock_location) { build(:stock_location) }
+
+      it 'canonicalises the winding on write rather than refusing it' do
+        stock_location.polygon = clockwise_square
+        stock_location.valid?
+
+        expect(stock_location.polygon).to eq(clockwise_square.map(&:reverse))
+      end
+
+      it 'derives the bounding box on write' do
+        stock_location.polygon = clockwise_square
+        stock_location.valid?
+
+        expect(stock_location.polygon_bbox).to eq(
+          'min_lng' => 116.40, 'max_lng' => 116.44, 'min_lat' => 39.90, 'max_lat' => 39.96
+        )
+      end
+
+      it 'refuses a polygon that crosses itself' do
+        stock_location.polygon = [[[116.40, 39.90], [116.44, 39.96], [116.44, 39.90], [116.40, 39.96], [116.40, 39.90]]]
+
+        expect(stock_location).not_to be_valid
+        expect(stock_location.errors[:polygon]).to include('crosses itself')
+      end
+
+      it 'refuses a node an active warehouse already holds' do
+        create(:stock_location, administrative_division_id: 1_101_010)
+
+        stock_location.administrative_division_id = 1_101_010
+
+        expect(stock_location).not_to be_valid
+        expect(stock_location.errors[:administrative_division_id]).to include('has already been taken')
+      end
+
+      it 'releases its node when it is deactivated' do
+        held = create(:stock_location, administrative_division_id: 1_101_010)
+        held.update!(active: false)
+
+        stock_location.administrative_division_id = 1_101_010
+
+        expect(stock_location).to be_valid
+      end
+
+      it 'releases its node when it is deleted' do
+        held = create(:stock_location, administrative_division_id: 1_101_010)
+        held.destroy
+
+        stock_location.administrative_division_id = 1_101_010
+
+        expect(stock_location).to be_valid
+      end
+    end
   end
 end
