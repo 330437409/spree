@@ -105,9 +105,17 @@ module SpreeAdministrativeDivisions
         parents = parent_ids_for(batch)
         Spree::AdministrativeDivision.upsert_all(
           batch.map { |row| attributes_for(row, parents) },
-          unique_by: :code
+          **upsert_options
         )
       end
+    end
+
+    # MySQL infers the conflict target from the table's own unique index and
+    # rejects an explicit `unique_by`, which PostgreSQL and SQLite require.
+    def upsert_options
+      return {} if Spree.mysql?
+
+      { unique_by: :code }
     end
 
     def attributes_for(row, parents)
