@@ -5486,8 +5486,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 3539789
-                  slug: product-3539789
+                  name: Product 3559789
+                  slug: product-3559789
                   options_text: ''
                   price: '10.0'
                   display_price: "$10.00"
@@ -5704,8 +5704,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 355179
-                  slug: product-355179
+                  name: Product 357179
+                  slug: product-357179
                   options_text: ''
                   price: '10.0'
                   display_price: "$10.00"
@@ -9892,7 +9892,7 @@ paths:
                 variant:
                   id: variant_gbHJdmfrXB
                   product_id: prod_gbHJdmfrXB
-                  sku: SKU-443
+                  sku: SKU-447
                   options_text: ''
                   track_inventory: true
                   media_count: 0
@@ -11834,6 +11834,92 @@ paths:
                   message: Seller not found
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  "/api/v3/store/shares":
+    post:
+      summary: Compose a share card
+      tags:
+      - Shares
+      security:
+      - api_key: []
+      description: |
+        What a WeChat share card says, and where it opens, for the thing the request names:
+        a title, a subtitle, an image and the path the client assigns to its share API.
+
+        One payload for every kind of thing a storefront shares — a product today, an
+        invitation, a coupon or a team as those plans land — so the link's grammar has one
+        implementation rather than one per domain. The QR and the poster belong to the
+        mini-program identity capability and are absent until a target can ask it for them.
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: x-spree-channel
+        in: header
+        required: false
+        description: Channel code or prefixed ID the shared thing is resolved in
+        schema:
+          type: string
+      responses:
+        '200':
+          description: the card for a product
+          content:
+            application/json:
+              example:
+                title: 青花瓷茶具
+                subtitle:
+                image_url:
+                path: "/pages/index?type=inviteGoods&typeId=id-prod%5FUkLWZg9DAJ_originalSiteId-store%5FUkLWZg9DAJ"
+                scene:
+                qrcode_url:
+                poster_url:
+              schema:
+                "$ref": "#/components/schemas/StoreShare"
+        '422':
+          description: a request that names nothing to share
+          content:
+            application/json:
+              example:
+                error:
+                  code: validation_error
+                  message: target_type and target_id are required.
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        '404':
+          description: a product this storefront does not show
+          content:
+            application/json:
+              example:
+                error:
+                  code: record_not_found
+                  message: Product not found
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target_type:
+                  type: string
+                  example: product
+                  description: What kind of thing is being shared, in the api_type
+                    shorthand the rest of v3 uses
+                target_id:
+                  type: string
+                  example: prod_abc123
+                  description: Prefixed ID of the thing being shared
+                context:
+                  type: object
+                  additionalProperties: true
+                  description: What the target itself needs — a binding to mint, a
+                    team to join
+              required:
+              - target_type
+              - target_id
+        required: true
 servers:
 - url: http://{defaultHost}
   variables:
@@ -15640,6 +15726,38 @@ components:
       - purchasable
       - flags
       - items
+      x-typelizer: true
+    StoreShare:
+      type: object
+      properties:
+        title:
+          type: string
+          nullable: true
+        subtitle:
+          type: string
+          nullable: true
+        image_url:
+          type: string
+          nullable: true
+        path:
+          type: string
+        scene:
+          type: string
+          nullable: true
+        qrcode_url:
+          type: string
+          nullable: true
+        poster_url:
+          type: string
+          nullable: true
+      required:
+      - title
+      - subtitle
+      - image_url
+      - path
+      - scene
+      - qrcode_url
+      - poster_url
       x-typelizer: true
     StoreCreditEvent:
       type: object

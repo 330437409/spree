@@ -261,6 +261,30 @@ module Spree
 
     validate :discontinue_on_must_be_later_than_make_active_at, if: -> { make_active_at && discontinue_on }
 
+    # What a share card for this product says, and where it opens. The contract
+    # the Store API's one share route reads ({Spree::Shares::Compose}): a record
+    # that answers it can be shared, and one that does not is not shareable.
+    #
+    # The identifiers are the client's own names, because it resolves them
+    # against its own type table: `id` is this product, and `originalSiteId` is
+    # the shop the link came from (static/behaviors/locationLinkBehavior.js:7-13,
+    # pagesA/goods-details/normal/normal.js:281).
+    #
+    # @param context [Hash] what the share request carried, unused here
+    # @return [Hash]
+    def share_descriptor(_context = {})
+      {
+        title: name,
+        subtitle: meta_description.presence,
+        image_url: Spree::Reporting.image_url(primary_media),
+        type: 'inviteGoods',
+        identifiers: {
+          'id' => prefixed_id,
+          'originalSiteId' => (seller || store).prefixed_id
+        }
+      }
+    end
+
     scope :for_store, ->(store) { where(store_id: store.id) }
     # Products belonging to the given seller. Passing nil selects the
     # operator's own catalog, which on a store with no sellers is everything.

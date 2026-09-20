@@ -50,6 +50,7 @@ import type {
   Policy,
   PricePreview,
   PricePreviewParams,
+  ShareParams,
   Product,
   ProductFiltersParams,
   ProductFiltersResponse,
@@ -60,6 +61,7 @@ import type {
   ResetPasswordParams,
   Return,
   Seller,
+  Share,
   StockLocation,
   StoreCredit,
   UpdateCartParams,
@@ -496,6 +498,18 @@ export class StoreClient {
      */
     create: (params: PricePreviewParams, options?: RequestOptions): Promise<PricePreview> =>
       this.request<PricePreview>('POST', '/price_preview', {
+        ...options,
+        body: params,
+      }),
+  }
+
+  /**
+   * The one share payload: what a WeChat share card says, and where it opens,
+   * for whatever kind of thing the request names.
+   */
+  readonly shares = {
+    create: (params: ShareParams, options?: RequestOptions): Promise<Share> =>
+      this.request<Share>('POST', '/shares', {
         ...options,
         body: params,
       }),

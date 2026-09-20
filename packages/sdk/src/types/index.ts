@@ -56,6 +56,7 @@ export type {
   StoreCredit,
   StorePricePreview as PricePreview,
   StorePricePreviewItem as PricePreviewItem,
+  StoreShare as Share,
   Variant,
   Wishlist,
   WishlistItem,
@@ -166,6 +167,15 @@ export interface RegisterParams {
   accepts_email_marketing?: boolean
   /** Arbitrary key-value metadata (stored, not returned in responses) */
   metadata?: Record<string, unknown>
+}
+
+export interface ShareParams {
+  /** What kind of thing is being shared, in the api_type shorthand the rest of v3 uses */
+  target_type: string
+  /** Prefixed ID of the thing being shared */
+  target_id: string
+  /** What the target itself needs — a binding to mint, a team to join */
+  context?: Record<string, unknown>
 }
 
 export interface PricePreviewParams {

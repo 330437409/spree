@@ -507,6 +507,21 @@ module Spree
     Rails.application.config.spree.price_preview_sources = value
   end
 
+  # What a Store API share can be about: each `api_type` shorthand maps to the
+  # relation its target is resolved through, so the route needs no branch per
+  # kind. A record that does not answer `share_descriptor` is not shareable,
+  # whatever the map says.
+  #
+  # @return [Hash{String => #call}] keyed by `api_type`, each taking
+  #   `(store, channel, customer)` and answering an ActiveRecord::Relation
+  def self.shareable_targets
+    Rails.application.config.spree.shareable_targets
+  end
+
+  def self.shareable_targets=(value)
+    Rails.application.config.spree.shareable_targets = value
+  end
+
   def self.delivery_method_rules=(value)
     Rails.application.config.spree.delivery_method_rules = value
   end

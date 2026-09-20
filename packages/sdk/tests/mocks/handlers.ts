@@ -164,6 +164,16 @@ export const fixtures = {
     ],
   },
 
+  share: {
+    title: '青花瓷茶具',
+    subtitle: null,
+    image_url: null,
+    path: '/pages/index?type=inviteGoods&typeId=id-prod%5F1_originalSiteId-store%5F1',
+    scene: null,
+    qrcode_url: null,
+    poster_url: null,
+  },
+
   newsletterSubscriber: {
     id: 'sub_1',
     email: 'subscriber@example.com',
@@ -779,4 +789,6 @@ export const handlers = [
 
   // Price preview — the one price calculation, answered for whatever was asked
   http.post(`${API_PREFIX}/price_preview`, () => HttpResponse.json(fixtures.pricePreview)),
+
+  http.post(`${API_PREFIX}/shares`, () => HttpResponse.json(fixtures.share)),
 ]
