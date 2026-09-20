@@ -34,8 +34,9 @@ One row says which variants form the set: `Spree::ProductBundle` and its
 ## Reading
 
 ```
-GET /api/v3/store/product_bundles        # the collection
-GET /api/v3/store/product_bundles/:id    # the purchase payload
+GET /api/v3/store/product_bundles                    # the collection
+GET /api/v3/store/product_bundles/:id                # the purchase payload
+GET /api/v3/store/carts/:cart_id/product_bundles     # the sets this cart holds
 ```
 
 The collection filters by component (`with_component_variant`), by category
@@ -43,6 +44,30 @@ The collection filters by component (`with_component_variant`), by category
 components with their own prices, and the three figures a storefront shows
 beside them: `goods_price` (what the components cost one by one), `price` (what
 the set costs) and `saving`.
+
+## In a cart
+
+A set reaches a cart as its components: the client writes one line per
+component through the ordinary cart write, each tagged `bundle_id` in the
+line's metadata. A synchronous subscriber reads that tag, writes the group row
+and recomputes the saving — there is no second add path, and the cart the
+client reads back already holds the set.
+
+```
+POST /api/v3/store/carts/:cart_id/items
+  { "variant_id": "variant_…", "quantity": 2,
+    "metadata": { "bundle_id": "bundle_…" } }
+```
+
+What the set saves is written as one `manual`-kind discount row per component
+line, allocated in proportion to what each line costs with the rounding
+remainder on the last line by position — so returning one component reverses
+its share rather than unwinding the whole set, and removing a component takes
+its group row with it and stops the set saving anything.
+
+`GET /api/v3/store/carts/:cart_id/product_bundles` reads the sets back as one
+card each: the title, how many sets the lines hold, what they cost, what they
+saved, how many more the shelf could fill, and the cart's own lines.
 
 ## In the panel
 

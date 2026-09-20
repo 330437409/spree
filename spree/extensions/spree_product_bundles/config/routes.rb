@@ -23,6 +23,12 @@ Spree::Core::Engine.add_routes do
         # One collection and one member: the client's four calls differ in
         # filter rather than in shape.
         resources :product_bundles, only: [:index, :show], id: /.+/
+
+        # The sets a cart holds, which a storefront renders as one card each.
+        # Read-only: a bundle is added and removed through the cart's own items.
+        resources :carts, only: [] do
+          resources :product_bundles, only: [:index], controller: 'carts/product_bundles'
+        end
       end
     end
   end
