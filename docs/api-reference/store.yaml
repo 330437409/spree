@@ -5493,6 +5493,248 @@ paths:
                   message: Cart not found
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  "/api/v3/store/carts/{cart_id}/items/batch":
+    post:
+      summary: Write a set of lines in one request
+      tags:
+      - Carts
+      security:
+      - api_key: []
+        bearer_auth: []
+      description: |
+        Writes a set of the cart's lines in one pass: the quantities named are the ones the
+        cart should end up holding, so a retried request writes the same cart rather than
+        adding twice. An entry names either the variant to buy or a line of this cart, and
+        the whole set recalculates once.
+
+        A set is not all-or-nothing: an entry the cart's rules refuse (out of stock, an
+        unsellable currency) comes back in the cart's `warnings` and the rest of the set
+        applies. A request that cannot be applied at all — an empty set, a quantity that is
+        not a positive whole number, a line this cart does not hold — is refused whole.
+      x-codeSamples:
+      - lang: javascript
+        label: Spree SDK
+        source: |-
+          import { createClient } from '@spree/sdk'
+
+          const client = createClient({
+            baseUrl: 'https://your-store.com',
+            publishableKey: '<api-key>',
+          })
+
+          const cart = await client.carts.items.batch(
+            'cart_abc123',
+            {
+              items: [
+                { variant_id: 'variant_abc123', quantity: 2 },
+                { line_item_id: 'li_abc123', quantity: 3 },
+              ],
+            },
+            {
+              token: '<token>',
+            },
+          )
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        required: false
+        description: Bearer token for authenticated customers
+        schema:
+          type: string
+      - name: x-spree-token
+        in: header
+        required: false
+        description: Cart token for guest access
+        schema:
+          type: string
+      - name: cart_id
+        in: path
+        required: true
+        description: Cart prefixed ID (e.g., cart_abc123)
+        schema:
+          type: string
+      responses:
+        '201':
+          description: the cart, with the set written
+          content:
+            application/json:
+              example:
+                id: cart_UkLWZg9DAJ
+                selected_quantity: 2
+                market_id: mkt_UkLWZg9DAJ
+                channel_id: ch_UkLWZg9DAJ
+                preferred_stock_location_id:
+                company_id:
+                company_name:
+                po_number_required: false
+                po_document_filename:
+                po_document_byte_size:
+                number: cart_UkLWZg9DAJ
+                token: MZnVKZhVbRuyof9bWtwLAGVY
+                email:
+                customer_note:
+                po_number:
+                currency: USD
+                locale: en
+                total_quantity: 2
+                warnings: []
+                coupon_code:
+                item_total: '20.0'
+                display_item_total: "$20.00"
+                adjustment_total: '0.0'
+                display_adjustment_total: "$0.00"
+                discount_total: '0.0'
+                display_discount_total: "$0.00"
+                tax_total: '0.0'
+                display_tax_total: "$0.00"
+                included_tax_total: '0.0'
+                display_included_tax_total: "$0.00"
+                additional_tax_total: '0.0'
+                display_additional_tax_total: "$0.00"
+                total: '20.0'
+                display_total: "$20.00"
+                gift_card_total: '0.0'
+                display_gift_card_total: "$0.00"
+                amount_due: '20.0'
+                display_amount_due: "$20.00"
+                delivery_total: '0.0'
+                display_delivery_total: "$0.00"
+                fee_total: '0.0'
+                display_fee_total: "$0.00"
+                store_credit_total: '0.0'
+                display_store_credit_total: "$0.00"
+                covered_by_store_credit: false
+                current_step: address
+                completed_steps: []
+                requirements:
+                - code: email_required
+                  step: address
+                  field: email
+                  message: Email address is required
+                - code: delivery_method_required
+                  step: delivery
+                  field: delivery_method
+                  message: Select a delivery method for all fulfillments
+                - code: payment_required
+                  step: payment
+                  field: payment
+                  message: Add a payment method
+                order_minimum:
+                order_minimum_shortfall:
+                below_order_minimum: false
+                freight_summary:
+                shipping_eq_billing_address: true
+                discounts: []
+                fees: []
+                items:
+                - id: li_UkLWZg9DAJ
+                  variant_id: variant_gbHJdmfrXB
+                  seller_id:
+                  preorder: false
+                  preorder_ships_at:
+                  quantity: 2
+                  currency: USD
+                  name: Product 3821497
+                  slug: product-3821497
+                  options_text: 'Size: S'
+                  selected: true
+                  price: '10.0'
+                  display_price: "$10.00"
+                  total: '20.0'
+                  display_total: "$20.00"
+                  adjustment_total: '0.0'
+                  display_adjustment_total: "$0.00"
+                  additional_tax_total: '0.0'
+                  display_additional_tax_total: "$0.00"
+                  included_tax_total: '0.0'
+                  display_included_tax_total: "$0.00"
+                  discount_total: '0.0'
+                  display_discount_total: "$0.00"
+                  pre_tax_amount: '20.0'
+                  display_pre_tax_amount: "$20.00"
+                  discounted_amount: '20.0'
+                  display_discounted_amount: "$20.00"
+                  display_compare_at_amount: "$0.00"
+                  compare_at_amount:
+                  thumbnail_url:
+                  option_values:
+                  - id: optval_UkLWZg9DAJ
+                    option_type_id: opt_UkLWZg9DAJ
+                    name: size-65
+                    label: S
+                    position: 1
+                    color_code:
+                    option_type_name: foo-size-74
+                    option_type_label: Size
+                    image_url:
+                  digital_links: []
+                fulfillments: []
+                payments: []
+                billing_address:
+                shipping_address:
+                payment_methods: []
+                gift_card:
+                market:
+                  id: mkt_UkLWZg9DAJ
+                  name: United States
+                  currency: USD
+                  default_locale: en
+                  tax_inclusive: false
+                  default: true
+                  country_codes:
+                  - US
+                  supported_locales:
+                  - en
+              schema:
+                "$ref": "#/components/schemas/Cart"
+        '422':
+          description: the set names no item
+          content:
+            application/json:
+              example:
+                error:
+                  code: validation_error
+                  message: Name at least one item to write to this cart.
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  description: The lines to write
+                  items:
+                    type: object
+                    properties:
+                      variant_id:
+                        type: string
+                        example: variant_abc123
+                        description: The variant to buy
+                      line_item_id:
+                        type: string
+                        example: li_abc123
+                        description: A line of this cart to write; takes precedence
+                          over variant_id
+                      quantity:
+                        type: integer
+                        example: 2
+                        description: 'The quantity the line should hold (default:
+                          1)'
+                      metadata:
+                        type: object
+                        additionalProperties: true
+                        description: Arbitrary key-value metadata for the line
+              required:
+              - items
+        required: true
   "/api/v3/store/carts/{cart_id}/selection":
     patch:
       summary: Choose which lines take part in checkout
@@ -5629,8 +5871,8 @@ paths:
                   preorder_ships_at:
                   quantity: 2
                   currency: USD
-                  name: Product 3837961
-                  slug: product-3837961
+                  name: Product 3847961
+                  slug: product-3847961
                   options_text: ''
                   selected: false
                   price: '19.99'
@@ -5833,8 +6075,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 3859789
-                  slug: product-3859789
+                  name: Product 3869789
+                  slug: product-3869789
                   options_text: ''
                   selected: true
                   price: '10.0'
@@ -6053,8 +6295,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 387179
-                  slug: product-387179
+                  name: Product 388179
+                  slug: product-388179
                   options_text: ''
                   selected: true
                   price: '10.0'
@@ -10456,7 +10698,7 @@ paths:
                 variant:
                   id: variant_gbHJdmfrXB
                   product_id: prod_gbHJdmfrXB
-                  sku: SKU-483
+                  sku: SKU-486
                   options_text: ''
                   track_inventory: true
                   media_count: 0
