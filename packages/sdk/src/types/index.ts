@@ -6,6 +6,7 @@ export type {
   Address,
   Base,
   Cart,
+  CartCount,
   Category,
   Channel,
   Claim,

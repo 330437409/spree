@@ -3,6 +3,7 @@ export { AddressSchema, type Address } from './Address';
 export { AppliedPromotionSchema, type AppliedPromotion } from './AppliedPromotion';
 export { BaseSchema, type Base } from './Base';
 export { CartSchema, type Cart } from './Cart';
+export { CartCountSchema, type CartCount } from './CartCount';
 export { CategorySchema, type Category } from './Category';
 export { ChannelSchema, type Channel } from './Channel';
 export { ClaimSchema, type Claim } from './Claim';

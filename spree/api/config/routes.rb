@@ -68,6 +68,10 @@ Spree::Core::Engine.add_routes do
           # Which lines take part in checkout, written in bulk: one tick, or a
           # whole group's (docs/plans/6.1-store-api-miniprogram-gaps.md).
           resource :selection, only: [:update], controller: 'carts/selection'
+
+          # The item counts alone, for a badge read on pages that have no other
+          # business with the cart (docs/plans/6.1-store-api-miniprogram-gaps.md).
+          resource :count, only: [:show], controller: 'carts/count'
           resources :discount_codes, only: [:create, :destroy], controller: 'carts/discount_codes'
           resources :gift_cards, only: [:create, :destroy], controller: 'carts/gift_cards'
           resources :fulfillments, only: [:update], controller: 'carts/fulfillments'
