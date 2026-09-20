@@ -30,6 +30,7 @@ module Spree
                  total: [:string, nullable: true], display_total: [:string, nullable: true],
                  amount_due: [:string, nullable: true], display_amount_due: [:string, nullable: true],
                  completed_at: [:string, nullable: true],
+                 payment_deadline: [:string, nullable: true],
                  withdrawal_period_ends_at: [:string, nullable: true],
                  within_withdrawal_period: :boolean,
                  billing_address: { nullable: true }, shipping_address: { nullable: true },
@@ -37,6 +38,14 @@ module Spree
 
         attribute :market_id do |order|
           order.market&.prefixed_id
+        end
+
+        # When an unpaid order stops being payable, for the storefront's own
+        # countdown. Null once there is nothing left to pay, and null when the
+        # store keeps no timeout; an expired order is the merchant's to deal
+        # with, not the server's to cancel.
+        attribute :payment_deadline do |order|
+          order.payment_deadline&.iso8601
         end
 
         # The EU cooling-off deadline. Customer-facing by design: a buyer

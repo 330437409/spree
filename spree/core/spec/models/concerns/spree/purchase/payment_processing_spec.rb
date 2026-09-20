@@ -176,6 +176,45 @@ RSpec.shared_examples 'a payment processing host' do
     end
   end
 
+  describe '#payment_deadline' do
+    let(:record) { new_record_with_line_items }
+    let(:placed_at) { Time.zone.parse('2026-09-20 12:00:00') }
+
+    # A purchase nobody has placed owes nothing late, and neither does one that
+    # owes nothing at all.
+    it 'has none while the purchase is not placed' do
+      expect(record.payment_deadline).to be_nil
+    end
+
+    context 'once it is placed and still owes money' do
+      before do
+        record.update_columns(completed_at: placed_at, total: 50, payment_total: 0)
+      end
+
+      it 'answers the store’s timeout from the moment it was placed' do
+        expect(record.payment_deadline).to eq(placed_at + 30.minutes)
+      end
+
+      context 'when the store keeps no timeout' do
+        before { stub_store_preferences(unpaid_order_timeout_minutes: 0) }
+
+        it { expect(record.payment_deadline).to be_nil }
+      end
+
+      context 'when it has been settled' do
+        before { allow(record).to receive_messages(paid?: true) }
+
+        it { expect(record.payment_deadline).to be_nil }
+      end
+
+      context 'when it no longer owes anything' do
+        before { allow(record).to receive_messages(payment_required?: false) }
+
+        it { expect(record.payment_deadline).to be_nil }
+      end
+    end
+  end
+
   describe '#confirmation_required?' do
     subject { record.confirmation_required? }
 
@@ -251,6 +290,15 @@ RSpec.describe Spree::Purchase::PaymentProcessing do
     end
 
     it_behaves_like 'a payment processing host'
+
+    # Cancellation is the order's own state, so the deadline's half of the rule
+    # lives here rather than in the shared examples a cart also runs.
+    it 'has no payment deadline once it has been canceled' do
+      order = create(:order_with_line_items, store: @default_store)
+      order.update_columns(status: 'canceled', completed_at: 1.hour.ago, total: 50, payment_total: 0)
+
+      expect(order.payment_deadline).to be_nil
+    end
 
     it 'bridges the deprecated collect_frontend_payment_methods to payment_methods' do
       order = new_record_with_line_items
