@@ -367,6 +367,16 @@ module Spree
         conditions << search_condition(Spree::Address, :last_name, full_name.last)
       end
 
+      # What was in the order: a shopper looks for "the tea set I bought" as
+      # often as for a number, and a buyer's own list is where they look
+      # (docs/plans/6.1-store-api-miniprogram-gaps.md). Asked as an EXISTS
+      # rather than joined, because an order with three matching lines is
+      # still one order to list and to count.
+      conditions << Spree::LineItem.
+                    where(Spree::LineItem.arel_table[:order_id].eq(arel_table[:id])).
+                    joins(variant: :product).
+                    where(search_condition(Spree::Product, :name, sanitized_query)).arel.exists
+
       left_joins(:bill_address).where(arel_table[:email].lower.eq(query.downcase)).or(where(conditions.reduce(:or)))
     end
 
