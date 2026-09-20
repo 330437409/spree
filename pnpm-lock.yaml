@@ -520,9 +520,6 @@ importers:
       '@spree/dashboard-core':
         specifier: workspace:^
         version: link:../dashboard-core
-      '@spree/dashboard-plugin-product-bundles':
-        specifier: workspace:^
-        version: link:../dashboard-plugin-product-bundles
       '@spree/dashboard-ui':
         specifier: workspace:^
         version: link:../dashboard-ui
@@ -548,6 +545,9 @@ importers:
       '@spree/dashboard-plugin-example':
         specifier: workspace:^
         version: link:../dashboard-plugin-example
+      '@spree/dashboard-plugin-product-bundles':
+        specifier: workspace:^
+        version: link:../dashboard-plugin-product-bundles
       '@types/react':
         specifier: ^19.2.14
         version: 19.2.14

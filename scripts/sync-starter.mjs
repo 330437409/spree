@@ -48,7 +48,12 @@ const targetDir = path.resolve(target)
 fs.mkdirSync(targetDir, { recursive: true })
 
 const EXCLUDE = new Set(['node_modules', 'dist', '.turbo', '.tanstack'])
-const MONOREPO_ONLY_DEV_DEPS = new Set(['@spree/dashboard-plugin-example'])
+// Plugins the monorepo builds and the published template does not ship: a
+// private workspace package cannot be a dependency of a synced template.
+const MONOREPO_ONLY_DEV_DEPS = new Set([
+  '@spree/dashboard-plugin-example',
+  '@spree/dashboard-plugin-product-bundles',
+])
 
 // Bump deliberately (with an image-build test) — pnpm majors have changed
 // install-policy behavior under existing lockfiles.
