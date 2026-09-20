@@ -313,7 +313,7 @@ paths:
                 - key: wechat
                   kind: redirect
                   label: WeChat
-                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--89984eeb01d29e6bd9a5b7fe3d95d3c31fd70ab3
+                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--32aae41ae6f1d2501f91357517e67a979983585a
                   requires_email: true
               schema:
                 type: object
@@ -1214,8 +1214,8 @@ paths:
               example:
                 data:
                 - id: prod_UkLWZg9DAJ
-                  name: Product 2989085
-                  slug: product-2989085
+                  name: Product 3039085
+                  slug: product-3039085
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -1246,8 +1246,8 @@ paths:
                   original_price:
                   seller_id:
                 - id: prod_gbHJdmfrXB
-                  name: Product 2998209
-                  slug: product-2998209
+                  name: Product 3048209
+                  slug: product-3048209
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -1376,8 +1376,8 @@ paths:
             application/json:
               example:
                 id: prod_UkLWZg9DAJ
-                name: Product 3266885
-                slug: product-3266885
+                name: Product 3316885
+                slug: product-3316885
                 meta_title:
                 meta_description:
                 meta_keywords:
@@ -1787,7 +1787,7 @@ paths:
                   po_document_filename:
                   po_document_byte_size:
                   number: cart_gbHJdmfrXB
-                  token: pvLw1ZWLLQNxh1uvSPUCdSmt
+                  token: pKEkRfo2yoowhVSHGhDLYtPT
                   email:
                   customer_note:
                   po_number:
@@ -3009,7 +3009,7 @@ paths:
                 payments:
                 - id: py_UkLWZg9DAJ
                   payment_method_id: pm_UkLWZg9DAJ
-                  response_code: BGS-518d4ef9738e
+                  response_code: BGS-449038697740
                   number: R1001-P1
                   status: completed
                   amount: '20.0'
@@ -4932,9 +4932,9 @@ paths:
                 id: ps_gbHJdmfrXB
                 status: pending
                 currency: USD
-                external_id: bogus_208a8eb2883f955fd5c07616
+                external_id: bogus_a8b3afe691c933c1077a4098
                 external_data:
-                  client_secret: bogus_secret_a8b3afe691c933c1
+                  client_secret: bogus_secret_c8459e29d7e3219c
                 customer_external_id:
                 expires_at:
                 amount: '10.0'
@@ -5033,7 +5033,7 @@ paths:
                 id: ps_UkLWZg9DAJ
                 status: pending
                 currency: USD
-                external_id: bogus_96d0ebf0a4300304c930f3c0
+                external_id: bogus_f51dc67c03940c37ef8ece9d
                 external_data:
                   client_secret: secret_123
                 customer_external_id:
@@ -5101,7 +5101,7 @@ paths:
                 id: ps_UkLWZg9DAJ
                 status: pending
                 currency: USD
-                external_id: bogus_8a53bedc6c12205d0e31f231
+                external_id: bogus_9ab2cbad1f93cd5fc6666f78
                 external_data:
                   client_secret: secret_123
                 customer_external_id:
@@ -5209,7 +5209,7 @@ paths:
                 id: ps_UkLWZg9DAJ
                 status: completed
                 currency: USD
-                external_id: bogus_f6de6a6c7dddf8f63c45a3f0
+                external_id: bogus_ed21f33e5157a013bc6b223e
                 external_data:
                   client_secret: secret_123
                 customer_external_id:
@@ -5486,8 +5486,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 3469789
-                  slug: product-3469789
+                  name: Product 3519789
+                  slug: product-3519789
                   options_text: ''
                   price: '10.0'
                   display_price: "$10.00"
@@ -5704,8 +5704,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 348179
-                  slug: product-348179
+                  name: Product 353179
+                  slug: product-353179
                   options_text: ''
                   price: '10.0'
                   display_price: "$10.00"
@@ -9605,7 +9605,7 @@ paths:
               example:
                 id: wl_gbHJdmfrXB
                 name: Birthday Ideas
-                token: 9QwEwKPqhv9b6g6vN3mSu4Pm
+                token: wqY1UeyRZCMQkasa29rgmhzU
                 is_default: false
                 is_private: true
               schema:
@@ -9892,7 +9892,7 @@ paths:
                 variant:
                   id: variant_gbHJdmfrXB
                   product_id: prod_gbHJdmfrXB
-                  sku: SKU-436
+                  sku: SKU-441
                   options_text: ''
                   track_inventory: true
                   media_count: 0
@@ -11532,6 +11532,114 @@ paths:
                   message: Digital link not found
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  "/api/v3/store/price_preview":
+    post:
+      summary: Preview the price of a basket
+      tags:
+      - Price Preview
+      security:
+      - api_key: []
+      description: |
+        Prices a set of variants and quantities, with no cart created — what the product page
+        asks before anything exists, and what the settlement page asks with a cart later.
+
+        Prices are resolved in the context the request carries: the channel it resolved, its
+        currency, the country the buyer is taxed in, and the customer when there is one. It is
+        the one price calculation the Store API offers, and the price it answers is the price
+        the cart writes.
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        description: Publishable API key
+        schema:
+          type: string
+      - name: x-spree-channel
+        in: header
+        required: false
+        description: Channel code or prefixed ID the prices are resolved for
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        required: false
+        description: Bearer JWT token (optional — for a signed-in customer)
+        schema:
+          type: string
+      responses:
+        '200':
+          description: no amounts on a storefront that hides prices
+          content:
+            application/json:
+              example:
+                currency: USD
+                total:
+                quantity: 1
+                purchasable: true
+                items:
+                - variant_id: variant_UkLWZg9DAJ
+                  product_id: prod_UkLWZg9DAJ
+                  quantity: 1
+                  unit_amount:
+                  compare_at_amount:
+                  total:
+                  price_list_id:
+                  price_source:
+                  in_stock: false
+                  backorderable: true
+                  purchasable: true
+                  available_quantity: 0
+              schema:
+                "$ref": "#/components/schemas/StorePricePreview"
+        '404':
+          description: a variant of a product the storefront does not show
+          content:
+            application/json:
+              example:
+                error:
+                  code: variant_not_found
+                  message: Variant not found
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        '422':
+          description: a quantity that is not a positive whole number
+          content:
+            application/json:
+              example:
+                error:
+                  code: validation_error
+                  message: quantity must be a positive whole number
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currency:
+                  type: string
+                  example: USD
+                  description: Currency to price in; defaults to the request’s
+                items:
+                  type: array
+                  description: The variants to price, with how many of each
+                  items:
+                    type: object
+                    properties:
+                      variant_id:
+                        type: string
+                        example: variant_abc123
+                        description: Prefixed variant ID
+                      quantity:
+                        type: integer
+                        example: 2
+                        description: Quantity (defaults to 1)
+                    required:
+                    - variant_id
+              required:
+              - items
+        required: true
   "/api/v3/store/sellers":
     get:
       summary: List sellers
@@ -15410,6 +15518,77 @@ components:
           type: string
       required:
       - id
+      x-typelizer: true
+    StorePricePreviewItem:
+      type: object
+      properties:
+        variant_id:
+          type: string
+          nullable: true
+        product_id:
+          type: string
+          nullable: true
+        quantity:
+          type: number
+        unit_amount:
+          type: number
+          nullable: true
+        compare_at_amount:
+          type: number
+          nullable: true
+        total:
+          type: number
+          nullable: true
+        price_list_id:
+          type: string
+          nullable: true
+        price_source:
+          type: string
+          nullable: true
+        in_stock:
+          type: boolean
+        backorderable:
+          type: boolean
+        purchasable:
+          type: boolean
+        available_quantity:
+          type: number
+      required:
+      - variant_id
+      - product_id
+      - quantity
+      - unit_amount
+      - compare_at_amount
+      - total
+      - price_list_id
+      - price_source
+      - in_stock
+      - backorderable
+      - purchasable
+      - available_quantity
+      x-typelizer: true
+    StorePricePreview:
+      type: object
+      properties:
+        currency:
+          type: string
+        total:
+          type: number
+          nullable: true
+        quantity:
+          type: number
+        purchasable:
+          type: boolean
+        items:
+          type: array
+          items:
+            "$ref": "#/components/schemas/StorePricePreviewItem"
+      required:
+      - currency
+      - total
+      - quantity
+      - purchasable
+      - items
       x-typelizer: true
     StoreCreditEvent:
       type: object

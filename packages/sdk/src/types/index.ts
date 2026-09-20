@@ -54,6 +54,8 @@ export type {
   State,
   StockLocation,
   StoreCredit,
+  StorePricePreview as PricePreview,
+  StorePricePreviewItem as PricePreviewItem,
   Variant,
   Wishlist,
   WishlistItem,
@@ -164,6 +166,13 @@ export interface RegisterParams {
   accepts_email_marketing?: boolean
   /** Arbitrary key-value metadata (stored, not returned in responses) */
   metadata?: Record<string, unknown>
+}
+
+export interface PricePreviewParams {
+  /** Currency to price in; defaults to the request's own */
+  currency?: string
+  /** What to price, and how many of each */
+  items: Array<{ variant_id: string; quantity?: number }>
 }
 
 export interface ProductListParams extends ListParams {
