@@ -31,7 +31,8 @@ module Spree
             apply_sources(cart) if cart
 
             result = Spree::PricePreview.call(
-              items: items, currency: cart&.currency, customer: current_user, context: source_context
+              items: items, currency: cart&.currency, customer: current_user,
+              context: source_context, stock_location: stock_location_param
             )
 
             render json: serializer_class.new(result.value, params: serializer_params).to_h
@@ -66,6 +67,16 @@ module Spree
           # source rather than the one this application happens to have.
           def source_context
             permitted_params[:context].to_h.symbolize_keys
+          end
+
+          # The warehouse an area page is about, when it names one. Read through
+          # the store's own locations, so an id from another tenant is a 404.
+          # @return [Spree::StockLocation, nil]
+          def stock_location_param
+            id = params[:stock_location_id]
+            return nil if id.blank?
+
+            current_store.stock_locations.find_by_prefix_id!(id)
           end
 
           # Every variant is read through the store's own products, narrowed the

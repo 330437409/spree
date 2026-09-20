@@ -11591,8 +11591,10 @@ paths:
                   compare_at_amount:
                   total:
                   price_list_id:
+                  price_ends_at:
                   price_source:
                   source:
+                  stock_location_quantity:
                   in_stock: false
                   backorderable: true
                   purchasable: true
@@ -11649,6 +11651,12 @@ paths:
                   additionalProperties: true
                   description: What a registered source needs — a flash sale’s activity
                     id, for instance.
+                stock_location_id:
+                  type: string
+                  example: sloc_abc123
+                  description: 'The warehouse the page is about, when it is about
+                    one: each line then answers that shop’s own shelf beside the goods’
+                    total.'
                 items:
                   type: array
                   description: The variants to price, with how many of each
@@ -15570,11 +15578,17 @@ components:
         price_list_id:
           type: string
           nullable: true
+        price_ends_at:
+          type: string
+          nullable: true
         price_source:
           type: string
           nullable: true
         source:
           type: string
+          nullable: true
+        stock_location_quantity:
+          type: number
           nullable: true
         in_stock:
           type: boolean
@@ -15592,8 +15606,10 @@ components:
       - compare_at_amount
       - total
       - price_list_id
+      - price_ends_at
       - price_source
       - source
+      - stock_location_quantity
       - in_stock
       - backorderable
       - purchasable

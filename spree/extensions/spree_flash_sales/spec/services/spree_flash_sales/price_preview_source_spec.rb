@@ -47,6 +47,19 @@ RSpec.describe SpreeFlashSales::PricePreviewSource do
     expect(preview(flash_sale_id: other.prefixed_id).rows.first.source).to be_nil
   end
 
+  # The price the activity answers is good for as long as it is offered: the
+  # close of the stretch it is sold in, or the window's own end when it is sold
+  # throughout. This is the instant the page's countdown renders.
+  it 'answers when the price stops being offered' do
+    expect(preview(flash_sale_id: flash_sale.prefixed_id).rows.first.price_ends_at)
+      .to be_within(1.second).of(flash_sale.ends_at)
+
+    slot = create(:flash_sale_slot, flash_sale: flash_sale, pool: 10)
+
+    expect(preview(flash_sale_id: flash_sale.prefixed_id).rows.first.price_ends_at)
+      .to be_within(1.second).of(slot.ends_at)
+  end
+
   # A pool that has run out is not a price: the page should not offer the
   # seckill for units nobody can claim.
   it 'says an activity is not claimable once its pool is gone' do
