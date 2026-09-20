@@ -33,7 +33,9 @@ defineTable<ProductBundle>('product_bundles', {
       sortable: true,
       filterable: true,
       default: true,
-      render: (bundle) => bundle.title,
+      // The row's click-through reads this attribute: a table cell has nowhere
+      // else to carry the record's id.
+      render: (bundle) => <span data-product-bundle-id={bundle.id}>{bundle.title}</span>,
     },
     {
       key: 'status',

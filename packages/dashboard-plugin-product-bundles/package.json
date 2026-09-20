@@ -28,15 +28,19 @@
     }
   },
   "devDependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@spree/admin-sdk": "workspace:^",
     "@spree/dashboard-core": "workspace:^",
     "@spree/dashboard-ui": "workspace:^",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "react-hook-form": "^7.75.0",
     "typescript": "~6.0.3",
-    "vite": "^8.0.11"
+    "vite": "^8.0.11",
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@spree/admin-sdk": "workspace:^",
     "@spree/dashboard-core": "workspace:^",
     "@spree/dashboard-ui": "workspace:^",
@@ -46,6 +50,8 @@
     "lucide-react": "^1.14.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "react-i18next": "^17.0.8"
+    "react-hook-form": "^7.75.0",
+    "react-i18next": "^17.0.8",
+    "zod": "^4.4.3"
   }
 }

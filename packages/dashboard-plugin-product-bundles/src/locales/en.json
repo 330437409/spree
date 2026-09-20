@@ -24,6 +24,25 @@
       "delete_confirm": {
         "title": "Delete this bundle?",
         "message": "{{name}} will be removed. The goods it is made of stay exactly as they are."
+      },
+      "page": {
+        "new_cta": "New bundle"
+      },
+      "form": {
+        "new_title": "New bundle",
+        "edit_title": "Edit bundle",
+        "details": "Details",
+        "composition": "Components",
+        "rule": "Saving",
+        "figures": "Computed figures",
+        "add_component": "Add a component",
+        "product_placeholder": "Search goods",
+        "no_products": "No goods found",
+        "variant_placeholder": "Variant",
+        "quantity_suffix": "pcs",
+        "discount_kind": "How the saving is given",
+        "kind_amount": "A fixed amount",
+        "kind_percentage": "A percentage"
       }
     }
   }

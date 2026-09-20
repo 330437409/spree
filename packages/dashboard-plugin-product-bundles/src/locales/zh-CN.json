@@ -24,6 +24,25 @@
       "delete_confirm": {
         "title": "删除这个套餐？",
         "message": "「{{name}}」将被删除，组成它的商品不受影响。"
+      },
+      "page": {
+        "new_cta": "新建套餐"
+      },
+      "form": {
+        "new_title": "新建套餐",
+        "edit_title": "编辑套餐",
+        "details": "基本信息",
+        "composition": "组成商品",
+        "rule": "优惠设置",
+        "figures": "计算结果",
+        "add_component": "添加一件组成商品",
+        "product_placeholder": "搜索商品",
+        "no_products": "没有找到商品",
+        "variant_placeholder": "规格",
+        "quantity_suffix": "件",
+        "discount_kind": "优惠方式",
+        "kind_amount": "固定金额",
+        "kind_percentage": "百分比"
       }
     }
   }

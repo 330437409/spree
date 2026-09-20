@@ -23,6 +23,9 @@ export interface ProductBundle {
   currency: string
   status: 'draft' | 'active' | 'archived'
   position: number
+  /** The rule the merchant edits: a fixed amount or a percentage. */
+  saving_kind: 'amount' | 'percentage'
+  saving_value: number
   goods_price: number
   price: number
   saving: number
