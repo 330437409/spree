@@ -853,6 +853,16 @@ Plan: `6.1-store-api-miniprogram-gaps.md`'s batch cart rows (`cart/addCartBatch`
 
 **What the client sends that this deliberately ignores: `promotionCode`, `promotionId` and `frozenQuantity`.** Choosing between promotions is its own slice (Key Decision 29), and a combo's discount is the server's own business here — this fork's bundles gem prices a set from the lines it sees, so a client writes lines and no promo identity. `frozenQuantity` is the old server's promotional hold, which has no counterpart in this cart yet.
 
+## 2026-09-20 (the payment deadline) — The deadline is told, not enforced
+
+Plan: `6.1-store-api-miniprogram-gaps.md`'s order-reads row, and the correction that row needed.
+
+**The client asks for a countdown, and the deadline it counts to is display state.** Its order list and detail read `orderPayEndTime`, `orderPayLimitTime` and a local `tamp`, and flip their own status to "超时未支付, 订单已取消" when the clock passes (`static/behaviors/orderListBehavior.js:12-20`, `pagesF/static/behaviors/orderInfoBehavior.js:62-63`). The server answers **`payment_deadline`** on the order payload — `completed_at` plus the store's **`unpaid_order_timeout_minutes`** preference (default 30, declared beside the stock-reservation TTL it mirrors) — and nulls it while there is nothing to pay: a draft, a settled order, a canceled one, a free one, or a store that keeps no timeout (zero or less). Anything the client shows beyond that instant is its own arithmetic.
+
+**Nothing cancels an expired order** (the author's ruling, 2026-09-20). A deadline that fires work of its own would need a background job, an expiry state and a rule for a payment that arrives late — and the merchant already has a cancellation flow for deciding what happens to an order nobody paid for. Written down so the next reader does not "finish" the feature by adding a job.
+
+**The plan's row was wrong, and is corrected in place: 超时赔付 is late-delivery compensation, not payment expiry.** The two client calls the row listed read an approval status and its review nodes, not a payment clock. The deadline those rows were mistaken for was on the order list all along under a different name.
+
 ## 2026-09-20 (the order search) — A buyer's keyword search reaches the goods
 
 Plan: `6.1-store-api-miniprogram-gaps.md`'s order-list row, whose keyword filter the client's own search implies.
