@@ -74,6 +74,8 @@ import { Route as ProductsOptionsRouteImport } from './../../dashboard/src/route
 import { Route as ProductsNewRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/products/new'
 import { Route as ProductsMediaRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/products/media'
 import { Route as ProductsProductIdRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/products/$productId'
+import { Route as ProductBundlesDotnewRouteImport } from './../../dashboard-plugin-product-bundles/src/routes/product-bundles.new'
+import { Route as ProductBundlesDotbundleIdRouteImport } from './../../dashboard-plugin-product-bundles/src/routes/product-bundles.$bundleId'
 import { Route as OrdersNewRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/orders/new'
 import { Route as OrdersDraftsRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/orders/drafts'
 import { Route as LoyaltyStoreCreditsRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/loyalty/store-credits'
@@ -436,6 +438,17 @@ const ProductsProductIdRoute = ProductsProductIdRouteImport.update({
   path: '/products/$productId',
   getParentRoute: () => authenticatedStoreIdRoute,
 } as any)
+const ProductBundlesDotnewRoute = ProductBundlesDotnewRouteImport.update({
+  id: '/product-bundles/new',
+  path: '/product-bundles/new',
+  getParentRoute: () => authenticatedStoreIdRoute,
+} as any)
+const ProductBundlesDotbundleIdRoute =
+  ProductBundlesDotbundleIdRouteImport.update({
+    id: '/product-bundles/$bundleId',
+    path: '/product-bundles/$bundleId',
+    getParentRoute: () => authenticatedStoreIdRoute,
+  } as any)
 const OrdersNewRoute = OrdersNewRouteImport.update({
   id: '/orders/new',
   path: '/orders/new',
@@ -644,6 +657,8 @@ export interface FileRoutesByFullPath {
   '/$storeId/loyalty/store-credits': typeof LoyaltyStoreCreditsRoute
   '/$storeId/orders/drafts': typeof OrdersDraftsRoute
   '/$storeId/orders/new': typeof OrdersNewRoute
+  '/$storeId/product-bundles/$bundleId': typeof ProductBundlesDotbundleIdRoute
+  '/$storeId/product-bundles/new': typeof ProductBundlesDotnewRoute
   '/$storeId/products/$productId': typeof ProductsProductIdRoute
   '/$storeId/products/media': typeof ProductsMediaRoute
   '/$storeId/products/new': typeof ProductsNewRoute
@@ -742,6 +757,8 @@ export interface FileRoutesByTo {
   '/$storeId/loyalty/store-credits': typeof LoyaltyStoreCreditsRoute
   '/$storeId/orders/drafts': typeof OrdersDraftsRoute
   '/$storeId/orders/new': typeof OrdersNewRoute
+  '/$storeId/product-bundles/$bundleId': typeof ProductBundlesDotbundleIdRoute
+  '/$storeId/product-bundles/new': typeof ProductBundlesDotnewRoute
   '/$storeId/products/$productId': typeof ProductsProductIdRoute
   '/$storeId/products/media': typeof ProductsMediaRoute
   '/$storeId/products/new': typeof ProductsNewRoute
@@ -844,6 +861,8 @@ export interface FileRoutesById {
   '/_authenticated/$storeId/loyalty/store-credits': typeof LoyaltyStoreCreditsRoute
   '/_authenticated/$storeId/orders/drafts': typeof OrdersDraftsRoute
   '/_authenticated/$storeId/orders/new': typeof OrdersNewRoute
+  '/_authenticated/$storeId/product-bundles/$bundleId': typeof ProductBundlesDotbundleIdRoute
+  '/_authenticated/$storeId/product-bundles/new': typeof ProductBundlesDotnewRoute
   '/_authenticated/$storeId/products/$productId': typeof ProductsProductIdRoute
   '/_authenticated/$storeId/products/media': typeof ProductsMediaRoute
   '/_authenticated/$storeId/products/new': typeof ProductsNewRoute
@@ -946,6 +965,8 @@ export interface FileRouteTypes {
     | '/$storeId/loyalty/store-credits'
     | '/$storeId/orders/drafts'
     | '/$storeId/orders/new'
+    | '/$storeId/product-bundles/$bundleId'
+    | '/$storeId/product-bundles/new'
     | '/$storeId/products/$productId'
     | '/$storeId/products/media'
     | '/$storeId/products/new'
@@ -1044,6 +1065,8 @@ export interface FileRouteTypes {
     | '/$storeId/loyalty/store-credits'
     | '/$storeId/orders/drafts'
     | '/$storeId/orders/new'
+    | '/$storeId/product-bundles/$bundleId'
+    | '/$storeId/product-bundles/new'
     | '/$storeId/products/$productId'
     | '/$storeId/products/media'
     | '/$storeId/products/new'
@@ -1145,6 +1168,8 @@ export interface FileRouteTypes {
     | '/_authenticated/$storeId/loyalty/store-credits'
     | '/_authenticated/$storeId/orders/drafts'
     | '/_authenticated/$storeId/orders/new'
+    | '/_authenticated/$storeId/product-bundles/$bundleId'
+    | '/_authenticated/$storeId/product-bundles/new'
     | '/_authenticated/$storeId/products/$productId'
     | '/_authenticated/$storeId/products/media'
     | '/_authenticated/$storeId/products/new'
@@ -1688,6 +1713,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductsProductIdRouteImport
       parentRoute: typeof authenticatedStoreIdRoute
     }
+    '/_authenticated/$storeId/product-bundles/new': {
+      id: '/_authenticated/$storeId/product-bundles/new'
+      path: '/product-bundles/new'
+      fullPath: '/$storeId/product-bundles/new'
+      preLoaderRoute: typeof ProductBundlesDotnewRouteImport
+      parentRoute: typeof authenticatedStoreIdRoute
+    }
+    '/_authenticated/$storeId/product-bundles/$bundleId': {
+      id: '/_authenticated/$storeId/product-bundles/$bundleId'
+      path: '/product-bundles/$bundleId'
+      fullPath: '/$storeId/product-bundles/$bundleId'
+      preLoaderRoute: typeof ProductBundlesDotbundleIdRouteImport
+      parentRoute: typeof authenticatedStoreIdRoute
+    }
     '/_authenticated/$storeId/orders/new': {
       id: '/_authenticated/$storeId/orders/new'
       path: '/orders/new'
@@ -2018,6 +2057,8 @@ interface authenticatedStoreIdRouteChildren {
   LoyaltyStoreCreditsRoute: typeof LoyaltyStoreCreditsRoute
   OrdersDraftsRoute: typeof OrdersDraftsRoute
   OrdersNewRoute: typeof OrdersNewRoute
+  ProductBundlesDotbundleIdRoute: typeof ProductBundlesDotbundleIdRoute
+  ProductBundlesDotnewRoute: typeof ProductBundlesDotnewRoute
   ProductsProductIdRoute: typeof ProductsProductIdRoute
   ProductsMediaRoute: typeof ProductsMediaRoute
   ProductsNewRoute: typeof ProductsNewRoute
@@ -2083,6 +2124,8 @@ const authenticatedStoreIdRouteChildren: authenticatedStoreIdRouteChildren = {
   LoyaltyStoreCreditsRoute: LoyaltyStoreCreditsRoute,
   OrdersDraftsRoute: OrdersDraftsRoute,
   OrdersNewRoute: OrdersNewRoute,
+  ProductBundlesDotbundleIdRoute: ProductBundlesDotbundleIdRoute,
+  ProductBundlesDotnewRoute: ProductBundlesDotnewRoute,
   ProductsProductIdRoute: ProductsProductIdRoute,
   ProductsMediaRoute: ProductsMediaRoute,
   ProductsNewRoute: ProductsNewRoute,

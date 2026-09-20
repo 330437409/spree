@@ -8,9 +8,21 @@ module Spree
         class ProductBundleSerializer < Spree::Api::V3::Store::ProductBundleSerializer
           typelize status: :string, position: :number,
                    currency: :string,
+                   saving_kind: :string, saving_value: :number,
                    created_at: :string, updated_at: :string, deleted_at: [:string, nullable: true]
 
           attributes :status, :position, :created_at, :updated_at, :deleted_at
+
+          # The rule itself, which is what a merchant edits: the panel shows the
+          # three computed figures beside it, and it needs the rule to fill the
+          # form back in.
+          attribute :saving_kind do |bundle|
+            bundle.preferred_discount_kind
+          end
+
+          attribute :saving_value do |bundle|
+            bundle.preferred_discount_value.to_f
+          end
 
           # The currency every figure in this payload is in, so a panel formats
           # what it was given rather than guessing the store's own.
