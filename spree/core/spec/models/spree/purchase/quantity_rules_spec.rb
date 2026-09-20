@@ -42,6 +42,20 @@ RSpec.describe Spree::Purchase::QuantityRules do
       expect(cart.reload.order_minimum_shortfall).to eq(400)
     end
 
+    # What the buyer is short of is what they are buying: 550 of goods in the
+    # cart with 450 of them unticked is 400 short, not 550 over the line.
+    it 'measures the ticked lines and not the unticked ones' do
+      cheap = create(:product, store: store, price: 100).default_variant
+      expensive = create(:product, store: store, price: 450).default_variant
+      Spree::Carts::AddItem.call(cart: cart, variant: cheap, quantity: 1)
+      Spree::Carts::AddItem.call(cart: cart, variant: expensive, quantity: 1)
+
+      cart.line_items.detect { |line_item| line_item.variant_id == expensive.id }.update!(selected: false)
+      cart.recalculate_totals!
+
+      expect(cart.reload.order_minimum_shortfall).to eq(400)
+    end
+
     it 'is silent for a currency no catalog prices' do
       cart.update!(currency: 'GBP')
 

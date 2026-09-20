@@ -11,7 +11,7 @@ module Spree
         # rather than pointing at whatever order happens to share the cart's
         # id — a stranger's order whose currency and ship address would then
         # stand in for the customer's.
-        @order.line_items.map do |line_item|
+        @order.priced_line_items.map do |line_item|
           # They go through multiple splits, avoid loading the
           # association to order until needed.
           Spree::InventoryUnit.new(

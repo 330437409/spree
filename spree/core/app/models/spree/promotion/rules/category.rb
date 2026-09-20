@@ -152,7 +152,7 @@ module Spree
         # IDs of categories in order that match rule categories (or their children), plus all ancestors
         def category_ids_in_order_including_ancestors(order)
           # Get category IDs from order products that are within rule categories or their children
-          order_category_ids = Spree::ProductCategory.where(product_id: order.product_ids, category_id: eligible_category_ids_including_children).pluck(:category_id).uniq
+          order_category_ids = Spree::ProductCategory.where(product_id: order.priced_product_ids, category_id: eligible_category_ids_including_children).pluck(:category_id).uniq
 
           return [] if order_category_ids.empty?
 

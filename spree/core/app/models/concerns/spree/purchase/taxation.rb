@@ -61,7 +61,7 @@ module Spree
       #
       # @return [Array<Spree::LineItem, Spree::Fulfillment, Spree::Fee>]
       def taxable_items
-        line_items.reload.to_a + fulfillments.reload.to_a + fees.where.not(kind: 'duty').to_a
+        priced_line_items.reload.to_a + fulfillments.reload.to_a + fees.where.not(kind: 'duty').to_a
       end
 
       # The buyer's tax registration to compute against: a checkout-time
@@ -92,7 +92,7 @@ module Spree
 
       # Sum of all line item amounts pre-tax
       def pre_tax_item_amount
-        line_items.sum(:pre_tax_amount)
+        priced_line_items.sum(:pre_tax_amount)
       end
 
       # Sum of all line item and fulfillment amounts pre-tax

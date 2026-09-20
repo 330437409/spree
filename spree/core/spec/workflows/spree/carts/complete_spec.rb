@@ -52,12 +52,15 @@ module Spree
       # choice into completion: nothing in the checkout path names it, so an
       # unticked line is simply never copied and no order holds one.
       it 'copies the selected lines and leaves the unticked ones behind' do
-        ready_cart.line_items.last.update!(selected: false)
+        cart = create(:cart_ready_to_complete, store: store, line_items_count: 2)
+        unticked = cart.line_items.last
+        unticked.update!(selected: false)
 
-        order = subject.value
+        result = described_class.call(cart: cart)
 
-        expect(order.line_items.count).to eq(ready_cart.line_items.count - 1)
-        expect(order.line_items.map(&:variant_id)).not_to include(ready_cart.line_items.last.variant_id)
+        expect(result).to be_success
+        expect(result.value.line_items.map(&:variant_id)).not_to include(unticked.variant_id)
+        expect(result.value.line_items.count).to eq(1)
       end
 
       it 'copies line items, fulfillments and addresses — never sharing rows' do
@@ -126,6 +129,43 @@ module Spree
         expect(result).to be_failure
         expect(result.error.value[:code]).to eq('validation_failed')
         expect(result.error.value[:errors]).to be_present
+      end
+
+      # The order counts what was copied into it, not what the cart held: a
+      # count taken from the cart would report the unticked lines as sold.
+      it 'counts the lines it copied rather than everything the cart held' do
+        cart = create(:cart_ready_to_complete, store: store, line_items_count: 2)
+        cart.line_items.last.update!(selected: false)
+
+        result = described_class.call(cart: cart)
+
+        expect(result.value.total_quantity).to eq(1)
+      end
+
+      # An unticked line is not being bought, so what is wrong with it is not
+      # the checkout's business: the shopper keeps it in the cart and takes the
+      # ticked lines through.
+      it 'completes over an unticked line the shopper can no longer buy' do
+        cart = create(:cart_ready_to_complete, store: store, line_items_count: 2)
+        unticked = cart.line_items.last
+        unticked.update!(selected: false)
+        unticked.variant.update_columns(discontinue_on: 1.minute.ago)
+
+        result = described_class.call(cart: cart)
+
+        expect(result).to be_success
+        expect(result.value.line_items.map(&:variant_id)).not_to include(unticked.variant_id)
+      end
+
+      # Nothing ticked is nothing to buy: the cart holds lines but the order
+      # would hold none, so completion refuses rather than placing an empty one.
+      it 'refuses a cart with nothing ticked' do
+        ready_cart.line_items.each { |line_item| line_item.update!(selected: false) }
+
+        result = described_class.call(cart: ready_cart)
+
+        expect(result).to be_failure
+        expect(result.error.value[:code]).to eq('validation_failed')
       end
 
       it 'rejects a variant discontinued after it entered the cart' do

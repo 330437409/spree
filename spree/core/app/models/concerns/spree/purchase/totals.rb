@@ -16,12 +16,31 @@ module Spree
       # about (docs/plans/6.1-store-api-miniprogram-gaps.md).
       # @return [Integer]
       def selected_quantity
-        line_items.where(selected: true).sum(:quantity)
+        line_items.selected.sum(:quantity)
+      end
+
+      # The lines this record's money is computed over. An order's lines are
+      # all its own — it was completed from ticked cart lines, so every line it
+      # holds was ticked; a cart prices only what the shopper ticked and lets
+      # the rest sit in the cart uncharged. Every money path reads this rather
+      # than +line_items+ (docs/plans/6.1-store-api-miniprogram-gaps.md).
+      # @return [ActiveRecord::Relation]
+      def priced_line_items
+        line_items
+      end
+
+      # The products this record's money is about, for the rules that ask
+      # "does this purchase contain X" — a promotion whose trigger product is
+      # sitting unticked in the cart must not fire on what the shopper is
+      # actually buying.
+      # @return [Array<String>]
+      def priced_product_ids
+        product_ids
       end
 
       # @return [BigDecimal]
       def amount
-        line_items.sum(BigDecimal('0'), &:amount)
+        priced_line_items.sum(BigDecimal('0'), &:amount)
       end
 
       # Re-sums what the customer has actually paid, and nothing else. A
