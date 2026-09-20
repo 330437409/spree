@@ -129,6 +129,21 @@ RSpec.describe 'Price Preview API', type: :request, swagger_doc: 'api-reference/
         run_test!
       end
 
+      # A warehouse the store has parked is not a shop an area page can be
+      # about, and the shelf beside its own availability would contradict it.
+      response '404', 'a warehouse the store no longer uses' do
+        let(:warehouse) { create(:stock_location, store: store, name: '停用仓', active: false) }
+        let(:'x-spree-api-key') { api_key.token }
+        let(:body) do
+          { stock_location_id: warehouse.prefixed_id,
+            items: [{ variant_id: variant.prefixed_id, quantity: 1 }] }
+        end
+
+        schema Spree::Api::OpenAPI::SchemaHelper.error_response
+
+        run_test!
+      end
+
       response '422', 'a payload that is not a list of items' do
         let(:'x-spree-api-key') { api_key.token }
         let(:body) { { items: {} } }
@@ -190,8 +205,12 @@ RSpec.describe 'Price Preview API', type: :request, swagger_doc: 'api-reference/
         let(:store) { create(:store, default: true, preferred_storefront_access: 'prices_hidden') }
         let(:product) { create(:product, store: store, price: 100) }
         let(:variant) { product.default_variant }
+        let(:warehouse) { create(:stock_location, store: store, name: '浦东仓') }
         let(:'x-spree-api-key') { api_key.token }
-        let(:body) { { items: [{ variant_id: variant.prefixed_id, quantity: 1 }] } }
+        let(:body) do
+          { stock_location_id: warehouse.prefixed_id,
+            items: [{ variant_id: variant.prefixed_id, quantity: 1 }] }
+        end
 
         schema Spree::Api::OpenAPI::SchemaHelper.ref('StorePricePreview')
 
@@ -200,7 +219,10 @@ RSpec.describe 'Price Preview API', type: :request, swagger_doc: 'api-reference/
 
           expect(data['total']).to be_nil
           expect(data['items'].first['unit_amount']).to be_nil
+          expect(data['items'].first['price_ends_at']).to be_nil
+          # What the goods cost is hidden; whether they are there is not.
           expect(data['items'].first).to have_key('in_stock')
+          expect(data['items'].first['stock_location_quantity']).to eq(0)
         end
       end
     end

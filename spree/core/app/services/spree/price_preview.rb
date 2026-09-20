@@ -67,9 +67,10 @@ module Spree
         # priced the line and which source answered.
         price_list_id: price&.price_list&.prefixed_id,
         # How long the price it answered holds: a source's own window when one
-        # priced the line, otherwise the list's. Nil when nothing time-boxes it,
-        # which is the ordinary catalogue price.
-        price_ends_at: source&.fetch(:ends_at, nil) || price&.price_list&.ends_at
+        # priced the line, otherwise the list's. A source that prices without one
+        # answers no window at all — the catalogue's list is not the price being
+        # charged, so its window says nothing about this line.
+        price_ends_at: source ? source[:ends_at] : price&.price_list&.ends_at
       ).tap do |row|
         row.total = row.unit_amount && row.unit_amount * quantity
       end

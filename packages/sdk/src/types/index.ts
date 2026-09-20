@@ -171,6 +171,12 @@ export interface RegisterParams {
 export interface PricePreviewParams {
   /** Currency to price in; defaults to the request's own */
   currency?: string
+  /** Price the lines this cart holds instead of naming variants */
+  cart_id?: string
+  /** The warehouse the page is about, when it is about one */
+  stock_location_id?: string
+  /** What a registered pricing source needs — a flash sale's activity id, for instance */
+  context?: Record<string, unknown>
   /** What to price, and how many of each */
   items: Array<{ variant_id: string; quantity?: number }>
 }

@@ -84,6 +84,30 @@ RSpec.describe Spree::PricePreview do
     expect(row.price_ends_at).to be_within(1.second).of(closes_at)
   end
 
+  # A source that prices a line is the price, so a window on the catalogue's own
+  # list says nothing about it: the line answers no window rather than the one
+  # belonging to the price it is not being charged.
+  it 'answers no window when a source prices a line the catalogue time-boxes' do
+    price_list = create(:price_list, store: store, status: 'active', name: '区域价', ends_at: 2.hours.from_now)
+    create(:price, variant: variant, currency: store.default_currency, amount: 80, price_list: price_list)
+    catalog = create(:catalog, store: store, price_list: price_list, active: true)
+    Spree::Current.channel = create(:channel, store: store, default_catalog: catalog)
+
+    source = Class.new do
+      def self.call(variant:, quantity:, customer: nil, context: {})
+        { amount: 60.0, label: 'test_source' }
+      end
+    end
+    Spree.price_preview_sources.unshift(source)
+
+    row = preview([{ variant: variant, quantity: 1 }]).rows.first
+
+    expect(row.unit_amount).to eq(60)
+    expect(row.price_ends_at).to be_nil
+  ensure
+    Spree.price_preview_sources.delete(source)
+  end
+
   # A line nobody can price is not a free line, and nothing in it is for sale.
   it 'answers no price rather than a free one when nothing prices the variant' do
     variant.prices.destroy_all
