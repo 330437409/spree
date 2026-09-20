@@ -45,10 +45,12 @@ module Spree
 
           private
 
-          # Every line the cart holds: the tick that chooses some of them is the
-          # cart's own state, and selecting them is not built yet.
+          # The lines the cart prices, not every line it holds: the tick that
+          # chooses between them is cart state, and a preview of what is being
+          # bought has to answer the same set the money does
+          # (docs/plans/6.1-store-api-miniprogram-gaps.md).
           def cart_items(cart)
-            cart.line_items.map do |line_item|
+            cart.priced_line_items.map do |line_item|
               { variant: line_item.variant, quantity: line_item.quantity }
             end
           end

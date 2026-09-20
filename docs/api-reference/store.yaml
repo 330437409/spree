@@ -1229,8 +1229,8 @@ paths:
               example:
                 data:
                 - id: prod_UkLWZg9DAJ
-                  name: Product 3219085
-                  slug: product-3219085
+                  name: Product 3229085
+                  slug: product-3229085
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -1261,8 +1261,8 @@ paths:
                   original_price:
                   seller_id:
                 - id: prod_gbHJdmfrXB
-                  name: Product 3228209
-                  slug: product-3228209
+                  name: Product 3238209
+                  slug: product-3238209
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -1401,8 +1401,8 @@ paths:
             application/json:
               example:
                 id: prod_UkLWZg9DAJ
-                name: Product 3536885
-                slug: product-3536885
+                name: Product 3546885
+                slug: product-3546885
                 meta_title:
                 meta_description:
                 meta_keywords:
@@ -9276,8 +9276,8 @@ paths:
               example:
                 data:
                 - id: prod_UkLWZg9DAJ
-                  name: Product 3767945
-                  slug: product-3767945
+                  name: Product 3777945
+                  slug: product-3777945
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -9329,8 +9329,8 @@ paths:
                   original_price:
                   seller_id:
                 - id: prod_gbHJdmfrXB
-                  name: Product 3774689
-                  slug: product-3774689
+                  name: Product 3784689
+                  slug: product-3784689
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -12359,6 +12359,9 @@ paths:
         currency, the country the buyer is taxed in, and the customer when there is one. It is
         the one price calculation the Store API offers, and the price it answers is the price
         the cart writes.
+
+        A cart is priced over the lines the shopper has ticked for checkout: an unticked line
+        waits in the cart without a price, the same way it waits without money.
       parameters:
       - name: x-spree-api-key
         in: header
