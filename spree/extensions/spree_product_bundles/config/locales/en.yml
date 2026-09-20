@@ -1,0 +1,7 @@
+---
+en:
+  spree:
+    product_bundles:
+      errors:
+        cross_seller: must all come from one seller
+        duplicate_component: holds each goods once

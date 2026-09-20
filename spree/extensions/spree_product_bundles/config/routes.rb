@@ -1,0 +1,22 @@
+# frozen_string_literal: true
+
+# The storefront's bundle reads, wired through Spree's extension hook so nothing
+# in core's routes file changes. The controllers inherit the Store API's base,
+# so publishable-key auth, the guest gate and the error shape behave exactly like
+# core resources.
+#
+# It lives in config/ rather than lib/ because this is the file Rails watches
+# and re-loads: a routes reload re-draws the engine's routes, and a block
+# registered once at boot from lib/ is not registered again, so the endpoint
+# would vanish from a running development server until it restarted.
+Spree::Core::Engine.add_routes do
+  namespace :api, defaults: { format: 'json' } do
+    namespace :v3 do
+      namespace :store do
+        # One collection and one member: the client's four calls differ in
+        # filter rather than in shape.
+        resources :product_bundles, only: [:index, :show], id: /.+/
+      end
+    end
+  end
+end
