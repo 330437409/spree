@@ -44,6 +44,27 @@ components with their own prices, and the three figures a storefront shows
 beside them: `goods_price` (what the components cost one by one), `price` (what
 the set costs) and `saving`.
 
+## In the panel
+
+```
+GET    /api/v3/admin/product_bundles        # the operator's list
+POST   /api/v3/admin/product_bundles        # create one from components
+PATCH  /api/v3/admin/product_bundles/:id    # edit it, or take it off sale
+DELETE /api/v3/admin/product_bundles/:id    # remove it, leaving the components
+```
+
+The Admin API's own resource: full CRUD, secret-key scopes
+(`read_product_bundles` / `write_product_bundles`) and CanCanCan, like every
+other admin resource. The composition is written flat and it is the whole set —
+a component the payload leaves out is one the operator removed:
+
+```json
+{ "title": "双人下午茶套餐", "status": "active",
+  "preferred_discount_kind": "amount", "preferred_discount_value": 20,
+  "components": [{ "variant_id": "variant_…", "quantity": 1 },
+                 { "variant_id": "variant_…", "quantity": 2 }] }
+```
+
 ## Wiring
 
 An extension gem like the others under `spree/extensions/`: the starter's
