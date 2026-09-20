@@ -18,40 +18,80 @@ module Spree
     #   and scoped by the caller
     # @param currency [String, nil] defaults to the request's currency
     # @param customer [Object, nil] the shopper whose price lists apply
+    # @param context [Hash] what a registered source needs to price a line — an
+    #   activity's id, a ticket's — passed through untouched
+    # @param stock_location [Spree::StockLocation, nil] the warehouse the request
+    #   is asking about, when it is asking about one: a line then answers that
+    #   shop's shelf as well as the goods' own availability
     # @return [Spree::ServiceModule::Result] value is a {Spree::PricePreview::Result}
-    def call(items:, currency: nil, customer: nil)
+    def call(items:, currency: nil, customer: nil, context: {}, stock_location: nil)
       currency ||= Spree::Current.currency
+      @stock_location = stock_location
 
-      rows = Array(items).filter_map { |item| row_for(item, currency, customer) }
+      rows = Array(items).filter_map { |item| row_for(item, currency, customer, context) }
 
       success(Result.new(currency: currency, rows: rows))
     end
 
     private
 
-    def row_for(item, currency, customer)
+    def row_for(item, currency, customer, context)
       variant = item[:variant] || item['variant']
       return nil if variant.blank?
 
       quantity = (item[:quantity] || item['quantity'] || 1).to_i
-      price = variant.price_for(context_for(variant, currency, quantity, customer))
-      unit_amount = amount_for(price)
+      pricing = context_for(variant, currency, quantity, customer)
+      price = variant.price_for(pricing)
+      catalogue_amount = amount_for(price)
+
+      source = source_answer(variant: variant, quantity: quantity, customer: customer, context: context)
 
       Row.new(
         variant: variant,
         quantity: quantity,
         price: price,
-        unit_amount: unit_amount,
-        compare_at_amount: compare_at_amount(variant, price, currency),
-        total: unit_amount && unit_amount * quantity,
+        unit_amount: source ? source[:amount] : catalogue_amount,
+        # A source that prices a line below the catalogue shows what it was
+        # priced against, which is the strike-through the page renders.
+        compare_at_amount: source ? catalogue_amount : compare_at_amount(variant, price, currency),
+        source: source&.fetch(:label, nil),
+        flags: source&.fetch(:flags, nil) || {},
         in_stock: variant.in_stock?,
         backorderable: variant.backorderable?,
         purchasable: variant.purchasable?,
         available_quantity: Spree::Stock::Quantifier.new(variant).total_on_hand,
+        # What the named shop itself has on the shelf. Nil when the request is
+        # not about one shop, which is every read that is not an area page.
+        stock_location_quantity: stock_location_quantity_for(variant),
         # Kept as the record rather than its id, so a caller can say which list
         # priced the line and which source answered.
-        price_list_id: price&.price_list&.prefixed_id
-      )
+        price_list_id: price&.price_list&.prefixed_id,
+        # How long the price it answered holds: a source's own window when one
+        # priced the line, otherwise the list's. A source that prices without one
+        # answers no window at all — the catalogue's list is not the price being
+        # charged, so its window says nothing about this line.
+        price_ends_at: source ? source[:ends_at] : price&.price_list&.ends_at
+      ).tap do |row|
+        row.total = row.unit_amount && row.unit_amount * quantity
+      end
+    end
+
+    # The first registered source that has something to say about this line
+    # prices it — one answer, so two sources cannot each take a bite.
+    # @return [Hash, nil]
+    def source_answer(variant:, quantity:, customer:, context:)
+      Spree.price_preview_sources.each do |source|
+        answer = source.call(variant: variant, quantity: quantity, customer: customer, context: context)
+        return answer if answer.present?
+      end
+
+      nil
+    end
+
+    def stock_location_quantity_for(variant)
+      return nil if @stock_location.nil?
+
+      Spree::Stock::Quantifier.new(variant, @stock_location).total_on_hand
     end
 
     def context_for(variant, currency, quantity, customer)

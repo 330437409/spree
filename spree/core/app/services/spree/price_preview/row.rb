@@ -19,7 +19,13 @@ module Spree
       attribute :backorderable, :boolean
       attribute :purchasable, :boolean
       attribute :available_quantity, :integer
+      attribute :stock_location_quantity, :integer
       attribute :price_list_id
+      attribute :price_ends_at, :datetime
+      # Which registered source priced this line, when one did rather than the
+      # catalogue, and the verdicts it brought with it.
+      attribute :source
+      attribute :flags, default: -> { {} }
 
       def price_source
         price&.price_source

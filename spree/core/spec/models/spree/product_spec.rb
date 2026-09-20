@@ -1701,6 +1701,40 @@ describe Spree::Product, type: :model do
     end
   end
 
+  describe '#sale_option_values' do
+    let(:store) { @default_store }
+    let(:option_type) { create(:option_type, name: 'size', label: 'Size') }
+    let(:small) { create(:option_value, option_type: option_type, name: 'small', label: 'S') }
+    let(:large) { create(:option_value, option_type: option_type, name: 'large', label: 'L') }
+    let(:product) { create(:product, store: store) }
+
+    def variant_with(*option_values)
+      create(:variant, product: product, option_values: option_values)
+    end
+
+    # The picker offers what can be bought: a value whose only variant is sold
+    # out is a dead end, and the client should not have to discover that.
+    it 'answers the values a shopper can pick, not every value the goods carry' do
+      variant_with(small).stock_levels.update_all(count_on_hand: 5, backorderable: false)
+      variant_with(large).stock_levels.update_all(count_on_hand: 0, backorderable: false)
+
+      expect(product.sale_option_values).to eq([small])
+    end
+
+    it 'answers nothing when nothing can be bought' do
+      variant_with(small).stock_levels.update_all(count_on_hand: 0, backorderable: false)
+
+      expect(product.sale_option_values).to be_empty
+    end
+
+    it 'answers a value once when two variants carry it' do
+      variant_with(small, large).stock_levels.update_all(count_on_hand: 5, backorderable: false)
+      variant_with(small).stock_levels.update_all(count_on_hand: 5, backorderable: false)
+
+      expect(product.sale_option_values).to eq([small, large])
+    end
+  end
+
   describe 'scopes' do
     describe '.not_discontinued' do
       let(:product) { create(:product) }

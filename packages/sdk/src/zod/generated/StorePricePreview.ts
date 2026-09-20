@@ -7,6 +7,7 @@ export const StorePricePreviewSchema = z.object({
   total: z.number().nullable(),
   quantity: z.number(),
   purchasable: z.boolean(),
+  flags: z.record(z.string(), z.unknown()),
   items: z.array(StorePricePreviewItemSchema),
 });
 

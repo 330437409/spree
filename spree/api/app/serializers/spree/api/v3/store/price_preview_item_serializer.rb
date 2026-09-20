@@ -15,9 +15,12 @@ module Spree
                    compare_at_amount: [:number, nullable: true],
                    total: [:number, nullable: true],
                    price_list_id: [:string, nullable: true],
+                   price_ends_at: [:string, nullable: true],
                    price_source: [:string, nullable: true],
                    in_stock: :boolean, backorderable: :boolean, purchasable: :boolean,
-                   available_quantity: :number
+                   available_quantity: :number,
+                   stock_location_quantity: [:number, nullable: true],
+                   source: [:string, nullable: true]
 
           attribute :variant_id do |row|
             row.variant&.prefixed_id
@@ -55,10 +58,24 @@ module Spree
             row.price_list_id
           end
 
+          attribute :price_ends_at do |row|
+            next nil if params[:hide_prices]
+
+            row.price_ends_at&.iso8601
+          end
+
           attribute :price_source do |row|
             next nil if params[:hide_prices]
 
             row.price_source
+          end
+
+          attribute :source do |row|
+            row.source
+          end
+
+          attribute :stock_location_quantity do |row|
+            row.stock_location_quantity
           end
 
           attributes :in_stock, :backorderable, :purchasable, :available_quantity

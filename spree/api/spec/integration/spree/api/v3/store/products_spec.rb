@@ -204,6 +204,28 @@ RSpec.describe 'Products API', type: :request, swagger_doc: 'api-reference/store
         end
       end
 
+      # The picker's own read: the values the goods can be bought in, which is
+      # narrower than every value the catalogue knows about.
+      response '200', 'the values the goods can be picked in' do
+        let(:'x-spree-api-key') { api_key.token }
+        let(:id) { product.prefixed_id }
+        let(:expand) { 'sale_option_values' }
+        let!(:picked_variant) do
+          create(:variant, product: product, option_values: [option_value_small]).tap do |variant|
+            variant.stock_levels.update_all(count_on_hand: 5, backorderable: false)
+          end
+        end
+
+        schema '$ref' => '#/components/schemas/Product'
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+
+          expect(data['sale_option_values'].map { |value| value['name'] }).to eq(['small'])
+          expect(data['sale_option_values'].first['option_type_label']).to eq('Size')
+        end
+      end
+
       response '200', 'product found by prefix ID' do
         let(:'x-spree-api-key') { api_key.token }
         let(:id) { product.to_param }

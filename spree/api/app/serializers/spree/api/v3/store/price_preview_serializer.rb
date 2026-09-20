@@ -13,7 +13,8 @@ module Spree
           include Typelizer::DSL
 
           typelize currency: :string, total: [:number, nullable: true], quantity: :number,
-                   purchasable: :boolean, items: 'StorePricePreviewItem[]'
+                   purchasable: :boolean, items: 'StorePricePreviewItem[]',
+                   flags: 'Record<string, unknown>'
 
           attributes :currency
 
@@ -29,6 +30,10 @@ module Spree
 
           attribute :purchasable do |preview|
             preview.purchasable?
+          end
+
+          attribute :flags do |preview|
+            preview.flags
           end
 
           attribute :items do |preview|

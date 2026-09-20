@@ -679,6 +679,7 @@ paths:
                   meta_description:
                   meta_keywords:
                   children_count: 1
+                  products_count: 1
                   parent_id:
                   description: ''
                   description_html: ''
@@ -696,6 +697,7 @@ paths:
                   meta_description:
                   meta_keywords:
                   children_count: 1
+                  products_count: 1
                   parent_id: ctg_UkLWZg9DAJ
                   description: ''
                   description_html: ''
@@ -713,6 +715,7 @@ paths:
                   meta_description:
                   meta_keywords:
                   children_count: 0
+                  products_count: 0
                   parent_id: ctg_gbHJdmfrXB
                   description: ''
                   description_html: ''
@@ -813,6 +816,7 @@ paths:
                 meta_description:
                 meta_keywords:
                 children_count: 1
+                products_count: 1
                 parent_id: ctg_UkLWZg9DAJ
                 description: ''
                 description_html: ''
@@ -1225,8 +1229,8 @@ paths:
               example:
                 data:
                 - id: prod_UkLWZg9DAJ
-                  name: Product 3199085
-                  slug: product-3199085
+                  name: Product 3219085
+                  slug: product-3219085
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -1257,8 +1261,8 @@ paths:
                   original_price:
                   seller_id:
                 - id: prod_gbHJdmfrXB
-                  name: Product 3208209
-                  slug: product-3208209
+                  name: Product 3228209
+                  slug: product-3228209
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -1397,8 +1401,8 @@ paths:
             application/json:
               example:
                 id: prod_UkLWZg9DAJ
-                name: Product 3476885
-                slug: product-3476885
+                name: Product 3536885
+                slug: product-3536885
                 meta_title:
                 meta_description:
                 meta_keywords:
@@ -1428,6 +1432,16 @@ paths:
                   price_list_id:
                 original_price:
                 seller_id:
+                sale_option_values:
+                - id: optval_UkLWZg9DAJ
+                  option_type_id: opt_UkLWZg9DAJ
+                  name: small
+                  label: S
+                  position: 1
+                  color_code:
+                  option_type_name: size
+                  option_type_label: Size
+                  image_url:
                 prior_price:
                   id: _AXs1igzRC6
                   amount: '9.99'
@@ -1533,7 +1547,7 @@ paths:
                   options:
                   - id: ctg_gbHJdmfrXB
                     name: Shirts
-                    permalink: category-38/shirts
+                    permalink: category-39/shirts
                     count: 2
                 sort_options:
                 - id: manual
@@ -5507,8 +5521,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 3729789
-                  slug: product-3729789
+                  name: Product 3789789
+                  slug: product-3789789
                   options_text: ''
                   price: '10.0'
                   display_price: "$10.00"
@@ -5725,8 +5739,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 374179
-                  slug: product-374179
+                  name: Product 380179
+                  slug: product-380179
                   options_text: ''
                   price: '10.0'
                   display_price: "$10.00"
@@ -8698,8 +8712,8 @@ paths:
               example:
                 data:
                 - id: prod_UkLWZg9DAJ
-                  name: Product 3707945
-                  slug: product-3707945
+                  name: Product 3767945
+                  slug: product-3767945
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -8751,8 +8765,8 @@ paths:
                   original_price:
                   seller_id:
                 - id: prod_gbHJdmfrXB
-                  name: Product 3714689
-                  slug: product-3714689
+                  name: Product 3774689
+                  slug: product-3774689
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -10124,7 +10138,7 @@ paths:
                 variant:
                   id: variant_gbHJdmfrXB
                   product_id: prod_gbHJdmfrXB
-                  sku: SKU-466
+                  sku: SKU-474
                   options_text: ''
                   track_inventory: true
                   media_count: 0
@@ -11798,6 +11812,12 @@ paths:
         description: Bearer JWT token (optional — for a signed-in customer)
         schema:
           type: string
+      - name: x-spree-token
+        in: header
+        required: false
+        description: Guest cart token, when the request prices a cart the caller holds
+        schema:
+          type: string
       responses:
         '200':
           description: no amounts on a storefront that hides prices
@@ -11808,6 +11828,7 @@ paths:
                 total:
                 quantity: 1
                 purchasable: true
+                flags: {}
                 items:
                 - variant_id: variant_UkLWZg9DAJ
                   product_id: prod_UkLWZg9DAJ
@@ -11816,7 +11837,10 @@ paths:
                   compare_at_amount:
                   total:
                   price_list_id:
+                  price_ends_at:
                   price_source:
+                  source:
+                  stock_location_quantity: 0
                   in_stock: false
                   backorderable: true
                   purchasable: true
@@ -11824,13 +11848,13 @@ paths:
               schema:
                 "$ref": "#/components/schemas/StorePricePreview"
         '404':
-          description: a variant of a product the storefront does not show
+          description: a warehouse the store no longer uses
           content:
             application/json:
               example:
                 error:
-                  code: variant_not_found
-                  message: Variant not found
+                  code: record_not_found
+                  message: Stock location not found
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
         '422':
@@ -11843,6 +11867,16 @@ paths:
                   message: quantity must be a positive whole number
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+        '403':
+          description: a cart that is not this caller’s
+          content:
+            application/json:
+              example:
+                error:
+                  code: access_denied
+                  message: You are not authorized to access this page.
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
       requestBody:
         content:
           application/json:
@@ -11853,6 +11887,22 @@ paths:
                   type: string
                   example: USD
                   description: Currency to price in; defaults to the request’s
+                cart_id:
+                  type: string
+                  example: cart_abc123
+                  description: Price the lines this cart holds instead of naming variants.
+                    Its own currency and its own context apply.
+                context:
+                  type: object
+                  additionalProperties: true
+                  description: What a registered source needs — a flash sale’s activity
+                    id, for instance.
+                stock_location_id:
+                  type: string
+                  example: sloc_abc123
+                  description: 'The warehouse the page is about, when it is about
+                    one: each line then answers that shop’s own shelf beside the goods’
+                    total.'
                 items:
                   type: array
                   description: The variants to price, with how many of each
@@ -12779,6 +12829,8 @@ components:
           nullable: true
         children_count:
           type: number
+        products_count:
+          type: number
         parent_id:
           type: string
           nullable: true
@@ -12822,6 +12874,7 @@ components:
       - meta_description
       - meta_keywords
       - children_count
+      - products_count
       - parent_id
       - description
       - description_html
@@ -15347,6 +15400,10 @@ components:
           type: array
           items:
             "$ref": "#/components/schemas/OptionValue"
+        sale_option_values:
+          type: array
+          items:
+            "$ref": "#/components/schemas/OptionValue"
         categories:
           type: array
           items:
@@ -15774,8 +15831,17 @@ components:
         price_list_id:
           type: string
           nullable: true
+        price_ends_at:
+          type: string
+          nullable: true
         price_source:
           type: string
+          nullable: true
+        source:
+          type: string
+          nullable: true
+        stock_location_quantity:
+          type: number
           nullable: true
         in_stock:
           type: boolean
@@ -15793,7 +15859,10 @@ components:
       - compare_at_amount
       - total
       - price_list_id
+      - price_ends_at
       - price_source
+      - source
+      - stock_location_quantity
       - in_stock
       - backorderable
       - purchasable
@@ -15811,6 +15880,8 @@ components:
           type: number
         purchasable:
           type: boolean
+        flags:
+          type: object
         items:
           type: array
           items:
@@ -15820,6 +15891,7 @@ components:
       - total
       - quantity
       - purchasable
+      - flags
       - items
       x-typelizer: true
     StoreCreditEvent:
