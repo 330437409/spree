@@ -18,6 +18,9 @@ en:
         media_in_use: "This file is still in use (%{places}). Pass detach=true to remove it everywhere and delete it, or clear those places first."
         media_url_import_requires_product: Importing media from a URL needs a product to import it into. Upload the file instead, or post it to a product's media.
         seller_not_found: The requested site does not exist in this store.
+        cart_batch_requires_items: Name at least one item to write to this cart.
+        cart_batch_requires_item: Name the variant to buy, or a line of this cart.
+        cart_batch_unknown_line: One of the lines named is not in this cart.
         cart_selection_requires_lines: Name at least one line of this cart to select or deselect.
         cart_selection_requires_state: Pass selected as true or false.
         unknown_share_target: This store shares nothing of type %{type}.
