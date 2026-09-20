@@ -841,6 +841,18 @@ Plan: `6.1-store-api-miniprogram-gaps.md`'s `cart/getCartCount`, which left the 
 
 **Recorded beside it: the selection has a reference entry now.** The endpoint shipped in the flag's PR without one, which left `PATCH /api/v3/store/carts/{cart_id}/selection` out of the published API reference while every other endpoint this fork added has one. Its integration spec rides this change.
 
+## 2026-09-20 (the batch write) — A set of lines is written as the cart should hold it
+
+Plan: `6.1-store-api-miniprogram-gaps.md`'s batch cart rows (`cart/addCartBatch`, `setCartBatch`), whose table read "one request carrying many lines, applied atomically".
+
+**Its own path, not the collection's: `POST /api/v3/store/carts/{cart_id}/items/batch`.** The collection's POST *adds* to a line and the batch *sets* it, and one verb carrying two meanings is a trap a client finds out about by being charged twice; a path of its own keeps each verb meaning one thing. It is the shape the codebase already gives a batch write — `POST /translations/batch` is the precedent, comment and all — and it keeps the published reference's diff to the new operation rather than re-cutting the file.
+
+**The quantities are the set the cart should end up holding.** A retried batch writes the same cart instead of adding twice, which is what a phone on a flaky network needs, and it is the semantics the cart's single-item `PATCH` already speaks. An entry names the variant to buy or a line of this cart — a combo knows its goods, a group's quantity edit knows its lines — and a line id outside this cart is refused rather than skipped, because the client asked for a set and answering with a different one hides its stale state. Zero and negatives are refused too: removals are the DELETE endpoint's, and a write that reads as an edit must not delete.
+
+**A refused entry warns; a request that cannot be applied is refused whole** (the author's ruling, 2026-09-20). The plan's "applied atomically" is narrowed deliberately: an entry the cart's own rules refuse — out of stock, an unsellable currency — rides the cart's existing `warnings` channel and the rest of the set still applies. The workflow was built that way for cart restores, and a shopper restoring saved goods must not lose everything to one unbuyable line. What is refused whole is what is not a fact about one entry: an empty set, a quantity that is not a positive whole number, a line this cart does not hold.
+
+**What the client sends that this deliberately ignores: `promotionCode`, `promotionId` and `frozenQuantity`.** Choosing between promotions is its own slice (Key Decision 29), and a combo's discount is the server's own business here — this fork's bundles gem prices a set from the lines it sees, so a client writes lines and no promo identity. `frozenQuantity` is the old server's promotional hold, which has no counterpart in this cart yet.
+
 ## 2026-09-20 (the payment deadline) — The deadline is told, not enforced
 
 Plan: `6.1-store-api-miniprogram-gaps.md`'s order-reads row, and the correction that row needed.

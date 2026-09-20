@@ -14,6 +14,7 @@ import type {
   AuthTokens,
   Cart,
   CartCount,
+  CartItemsBatchParams,
   CartSelectionParams,
   Category,
   CategoryListParams,
@@ -611,6 +612,25 @@ export class StoreClient {
     },
 
     items: {
+      /**
+       * Write a set of lines in one request — a combo added whole, an order
+       * re-added, a group's quantities changed together. The quantities are
+       * the set the cart should end up holding, so a retried batch writes the
+       * same cart rather than adding twice. Rejections are per entry and come
+       * back in the cart's warnings.
+       * @param cartId - Cart prefixed ID
+       * @param params - The lines to write
+       */
+      batch: (
+        cartId: string,
+        params: CartItemsBatchParams,
+        options?: RequestOptions,
+      ): Promise<Cart> =>
+        this.request<Cart>('POST', `/carts/${cartId}/items/batch`, {
+          ...options,
+          body: params,
+        }),
+
       /**
        * Add an item to the cart.
        * Returns the updated cart with recalculated totals.

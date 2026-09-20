@@ -177,6 +177,24 @@ export interface CartSelectionParams {
   line_item_ids: string[]
 }
 
+/**
+ * One line a batch writes: what the cart should hold for it after the request.
+ * An entry names either the variant to buy or a line of this cart.
+ */
+export type CartItemsBatchEntry = (
+  | { variant_id: string; line_item_id?: never }
+  | { line_item_id: string; variant_id?: never }
+) & {
+  /** The quantity the line should hold (defaults to 1) */
+  quantity?: number
+  /** Arbitrary key-value metadata for the line */
+  metadata?: Record<string, unknown>
+}
+
+export interface CartItemsBatchParams {
+  items: CartItemsBatchEntry[]
+}
+
 export interface ShareParams {
   /** What kind of thing is being shared, in the api_type shorthand the rest of v3 uses */
   target_type: string

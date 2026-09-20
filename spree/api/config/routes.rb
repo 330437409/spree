@@ -65,6 +65,12 @@ Spree::Core::Engine.add_routes do
           end
           resources :items, only: [:create, :update, :destroy], controller: 'carts/items'
 
+          # A set of lines written in one pass — a combo added whole, an order
+          # re-added, a group's quantities changed together. Its own path
+          # rather than the collection's, because the collection's POST adds
+          # where this one sets (docs/plans/6.1-store-api-miniprogram-gaps.md).
+          post 'items/batch', to: 'carts/items_batches#create'
+
           # Which lines take part in checkout, written in bulk: one tick, or a
           # whole group's (docs/plans/6.1-store-api-miniprogram-gaps.md).
           resource :selection, only: [:update], controller: 'carts/selection'
