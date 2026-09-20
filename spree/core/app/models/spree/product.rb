@@ -302,6 +302,44 @@ module Spree
       where(id: (product_ids + custom_field_ids).uniq.compact)
     }
 
+    # What this customer has already bought, ordered two ways: `:recent` by the
+    # last time they bought it, `:frequent` by how many of their orders carried
+    # it. One set with two orderings, which is how a "bought before" shelf and a
+    # "bought often" shelf read (docs/plans/6.1-store-api-miniprogram-gaps.md).
+    #
+    # The rows are grouped by product, so a caller that pages them plucks ids
+    # rather than counting rows — see Spree::Api::V3::Store::Customer::
+    # PurchaseHistoryController.
+    #
+    # @param customer [Object] a record answering +completed_orders+ — the
+    #   customer the history belongs to
+    # @param order_by [Symbol, String] `:recent` (default) or `:frequent`
+    scope :purchased_by, lambda { |customer, order_by: :recent|
+      line_items = Spree::LineItem.table_name
+      orders = Spree::Order.table_name
+
+      joins(variants: { line_items: :order }).
+        where(orders => { customer_id: customer.id }).
+        where.not(orders => { completed_at: nil }).
+        group("#{table_name}.id").
+        reorder(purchase_history_order(order_by))
+    }
+
+    # The ordering a purchase history asks for, as SQL because it is an
+    # aggregate over the customer's own orders rather than a column.
+    # @param order_by [Symbol, String]
+    # @return [Arel::Nodes::SqlLiteral]
+    def self.purchase_history_order(order_by)
+      line_items = Spree::LineItem.table_name
+      orders = Spree::Order.table_name
+
+      if order_by.to_s == 'frequent'
+        Arel.sql("COUNT(DISTINCT #{line_items}.order_id) DESC, MAX(#{orders}.completed_at) DESC")
+      else
+        Arel.sql("MAX(#{orders}.completed_at) DESC")
+      end
+    end
+
     # Backward compatibility alias — remove in Spree 6.0
     scope :multi_search, ->(*args) { search(*args) }
 

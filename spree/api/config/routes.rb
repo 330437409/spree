@@ -121,6 +121,9 @@ Spree::Core::Engine.add_routes do
           patch '/', action: :update, controller: '/spree/api/v3/store/customers'
 
           resources :orders, only: [:index, :show]
+          # What this customer has already bought, ordered by when they bought
+          # it or by how often (docs/plans/6.1-store-api-miniprogram-gaps.md).
+          resources :purchase_history, only: [:index], controller: 'purchase_history'
           resources :addresses, only: [:index, :show, :create, :update, :destroy]
           resources :credit_cards, only: [:index, :show, :destroy]
           resources :gift_cards, only: [:index, :show]

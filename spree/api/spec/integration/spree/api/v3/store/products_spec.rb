@@ -59,6 +59,41 @@ RSpec.describe 'Products API', type: :request, swagger_doc: 'api-reference/store
                              'option_types, seller, seller.policies)'
       parameter name: :fields, in: :query, type: :string, required: false,
                 description: 'Comma-separated list of fields to include (e.g., name,slug,price). id is always included.'
+      parameter name: :ids, in: :query, type: :array, required: false,
+                description: 'Batch load: the prefixed product IDs to answer with, in one request ' \
+                             '(at most 100). An ID the store does not sell is simply absent from the answer.'
+
+      # The batch load the mini program's product lists are built from: the IDs
+      # it already holds, answered as a scoped collection rather than a search.
+      response '200', 'the products named by ids' do
+        let(:'x-spree-api-key') { api_key.token }
+        let(:ids) { [product.prefixed_id, product2.prefixed_id, other_store_product.prefixed_id] }
+
+        schema type: :object,
+               properties: {
+                 data: { type: :array, items: { '$ref' => '#/components/schemas/Product' } },
+                 meta: { '$ref' => '#/components/schemas/PaginationMeta' }
+               },
+               required: %w[data meta]
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+
+          expect(data['data'].map { |row| row['id'] }).to contain_exactly(product.prefixed_id, product2.prefixed_id)
+          expect(data['meta']['count']).to eq(2)
+        end
+      end
+
+      response '422', 'more ids than one batch may ask for' do
+        let(:'x-spree-api-key') { api_key.token }
+        let(:ids) { Array.new(Spree::Api::V3::Store::ProductsController::MAX_BATCH_IDS + 1) { product.prefixed_id } }
+
+        schema '$ref' => '#/components/schemas/ErrorResponse'
+
+        run_test! do |response|
+          expect(JSON.parse(response.body)['error']['code']).to be_present
+        end
+      end
 
       response '200', 'products found' do
         let(:'x-spree-api-key') { api_key.token }

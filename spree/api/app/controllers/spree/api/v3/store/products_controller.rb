@@ -6,7 +6,88 @@ module Spree
           include Spree::Api::V3::HttpCaching
           include Spree::Api::V3::Store::SearchProviderSupport
 
+          # The most ids one batch load may ask for. The response is the page,
+          # and a page holds this many, so a longer list is a request to split
+          # rather than an answer quietly cut short.
+          MAX_BATCH_IDS = 100
+
+          # A batch load: the products the caller already holds ids for. The
+          # search provider is deliberately not consulted — it answers from an
+          # index, and a product published a moment ago may not be in it yet,
+          # while this question is about the catalogue itself.
+          def index
+            return if render_over_long_batch
+
+            super
+          end
+
           protected
+
+          # @return [Boolean] true when the request was refused
+          def render_over_long_batch
+            return false if requested_ids.size <= MAX_BATCH_IDS
+
+            render_error(
+              code: ErrorHandler::ERROR_CODES[:validation_error],
+              message: "ids must be at most #{MAX_BATCH_IDS}",
+              status: :unprocessable_content
+            )
+            true
+          end
+
+          # The ids the caller asked for, as they sent them — the cap is on what
+          # was asked for rather than on what resolved.
+          # @return [Array<String>]
+          def requested_ids
+            @requested_ids ||= begin
+              raw = params[:ids]
+              case raw
+              when nil then []
+              when Array then raw.map(&:to_s)
+              when String then raw.split(',')
+              else
+                []
+              end
+            end
+          end
+
+          # The requested ids as primary keys, in the order asked for and
+          # without duplicates. An id that names nothing — another store's
+          # product, a deleted one, a mistyped prefix — is simply absent from
+          # the answer: a batch is a set the caller already holds, and some of
+          # it may be gone.
+          # @return [Array<String>]
+          def batch_ids
+            @batch_ids ||= requested_ids.filter_map { |id| model_class.decode_own_prefixed_id(id) }.uniq
+          end
+
+          def collection
+            return @collection if @collection.present?
+            return @collection = collection_by_ids if batch_ids.any?
+
+            super
+          end
+
+          # A batch answers the whole batch unless the caller pages it: the
+          # limit is what they asked for, which is never more than a page.
+          def collection_by_ids
+            relation = scope.where(id: batch_ids)
+            @pagy, products = pagy(relation, limit: batch_limit, page: page)
+            products
+          end
+
+          def batch_limit
+            params[:limit].present? ? limit : batch_ids.size
+          end
+
+          # A batch is its own collection, so its identity is the ids it names
+          # — the shared key would let two different batches share an ETag.
+          def collection_cache_key(collection)
+            return super if batch_ids.empty?
+
+            "#{super}/#{batch_ids.sort.join(',')}"
+          end
+
 
           def model_class
             Spree::Product
