@@ -1,6 +1,8 @@
+import { HttpResponse, http } from 'msw'
 import { beforeAll, describe, expect, it } from 'vitest'
 import type { Client } from '../src'
-import { createTestClient } from './helpers'
+import { createTestClient, TEST_BASE_URL } from './helpers'
+import { server } from './mocks/server'
 
 describe('carts', () => {
   let client: Client
@@ -31,6 +33,21 @@ describe('carts', () => {
     it('works with spreeToken for guest checkout', async () => {
       const result = await client.carts.get('cart_1', { spreeToken: 'guest-token' })
       expect(result).toBeDefined()
+    })
+  })
+
+  describe('count', () => {
+    it('returns the cart’s item counts alone', async () => {
+      server.use(
+        http.get(`${TEST_BASE_URL}/api/v3/store/carts/cart_1/count`, () =>
+          HttpResponse.json({ id: 'cart_1', total_quantity: 3, selected_quantity: 1 }),
+        ),
+      )
+
+      const result = await client.carts.count('cart_1', opts)
+
+      expect(result.total_quantity).toBe(3)
+      expect(result.selected_quantity).toBe(1)
     })
   })
 

@@ -313,7 +313,7 @@ paths:
                 - key: wechat
                   kind: redirect
                   label: WeChat
-                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--23d865d93691cf0741d18e2316655edafbda873e
+                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--f21f2521b12d61b587f1a0545706fe77c580dc2f
                   requires_email: true
               schema:
                 type: object
@@ -3507,8 +3507,8 @@ paths:
                   display_included_tax_total: "$0.00"
                   discount_total: '0.0'
                   display_discount_total: "$0.00"
-                  pre_tax_amount: '10.0'
-                  display_pre_tax_amount: "$10.00"
+                  pre_tax_amount: '0.0'
+                  display_pre_tax_amount: "$0.00"
                   discounted_amount: '10.0'
                   display_discounted_amount: "$10.00"
                   display_compare_at_amount: "$0.00"
@@ -5421,6 +5421,290 @@ paths:
                   description: Arbitrary metadata to attach to the payment
               required:
               - payment_method_id
+  "/api/v3/store/carts/{cart_id}/count":
+    get:
+      summary: Get a cart’s item counts
+      tags:
+      - Carts
+      security:
+      - api_key: []
+        bearer_auth: []
+      description: |
+        How much is in the cart, without reading the cart: the units it holds and how many
+        of them the shopper has ticked for checkout. The two figures are the cart payload's
+        own — `total_quantity` and `selected_quantity` — for a storefront that renders a
+        badge on pages with no other business with the cart.
+      x-codeSamples:
+      - lang: javascript
+        label: Spree SDK
+        source: |-
+          import { createClient } from '@spree/sdk'
+
+          const client = createClient({
+            baseUrl: 'https://your-store.com',
+            publishableKey: '<api-key>',
+          })
+
+          const count = await client.carts.count('cart_abc123', {
+            token: '<token>',
+          })
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        required: false
+        description: Bearer token for authenticated customers
+        schema:
+          type: string
+      - name: x-spree-token
+        in: header
+        required: false
+        description: Cart token for guest access
+        schema:
+          type: string
+      - name: cart_id
+        in: path
+        required: true
+        description: Cart prefixed ID (e.g., cart_abc123)
+        schema:
+          type: string
+      responses:
+        '200':
+          description: the cart’s item counts
+          content:
+            application/json:
+              example:
+                id: cart_UkLWZg9DAJ
+                total_quantity: 2
+                selected_quantity: 2
+              schema:
+                "$ref": "#/components/schemas/CartCount"
+        '404':
+          description: the cart is not one this store holds
+          content:
+            application/json:
+              example:
+                error:
+                  code: record_not_found
+                  message: Cart not found
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/v3/store/carts/{cart_id}/selection":
+    patch:
+      summary: Choose which lines take part in checkout
+      tags:
+      - Carts
+      security:
+      - api_key: []
+        bearer_auth: []
+      description: |
+        Ticks or unticks lines of the cart in one write, over a set of line ids: one tick,
+        or a whole group's. The ticks are durable cart state — the cart prices the ticked
+        lines and completion copies them into the order — so no request in the checkout
+        path names the selection again. The cart that comes back carries the new ticks
+        beside the money of the lines that are left ticked.
+      x-codeSamples:
+      - lang: javascript
+        label: Spree SDK
+        source: |-
+          import { createClient } from '@spree/sdk'
+
+          const client = createClient({
+            baseUrl: 'https://your-store.com',
+            publishableKey: '<api-key>',
+          })
+
+          const cart = await client.carts.selection.update(
+            'cart_abc123',
+            {
+              selected: false,
+              line_item_ids: ['li_abc123', 'li_def456'],
+            },
+            {
+              token: '<token>',
+            },
+          )
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        required: false
+        description: Bearer token for authenticated customers
+        schema:
+          type: string
+      - name: x-spree-token
+        in: header
+        required: false
+        description: Cart token for guest access
+        schema:
+          type: string
+      - name: cart_id
+        in: path
+        required: true
+        description: Cart prefixed ID (e.g., cart_abc123)
+        schema:
+          type: string
+      responses:
+        '200':
+          description: the cart, priced over the lines that are left ticked
+          content:
+            application/json:
+              example:
+                id: cart_UkLWZg9DAJ
+                selected_quantity: 0
+                market_id: mkt_UkLWZg9DAJ
+                channel_id: ch_UkLWZg9DAJ
+                preferred_stock_location_id:
+                company_id:
+                company_name:
+                po_number_required: false
+                po_document_filename:
+                po_document_byte_size:
+                number: cart_UkLWZg9DAJ
+                token: Lw9TKjug7GDnpapPX2vsg7F5
+                email:
+                customer_note:
+                po_number:
+                currency: USD
+                locale: en
+                total_quantity: 2
+                warnings: []
+                coupon_code:
+                item_total: '0.0'
+                display_item_total: "$0.00"
+                adjustment_total: '0.0'
+                display_adjustment_total: "$0.00"
+                discount_total: '0.0'
+                display_discount_total: "$0.00"
+                tax_total: '0.0'
+                display_tax_total: "$0.00"
+                included_tax_total: '0.0'
+                display_included_tax_total: "$0.00"
+                additional_tax_total: '0.0'
+                display_additional_tax_total: "$0.00"
+                total: '0.0'
+                display_total: "$0.00"
+                gift_card_total: '0.0'
+                display_gift_card_total: "$0.00"
+                amount_due: '0.0'
+                display_amount_due: "$0.00"
+                delivery_total: '0.0'
+                display_delivery_total: "$0.00"
+                fee_total: '0.0'
+                display_fee_total: "$0.00"
+                store_credit_total: '0.0'
+                display_store_credit_total: "$0.00"
+                covered_by_store_credit: false
+                current_step: address
+                completed_steps: []
+                requirements:
+                - code: line_items_required
+                  step: cart
+                  field: line_items
+                  message: Add at least one item to your cart
+                - code: email_required
+                  step: address
+                  field: email
+                  message: Email address is required
+                order_minimum:
+                order_minimum_shortfall:
+                below_order_minimum: false
+                freight_summary:
+                shipping_eq_billing_address: true
+                discounts: []
+                fees: []
+                items:
+                - id: li_UkLWZg9DAJ
+                  variant_id: variant_UkLWZg9DAJ
+                  seller_id:
+                  preorder: false
+                  preorder_ships_at:
+                  quantity: 2
+                  currency: USD
+                  name: Product 3827961
+                  slug: product-3827961
+                  options_text: ''
+                  selected: false
+                  price: '19.99'
+                  display_price: "$19.99"
+                  total: '39.98'
+                  display_total: "$39.98"
+                  adjustment_total: '0.0'
+                  display_adjustment_total: "$0.00"
+                  additional_tax_total: '0.0'
+                  display_additional_tax_total: "$0.00"
+                  included_tax_total: '0.0'
+                  display_included_tax_total: "$0.00"
+                  discount_total: '0.0'
+                  display_discount_total: "$0.00"
+                  pre_tax_amount: '39.98'
+                  display_pre_tax_amount: "$39.98"
+                  discounted_amount: '39.98'
+                  display_discounted_amount: "$39.98"
+                  display_compare_at_amount: "$0.00"
+                  compare_at_amount:
+                  thumbnail_url:
+                  option_values: []
+                  digital_links: []
+                fulfillments: []
+                payments: []
+                billing_address:
+                shipping_address:
+                payment_methods: []
+                gift_card:
+                market:
+                  id: mkt_UkLWZg9DAJ
+                  name: United States
+                  currency: USD
+                  default_locale: en
+                  tax_inclusive: false
+                  default: true
+                  country_codes:
+                  - US
+                  supported_locales:
+                  - en
+              schema:
+                "$ref": "#/components/schemas/Cart"
+        '422':
+          description: the write names no line
+          content:
+            application/json:
+              example:
+                error:
+                  code: validation_error
+                  message: Name at least one line of this cart to select or deselect.
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                selected:
+                  type: boolean
+                  example: false
+                  description: Whether the named lines take part in checkout
+                line_item_ids:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                  - li_abc123
+                  description: Prefixed IDs of the lines to write. An id this cart
+                    does not hold is ignored
+              required:
+              - selected
+              - line_item_ids
+        required: true
   "/api/v3/store/carts/{cart_id}/store_credits":
     post:
       summary: Apply store credit
@@ -5549,8 +5833,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 3809789
-                  slug: product-3809789
+                  name: Product 3849789
+                  slug: product-3849789
                   options_text: ''
                   selected: true
                   price: '10.0'
@@ -5769,8 +6053,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 382179
-                  slug: product-382179
+                  name: Product 386179
+                  slug: product-386179
                   options_text: ''
                   selected: true
                   price: '10.0'
@@ -10172,7 +10456,7 @@ paths:
                 variant:
                   id: variant_gbHJdmfrXB
                   product_id: prod_gbHJdmfrXB
-                  sku: SKU-478
+                  sku: SKU-482
                   options_text: ''
                   track_inventory: true
                   media_count: 0
@@ -12667,6 +12951,20 @@ components:
           type: string
       required:
       - id
+      x-typelizer: true
+    CartCount:
+      type: object
+      properties:
+        id:
+          type: string
+        total_quantity:
+          type: number
+        selected_quantity:
+          type: number
+      required:
+      - id
+      - total_quantity
+      - selected_quantity
       x-typelizer: true
     Cart:
       type: object

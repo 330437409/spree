@@ -13,6 +13,7 @@ import type {
   AuthProvidersResponse,
   AuthTokens,
   Cart,
+  CartCount,
   CartSelectionParams,
   Category,
   CategoryListParams,
@@ -530,6 +531,15 @@ export class StoreClient {
      */
     get: (cartId: string, options?: RequestOptions): Promise<Cart> =>
       this.request<Cart>('GET', `/carts/${cartId}`, options),
+
+    /**
+     * The cart's item counts alone — the number of units it holds and how
+     * many of them the shopper has ticked. For a badge rendered on pages that
+     * have no other business with the cart.
+     * @param cartId - Cart prefixed ID
+     */
+    count: (cartId: string, options?: RequestOptions): Promise<CartCount> =>
+      this.request<CartCount>('GET', `/carts/${cartId}/count`, options),
 
     /**
      * Create a new cart
