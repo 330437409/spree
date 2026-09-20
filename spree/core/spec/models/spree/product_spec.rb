@@ -1946,6 +1946,58 @@ describe Spree::Product, type: :model do
         end
       end
     end
+
+    describe '.purchased_by' do
+      let(:store) { @default_store }
+      let(:customer) { create(:user_with_addresses) }
+      let(:bought_often) { create(:product, store: store) }
+      let(:bought_lately) { create(:product, store: store) }
+
+      def purchase(product, completed_at:, customer: self.customer)
+        order = create(:order, store: store, customer: customer, completed_at: completed_at)
+        create(:line_item, order: order, variant: product.default_variant, quantity: 1, price: 10)
+      end
+
+      before do
+        3.times { |i| purchase(bought_often, completed_at: (10 + i).days.ago) }
+        purchase(bought_lately, completed_at: 1.hour.ago)
+      end
+
+      it 'orders the history by when the customer last bought it' do
+        expect(described_class.purchased_by(customer).map(&:id)).to eq([bought_lately.id, bought_often.id])
+      end
+
+      it 'orders it by how often they bought it' do
+        expect(described_class.purchased_by(customer, order_by: :frequent).map(&:id)).to eq([bought_often.id, bought_lately.id])
+      end
+
+      # The same product in three orders is one entry in the history, not three.
+      it 'answers each product once' do
+        expect(described_class.purchased_by(customer).group("#{described_class.table_name}.id").count.size).to eq(2)
+      end
+
+      # The read pages over ids, and PostgreSQL refuses a DISTINCT whose ORDER
+      # BY is an aggregate the select list does not carry — which is what the
+      # currency narrowing adds on top of this scope.
+      it 'orders a distinct-free relation, so the read survives PostgreSQL' do
+        relation = described_class.available(Time.current, 'USD').purchased_by(customer)
+
+        expect(relation.to_sql).not_to include('DISTINCT')
+      end
+
+      it 'leaves another shopper’s purchases out' do
+        expect(described_class.purchased_by(create(:user_with_addresses))).to be_empty
+      end
+
+      # A cart is not a purchase: only a completed order puts a product in a
+      # customer's history, and a cart line is not one.
+      it 'counts nothing a customer has only put in a cart' do
+        cart = create(:cart, store: store, customer: customer)
+        create(:line_item, cart: cart, variant: create(:product, store: store).default_variant, quantity: 1, price: 10)
+
+        expect(described_class.purchased_by(customer).map(&:id)).not_to include(cart.line_items.first.variant.product_id)
+      end
+    end
   end
 
   describe 'after_touch :touch_categories' do

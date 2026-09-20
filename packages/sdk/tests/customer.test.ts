@@ -122,6 +122,29 @@ describe('customer', () => {
     })
   })
 
+  describe('purchaseHistory', () => {
+    it('lists the products the customer has bought', async () => {
+      const result = await client.customer.purchaseHistory.list(undefined, opts)
+
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].id).toBe('prod_1')
+    })
+
+    it('asks for the ordering it was given', async () => {
+      let requestedUrl = ''
+      server.use(
+        http.get(`${API_PREFIX}/customers/me/purchase_history`, ({ request }) => {
+          requestedUrl = request.url
+          return HttpResponse.json({ data: [], meta: { page: 1, limit: 25, count: 0, pages: 0 } })
+        }),
+      )
+
+      await client.customer.purchaseHistory.list({ sort: 'frequent' }, opts)
+
+      expect(requestedUrl).toContain('sort=frequent')
+    })
+  })
+
   describe('giftCards', () => {
     it('lists gift cards', async () => {
       const result = await client.customer.giftCards.list(undefined, opts)
