@@ -751,3 +751,13 @@ Plan: `6.1-flash-sales.md`, whose last two open questions these settle.
 **The hold is still the gem's own, and it is built to be lifted.** Group buying generalises it into core when it arrives (ruled 2026-09-18); this run builds it against the four questions that lift depends on — owner, TTL, visibility to `Stock::Quantifier`, and the backorderable case that a pool-scoped hold answers by owning no `StockLevel` at all. Two implementations of a hold must not diverge in the meantime.
 
 **What is deliberately not built here: the settlement discount and the activity's 积分/优惠券 refusal flags.** Both attach to the price preview, which `6.1-store-api-miniprogram-gaps.md` owns as one of three shared surfaces — a second price calculation is exactly what that plan forbids. A seckill therefore prices at the preview's work, and this gem stops at the claim.
+
+## 2026-09-20 — The seckill price is a discount the cart charges but does not label as one
+
+Plan: `6.1-flash-sales.md`'s settlement step, built on the 2026-09-18 ruling that a seckill's price is a `manual`-kind discount rather than a promotion action.
+
+**The ruling holds, and this is what it means in the ledger.** A cart sums *every* discount into `adjustment_total` and therefore into the customer's total, so a seckill's saving is charged correctly — two units at 100 with an activity at 60 come to 120. But the cart's and the line's own `discount_total` columns count `promotion` rows only, so that column stays 0 for a seckill. **Any report looking for seckill sales must read the discount rows — `kind: 'manual'` with the activity and the ticket in their metadata — and never `discount_total`.** The line's *displayed* price is not that column either: it comes from the price preview, which quotes the activity and strikes the catalogue price through.
+
+**The row carries both rows it came from.** `metadata.flash_sale_id` and `metadata.flash_sale_ticket_id` are what make a seckill line's refund recomputable and what lets the order settle the tickets it was priced with, rather than guessing from whoever happens to be holding one.
+
+**A claim prices a cart that already holds the goods.** The claim is where a ticket and a cart meet, so a cart with the line is discounted then rather than waiting for the settle page — and a re-claim updates the same row by its code instead of stacking a second discount on the line.

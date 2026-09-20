@@ -17,7 +17,8 @@ module Spree
                    price_list_id: [:string, nullable: true],
                    price_source: [:string, nullable: true],
                    in_stock: :boolean, backorderable: :boolean, purchasable: :boolean,
-                   available_quantity: :number
+                   available_quantity: :number,
+                   source: [:string, nullable: true]
 
           attribute :variant_id do |row|
             row.variant&.prefixed_id
@@ -59,6 +60,10 @@ module Spree
             next nil if params[:hide_prices]
 
             row.price_source
+          end
+
+          attribute :source do |row|
+            row.source
           end
 
           attributes :in_stock, :backorderable, :purchasable, :available_quantity

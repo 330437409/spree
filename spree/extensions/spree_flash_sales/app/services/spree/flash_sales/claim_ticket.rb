@@ -90,7 +90,19 @@ module Spree
         end
         return failure(:sold_out) unless held
 
+        price_the_cart(ticket)
         success(ticket)
+      end
+
+      # A customer who claimed for a cart that already holds the goods gets the
+      # activity's price on it now, rather than at the settle page — the claim is
+      # when the two meet, and a line that is already there should not wait.
+      def price_the_cart(ticket)
+        Spree::Cart.where(customer: @customer, store: @flash_sale.store).find_each do |cart|
+          cart.line_items.where(variant: @item.variant).find_each do |line_item|
+            Spree::FlashSales::ApplyTicketPrice.call(ticket: ticket, line_item: line_item)
+          end
+        end
       end
 
       def pools

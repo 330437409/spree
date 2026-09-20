@@ -15,7 +15,9 @@ module Spree
             items = resolved_items
             return if performed?
 
-            result = Spree::PricePreview.call(items: items, customer: current_user)
+            result = Spree::PricePreview.call(
+              items: items, customer: current_user, context: source_context
+            )
 
             render json: serializer_class.new(result.value, params: serializer_params).to_h
           end
@@ -27,7 +29,14 @@ module Spree
           end
 
           def permitted_params
-            params.permit(:currency, items: [:variant_id, :quantity])
+            params.permit(:currency, items: [:variant_id, :quantity], context: {})
+          end
+
+          # What a registered source needs to price a line — an activity's id,
+          # a ticket's. Passed through untouched, because the route serves every
+          # source rather than the one this application happens to have.
+          def source_context
+            permitted_params[:context].to_h.symbolize_keys
           end
 
           # Every variant is read through the store's own products, narrowed the
