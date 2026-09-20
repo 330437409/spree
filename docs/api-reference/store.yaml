@@ -1213,7 +1213,8 @@ paths:
         explode: false
         description: 'Batch load: the prefixed product IDs to answer with, in one
           comma-separated request (at most 100). An ID the store does not sell, or
-          never had, is simply absent from the answer.'
+          never had, is simply absent from the answer. Cannot be combined with q or
+          sort: a batch answers the set it was given.'
         schema:
           type: array
       responses:
@@ -1224,8 +1225,8 @@ paths:
               example:
                 data:
                 - id: prod_UkLWZg9DAJ
-                  name: Product 3119085
-                  slug: product-3119085
+                  name: Product 3199085
+                  slug: product-3199085
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -1256,8 +1257,8 @@ paths:
                   original_price:
                   seller_id:
                 - id: prod_gbHJdmfrXB
-                  name: Product 3128209
-                  slug: product-3128209
+                  name: Product 3208209
+                  slug: product-3208209
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -1396,8 +1397,8 @@ paths:
             application/json:
               example:
                 id: prod_UkLWZg9DAJ
-                name: Product 3396885
-                slug: product-3396885
+                name: Product 3476885
+                slug: product-3476885
                 meta_title:
                 meta_description:
                 meta_keywords:
@@ -1532,7 +1533,7 @@ paths:
                   options:
                   - id: ctg_gbHJdmfrXB
                     name: Shirts
-                    permalink: category-36/shirts
+                    permalink: category-38/shirts
                     count: 2
                 sort_options:
                 - id: manual
@@ -5506,8 +5507,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 3649789
-                  slug: product-3649789
+                  name: Product 3729789
+                  slug: product-3729789
                   options_text: ''
                   price: '10.0'
                   display_price: "$10.00"
@@ -5724,8 +5725,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 366179
-                  slug: product-366179
+                  name: Product 374179
+                  slug: product-374179
                   options_text: ''
                   price: '10.0'
                   display_price: "$10.00"
@@ -8697,8 +8698,8 @@ paths:
               example:
                 data:
                 - id: prod_UkLWZg9DAJ
-                  name: Product 3627945
-                  slug: product-3627945
+                  name: Product 3707945
+                  slug: product-3707945
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -8750,8 +8751,8 @@ paths:
                   original_price:
                   seller_id:
                 - id: prod_gbHJdmfrXB
-                  name: Product 3634689
-                  slug: product-3634689
+                  name: Product 3714689
+                  slug: product-3714689
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -10123,7 +10124,7 @@ paths:
                 variant:
                   id: variant_gbHJdmfrXB
                   product_id: prod_gbHJdmfrXB
-                  sku: SKU-456
+                  sku: SKU-466
                   options_text: ''
                   track_inventory: true
                   media_count: 0

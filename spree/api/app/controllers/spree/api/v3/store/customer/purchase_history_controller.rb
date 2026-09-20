@@ -9,6 +9,8 @@ module Spree
           # ordering, so they are one read rather than two
           # (docs/plans/6.1-store-api-miniprogram-gaps.md).
           class PurchaseHistoryController < ResourceController
+            include Spree::Api::V3::Store::ProductCatalogue
+
             prepend_before_action :require_authentication!
 
             # `recent` is what a customer means by "bought before"; `frequent`
@@ -31,12 +33,12 @@ module Spree
               Spree.api.product_serializer
             end
 
-            # The store's buyable catalogue, which the history is a subset of:
-            # a product the customer bought and the shop no longer sells is not
-            # an answer to "buy it again".
+            # The history is a subset of the catalogue this request may see —
+            # a product the customer bought and the shop no longer offers, or
+            # one their channel no longer carries, is not an answer to "buy it
+            # again" (see Spree::Api::V3::Store::ProductCatalogue).
             def base_scope
-              model_class.for_store(current_store).
-                available(Time.current, Spree::Current.currency, include_preorderable: true)
+              @base_scope ||= product_catalogue
             end
 
             def scope

@@ -5,6 +5,7 @@ module Spree
         class ProductsController < ResourceController
           include Spree::Api::V3::HttpCaching
           include Spree::Api::V3::Store::SearchProviderSupport
+          include Spree::Api::V3::Store::ProductCatalogue
 
           # The most ids one batch load may ask for. The response is the page,
           # and a page holds this many, so a longer list is a request to split
@@ -16,20 +17,30 @@ module Spree
           # index, and a product published a moment ago may not be in it yet,
           # while this question is about the catalogue itself.
           def index
-            return if render_over_long_batch
+            return if render_unusable_batch
 
             super
           end
 
           protected
 
+          # A batch answers the set it was given, so two requests are refused
+          # rather than half-answered: one that asks for more ids than a page
+          # holds, and one that also sends a filter or an ordering — dropping
+          # those silently would answer a page the caller did not ask for.
           # @return [Boolean] true when the request was refused
-          def render_over_long_batch
-            return false if requested_ids.size <= MAX_BATCH_IDS
+          def render_unusable_batch
+            return false if requested_ids.empty?
+            return render_batch_refusal('ids cannot be combined with q or sort') if params[:q].present? || params[:sort].present?
+            return render_batch_refusal("ids must be at most #{MAX_BATCH_IDS}") if requested_ids.size > MAX_BATCH_IDS
 
+            false
+          end
+
+          def render_batch_refusal(message)
             render_error(
               code: ErrorHandler::ERROR_CODES[:validation_error],
-              message: "ids must be at most #{MAX_BATCH_IDS}",
+              message: message,
               status: :unprocessable_content
             )
             true
@@ -61,11 +72,11 @@ module Spree
             @batch_ids ||= requested_ids.filter_map { |id| model_class.decode_own_prefixed_id(id) }.uniq
           end
 
-          def collection
-            return @collection if @collection.present?
-            return @collection = collection_by_ids if batch_ids.any?
-
-            super
+          # The batch branch is taken whenever the caller asked for one, even
+          # when nothing they sent resolves: answering the whole catalogue
+          # instead of an empty set is the one answer a batch must not give.
+          def batch_requested?
+            requested_ids.any?
           end
 
           # A batch answers the whole batch unless the caller pages it: the
@@ -76,14 +87,18 @@ module Spree
             products
           end
 
+          # A batch whose ids resolved to nothing still needs a limit — a page
+          # of zero rows, asked for at the ordinary size.
           def batch_limit
-            params[:limit].present? ? limit : batch_ids.size
+            return limit if params[:limit].present? || batch_ids.empty?
+
+            batch_ids.size
           end
 
           # A batch is its own collection, so its identity is the ids it names
           # — the shared key would let two different batches share an ETag.
           def collection_cache_key(collection)
-            return super if batch_ids.empty?
+            return super unless batch_requested?
 
             "#{super}/#{batch_ids.sort.join(',')}"
           end
@@ -110,42 +125,24 @@ module Spree
           end
 
           def scope
-            base = super.available(Time.current, Spree::Current.currency, include_preorderable: true)
-
-            # Catalog narrowing for the buyer: their company's effective
-            # catalogs, their group's, or the channel default — union of
-            # assortments, resolved in one place
-            # (docs/plans/6.0-b2b-companies-and-catalogs.md).
-            Spree.products_for_context_service.call(
-              store: current_store,
-              channel: current_channel,
-              customer: current_user,
-              base: base
-            ).value
+            product_catalogue
           end
 
-          # these scopes are not automatically picked by ar_lazy_preload gem and we need to explicitly include them
+          # The listing loads the same associations as every other read of this
+          # catalogue — see Spree::Api::V3::Store::ProductCatalogue.
           def scope_includes
-            [
-              # `seller` is declared on both sides rather than left to lazy
-              # preloading: the buy box asks every variant who is selling it,
-              # and a variant with no seller of its own asks its product — so a
-              # listing would otherwise depend on ambient behaviour to avoid an
-              # N+1 on whichever of the two answers.
-              :seller,
-              {
-                product_publications: [],
-                primary_media: [attachment_attachment: :blob, poster_attachment: :blob],
-                default_variant: [:prices, stock_levels: [:stock_location, :active_stock_reservations]],
-                variants: [:prices, :seller, stock_levels: [:stock_location, :active_stock_reservations]]
-              }
-            ]
+            catalogue_includes
           end
 
           # Override collection to use search provider.
           # The provider handles search, filtering, sorting, pagination, and returns a Pagy object.
+          #
+          # A batch load is answered before the provider is consulted: it is not
+          # a search but a set the caller already holds, and an id answered from
+          # an index would be missing the products published since the last one.
           def collection
             return @collection if @collection.present?
+            return @collection = collection_by_ids if batch_requested?
 
             result = search_provider.search_and_filter(
               scope: scope.includes(collection_includes).preload_associations_lazily,

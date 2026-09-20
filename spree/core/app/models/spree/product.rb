@@ -315,14 +315,18 @@ module Spree
     #   customer the history belongs to
     # @param order_by [Symbol, String] `:recent` (default) or `:frequent`
     scope :purchased_by, lambda { |customer, order_by: :recent|
-      line_items = Spree::LineItem.table_name
       orders = Spree::Order.table_name
 
       joins(variants: { line_items: :order }).
         where(orders => { customer_id: customer.id }).
         where.not(orders => { completed_at: nil }).
         group("#{table_name}.id").
-        reorder(purchase_history_order(order_by))
+        reorder(purchase_history_order(order_by)).
+        # The grouping already makes one row per product, and PostgreSQL refuses
+        # a DISTINCT whose ORDER BY is an aggregate the select list does not
+        # carry. The currency narrowing a caller chains on top adds one, so it
+        # is dropped here rather than left to break the read there.
+        distinct(false)
     }
 
     # The ordering a purchase history asks for, as SQL because it is an

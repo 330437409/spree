@@ -1942,6 +1942,15 @@ describe Spree::Product, type: :model do
         expect(described_class.purchased_by(customer).group("#{described_class.table_name}.id").count.size).to eq(2)
       end
 
+      # The read pages over ids, and PostgreSQL refuses a DISTINCT whose ORDER
+      # BY is an aggregate the select list does not carry — which is what the
+      # currency narrowing adds on top of this scope.
+      it 'orders a distinct-free relation, so the read survives PostgreSQL' do
+        relation = described_class.available(Time.current, 'USD').purchased_by(customer)
+
+        expect(relation.to_sql).not_to include('DISTINCT')
+      end
+
       it 'leaves another shopper’s purchases out' do
         expect(described_class.purchased_by(create(:user_with_addresses))).to be_empty
       end

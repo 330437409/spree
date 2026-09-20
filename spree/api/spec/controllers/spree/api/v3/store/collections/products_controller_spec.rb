@@ -31,6 +31,16 @@ RSpec.describe Spree::Api::V3::Store::Collections::ProductsController, type: :co
       expect(json_response['data'].pluck('id')).to include(in_product.prefixed_id)
     end
 
+    # The batch load is the products collection's, and this endpoint shares its
+    # controller: answering a page of the collection because `ids` was ignored
+    # would be worse than saying so.
+    it 'refuses an ids batch it does not implement' do
+      get :index, params: { collection_id: collection.prefixed_id, ids: [in_product.prefixed_id] }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(json_response['error']['message']).to include('not supported')
+    end
+
     it 'returns not found for an unknown collection' do
       get :index, params: { collection_id: 'coll_nope' }
 
