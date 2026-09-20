@@ -143,6 +143,12 @@ module Spree
              resource: proc { Spree.api.option_value_serializer },
              if: proc { expand?('option_values') }
 
+        # What the goods can be picked in: the values on the variants a shopper
+        # can buy, rather than every value the catalogue knows about.
+        many :sale_option_values,
+             resource: proc { Spree.api.option_value_serializer },
+             if: proc { expand?('sale_option_values') }
+
         many :categories,
              proc { |categories, params|
                store_id = params[:store].id

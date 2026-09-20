@@ -7,11 +7,15 @@ module Spree
                  parent_id: [:string, nullable: true], children_count: :number,
                  description: :string, description_html: :string,
                  image_url: [:string, nullable: true], square_image_url: [:string, nullable: true],
+                 products_count: :number,
                  is_root: :boolean, is_child: :boolean, is_leaf: :boolean
 
         attributes :name, :permalink, :position, :depth,
                    :meta_title, :meta_description, :meta_keywords,
-                   :children_count
+                   # Both of the menu's own figures: how many children it has,
+                   # and how many products it carries once its descendants are
+                   # counted (a stored, subtree-inclusive count).
+                   :children_count, :products_count
 
         attribute :parent_id do |category|
           category.parent&.prefixed_id
