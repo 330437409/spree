@@ -285,6 +285,17 @@ module Spree
       }
     end
 
+    # The option values a shopper can pick from: the ones carried by a variant
+    # this product can be bought in right now. A value whose only variant is
+    # sold out is a dead end in a picker, and the Store API answers the set
+    # rather than leaving the client to work it out from the variants
+    # (docs/plans/6.1-store-api-miniprogram-gaps.md).
+    #
+    # @return [Array<Spree::OptionValue>] in the order the variants carry them
+    def sale_option_values
+      variants.select(&:purchasable?).flat_map(&:option_values).uniq
+    end
+
     scope :for_store, ->(store) { where(store_id: store.id) }
     # Products belonging to the given seller. Passing nil selects the
     # operator's own catalog, which on a store with no sellers is everything.
