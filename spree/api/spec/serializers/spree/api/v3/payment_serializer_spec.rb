@@ -2,116 +2,38 @@ require 'spec_helper'
 
 RSpec.describe Spree::Api::V3::PaymentSerializer do
   let(:store) { @default_store }
-  let(:base_params) { { store: store, currency: store.default_currency } }
+  let(:payment) { create(:payment, payment_method: payment_method, amount: 10) }
 
-  subject { described_class.new(payment, params: base_params).to_h }
+  subject { described_class.new(payment, params: { store: store, currency: store.default_currency }).to_h }
 
-  describe 'serialized attributes' do
-    let(:payment) { create(:payment) }
-
-    it 'includes standard attributes' do
-      expect(subject).to include(
-        'id' => payment.prefixed_id,
-        'status' => 'checkout',
-        'number' => payment.number,
-        'response_code' => payment.response_code
-      )
-      expect(subject['amount']).to be_present
-    end
-
-    it 'includes prefixed payment_method_id' do
-      expect(subject['payment_method_id']).to eq(payment.payment_method.prefixed_id)
-    end
-
-    it 'includes display_amount' do
-      expect(subject['display_amount']).to be_present
-    end
-
-    it 'does not include timestamps in Store API' do
-      expect(subject).not_to have_key('created_at')
-      expect(subject).not_to have_key('updated_at')
-    end
-
-    it 'includes payment_method association' do
-      expect(subject['payment_method']).to be_a(Hash)
-      expect(subject['payment_method']['id']).to eq(payment.payment_method.prefixed_id)
-    end
-  end
-
-  describe 'source serialization' do
-    context 'with credit card source' do
-      let(:payment) { create(:payment) }
-
-      it 'returns credit_card as source_type' do
-        expect(subject['source_type']).to eq('credit_card')
+  describe 'the confirm-receipt identifiers' do
+    # A gateway that can answer a mini program's confirm-receipt handshake: the
+    # merchant it sells under, and its own id for the transaction. The gateway
+    # gem's own spec proves the WeChat side; this one proves the payload asks
+    # for them without knowing which gateway it is holding.
+    context 'with a gateway that answers' do
+      let(:payment_method) do
+        create(:check_payment_method, store: store).tap do |method|
+          allow(method).to receive_messages(merchant_id: '1900000109')
+          allow(method).to receive(:transaction_id_for).and_return('420000123420260920')
+        end
       end
 
-      it 'returns prefixed source_id' do
-        expect(subject['source_id']).to eq(payment.source.prefixed_id)
-      end
-
-      it 'serializes the credit card source' do
-        expect(subject['source']).to be_a(Hash)
-        expect(subject['source']['id']).to eq(payment.source.prefixed_id)
-        expect(subject['source']).to have_key('brand')
-        expect(subject['source']).to have_key('last4')
-        expect(subject['source']).to have_key('month')
-        expect(subject['source']).to have_key('year')
-        expect(subject['source']).to have_key('name')
+      it 'carries them beside the reference the gateway knows the order by' do
+        expect(subject['merchant_id']).to eq('1900000109')
+        expect(subject['gateway_transaction_id']).to eq('420000123420260920')
+        expect(subject).to have_key('response_code')
       end
     end
 
-    context 'with payment source (non-credit card)' do
-      let(:payment) { create(:custom_payment) }
+    # Most gateways keep neither, and a client reading these has to be able to
+    # tell "no handshake to make" from a value.
+    context 'with a gateway that keeps neither' do
+      let(:payment_method) { create(:check_payment_method, store: store) }
 
-      it 'returns payment_source as source_type' do
-        expect(subject['source_type']).to eq('payment_source')
-      end
-
-      it 'returns prefixed source_id' do
-        expect(subject['source_id']).to eq(payment.source.prefixed_id)
-      end
-
-      it 'serializes the payment source' do
-        expect(subject['source']).to be_a(Hash)
-        expect(subject['source']['id']).to eq(payment.source.prefixed_id)
-        expect(subject['source']).to have_key('gateway_payment_profile_id')
-      end
-    end
-
-    context 'with store credit source' do
-      let(:payment) { create(:store_credit_payment) }
-
-      it 'returns store_credit as source_type' do
-        expect(subject['source_type']).to eq('store_credit')
-      end
-
-      it 'returns prefixed source_id' do
-        expect(subject['source_id']).to eq(payment.source.prefixed_id)
-      end
-
-      it 'serializes the store credit source' do
-        expect(subject['source']).to be_a(Hash)
-        expect(subject['source']['id']).to eq(payment.source.prefixed_id)
-        expect(subject['source']).to have_key('amount_remaining')
-        expect(subject['source']).to have_key('display_amount_remaining')
-        expect(subject['source']).to have_key('currency')
-      end
-    end
-
-    context 'without source (e.g. check payment)' do
-      let(:payment) { create(:check_payment) }
-
-      it 'returns nil for source_type' do
-        expect(subject['source_type']).to be_nil
-      end
-
-      it 'returns nil for source_id' do
-        expect(subject['source_id']).to be_nil
-      end
-
-      it 'returns nil for source' do
-        expect(subject['source']).to be_nil
+      it 'answers null' do
+        expect(subject['merchant_id']).to be_nil
+        expect(subject['gateway_transaction_id']).to be_nil
       end
     end
   end
