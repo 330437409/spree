@@ -2,6 +2,7 @@
 zh-CN:
   spree:
     flash_sales:
+      discount_label: '%{title} — 活动价'
       refusals:
         invalid_quantity: 请至少选择一件。
         not_in_activity: 该活动不包含这个商品。

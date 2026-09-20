@@ -133,4 +133,17 @@ RSpec.describe Spree::FlashSales::ClaimTicket do
 
     expect(claim(quantity: 1).value).to eq(:already_holding)
   end
+
+  # The claim is where the ticket and the cart meet: a cart that already holds
+  # the goods is priced at the activity from then on, not at the settle page.
+  it 'prices a cart that already holds the goods' do
+    cart = create(:cart, store: store, customer: customer)
+    create(:line_item, cart: cart, variant: variant, quantity: 2, price: 100)
+    item.update!(sale_amount: 60)
+
+    ticket = claim(quantity: 2).value
+
+    expect(cart.reload.discounts.where(code: "flash_sale:#{ticket.prefixed_id}").count).to eq(1)
+    expect(cart.total.to_d).to eq(120)
+  end
 end

@@ -2,6 +2,7 @@
 en:
   spree:
     flash_sales:
+      discount_label: '%{title} — activity price'
       refusals:
         invalid_quantity: Ask for at least one.
         not_in_activity: This activity does not sell that product.

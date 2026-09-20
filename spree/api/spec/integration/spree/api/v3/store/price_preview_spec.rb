@@ -31,10 +31,16 @@ RSpec.describe 'Price Preview API', type: :request, swagger_doc: 'api-reference/
                 description: 'Channel code or prefixed ID the prices are resolved for'
       parameter name: 'Authorization', in: :header, type: :string, required: false,
                 description: 'Bearer JWT token (optional — for a signed-in customer)'
+      parameter name: 'x-spree-token', in: :header, type: :string, required: false,
+                description: 'Guest cart token, when the request prices a cart the caller holds'
       parameter name: :body, in: :body, required: true, schema: {
         type: :object,
         properties: {
           currency: { type: :string, example: 'USD', description: 'Currency to price in; defaults to the request’s' },
+          cart_id: { type: :string, example: 'cart_abc123',
+                     description: 'Price the lines this cart holds instead of naming variants. Its own currency and its own context apply.' },
+          context: { type: :object, additionalProperties: true,
+                     description: 'What a registered source needs — a flash sale’s activity id, for instance.' },
           items: {
             type: :array,
             description: 'The variants to price, with how many of each',
@@ -111,6 +117,39 @@ RSpec.describe 'Price Preview API', type: :request, swagger_doc: 'api-reference/
       response '422', 'a quantity that is not a positive whole number' do
         let(:'x-spree-api-key') { api_key.token }
         let(:body) { { items: [{ variant_id: variant.prefixed_id, quantity: -2 }] } }
+
+        schema Spree::Api::OpenAPI::SchemaHelper.error_response
+
+        run_test!
+      end
+
+      # The settle page's own shape: a cart rather than a list of variants.
+      response '200', 'the lines a cart holds' do
+        let(:cart) { create(:cart, store: store).tap { |record| create(:line_item, cart: record, variant: variant, quantity: 2, price: 100) } }
+        let(:'x-spree-api-key') { api_key.token }
+        # A guest reaches their own cart with its token, the same way the cart
+        # endpoints do.
+        let(:'x-spree-token') { cart.token }
+        let(:body) { { cart_id: cart.prefixed_id } }
+
+        schema Spree::Api::OpenAPI::SchemaHelper.ref('StorePricePreview')
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+
+          expect(data['items'].length).to eq(1)
+          expect(data['items'].first['variant_id']).to eq(variant.prefixed_id)
+          expect(data['items'].first['quantity']).to eq(2)
+          expect(data['total']).to eq(200.0)
+        end
+      end
+
+      # A cart that is not this caller's — another customer's, or one whose
+      # guest token does not match — is refused rather than priced.
+      response '403', 'a cart that is not this caller’s' do
+        let(:someone_elses_cart) { create(:cart, store: store) }
+        let(:'x-spree-api-key') { api_key.token }
+        let(:body) { { cart_id: someone_elses_cart.prefixed_id } }
 
         schema Spree::Api::OpenAPI::SchemaHelper.error_response
 

@@ -60,6 +60,17 @@ module Spree
       end
     end
 
+    # The units were bought. The pool keeps what it took — that is what the
+    # count was for — so this is not a release, and a settled ticket is never
+    # swept: the sweep walks what is still holding.
+    # @return [Boolean]
+    def settle!
+      return false unless holding?
+
+      update!(status: 'settled', active_key: nil)
+      true
+    end
+
     def expired?(now: Time.current)
       holding? && expires_at <= now
     end

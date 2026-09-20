@@ -24,6 +24,7 @@ module Spree
                                :commission_rules,
                                :delivery_method_rules,
                                :seller_requirements,
+                               :price_preview_sources,
                                :delivery_rate_providers,
                                :digital_asset_providers,
                                :delivery_profile_types,
@@ -168,6 +169,12 @@ module Spree
 
       initializer 'spree.register.delivery_rate_providers', before: :load_config_initializers do |app|
         app.config.spree.delivery_rate_providers = []
+      end
+
+      # A seam rather than a registry of kinds: a source prices a line the
+      # catalogue alone cannot, and an extension that has one appends itself.
+      initializer 'spree.register.price_preview_sources', before: :load_config_initializers do |app|
+        app.config.spree.price_preview_sources = []
       end
 
       # Same reason again: a tax provider gem, or a host app, registers its

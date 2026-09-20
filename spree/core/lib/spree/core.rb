@@ -493,6 +493,20 @@ module Spree
     Rails.application.config.spree.delivery_method_rules
   end
 
+  # Things that can price a line the catalogue alone cannot — an activity with
+  # its own window, a presale, an estimate — asked in this order by
+  # {Spree::PricePreview}: the first that answers prices the line.
+  #
+  # @return [Array<#call>] each answering `call(variant:, quantity:, customer:, context:)`
+  #   with nil to decline, or `{ amount:, label:, flags: }`
+  def self.price_preview_sources
+    Rails.application.config.spree.price_preview_sources
+  end
+
+  def self.price_preview_sources=(value)
+    Rails.application.config.spree.price_preview_sources = value
+  end
+
   def self.delivery_method_rules=(value)
     Rails.application.config.spree.delivery_method_rules = value
   end

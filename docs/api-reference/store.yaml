@@ -1214,8 +1214,8 @@ paths:
               example:
                 data:
                 - id: prod_UkLWZg9DAJ
-                  name: Product 3039085
-                  slug: product-3039085
+                  name: Product 3049085
+                  slug: product-3049085
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -1246,8 +1246,8 @@ paths:
                   original_price:
                   seller_id:
                 - id: prod_gbHJdmfrXB
-                  name: Product 3048209
-                  slug: product-3048209
+                  name: Product 3058209
+                  slug: product-3058209
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -1376,8 +1376,8 @@ paths:
             application/json:
               example:
                 id: prod_UkLWZg9DAJ
-                name: Product 3316885
-                slug: product-3316885
+                name: Product 3326885
+                slug: product-3326885
                 meta_title:
                 meta_description:
                 meta_keywords:
@@ -5486,8 +5486,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 3519789
-                  slug: product-3519789
+                  name: Product 3529789
+                  slug: product-3529789
                   options_text: ''
                   price: '10.0'
                   display_price: "$10.00"
@@ -5704,8 +5704,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 353179
-                  slug: product-353179
+                  name: Product 354179
+                  slug: product-354179
                   options_text: ''
                   price: '10.0'
                   display_price: "$10.00"
@@ -9892,7 +9892,7 @@ paths:
                 variant:
                   id: variant_gbHJdmfrXB
                   product_id: prod_gbHJdmfrXB
-                  sku: SKU-441
+                  sku: SKU-442
                   options_text: ''
                   track_inventory: true
                   media_count: 0
@@ -11566,6 +11566,12 @@ paths:
         description: Bearer JWT token (optional — for a signed-in customer)
         schema:
           type: string
+      - name: x-spree-token
+        in: header
+        required: false
+        description: Guest cart token, when the request prices a cart the caller holds
+        schema:
+          type: string
       responses:
         '200':
           description: no amounts on a storefront that hides prices
@@ -11576,6 +11582,7 @@ paths:
                 total:
                 quantity: 1
                 purchasable: true
+                flags: {}
                 items:
                 - variant_id: variant_UkLWZg9DAJ
                   product_id: prod_UkLWZg9DAJ
@@ -11585,6 +11592,7 @@ paths:
                   total:
                   price_list_id:
                   price_source:
+                  source:
                   in_stock: false
                   backorderable: true
                   purchasable: true
@@ -11611,6 +11619,16 @@ paths:
                   message: quantity must be a positive whole number
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+        '403':
+          description: a cart that is not this caller’s
+          content:
+            application/json:
+              example:
+                error:
+                  code: access_denied
+                  message: You are not authorized to access this page.
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
       requestBody:
         content:
           application/json:
@@ -11621,6 +11639,16 @@ paths:
                   type: string
                   example: USD
                   description: Currency to price in; defaults to the request’s
+                cart_id:
+                  type: string
+                  example: cart_abc123
+                  description: Price the lines this cart holds instead of naming variants.
+                    Its own currency and its own context apply.
+                context:
+                  type: object
+                  additionalProperties: true
+                  description: What a registered source needs — a flash sale’s activity
+                    id, for instance.
                 items:
                   type: array
                   description: The variants to price, with how many of each
@@ -15545,6 +15573,9 @@ components:
         price_source:
           type: string
           nullable: true
+        source:
+          type: string
+          nullable: true
         in_stock:
           type: boolean
         backorderable:
@@ -15562,6 +15593,7 @@ components:
       - total
       - price_list_id
       - price_source
+      - source
       - in_stock
       - backorderable
       - purchasable
@@ -15579,6 +15611,8 @@ components:
           type: number
         purchasable:
           type: boolean
+        flags:
+          type: object
         items:
           type: array
           items:
@@ -15588,6 +15622,7 @@ components:
       - total
       - quantity
       - purchasable
+      - flags
       - items
       x-typelizer: true
     StoreCreditEvent:
