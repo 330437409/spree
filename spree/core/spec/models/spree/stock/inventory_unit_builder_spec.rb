@@ -39,6 +39,17 @@ module Spree
             expect(subject.units).to be_present
             expect(subject.units.map(&:order_id).uniq).to eq [nil]
           end
+
+          # Packages are packed from these units, so everything downstream of
+          # them — package contents, weight, the delivery rate — prices the
+          # ticked lines only.
+          it 'packs the ticked lines and leaves an unticked one out' do
+            unticked = cart.line_items.last
+            unticked.update_column(:selected, false)
+
+            expect(subject.units.map(&:line_item_id)).not_to include(unticked.id)
+            expect(subject.units.size).to eq(cart.line_items.count - 1)
+          end
         end
       end
     end

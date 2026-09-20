@@ -101,6 +101,12 @@ module Spree
 
     scope :with_digital_assets, -> { joins(:variant).merge(Spree::Variant.with_digital_assets) }
 
+    # The lines a shopper ticked for checkout. Durable cart state rather than a
+    # filter applied at checkout: completion copies these and nothing else, and
+    # a cart's money is computed over them
+    # (docs/plans/6.1-store-api-miniprogram-gaps.md).
+    scope :selected, -> { where(selected: true) }
+
     # Pins inventory-unit placement to a specific fulfillment when set
     # (admin add-to-this-fulfillment flows).
     attr_accessor :target_fulfillment

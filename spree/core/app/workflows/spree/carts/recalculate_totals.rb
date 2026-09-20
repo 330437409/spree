@@ -75,11 +75,12 @@ module Spree
         refresh_discount_and_fee_columns if money_frozen?
         refresh_tax_columns
 
-        discounts_sum = cart.discounts.reload.sum(&:amount)
-        fees = cart.fees.reload.to_a
-        tax_sums = cart.tax_lines.reload.group_by(&:included?).transform_values { |lines| lines.sum(&:amount) }
+        discounts = priced_rows(cart.discounts.reload).to_a
+        fees = priced_rows(cart.fees.reload).to_a
+        tax_sums = priced_rows(cart.tax_lines.reload).group_by(&:included?).transform_values { |lines| lines.sum(&:amount) }
 
-        cart.discount_total = cart.discounts.select(&:promotion?).sum(&:amount)
+        discounts_sum = discounts.sum(&:amount)
+        cart.discount_total = discounts.select(&:promotion?).sum(&:amount)
         cart.fee_total = fees.sum(&:amount)
         cart.included_tax_total = tax_sums.fetch(true, 0)
         cart.additional_tax_total = tax_sums.fetch(false, 0)
@@ -90,6 +91,20 @@ module Spree
         # discounts distribute to line items, so fees are the only residents.
         cart.taxable_adjustment_total = 0
         cart.non_taxable_adjustment_total = fees.select(&:order_level?).sum(&:amount)
+      end
+
+      # The rows that belong to the lines this record prices, plus the ones
+      # that belong to no line — a fee's tax, a fulfillment's discount. A row
+      # on an unticked line stays on that line but out of the cart's money:
+      # unticking must not delete a merchant's manual discount, which nothing
+      # would write back if the line were ticked again.
+      #
+      # @param relation [ActiveRecord::Relation] discounts, fees or tax lines
+      # @return [ActiveRecord::Relation]
+      def priced_rows(relation)
+        line_item_ids = cart.priced_line_items.select(:id)
+
+        relation.where(line_item_id: nil).or(relation.where(line_item_id: line_item_ids))
       end
 
       # What the marketplace earned on this sale, re-summed from the order's
@@ -123,7 +138,7 @@ module Spree
       # reflect the current line items — not the previous recalculation.
       def refresh_money_inputs
         cart.payment_total = paid_so_far
-        cart.item_total = cart.line_items.to_a.sum(&:amount)
+        cart.item_total = cart.priced_line_items.to_a.sum(&:amount)
         cart.delivery_total = cart.fulfillments.to_a.sum(&:cost)
       end
 

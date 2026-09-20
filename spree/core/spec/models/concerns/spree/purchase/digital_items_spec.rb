@@ -98,6 +98,24 @@ RSpec.shared_examples 'a digital items host' do
       add_line_item(record, create(:variant), 1)
       expect(record.delivery_step_required?).to be true
     end
+
+    # What is being bought is what the shopper ticked: a physical line sitting
+    # unticked in the cart does not send them to a delivery choice. An order
+    # holds no unticked line, so its answer cannot move.
+    it 'follows the priced set the host defines' do
+      add_line_item(record, digital_variant, 1)
+      add_line_item(record, create(:variant), 1)
+
+      expected = if record.is_a?(Spree::Cart)
+                   record.line_items.reload.detect { |line_item| !line_item.digital? }.
+                     update_column(:selected, false)
+                   false
+                 else
+                   true
+                 end
+
+      expect(record.reload.delivery_step_required?).to be(expected)
+    end
   end
 end
 

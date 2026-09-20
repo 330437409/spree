@@ -20,6 +20,7 @@ module Spree
         # registrations were removed with their dead implementations.
         cart_compare_line_items_service: 'Spree::CompareLineItems',
         cart_add_item_workflow: 'Spree::Carts::AddItem',
+        cart_select_lines_workflow: 'Spree::Carts::SelectLines',
         cart_recalculate_workflow: 'Spree::Carts::Recalculate',
         cart_recalculate_totals_workflow: 'Spree::Carts::RecalculateTotals',
         order_recalculate_totals_workflow: 'Spree::Orders::RecalculateTotals',

@@ -49,8 +49,8 @@ module Spree
       # delivery methods are the source of truth — their fulfillment
       # providers decide (digital and pickup deliveries need none). Before
       # any selection, falls back to the record's merchant-pickup intent and
-      # the items' possible fulfillment types, matched against the store's
-      # configured address-requiring delivery methods.
+      # the priced items' possible fulfillment types, matched against the
+      # store's configured address-requiring delivery methods.
       #
       # @return [Boolean]
       def shipping_address_required?
@@ -67,7 +67,7 @@ module Spree
 
         # Both profile paths are preloaded: the variant's own override, and the
         # product's for the variants that inherit it.
-        line_items.includes(variant: [:delivery_profile, { product: :delivery_profile }]).any? do |line_item|
+        priced_line_items.includes(variant: [:delivery_profile, { product: :delivery_profile }]).any? do |line_item|
           profile_requires_address[line_item.variant&.resolved_delivery_profile]
         end
       end

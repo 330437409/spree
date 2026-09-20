@@ -104,7 +104,7 @@ module Spree
         # accuse a completed sale of breaking a rule written after it.
         return [] if staff_initiated? || (is_a?(Spree::Order) && completed?)
 
-        line_items.filter_map do |line_item|
+        priced_line_items.filter_map do |line_item|
           variant = line_item.variant
           next if variant.nil?
 

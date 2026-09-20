@@ -161,6 +161,20 @@ module Spree
       Spree.cart_recalculate_totals_workflow.call(cart: self)
     end
 
+    # A cart prices the lines the shopper ticked and nothing else: the rest are
+    # goods being considered, not bought, so they carry no subtotal, no
+    # discount, no tax and no delivery
+    # (docs/plans/6.1-store-api-miniprogram-gaps.md).
+    # @return [ActiveRecord::Relation]
+    def priced_line_items
+      line_items.selected
+    end
+
+    # @return [Array<String>]
+    def priced_product_ids
+      priced_line_items.joins(variant: :product).distinct.pluck(Spree::Product.arel_table[:id])
+    end
+
     def outstanding_balance
       total - payment_total
     end

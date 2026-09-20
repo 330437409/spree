@@ -29,7 +29,7 @@ module Spree
 
       def advisory_requirements
         [].tap do |r|
-          r << req('cart', 'line_items', Spree.t('checkout_requirements.line_items_required')) unless @cart.line_items.any?
+          r << req('cart', 'line_items', Spree.t('checkout_requirements.line_items_required')) unless @cart.priced_line_items.any?
           r << req('address', 'email', Spree.t('checkout_requirements.email_required')) unless @cart.email.present?
           r << req('address', 'ship_address', Spree.t('checkout_requirements.ship_address_required')) if @cart.shipping_address_required? && @cart.ship_address.blank?
           r << req('delivery', 'delivery_method', Spree.t('checkout_requirements.delivery_method_required')) if delivery_step_required? && !delivery_method_selected?
@@ -77,7 +77,7 @@ module Spree
       # while an individual variant hit its discontinue_on date after it
       # entered the cart.
       def stock_errors
-        @cart.line_items.includes(variant: :product).filter_map do |line_item|
+        @cart.priced_line_items.includes(variant: :product).filter_map do |line_item|
           if line_item.variant.nil? || line_item.variant.discontinued? || line_item.variant.product.discontinued?
             req('cart', 'line_items', Spree.t('cart_line_item.discontinued', li_name: line_item.name), code: 'discontinued')
           elsif !line_item.sufficient_stock?

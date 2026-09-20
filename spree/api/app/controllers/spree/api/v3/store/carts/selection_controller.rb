@@ -8,7 +8,7 @@ module Spree
           # A shopper ticks lines as they shop, and the ticks are durable cart
           # state rather than a flag applied at checkout: no request in the
           # checkout path names them, so the server reads the cart's own
-          # selection when the cart is completed
+          # selection when it prices the cart and when it is completed
           # (docs/plans/6.1-store-api-miniprogram-gaps.md).
           #
           # It is written in bulk — one tick, or a whole group's — because that
@@ -26,9 +26,20 @@ module Spree
                 lines = lines_param
                 return if performed?
 
-                @cart.line_items.where(id: lines).update_all(selected: selected_param)
+                selected = selected_param
+                return if performed?
 
-                render_cart
+                result = Spree.cart_select_lines_workflow.call(
+                  cart: @cart,
+                  line_items: @cart.line_items.where(id: lines),
+                  selected: selected
+                )
+
+                if result.success?
+                  render_cart
+                else
+                  render_result_error(result)
+                end
               end
             end
 
@@ -56,9 +67,22 @@ module Spree
               ids.filter_map { |id| Spree::LineItem.decode_own_prefixed_id(id) }
             end
 
-            # @return [Boolean]
+            # The way to go. An absent or unrecognised value is not "false" —
+            # the cast answers nil — and writing nil into a column that forbids
+            # it would surface a client's mistake as a server fault, so it is
+            # refused here with the same answer an empty line set gets.
+            #
+            # @return [Boolean, nil] nil once the error has been rendered
             def selected_param
-              ActiveModel::Type::Boolean.new.cast(permitted_params[:selected])
+              selected = ActiveModel::Type::Boolean.new.cast(permitted_params[:selected])
+              return selected unless selected.nil?
+
+              render_error(
+                code: ErrorHandler::ERROR_CODES[:validation_error],
+                message: Spree.t('api.errors.cart_selection_requires_state'),
+                status: :unprocessable_content
+              )
+              nil
             end
 
             def permitted_params
