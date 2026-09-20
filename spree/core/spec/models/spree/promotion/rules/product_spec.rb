@@ -16,6 +16,18 @@ describe Spree::Promotion::Rules::Product, type: :model do
       expect(rule).to be_eligible(order)
     end
 
+    # The rule asks what the shopper is buying: a trigger product sitting
+    # unticked in the cart does not make the promotion eligible for the rest
+    # of the basket.
+    it 'reads a cart’s priced set rather than every line it holds' do
+      cart = create(:cart_with_line_items, store: @default_store, line_items_count: 2)
+      unticked = cart.line_items.last
+      unticked.update_column(:selected, false)
+      allow(rule).to receive_messages(eligible_product_ids: [unticked.variant.product_id])
+
+      expect(rule).not_to be_eligible(cart)
+    end
+
     context "with 'any' match policy" do
       let(:rule_options) { super().merge(preferred_match_policy: 'any') }
 

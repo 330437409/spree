@@ -19,6 +19,7 @@ en:
         media_url_import_requires_product: Importing media from a URL needs a product to import it into. Upload the file instead, or post it to a product's media.
         seller_not_found: The requested site does not exist in this store.
         cart_selection_requires_lines: Name at least one line of this cart to select or deselect.
+        cart_selection_requires_state: Pass selected as true or false.
         unknown_share_target: This store shares nothing of type %{type}.
         not_shareable: "%{type} cannot be shared."
         share_target_required: target_type and target_id are required.

@@ -161,6 +161,25 @@ module Spree
       Spree.cart_recalculate_totals_workflow.call(cart: self)
     end
 
+    # A cart prices the lines the shopper ticked and nothing else: the rest are
+    # goods being considered, not bought, so they carry no subtotal, no
+    # discount, no tax and no delivery
+    # (docs/plans/6.1-store-api-miniprogram-gaps.md).
+    # @return [ActiveRecord::Relation]
+    def priced_line_items
+      line_items.selected
+    end
+
+    # @return [Array<String>]
+    def priced_product_ids
+      # `reorder(nil)` drops the line-items association's default order
+      # (`created_at`), which a SELECT DISTINCT may not order by: PostgreSQL
+      # and MySQL both refuse it, and only SQLite tolerates it. The same drop
+      # `digital_line_items` makes for the same reason.
+      priced_line_items.reorder(nil).joins(variant: :product).distinct.
+        pluck(Spree::Product.arel_table[:id])
+    end
+
     def outstanding_balance
       total - payment_total
     end

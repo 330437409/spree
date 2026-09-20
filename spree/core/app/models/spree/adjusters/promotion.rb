@@ -33,7 +33,7 @@ module Spree
       def candidate_for?(action)
         case action.discount_scope
         when :line_item
-          order.line_items.any? { |line_item| line_item_candidates(line_item).any? { |c| c[:action].id == action.id } }
+          order.priced_line_items.any? { |line_item| line_item_candidates(line_item).any? { |c| c[:action].id == action.id } }
         when :fulfillment
           order.fulfillments.any? && eligible_promotions.include?(action.promotion)
         when :order
@@ -99,7 +99,7 @@ module Spree
       end
 
       def apply_line_item_discounts
-        order.line_items.each do |line_item|
+        order.priced_line_items.each do |line_item|
           applicable = select_applicable(line_item_candidates(line_item))
           applicable.each do |candidate|
             amount = clamp(candidate[:amount], discountable_base(line_item))
@@ -158,7 +158,7 @@ module Spree
       # each line's remaining discounted base, so shares always sum exactly to
       # the promotion amount and no line goes below zero.
       def distribute_over_line_items(chosen)
-        line_items = order.line_items.to_a
+        line_items = order.priced_line_items.to_a
         bases = line_items.map { |line_item| [discountable_base(line_item), BigDecimal(0)].max }
         bases_sum = bases.sum
         return if bases_sum <= 0

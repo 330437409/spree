@@ -243,7 +243,11 @@ module Spree
 
           order.update_columns(
             item_total: cart.item_total,
-            total_quantity: cart.total_quantity,
+            # The order counts what was copied into it, not what the cart
+            # held: the cart's own count covers the unticked lines too, and
+            # an order that reported them would overstate the sale
+            # (docs/plans/6.1-store-api-miniprogram-gaps.md).
+            total_quantity: line_item_map.values.sum(&:quantity),
             adjustment_total: cart.adjustment_total,
             included_tax_total: cart.included_tax_total,
             additional_tax_total: cart.additional_tax_total,
@@ -310,7 +314,7 @@ module Spree
         # copied, so an order never holds one — and nothing in the checkout
         # path has to name the selection, because the cart carries it
         # (docs/plans/6.1-store-api-miniprogram-gaps.md).
-        cart.line_items.reload.where(selected: true).index_with do |cart_line_item|
+        cart.priced_line_items.reload.index_with do |cart_line_item|
           attributes = cart_line_item.attributes.except('id', 'cart_id', 'created_at', 'updated_at')
           line_item = order.line_items.new(attributes.merge('order_id' => order.id))
           line_item.skip_tax_estimation = true

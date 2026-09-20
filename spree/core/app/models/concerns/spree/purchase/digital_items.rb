@@ -6,34 +6,28 @@ module Spree
     module DigitalItems
       # @return [Boolean] true when every line item is digital
       def digital?
-        if total_quantity.zero? || line_items.empty?
-          false
-        else
-          line_items.includes(variant: :product).all?(&:digital?)
-        end
+        return false if priced_line_items.empty?
+
+        priced_line_items.includes(variant: :product).all?(&:digital?)
       end
 
       # @return [Boolean] true when any line item is digital
       def some_digital?
-        if total_quantity.zero? || line_items.empty?
-          false
-        else
-          line_items.includes(variant: :product).any?(&:digital?)
-        end
+        return false if priced_line_items.empty?
+
+        priced_line_items.includes(variant: :product).any?(&:digital?)
       end
 
       # @return [Boolean] true when any line item has digital assets
       def with_digital_assets?
-        if total_quantity.zero? || line_items.empty?
-          false
-        else
-          line_items.includes(:variant).any?(&:with_digital_assets?)
-        end
+        return false if priced_line_items.empty?
+
+        priced_line_items.includes(:variant).any?(&:with_digital_assets?)
       end
 
       # @return [ActiveRecord::Relation<Spree::LineItem>]
       def digital_line_items
-        line_items.joins(:variant).with_digital_assets.distinct
+        priced_line_items.joins(:variant).with_digital_assets.distinct
       end
 
       # One query rather than one per line item — this is read for every
@@ -53,7 +47,7 @@ module Spree
       #
       # @return [Boolean]
       def delivery_step_required?
-        line_items.any? && !digital?
+        priced_line_items.any? && !digital?
       end
     end
   end

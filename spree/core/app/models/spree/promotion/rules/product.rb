@@ -48,15 +48,15 @@ module Spree
           return true if eligible_product_ids.empty?
 
           if preferred_match_policy == 'all'
-            unless eligible_product_ids.all? { |p| order.product_ids.include?(p) }
+            unless eligible_product_ids.all? { |p| order.priced_product_ids.include?(p) }
               eligibility_errors.add(:base, eligibility_error_message(:missing_product))
             end
           elsif preferred_match_policy == 'any'
-            unless order.product_ids.any? { |p| eligible_product_ids.include?(p) }
+            unless order.priced_product_ids.any? { |p| eligible_product_ids.include?(p) }
               eligibility_errors.add(:base, eligibility_error_message(:no_applicable_products))
             end
           else
-            unless order.product_ids.none? { |p| eligible_product_ids.include?(p) }
+            unless order.priced_product_ids.none? { |p| eligible_product_ids.include?(p) }
               eligibility_errors.add(:base, eligibility_error_message(:has_excluded_product))
             end
           end

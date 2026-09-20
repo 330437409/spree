@@ -169,6 +169,20 @@ RSpec.shared_examples 'a taxation host' do
       expect(record.taxable_items.grep(Spree::Fee)).to contain_exactly(surcharge)
     end
 
+    # A cart taxes what the shopper ticked — an unticked line carries no tax
+    # into the cart's money. An order holds only ticked lines by construction,
+    # so it taxes all of them whatever the column says now.
+    it 'follows the priced set the host defines' do
+      line_item = create(:line_item, owner_attributes)
+      line_item.update_column(:selected, false)
+
+      if record.is_a?(Spree::Cart)
+        expect(record.taxable_items).not_to include(line_item)
+      else
+        expect(record.taxable_items).to include(line_item)
+      end
+    end
+
     # The associations load empty at record creation, and recalculation asks
     # for taxable items right after adjusters have written fees — so this must
     # read fresh, not from the cache, on both hosts.
