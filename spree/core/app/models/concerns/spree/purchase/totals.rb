@@ -10,6 +10,15 @@ module Spree
         line_items.sum(:quantity)
       end
 
+      # The units the shopper has ticked for checkout, which is what a cart's
+      # own page renders beside the cart's total. A cart is completed from its
+      # selected lines and nothing else, so this is the figure checkout is
+      # about (docs/plans/6.1-store-api-miniprogram-gaps.md).
+      # @return [Integer]
+      def selected_quantity
+        line_items.where(selected: true).sum(:quantity)
+      end
+
       # @return [BigDecimal]
       def amount
         line_items.sum(BigDecimal('0'), &:amount)

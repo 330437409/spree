@@ -64,6 +64,10 @@ Spree::Core::Engine.add_routes do
             post :complete
           end
           resources :items, only: [:create, :update, :destroy], controller: 'carts/items'
+
+          # Which lines take part in checkout, written in bulk: one tick, or a
+          # whole group's (docs/plans/6.1-store-api-miniprogram-gaps.md).
+          resource :selection, only: [:update], controller: 'carts/selection'
           resources :discount_codes, only: [:create, :destroy], controller: 'carts/discount_codes'
           resources :gift_cards, only: [:create, :destroy], controller: 'carts/gift_cards'
           resources :fulfillments, only: [:update], controller: 'carts/fulfillments'

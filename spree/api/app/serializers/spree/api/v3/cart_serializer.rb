@@ -7,6 +7,7 @@ module Spree
         typelize number: :string, current_step: :string, completed_steps: 'string[]', token: :string, email: [:string, nullable: true],
                  customer_note: [:string, nullable: true], market_id: [:string, nullable: true], channel_id: [:string, nullable: true],
                  currency: :string, locale: [:string, nullable: true], total_quantity: :number,
+                 selected_quantity: :number,
                  coupon_code: [:string, nullable: true],
                  preferred_stock_location_id: [:string, nullable: true],
                  company_id: [:string, nullable: true], company_name: [:string, nullable: true],
@@ -34,6 +35,13 @@ module Spree
                  warnings: 'Array<{code: string, message: string, line_item_id?: string, variant_id?: string, item_index?: number}>',
                  billing_address: { nullable: true }, shipping_address: { nullable: true },
                  gift_card: { nullable: true }, market: { nullable: true }
+
+        # The units the shopper has ticked, beside the cart's own total_quantity:
+        # a cart is completed from its selected lines, so a cart page and a
+        # settle page read the same figure.
+        attribute :selected_quantity do |order|
+          order.selected_quantity
+        end
 
         attribute :market_id do |order|
           order.market&.prefixed_id

@@ -13,6 +13,7 @@ import type {
   AuthProvidersResponse,
   AuthTokens,
   Cart,
+  CartSelectionParams,
   Category,
   CategoryListParams,
   Channel,
@@ -577,6 +578,28 @@ export class StoreClient {
     /**
      * Nested resource: Line items
      */
+    /**
+     * Which of the cart's lines take part in checkout — the ticks a shopper
+     * puts on the lines they are buying. Written in bulk: one write carries
+     * every line a gesture touched, and the whole cart comes back.
+     */
+    selection: {
+      /**
+       * Select or deselect lines.
+       * @param cartId - Cart prefixed ID
+       * @param params - Whether to select them, and which lines
+       */
+      update: (
+        cartId: string,
+        params: CartSelectionParams,
+        options?: RequestOptions,
+      ): Promise<Cart> =>
+        this.request<Cart>('PATCH', `/carts/${cartId}/selection`, {
+          ...options,
+          body: params,
+        }),
+    },
+
     items: {
       /**
        * Add an item to the cart.

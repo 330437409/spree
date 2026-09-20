@@ -306,7 +306,11 @@ module Spree
       # engine that is a billable remote call per line item, inside the
       # completion lock.
       def copy_line_items!(cart, order)
-        cart.line_items.reload.index_with do |cart_line_item|
+        # Only the lines the shopper ticked: an unselected cart line is never
+        # copied, so an order never holds one — and nothing in the checkout
+        # path has to name the selection, because the cart carries it
+        # (docs/plans/6.1-store-api-miniprogram-gaps.md).
+        cart.line_items.reload.where(selected: true).index_with do |cart_line_item|
           attributes = cart_line_item.attributes.except('id', 'cart_id', 'created_at', 'updated_at')
           line_item = order.line_items.new(attributes.merge('order_id' => order.id))
           line_item.skip_tax_estimation = true
@@ -328,13 +332,20 @@ module Spree
             fulfillment.delivery_rates.create!(rate_attributes.merge('fulfillment_id' => fulfillment.id))
           end
 
+          # A line the shopper left unticked has no order line to point at, so
+          # its fulfillment item is left behind with it: a fulfillment that
+          # carried only unticked lines reaches the order empty, which is the
+          # truth about it.
           cart_fulfillment.fulfillment_items.each do |item|
+            order_line_item_id = line_item_id_map[item.line_item_id]
+            next if order_line_item_id.nil?
+
             item_attributes = item.attributes.except('id', 'created_at', 'updated_at')
             fulfillment.fulfillment_items.create!(
               item_attributes.merge(
                 'fulfillment_id' => fulfillment.id,
                 'order_id' => order.id,
-                'line_item_id' => line_item_id_map.fetch(item.line_item_id)
+                'line_item_id' => order_line_item_id
               )
             )
           end

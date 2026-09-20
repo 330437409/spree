@@ -169,6 +169,13 @@ export interface RegisterParams {
   metadata?: Record<string, unknown>
 }
 
+export interface CartSelectionParams {
+  /** Whether the named lines are being bought (true) or put back (false) */
+  selected: boolean
+  /** The prefixed line item IDs this write is about */
+  line_item_ids: string[]
+}
+
 export interface ShareParams {
   /** What kind of thing is being shared, in the api_type shorthand the rest of v3 uses */
   target_type: string

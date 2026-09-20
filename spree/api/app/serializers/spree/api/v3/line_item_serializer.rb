@@ -15,6 +15,7 @@ module Spree
                  compare_at_amount: [:string, nullable: true], display_compare_at_amount: [:string, nullable: true],
                  thumbnail_url: [:string, nullable: true],
                  preorder: :boolean, preorder_ships_at: [:string, nullable: true],
+                 selected: :boolean,
                  seller_id: [:string, nullable: true]
 
         attribute :variant_id do |line_item|
@@ -40,7 +41,10 @@ module Spree
           line_item.variant&.preorder_ships_at&.iso8601 if line_item.variant&.preorder?
         end
 
-        attributes :quantity, :currency, :name, :slug, :options_text
+        # `selected` is cart state: whether this line takes part in checkout.
+        # An order's lines are all ticked by definition — an unticked cart line
+        # is never copied — so it reads as a plain column here.
+        attributes :quantity, :currency, :name, :slug, :options_text, :selected
 
         # Nulled for gated (prices_hidden) guests so the cart's line items can't
         # leak the prices that product/variant serializers already withhold.

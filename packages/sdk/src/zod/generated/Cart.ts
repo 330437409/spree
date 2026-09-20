@@ -13,6 +13,7 @@ import { PaymentMethodSchema } from './PaymentMethod';
 
 export const CartSchema = z.object({
   id: z.string(),
+  selected_quantity: z.number(),
   market_id: z.string().nullable(),
   channel_id: z.string().nullable(),
   preferred_stock_location_id: z.string().nullable(),

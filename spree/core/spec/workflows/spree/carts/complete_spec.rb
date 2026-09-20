@@ -48,6 +48,18 @@ module Spree
         expect(ready_cart.completing_at).to be_nil
       end
 
+      # A shopper ticks the lines they are buying, and the cart carries that
+      # choice into completion: nothing in the checkout path names it, so an
+      # unticked line is simply never copied and no order holds one.
+      it 'copies the selected lines and leaves the unticked ones behind' do
+        ready_cart.line_items.last.update!(selected: false)
+
+        order = subject.value
+
+        expect(order.line_items.count).to eq(ready_cart.line_items.count - 1)
+        expect(order.line_items.map(&:variant_id)).not_to include(ready_cart.line_items.last.variant_id)
+      end
+
       it 'copies line items, fulfillments and addresses — never sharing rows' do
         order = subject.value
 
