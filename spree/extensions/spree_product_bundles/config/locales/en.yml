@@ -2,6 +2,7 @@
 en:
   spree:
     product_bundles:
+      discount_label: "%{title} — bundle saving"
       errors:
         cross_seller: must all come from one seller
         duplicate_component: holds each goods once

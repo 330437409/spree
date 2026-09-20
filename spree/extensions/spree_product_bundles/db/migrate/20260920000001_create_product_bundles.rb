@@ -34,6 +34,10 @@ class CreateProductBundles < ActiveRecord::Migration[8.1]
     create_table :spree_bundle_line_items do |t|
       t.references :bundle, null: false
       t.references :line_item, null: false
+      # The cart or order the line belongs to, which is what lets a group be
+      # recomputed when a line goes: a line item is hard-deleted, so its owner
+      # would otherwise be unrecoverable at exactly the moment it is needed.
+      t.references :owner, polymorphic: true, null: false
       t.timestamps
 
       t.index :line_item_id, unique: true, name: 'index_spree_bundle_line_items_on_line_item'

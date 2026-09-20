@@ -8,6 +8,8 @@ module Spree
   class BundleLineItem < Spree.base_class
     belongs_to :bundle, class_name: 'Spree::ProductBundle', inverse_of: :bundle_line_items
     belongs_to :line_item, class_name: 'Spree::LineItem'
+    # The cart the set was added to, or the order those lines were copied into.
+    belongs_to :owner, polymorphic: true
 
     validates :line_item_id, uniqueness: true
   end
