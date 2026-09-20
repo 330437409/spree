@@ -26,6 +26,7 @@ module SpreeFlashSales
       {
         amount: item.sale_amount.to_f,
         label: 'flash_sale',
+        ends_at: ends_at_for(flash_sale),
         flags: {
           'flash_sale_id' => flash_sale.prefixed_id,
           'flash_sale_status' => flash_sale.window_status,
@@ -78,6 +79,15 @@ module SpreeFlashSales
       live(ticket&.flash_sale)
     end
     private_class_method :ticketed_activity_for
+
+    # When the price it answers stops being offered: the close of the stretch the
+    # activity is currently sold in, or the window's own end when it is sold
+    # throughout. This is the instant the page's countdown renders.
+    # @return [Time]
+    def self.ends_at_for(flash_sale)
+      flash_sale.current_slot&.ends_at || flash_sale.ends_at
+    end
+    private_class_method :ends_at_for
 
     def self.live(sale)
       return nil unless sale&.window_status == 'live'

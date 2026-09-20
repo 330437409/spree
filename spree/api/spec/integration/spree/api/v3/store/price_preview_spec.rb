@@ -41,6 +41,8 @@ RSpec.describe 'Price Preview API', type: :request, swagger_doc: 'api-reference/
                      description: 'Price the lines this cart holds instead of naming variants. Its own currency and its own context apply.' },
           context: { type: :object, additionalProperties: true,
                      description: 'What a registered source needs — a flash sale’s activity id, for instance.' },
+          stock_location_id: { type: :string, example: 'sloc_abc123',
+                               description: 'The warehouse the page is about, when it is about one: each line then answers that shop’s own shelf beside the goods’ total.' },
           items: {
             type: :array,
             description: 'The variants to price, with how many of each',
@@ -58,8 +60,24 @@ RSpec.describe 'Price Preview API', type: :request, swagger_doc: 'api-reference/
       }
 
       response '200', 'priced' do
+        # The area context's own question: what this goods costs, and what the
+        # shop the page is about has on its shelf.
+        let(:warehouse) { create(:stock_location, store: store, name: '浦东仓') }
+        # Ten the store ships from anywhere, three on this shop's own shelf —
+        # the two figures the client switches between.
+        let(:variant) do
+          product.default_variant.tap do |record|
+            create(:stock_level, variant: record, stock_location: store.default_stock_location,
+                                 count_on_hand: 10, backorderable: false, adjust_count_on_hand: false)
+            create(:stock_level, variant: record, stock_location: warehouse,
+                                 count_on_hand: 3, backorderable: false, adjust_count_on_hand: false)
+          end
+        end
         let(:'x-spree-api-key') { api_key.token }
-        let(:body) { { items: [{ variant_id: variant.prefixed_id, quantity: 2 }] } }
+        let(:body) do
+          { stock_location_id: warehouse.prefixed_id,
+            items: [{ variant_id: variant.prefixed_id, quantity: 2 }] }
+        end
 
         schema Spree::Api::OpenAPI::SchemaHelper.ref('StorePricePreview')
 
@@ -69,6 +87,12 @@ RSpec.describe 'Price Preview API', type: :request, swagger_doc: 'api-reference/
           expect(data['items'].first['unit_amount']).to eq(100.0)
           expect(data['total']).to eq(200.0)
           expect(data['items'].first['variant_id']).to eq(variant.prefixed_id)
+          # The goods' own availability, and the named shop's — both travel,
+          # because the client switches between them on the basket it is building.
+          expect(data['items'].first['available_quantity']).to eq(13)
+          expect(data['items'].first['stock_location_quantity']).to eq(3)
+          # Nothing time-boxes a catalogue price.
+          expect(data['items'].first['price_ends_at']).to be_nil
         end
       end
 
@@ -99,6 +123,21 @@ RSpec.describe 'Price Preview API', type: :request, swagger_doc: 'api-reference/
         let(:draft_variant) { create(:product, status: 'draft', store: store).default_variant }
         let(:'x-spree-api-key') { api_key.token }
         let(:body) { { items: [{ variant_id: draft_variant.prefixed_id, quantity: 1 }] } }
+
+        schema Spree::Api::OpenAPI::SchemaHelper.error_response
+
+        run_test!
+      end
+
+      # A warehouse the store has parked is not a shop an area page can be
+      # about, and the shelf beside its own availability would contradict it.
+      response '404', 'a warehouse the store no longer uses' do
+        let(:warehouse) { create(:stock_location, store: store, name: '停用仓', active: false) }
+        let(:'x-spree-api-key') { api_key.token }
+        let(:body) do
+          { stock_location_id: warehouse.prefixed_id,
+            items: [{ variant_id: variant.prefixed_id, quantity: 1 }] }
+        end
 
         schema Spree::Api::OpenAPI::SchemaHelper.error_response
 
@@ -166,8 +205,12 @@ RSpec.describe 'Price Preview API', type: :request, swagger_doc: 'api-reference/
         let(:store) { create(:store, default: true, preferred_storefront_access: 'prices_hidden') }
         let(:product) { create(:product, store: store, price: 100) }
         let(:variant) { product.default_variant }
+        let(:warehouse) { create(:stock_location, store: store, name: '浦东仓') }
         let(:'x-spree-api-key') { api_key.token }
-        let(:body) { { items: [{ variant_id: variant.prefixed_id, quantity: 1 }] } }
+        let(:body) do
+          { stock_location_id: warehouse.prefixed_id,
+            items: [{ variant_id: variant.prefixed_id, quantity: 1 }] }
+        end
 
         schema Spree::Api::OpenAPI::SchemaHelper.ref('StorePricePreview')
 
@@ -176,7 +219,10 @@ RSpec.describe 'Price Preview API', type: :request, swagger_doc: 'api-reference/
 
           expect(data['total']).to be_nil
           expect(data['items'].first['unit_amount']).to be_nil
+          expect(data['items'].first['price_ends_at']).to be_nil
+          # What the goods cost is hidden; whether they are there is not.
           expect(data['items'].first).to have_key('in_stock')
+          expect(data['items'].first['stock_location_quantity']).to eq(0)
         end
       end
     end

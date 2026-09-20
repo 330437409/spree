@@ -761,3 +761,13 @@ Plan: `6.1-flash-sales.md`'s settlement step, built on the 2026-09-18 ruling tha
 **The row carries both rows it came from.** `metadata.flash_sale_id` and `metadata.flash_sale_ticket_id` are what make a seckill line's refund recomputable and what lets the order settle the tickets it was priced with, rather than guessing from whoever happens to be holding one.
 
 **A claim prices a cart that already holds the goods.** The claim is where a ticket and a cart meet, so a cart with the line is discounted then rather than waiting for the settle page — and a re-claim updates the same row by its code instead of stacking a second discount on the line.
+
+## 2026-09-20 (later) — The preview answers both shelves, and the price's window travels with the price
+
+Plan: `6.1-seller-scoped-pricing.md`'s step 4, which had to consume the timer `6.1-flash-sales.md` settled rather than invent a second one.
+
+**A line answers the goods' own availability and, when the request names a warehouse, that shop's.** `stock_location_quantity` sits beside `available_quantity`: the area context's `shopStock`/`specStock` pair, which the client switches between on the basket it is building. The location is read through `current_store.stock_locations`, so an id from another tenant is a 404 rather than a figure, and it is nil when the request names no shop — every read that is not an area page.
+
+**The price's window is one field, whatever time-boxes it.** `price_ends_at` is the instant the answered price stops holding: a preview source's own window when a source priced the line, otherwise the pricing list's `ends_at`. It is what the client's countdown renders, and it is the fork's *only* timer — a seckill answers the open stretch's close (or the activity's end when it is sold throughout) through the same field, so the area's time-boxed price and the seckill price do not grow two mechanisms. **A preview source that time-boxes its price returns `ends_at` beside `amount`, `label` and `flags`.**
+
+**The window is hidden with the price; the shelf figures are not.** `price_ends_at` is the answered price's own context — a countdown to a price nobody may see is meaningless — so a storefront that hides prices hides it too. The stock figures (`available_quantity`, `stock_location_quantity`, `in_stock`) are inventory rather than price and travel either way, which is the posture the read has always had: what the goods cost is hidden, whether they are there is not.

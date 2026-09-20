@@ -25,13 +25,19 @@ module Spree
             items = cart ? cart_items(cart) : resolved_items
             return if performed?
 
+            # Resolved before the sources run: what they do is a write, and a
+            # warehouse this store does not have must refuse the request rather
+            # than leave a cart priced by a request that failed.
+            stock_location = stock_location_param
+
             # A source that has to write what it prices does it here, where the
             # request has told it everything it needs. The preview is a
             # computation rather than a resource, and this is the write it owns.
             apply_sources(cart) if cart
 
             result = Spree::PricePreview.call(
-              items: items, currency: cart&.currency, customer: current_user, context: source_context
+              items: items, currency: cart&.currency, customer: current_user,
+              context: source_context, stock_location: stock_location
             )
 
             render json: serializer_class.new(result.value, params: serializer_params).to_h
@@ -66,6 +72,18 @@ module Spree
           # source rather than the one this application happens to have.
           def source_context
             permitted_params[:context].to_h.symbolize_keys
+          end
+
+          # The warehouse an area page is about, when it names one. Read through
+          # the store's own active locations: an id from another tenant, or one
+          # for a warehouse the operator has parked, is a 404 rather than a
+          # figure that contradicts the goods' own availability beside it.
+          # @return [Spree::StockLocation, nil]
+          def stock_location_param
+            id = params[:stock_location_id]
+            return nil if id.blank?
+
+            current_store.stock_locations.active.find_by_prefix_id!(id)
           end
 
           # Every variant is read through the store's own products, narrowed the

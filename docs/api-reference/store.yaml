@@ -313,7 +313,7 @@ paths:
                 - key: wechat
                   kind: redirect
                   label: WeChat
-                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--32aae41ae6f1d2501f91357517e67a979983585a
+                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--23d865d93691cf0741d18e2316655edafbda873e
                   requires_email: true
               schema:
                 type: object
@@ -1214,8 +1214,8 @@ paths:
               example:
                 data:
                 - id: prod_UkLWZg9DAJ
-                  name: Product 3049085
-                  slug: product-3049085
+                  name: Product 3059085
+                  slug: product-3059085
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -1246,8 +1246,8 @@ paths:
                   original_price:
                   seller_id:
                 - id: prod_gbHJdmfrXB
-                  name: Product 3058209
-                  slug: product-3058209
+                  name: Product 3068209
+                  slug: product-3068209
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -1376,8 +1376,8 @@ paths:
             application/json:
               example:
                 id: prod_UkLWZg9DAJ
-                name: Product 3326885
-                slug: product-3326885
+                name: Product 3336885
+                slug: product-3336885
                 meta_title:
                 meta_description:
                 meta_keywords:
@@ -5486,8 +5486,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 3529789
-                  slug: product-3529789
+                  name: Product 3539789
+                  slug: product-3539789
                   options_text: ''
                   price: '10.0'
                   display_price: "$10.00"
@@ -5704,8 +5704,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 354179
-                  slug: product-354179
+                  name: Product 355179
+                  slug: product-355179
                   options_text: ''
                   price: '10.0'
                   display_price: "$10.00"
@@ -9892,7 +9892,7 @@ paths:
                 variant:
                   id: variant_gbHJdmfrXB
                   product_id: prod_gbHJdmfrXB
-                  sku: SKU-442
+                  sku: SKU-443
                   options_text: ''
                   track_inventory: true
                   media_count: 0
@@ -11591,8 +11591,10 @@ paths:
                   compare_at_amount:
                   total:
                   price_list_id:
+                  price_ends_at:
                   price_source:
                   source:
+                  stock_location_quantity: 0
                   in_stock: false
                   backorderable: true
                   purchasable: true
@@ -11600,13 +11602,13 @@ paths:
               schema:
                 "$ref": "#/components/schemas/StorePricePreview"
         '404':
-          description: a variant of a product the storefront does not show
+          description: a warehouse the store no longer uses
           content:
             application/json:
               example:
                 error:
-                  code: variant_not_found
-                  message: Variant not found
+                  code: record_not_found
+                  message: Stock location not found
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
         '422':
@@ -11649,6 +11651,12 @@ paths:
                   additionalProperties: true
                   description: What a registered source needs — a flash sale’s activity
                     id, for instance.
+                stock_location_id:
+                  type: string
+                  example: sloc_abc123
+                  description: 'The warehouse the page is about, when it is about
+                    one: each line then answers that shop’s own shelf beside the goods’
+                    total.'
                 items:
                   type: array
                   description: The variants to price, with how many of each
@@ -15570,11 +15578,17 @@ components:
         price_list_id:
           type: string
           nullable: true
+        price_ends_at:
+          type: string
+          nullable: true
         price_source:
           type: string
           nullable: true
         source:
           type: string
+          nullable: true
+        stock_location_quantity:
+          type: number
           nullable: true
         in_stock:
           type: boolean
@@ -15592,8 +15606,10 @@ components:
       - compare_at_amount
       - total
       - price_list_id
+      - price_ends_at
       - price_source
       - source
+      - stock_location_quantity
       - in_stock
       - backorderable
       - purchasable
