@@ -1,0 +1,30 @@
+{
+  "admin": {
+    "product_bundles_plugin": {
+      "nav": "Product bundles",
+      "table": {
+        "title": "Product bundles",
+        "search_placeholder": "Search bundles",
+        "empty": "No bundles yet"
+      },
+      "fields": {
+        "title": "Title",
+        "status": "Status",
+        "components": "Components",
+        "goods_price": "Goods price",
+        "price": "Bundle price",
+        "saving": "Saving",
+        "available": "Available"
+      },
+      "statuses": {
+        "draft": "Draft",
+        "active": "Active",
+        "archived": "Archived"
+      },
+      "delete_confirm": {
+        "title": "Delete this bundle?",
+        "message": "{{name}} will be removed. The goods it is made of stay exactly as they are."
+      }
+    }
+  }
+}

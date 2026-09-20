@@ -7,9 +7,16 @@ module Spree
         # they order by, and the timestamps.
         class ProductBundleSerializer < Spree::Api::V3::Store::ProductBundleSerializer
           typelize status: :string, position: :number,
+                   currency: :string,
                    created_at: :string, updated_at: :string, deleted_at: [:string, nullable: true]
 
           attributes :status, :position, :created_at, :updated_at, :deleted_at
+
+          # The currency every figure in this payload is in, so a panel formats
+          # what it was given rather than guessing the store's own.
+          attribute :currency do |bundle|
+            bundle.store&.default_currency || Spree::Current.currency
+          end
         end
       end
     end
