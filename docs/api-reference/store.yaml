@@ -3059,6 +3059,8 @@ paths:
                   response_code: BGS-449038697740
                   number: R1001-P1
                   status: completed
+                  merchant_id:
+                  gateway_transaction_id:
                   amount: '20.0'
                   display_amount: "$20.00"
                   source_type: credit_card
@@ -4012,6 +4014,8 @@ paths:
                   response_code: 1-SC-20260115120000000000
                   number: cart_UkLWZg9DAJ-P1
                   status: checkout
+                  merchant_id:
+                  gateway_transaction_id:
                   amount: '10.0'
                   display_amount: "$10.00"
                   source_type: store_credit
@@ -4268,6 +4272,8 @@ paths:
                   response_code: 1-SC-20260115120000000000
                   number: cart_UkLWZg9DAJ-P1
                   status: invalid
+                  merchant_id:
+                  gateway_transaction_id:
                   amount: '10.0'
                   display_amount: "$10.00"
                   source_type: store_credit
@@ -5377,6 +5383,8 @@ paths:
                 response_code:
                 number: cart_UkLWZg9DAJ-P1
                 status: checkout
+                merchant_id:
+                gateway_transaction_id:
                 amount: '10.0'
                 display_amount: "$10.00"
                 source_type:
@@ -6108,6 +6116,8 @@ paths:
                   response_code: 1-SC-20260115120000000000
                   number: cart_UkLWZg9DAJ-P1
                   status: checkout
+                  merchant_id:
+                  gateway_transaction_id:
                   amount: '10.0'
                   display_amount: "$10.00"
                   source_type: store_credit
@@ -15540,6 +15550,12 @@ components:
           - type: string
           description: The values listed are the built-in ones; extensions may add
             more.
+        merchant_id:
+          type: string
+          nullable: true
+        gateway_transaction_id:
+          type: string
+          nullable: true
         amount:
           type: string
           nullable: true
@@ -15570,6 +15586,8 @@ components:
       - response_code
       - number
       - status
+      - merchant_id
+      - gateway_transaction_id
       - amount
       - display_amount
       - source_type
