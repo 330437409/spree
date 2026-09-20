@@ -100,6 +100,10 @@ module Spree
     # get it regardless of this setting.
     preference :always_include_confirm_step, :boolean, default: false
     preference :stock_reservation_ttl_minutes, :integer, default: 10
+    # How long an unpaid order stays payable. The deadline it produces is a
+    # display fact: nothing cancels an expired order on its own — the merchant
+    # decides what happens to it (docs/plans/6.1-store-api-miniprogram-gaps.md).
+    preference :unpaid_order_timeout_minutes, :integer, default: 30
     # Store-wide default for when a customer is charged rather than only
     # authorized. A payment method's own capture_method wins when set.
     # See Spree::CaptureMethod.

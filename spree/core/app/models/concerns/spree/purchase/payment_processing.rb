@@ -45,6 +45,27 @@ module Spree
         total.to_f > 0.0
       end
 
+      # When an unpaid order stops being payable, for the storefront's own
+      # countdown. Nil while there is nothing to pay — a draft, a settled
+      # order, a canceled one — and nil when the store keeps no timeout.
+      #
+      # The deadline is a display fact: nothing cancels an expired order on its
+      # own, and the merchant decides what happens to it
+      # (docs/plans/6.1-store-api-miniprogram-gaps.md).
+      #
+      # @return [Time, nil]
+      def payment_deadline
+        return nil unless payment_required?
+        return nil if completed_at.nil? || paid?
+        # Cancellation is the order's own state; a cart has none to be in.
+        return nil if is_a?(Spree::Order) && canceled?
+
+        timeout_minutes = Spree::StorePreferences.read(store, :unpaid_order_timeout_minutes).to_i
+        return nil unless timeout_minutes.positive?
+
+        completed_at + timeout_minutes.minutes
+      end
+
       # Whether a confirm/review pass is expected before completion —
       # computed from data only.
       #

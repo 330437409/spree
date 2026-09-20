@@ -2894,6 +2894,7 @@ paths:
               example:
                 id: or_UkLWZg9DAJ
                 market_id: mkt_UkLWZg9DAJ
+                payment_deadline: '2026-01-15T12:30:00Z'
                 withdrawal_period_ends_at:
                 within_withdrawal_period: true
                 cart_id: cart_UkLWZg9DAJ
@@ -6414,6 +6415,7 @@ paths:
               example:
                 id: or_UkLWZg9DAJ
                 market_id: mkt_UkLWZg9DAJ
+                payment_deadline: '2026-01-15T12:30:00Z'
                 withdrawal_period_ends_at:
                 within_withdrawal_period: true
                 cart_id:
@@ -7546,6 +7548,7 @@ paths:
                 data:
                 - id: or_UkLWZg9DAJ
                   market_id: mkt_UkLWZg9DAJ
+                  payment_deadline: '2026-01-15T12:30:00Z'
                   withdrawal_period_ends_at:
                   within_withdrawal_period: true
                   cart_id:
@@ -7869,6 +7872,7 @@ paths:
               example:
                 id: or_UkLWZg9DAJ
                 market_id: mkt_UkLWZg9DAJ
+                payment_deadline: '2026-01-15T12:30:00Z'
                 withdrawal_period_ends_at:
                 within_withdrawal_period: true
                 cart_id:
@@ -11825,6 +11829,7 @@ paths:
                 data:
                 - id: or_UkLWZg9DAJ
                   market_id: mkt_UkLWZg9DAJ
+                  payment_deadline: '2026-01-15T12:30:00Z'
                   withdrawal_period_ends_at:
                   within_withdrawal_period: true
                   cart_id:
@@ -15240,6 +15245,9 @@ components:
         market_id:
           type: string
           nullable: true
+        payment_deadline:
+          type: string
+          nullable: true
         withdrawal_period_ends_at:
           type: string
           nullable: true
@@ -15424,6 +15432,7 @@ components:
       required:
       - id
       - market_id
+      - payment_deadline
       - withdrawal_period_ends_at
       - within_withdrawal_period
       - cart_id
