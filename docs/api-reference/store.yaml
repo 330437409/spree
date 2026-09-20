@@ -1210,6 +1210,17 @@ paths:
           id is always included.
         schema:
           type: string
+      - name: ids
+        in: query
+        required: false
+        style: form
+        explode: false
+        description: 'Batch load: the prefixed product IDs to answer with, in one
+          comma-separated request (at most 100). An ID the store does not sell, or
+          never had, is simply absent from the answer. Cannot be combined with q or
+          sort: a batch answers the set it was given.'
+        schema:
+          type: array
       responses:
         '200':
           description: products found
@@ -1218,8 +1229,8 @@ paths:
               example:
                 data:
                 - id: prod_UkLWZg9DAJ
-                  name: Product 3059085
-                  slug: product-3059085
+                  name: Product 3219085
+                  slug: product-3219085
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -1250,8 +1261,8 @@ paths:
                   original_price:
                   seller_id:
                 - id: prod_gbHJdmfrXB
-                  name: Product 3068209
-                  slug: product-3068209
+                  name: Product 3228209
+                  slug: product-3228209
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -1312,6 +1323,16 @@ paths:
                 required:
                 - data
                 - meta
+        '422':
+          description: more ids than one batch may ask for
+          content:
+            application/json:
+              example:
+                error:
+                  code: validation_error
+                  message: ids must be at most 100
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
         '401':
           description: unauthorized - invalid or missing API key
           content:
@@ -1380,8 +1401,8 @@ paths:
             application/json:
               example:
                 id: prod_UkLWZg9DAJ
-                name: Product 3376885
-                slug: product-3376885
+                name: Product 3536885
+                slug: product-3536885
                 meta_title:
                 meta_description:
                 meta_keywords:
@@ -1526,7 +1547,7 @@ paths:
                   options:
                   - id: ctg_gbHJdmfrXB
                     name: Shirts
-                    permalink: category-35/shirts
+                    permalink: category-39/shirts
                     count: 2
                 sort_options:
                 - id: manual
@@ -5500,8 +5521,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 3599789
-                  slug: product-3599789
+                  name: Product 3789789
+                  slug: product-3789789
                   options_text: ''
                   price: '10.0'
                   display_price: "$10.00"
@@ -5718,8 +5739,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 361179
-                  slug: product-361179
+                  name: Product 380179
+                  slug: product-380179
                   options_text: ''
                   price: '10.0'
                   display_price: "$10.00"
@@ -8625,6 +8646,217 @@ paths:
                 external_data:
                   type: object
                   description: Provider-specific completion data
+  "/api/v3/store/customers/me/purchase_history":
+    get:
+      summary: List purchased products
+      tags:
+      - Customers
+      security:
+      - api_key: []
+        bearer_auth: []
+      description: |
+        The products the authenticated customer has already bought, for the shelves a
+        storefront builds from their own history: ordered by when they bought it
+        (`sort=recent`, the default) or by how often they did (`sort=frequent`).
+
+        Only products the store still sells are answered, and a product bought from
+        another store, or in an order that was never completed, is not part of it.
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: sort
+        in: query
+        required: false
+        description: 'Ordering of the history: recent (default, most recently bought
+          first) or frequent (bought most often first)'
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        description: 'Page number (default: 1)'
+        schema:
+          type: integer
+      - name: limit
+        in: query
+        required: false
+        description: 'Number of results per page (default: 25, max: 100)'
+        schema:
+          type: integer
+      - name: expand
+        in: query
+        required: false
+        description: Comma-separated associations to expand (variants, media, option_values)
+        schema:
+          type: string
+      - name: fields
+        in: query
+        required: false
+        description: Comma-separated list of fields to include (e.g., name,slug,price).
+          id is always included.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: the products bought most often, first
+          content:
+            application/json:
+              example:
+                data:
+                - id: prod_UkLWZg9DAJ
+                  name: Product 3767945
+                  slug: product-3767945
+                  meta_title:
+                  meta_description:
+                  meta_keywords:
+                  variant_count: 1
+                  available_on:
+                  preorder_ships_at:
+                  purchasable: true
+                  preorder: false
+                  in_stock: false
+                  backorderable: true
+                  available: true
+                  description: Illum in tempore est veniam nulla id magni quam. Distinctio
+                    temporibus doloremque quod maiores impedit sequi. Ipsam est laudantium
+                    error voluptatibus. Suscipit earum repellendus quos voluptatibus
+                    reiciendis culpa. Reiciendis voluptate natus omnis dolore voluptatum
+                    cum. Totam aspernatur sunt rerum optio natus nihil nostrum provident.
+                    Numquam delectus sint est totam temporibus minima. Minus fugiat
+                    similique unde ipsa quis rem voluptatem. Voluptatem cum alias
+                    repellat sint quos dolorum ut. Corrupti tempore explicabo excepturi
+                    nostrum numquam ea natus recusandae. Ipsum esse commodi fugiat
+                    voluptate. Eius temporibus sunt corrupti adipisci nam. Commodi
+                    ex eius incidunt dolore amet ducimus. Saepe quos rerum mollitia
+                    commodi. Enim minima voluptates natus odio ad. Explicabo molestiae
+                    mollitia adipisci non blanditiis tenetur. Alias quisquam rem natus
+                    at debitis dolorum sequi doloremque. Magni labore ducimus dicta
+                    quo praesentium molestiae corrupti quas. Ullam aspernatur rem
+                    fuga fugit atque cum libero laborum. Beatae dolore veniam fugit
+                    officia esse.
+                  description_html: |-
+                    Illum in tempore est veniam nulla id magni quam. Distinctio temporibus doloremque quod maiores impedit sequi. Ipsam est laudantium error voluptatibus. Suscipit earum repellendus quos voluptatibus reiciendis culpa.
+                    Reiciendis voluptate natus omnis dolore voluptatum cum. Totam aspernatur sunt rerum optio natus nihil nostrum provident. Numquam delectus sint est totam temporibus minima. Minus fugiat similique unde ipsa quis rem voluptatem. Voluptatem cum alias repellat sint quos dolorum ut.
+                    Corrupti tempore explicabo excepturi nostrum numquam ea natus recusandae. Ipsum esse commodi fugiat voluptate. Eius temporibus sunt corrupti adipisci nam. Commodi ex eius incidunt dolore amet ducimus.
+                    Saepe quos rerum mollitia commodi. Enim minima voluptates natus odio ad. Explicabo molestiae mollitia adipisci non blanditiis tenetur.
+                    Alias quisquam rem natus at debitis dolorum sequi doloremque. Magni labore ducimus dicta quo praesentium molestiae corrupti quas. Ullam aspernatur rem fuga fugit atque cum libero laborum. Beatae dolore veniam fugit officia esse.
+                  default_variant_id: variant_UkLWZg9DAJ
+                  buy_box_variant_id: variant_UkLWZg9DAJ
+                  thumbnail_url:
+                  tags: []
+                  price:
+                    id: price_UkLWZg9DAJ
+                    amount: '19.99'
+                    amount_in_cents: 1999
+                    compare_at_amount:
+                    compare_at_amount_in_cents:
+                    currency: USD
+                    display_amount: "$19.99"
+                    display_compare_at_amount:
+                    price_list_id:
+                  original_price:
+                  seller_id:
+                - id: prod_gbHJdmfrXB
+                  name: Product 3774689
+                  slug: product-3774689
+                  meta_title:
+                  meta_description:
+                  meta_keywords:
+                  variant_count: 1
+                  available_on:
+                  preorder_ships_at:
+                  purchasable: true
+                  preorder: false
+                  in_stock: false
+                  backorderable: true
+                  available: true
+                  description: Deleniti ab ratione dolorem possimus magnam maxime
+                    quaerat. Veritatis molestiae perspiciatis eum eveniet. Doloribus
+                    aspernatur provident eveniet voluptate adipisci. Deleniti recusandae
+                    quae vel beatae. Doloribus nesciunt tenetur placeat reprehenderit.
+                    Atque vitae tempora velit consequatur tenetur. Quam necessitatibus
+                    natus pariatur aliquid sapiente delectus. Modi dolorum veniam
+                    incidunt autem quisquam doloremque. Sed porro quam libero perspiciatis
+                    corrupti tempora et. Et necessitatibus quibusdam perferendis cumque
+                    nihil culpa. Veritatis aperiam voluptatum voluptatem vero nulla.
+                    Vel accusantium eveniet deleniti facere rerum. Harum placeat eius
+                    optio iusto distinctio non totam minus. Placeat culpa dignissimos
+                    voluptates sint suscipit. Ratione cupiditate libero laborum consequuntur
+                    quod. Ipsam aliquid rem iusto sed. Nemo ex optio provident voluptas.
+                    Dolores laudantium neque libero rem nesciunt ipsa exercitationem.
+                    Incidunt porro minus corporis laboriosam id iusto fugit aspernatur.
+                  description_html: |-
+                    Deleniti ab ratione dolorem possimus magnam maxime quaerat. Veritatis molestiae perspiciatis eum eveniet. Doloribus aspernatur provident eveniet voluptate adipisci. Deleniti recusandae quae vel beatae. Doloribus nesciunt tenetur placeat reprehenderit.
+                    Atque vitae tempora velit consequatur tenetur. Quam necessitatibus natus pariatur aliquid sapiente delectus. Modi dolorum veniam incidunt autem quisquam doloremque.
+                    Sed porro quam libero perspiciatis corrupti tempora et. Et necessitatibus quibusdam perferendis cumque nihil culpa. Veritatis aperiam voluptatum voluptatem vero nulla.
+                    Vel accusantium eveniet deleniti facere rerum. Harum placeat eius optio iusto distinctio non totam minus. Placeat culpa dignissimos voluptates sint suscipit. Ratione cupiditate libero laborum consequuntur quod. Ipsam aliquid rem iusto sed.
+                    Nemo ex optio provident voluptas. Dolores laudantium neque libero rem nesciunt ipsa exercitationem. Incidunt porro minus corporis laboriosam id iusto fugit aspernatur.
+                  default_variant_id: variant_gbHJdmfrXB
+                  buy_box_variant_id: variant_gbHJdmfrXB
+                  thumbnail_url:
+                  tags: []
+                  price:
+                    id: price_gbHJdmfrXB
+                    amount: '19.99'
+                    amount_in_cents: 1999
+                    compare_at_amount:
+                    compare_at_amount_in_cents:
+                    currency: USD
+                    display_amount: "$19.99"
+                    display_compare_at_amount:
+                    price_list_id:
+                  original_price:
+                  seller_id:
+                meta:
+                  page: 1
+                  limit: 25
+                  count: 2
+                  pages: 1
+                  from: 1
+                  to: 2
+                  in: 2
+                  previous:
+                  next:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/Product"
+                  meta:
+                    "$ref": "#/components/schemas/PaginationMeta"
+                required:
+                - data
+                - meta
+        '422':
+          description: an ordering that does not exist
+          content:
+            application/json:
+              example:
+                error:
+                  code: validation_error
+                  message: 'sort must be one of: recent, frequent'
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              example:
+                error:
+                  code: authentication_required
+                  message: Authentication required
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
   "/api/v3/store/customers/me/store_credits":
     get:
       summary: List store credits
@@ -9906,7 +10138,7 @@ paths:
                 variant:
                   id: variant_gbHJdmfrXB
                   product_id: prod_gbHJdmfrXB
-                  sku: SKU-453
+                  sku: SKU-474
                   options_text: ''
                   track_inventory: true
                   media_count: 0
@@ -11848,92 +12080,6 @@ paths:
                   message: Seller not found
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
-  "/api/v3/store/shares":
-    post:
-      summary: Compose a share card
-      tags:
-      - Shares
-      security:
-      - api_key: []
-      description: |
-        What a WeChat share card says, and where it opens, for the thing the request names:
-        a title, a subtitle, an image and the path the client assigns to its share API.
-
-        One payload for every kind of thing a storefront shares — a product today, an
-        invitation, a coupon or a team as those plans land — so the link's grammar has one
-        implementation rather than one per domain. The QR and the poster belong to the
-        mini-program identity capability and are absent until a target can ask it for them.
-      parameters:
-      - name: x-spree-api-key
-        in: header
-        required: true
-        schema:
-          type: string
-      - name: x-spree-channel
-        in: header
-        required: false
-        description: Channel code or prefixed ID the shared thing is resolved in
-        schema:
-          type: string
-      responses:
-        '200':
-          description: the card for a product
-          content:
-            application/json:
-              example:
-                title: 青花瓷茶具
-                subtitle:
-                image_url:
-                path: "/pages/index?type=inviteGoods&typeId=id-prod%5FUkLWZg9DAJ_originalSiteId-store%5FUkLWZg9DAJ"
-                scene:
-                qrcode_url:
-                poster_url:
-              schema:
-                "$ref": "#/components/schemas/StoreShare"
-        '422':
-          description: a request that names nothing to share
-          content:
-            application/json:
-              example:
-                error:
-                  code: validation_error
-                  message: target_type and target_id are required.
-              schema:
-                "$ref": "#/components/schemas/ErrorResponse"
-        '404':
-          description: a product this storefront does not show
-          content:
-            application/json:
-              example:
-                error:
-                  code: record_not_found
-                  message: Product not found
-              schema:
-                "$ref": "#/components/schemas/ErrorResponse"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                target_type:
-                  type: string
-                  example: product
-                  description: What kind of thing is being shared, in the api_type
-                    shorthand the rest of v3 uses
-                target_id:
-                  type: string
-                  example: prod_abc123
-                  description: Prefixed ID of the thing being shared
-                context:
-                  type: object
-                  additionalProperties: true
-                  description: What the target itself needs — a binding to mint, a
-                    team to join
-              required:
-              - target_type
-              - target_id
-        required: true
 servers:
 - url: http://{defaultHost}
   variables:
@@ -15747,38 +15893,6 @@ components:
       - purchasable
       - flags
       - items
-      x-typelizer: true
-    StoreShare:
-      type: object
-      properties:
-        title:
-          type: string
-          nullable: true
-        subtitle:
-          type: string
-          nullable: true
-        image_url:
-          type: string
-          nullable: true
-        path:
-          type: string
-        scene:
-          type: string
-          nullable: true
-        qrcode_url:
-          type: string
-          nullable: true
-        poster_url:
-          type: string
-          nullable: true
-      required:
-      - title
-      - subtitle
-      - image_url
-      - path
-      - scene
-      - qrcode_url
-      - poster_url
       x-typelizer: true
     StoreCreditEvent:
       type: object

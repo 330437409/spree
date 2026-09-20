@@ -1,7 +1,11 @@
+import { HttpResponse, http } from 'msw'
 import { beforeAll, describe, expect, it } from 'vitest'
 import type { Client } from '../src'
-import { createTestClient } from './helpers'
+import { createTestClient, TEST_BASE_URL } from './helpers'
 import { fixtures } from './mocks/handlers'
+import { server } from './mocks/server'
+
+const API_PREFIX = `${TEST_BASE_URL}/api/v3/store`
 
 describe('products', () => {
   let client: Client
@@ -17,6 +21,28 @@ describe('products', () => {
       expect(result.data[0].name).toBe('Test Product')
       expect(result.meta.page).toBe(1)
       expect(result.meta.count).toBe(1)
+    })
+
+    // The batch load the mini program's product lists are built from: the ids
+    // travel as a first-class parameter, not as a Ransack filter.
+    it('asks for a batch of ids', async () => {
+      let requestedUrl = ''
+      server.use(
+        http.get(`${API_PREFIX}/products`, ({ request }) => {
+          requestedUrl = request.url
+          return HttpResponse.json({
+            data: [fixtures.product],
+            meta: { page: 1, limit: 25, count: 1, pages: 1 },
+          })
+        }),
+      )
+
+      await client.products.list({ ids: ['prod_1', 'prod_2'] })
+
+      // Passed through unwrapped, and joined the way every other list-shaped
+      // parameter this SDK sends is — the endpoint accepts either spelling.
+      expect(decodeURIComponent(requestedUrl)).toContain('ids=prod_1,prod_2')
+      expect(requestedUrl).not.toContain('q%5Bids')
     })
 
     it('passes query parameters', async () => {

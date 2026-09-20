@@ -54,6 +54,7 @@ import type {
   ProductFiltersParams,
   ProductFiltersResponse,
   ProductListParams,
+  PurchaseHistoryParams,
   RedirectLogin,
   RegisterParams,
   RequestPasswordResetParams,
@@ -1173,6 +1174,24 @@ export class StoreClient {
     /**
      * Nested resource: Orders (customer order history)
      */
+    /**
+     * Nested resource: Purchase History
+     *
+     * What this customer has already bought, for the shelves a storefront
+     * builds from their own history — ordered by when they bought it, or by how
+     * often they did.
+     */
+    purchaseHistory: {
+      list: (
+        params?: PurchaseHistoryParams,
+        options?: RequestOptions,
+      ): Promise<PaginatedResponse<Product>> =>
+        this.request<PaginatedResponse<Product>>('GET', '/customers/me/purchase_history', {
+          ...options,
+          params: transformListParams({ ...params }),
+        }),
+    },
+
     orders: {
       /**
        * List completed orders for the authenticated customer
