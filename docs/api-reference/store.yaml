@@ -1694,6 +1694,7 @@ paths:
               example:
                 data:
                 - id: cart_UkLWZg9DAJ
+                  selected_quantity: 1
                   market_id: mkt_UkLWZg9DAJ
                   channel_id: ch_UkLWZg9DAJ
                   preferred_stock_location_id:
@@ -1774,6 +1775,7 @@ paths:
                     name: Product 225715
                     slug: product-225715
                     options_text: ''
+                    selected: true
                     price: '10.0'
                     display_price: "$10.00"
                     total: '10.0'
@@ -1813,6 +1815,7 @@ paths:
                     supported_locales:
                     - en
                 - id: cart_gbHJdmfrXB
+                  selected_quantity: 1
                   market_id: mkt_UkLWZg9DAJ
                   channel_id: ch_UkLWZg9DAJ
                   preferred_stock_location_id:
@@ -1893,6 +1896,7 @@ paths:
                     name: Product 2262171
                     slug: product-2262171
                     options_text: ''
+                    selected: true
                     price: '10.0'
                     display_price: "$10.00"
                     total: '10.0'
@@ -2003,6 +2007,7 @@ paths:
             application/json:
               example:
                 id: cart_UkLWZg9DAJ
+                selected_quantity: 0
                 market_id: mkt_UkLWZg9DAJ
                 channel_id: ch_UkLWZg9DAJ
                 preferred_stock_location_id:
@@ -2181,6 +2186,7 @@ paths:
             application/json:
               example:
                 id: cart_UkLWZg9DAJ
+                selected_quantity: 0
                 market_id: mkt_UkLWZg9DAJ
                 channel_id: ch_UkLWZg9DAJ
                 preferred_stock_location_id:
@@ -2366,6 +2372,7 @@ paths:
             application/json:
               example:
                 id: cart_UkLWZg9DAJ
+                selected_quantity: 1
                 market_id: mkt_UkLWZg9DAJ
                 channel_id: ch_UkLWZg9DAJ
                 preferred_stock_location_id:
@@ -2442,6 +2449,7 @@ paths:
                   name: Product 2313263
                   slug: product-2313263
                   options_text: ''
+                  selected: true
                   price: '10.0'
                   display_price: "$10.00"
                   total: '10.0'
@@ -2655,6 +2663,7 @@ paths:
             application/json:
               example:
                 id: cart_UkLWZg9DAJ
+                selected_quantity: 1
                 market_id: mkt_UkLWZg9DAJ
                 channel_id: ch_UkLWZg9DAJ
                 preferred_stock_location_id:
@@ -2728,6 +2737,7 @@ paths:
                   name: Product 2338992
                   slug: product-2338992
                   options_text: ''
+                  selected: true
                   price: '10.0'
                   display_price: "$10.00"
                   total: '10.0'
@@ -2941,6 +2951,7 @@ paths:
                   name: Product 2364794
                   slug: product-2364794
                   options_text: ''
+                  selected: true
                   price: '10.0'
                   display_price: "$10.00"
                   total: '10.0'
@@ -3203,6 +3214,7 @@ paths:
             application/json:
               example:
                 id: cart_UkLWZg9DAJ
+                selected_quantity: 1
                 market_id: mkt_UkLWZg9DAJ
                 channel_id: ch_UkLWZg9DAJ
                 preferred_stock_location_id:
@@ -3281,6 +3293,7 @@ paths:
                   name: Product 2652614
                   slug: product-2652614
                   options_text: ''
+                  selected: true
                   price: '10.0'
                   display_price: "$10.00"
                   total: '10.0'
@@ -3404,6 +3417,7 @@ paths:
             application/json:
               example:
                 id: cart_UkLWZg9DAJ
+                selected_quantity: 1
                 market_id: mkt_UkLWZg9DAJ
                 channel_id: ch_UkLWZg9DAJ
                 preferred_stock_location_id:
@@ -3480,6 +3494,7 @@ paths:
                   name: Product 2663461
                   slug: product-2663461
                   options_text: ''
+                  selected: true
                   price: '10.0'
                   display_price: "$10.00"
                   total: '10.0'
@@ -3597,6 +3612,7 @@ paths:
             application/json:
               example:
                 id: cart_UkLWZg9DAJ
+                selected_quantity: 1
                 market_id: mkt_UkLWZg9DAJ
                 channel_id: ch_UkLWZg9DAJ
                 preferred_stock_location_id:
@@ -3667,6 +3683,7 @@ paths:
                   name: Product 2688182
                   slug: product-2688182
                   options_text: ''
+                  selected: true
                   price: '10.0'
                   display_price: "$10.00"
                   total: '10.0'
@@ -3892,6 +3909,7 @@ paths:
             application/json:
               example:
                 id: cart_UkLWZg9DAJ
+                selected_quantity: 1
                 market_id: mkt_UkLWZg9DAJ
                 channel_id: ch_UkLWZg9DAJ
                 preferred_stock_location_id:
@@ -3964,6 +3982,7 @@ paths:
                   name: Product 2705702
                   slug: product-2705702
                   options_text: ''
+                  selected: true
                   price: '10.0'
                   display_price: "$10.00"
                   total: '10.0'
@@ -4142,6 +4161,7 @@ paths:
             application/json:
               example:
                 id: cart_UkLWZg9DAJ
+                selected_quantity: 1
                 market_id: mkt_UkLWZg9DAJ
                 channel_id: ch_UkLWZg9DAJ
                 preferred_stock_location_id:
@@ -4218,6 +4238,7 @@ paths:
                   name: Product 2749569
                   slug: product-2749569
                   options_text: ''
+                  selected: true
                   price: '10.0'
                   display_price: "$10.00"
                   total: '10.0'
@@ -4351,6 +4372,7 @@ paths:
             application/json:
               example:
                 id: cart_UkLWZg9DAJ
+                selected_quantity: 2
                 market_id: mkt_UkLWZg9DAJ
                 channel_id: ch_UkLWZg9DAJ
                 preferred_stock_location_id:
@@ -4433,6 +4455,7 @@ paths:
                   name: Product 27763
                   slug: product-27763
                   options_text: ''
+                  selected: true
                   price: '10.0'
                   display_price: "$10.00"
                   total: '10.0'
@@ -4464,6 +4487,7 @@ paths:
                   name: Product 278298
                   slug: product-278298
                   options_text: ''
+                  selected: true
                   price: '19.99'
                   display_price: "$19.99"
                   total: '19.99'
@@ -4614,6 +4638,7 @@ paths:
             application/json:
               example:
                 id: cart_UkLWZg9DAJ
+                selected_quantity: 1
                 market_id: mkt_UkLWZg9DAJ
                 channel_id: ch_UkLWZg9DAJ
                 preferred_stock_location_id:
@@ -4694,6 +4719,7 @@ paths:
                   name: Product 2849165
                   slug: product-2849165
                   options_text: ''
+                  selected: true
                   price: '10.0'
                   display_price: "$10.00"
                   total: '10.0'
@@ -4806,6 +4832,7 @@ paths:
             application/json:
               example:
                 id: cart_UkLWZg9DAJ
+                selected_quantity: 0
                 market_id: mkt_UkLWZg9DAJ
                 channel_id: ch_UkLWZg9DAJ
                 preferred_stock_location_id:
@@ -5452,6 +5479,7 @@ paths:
             application/json:
               example:
                 id: cart_UkLWZg9DAJ
+                selected_quantity: 1
                 market_id: mkt_UkLWZg9DAJ
                 channel_id: ch_UkLWZg9DAJ
                 preferred_stock_location_id:
@@ -5524,6 +5552,7 @@ paths:
                   name: Product 3809789
                   slug: product-3809789
                   options_text: ''
+                  selected: true
                   price: '10.0'
                   display_price: "$10.00"
                   total: '10.0'
@@ -5666,6 +5695,7 @@ paths:
             application/json:
               example:
                 id: cart_UkLWZg9DAJ
+                selected_quantity: 1
                 market_id: mkt_UkLWZg9DAJ
                 channel_id: ch_UkLWZg9DAJ
                 preferred_stock_location_id:
@@ -5742,6 +5772,7 @@ paths:
                   name: Product 382179
                   slug: product-382179
                   options_text: ''
+                  selected: true
                   price: '10.0'
                   display_price: "$10.00"
                   total: '10.0'
@@ -5921,6 +5952,7 @@ paths:
                   name: Product 288496
                   slug: product-288496
                   options_text: ''
+                  selected: true
                   price: '10.0'
                   display_price: "$10.00"
                   total: '10.0'
@@ -7045,6 +7077,7 @@ paths:
                     name: Product 2535270
                     slug: product-2535270
                     options_text: ''
+                    selected: true
                     price: '10.0'
                     display_price: "$10.00"
                     total: '10.0'
@@ -7367,6 +7400,7 @@ paths:
                   name: Product 2555633
                   slug: product-2555633
                   options_text: ''
+                  selected: true
                   price: '10.0'
                   display_price: "$10.00"
                   total: '10.0'
@@ -11322,6 +11356,7 @@ paths:
                     name: Product 2525649
                     slug: product-2525649
                     options_text: ''
+                    selected: true
                     price: '10.0'
                     display_price: "$10.00"
                     total: '10.0'
@@ -12638,6 +12673,8 @@ components:
       properties:
         id:
           type: string
+        selected_quantity:
+          type: number
         market_id:
           type: string
           nullable: true
@@ -12829,6 +12866,7 @@ components:
           nullable: true
       required:
       - id
+      - selected_quantity
       - market_id
       - channel_id
       - preferred_stock_location_id
@@ -14205,6 +14243,8 @@ components:
           type: string
         options_text:
           type: string
+        selected:
+          type: boolean
         price:
           type: string
           nullable: true
@@ -14287,6 +14327,7 @@ components:
       - name
       - slug
       - options_text
+      - selected
       - price
       - display_price
       - total

@@ -18,6 +18,7 @@ en:
         media_in_use: "This file is still in use (%{places}). Pass detach=true to remove it everywhere and delete it, or clear those places first."
         media_url_import_requires_product: Importing media from a URL needs a product to import it into. Upload the file instead, or post it to a product's media.
         seller_not_found: The requested site does not exist in this store.
+        cart_selection_requires_lines: Name at least one line of this cart to select or deselect.
         unknown_share_target: This store shares nothing of type %{type}.
         not_shareable: "%{type} cannot be shared."
         share_target_required: target_type and target_id are required.
