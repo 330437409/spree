@@ -8,6 +8,15 @@ module Spree
           # pre-scope, so Meilisearch's own filtering/counting/pagination works),
           # and the collection's sort_order is the default when the request omits `sort`.
           class ProductsController < Spree::Api::V3::Store::ProductsController
+            # The batch load belongs to the products collection, not to one
+            # collection's products. Answering a page the caller never asked for
+            # because `ids` was ignored is worse than saying so.
+            def index
+              return if params[:ids].present? && render_batch_refusal('ids is not supported here; use the products collection')
+
+              super
+            end
+
             protected
 
             def collection
