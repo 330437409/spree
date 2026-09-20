@@ -59,6 +59,25 @@ RSpec.describe Spree::PricePreview do
     # The internal walk stamps no `price_source` — a provider that answered names
     # itself there — so the list is what says where this price came from.
     expect(row.price_source).to be_nil
-    expect(row.price_list_id).to eq(price_list.id)
+    expect(row.price_list_id).to eq(price_list.prefixed_id)
+  end
+
+  # A line nobody can price is not a free line, and nothing in it is for sale.
+  it 'answers no price rather than a free one when nothing prices the variant' do
+    variant.prices.destroy_all
+
+    result = preview([{ variant: variant, quantity: 1 }])
+    row = result.rows.first
+
+    expect(row.unit_amount).to be_nil
+    expect(row.total).to be_nil
+    expect(result.total).to be_nil
+    expect(result.purchasable?).to be(false)
+  end
+
+  # The quantity is what the caller asked for, and a basket of nothing is not a
+  # basket: the service prices what it is given rather than guessing.
+  it 'prices the quantity it is given, and only that' do
+    expect(preview([{ variant: variant, quantity: 5 }]).total).to eq(500)
   end
 end

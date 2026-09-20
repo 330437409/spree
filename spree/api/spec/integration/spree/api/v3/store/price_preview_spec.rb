@@ -119,11 +119,16 @@ RSpec.describe 'Price Preview API', type: :request, swagger_doc: 'api-reference/
 
       # A storefront that hides prices answers no amounts — the same posture the
       # product read applies — while the shelf's verdict still travels.
+      #
+      # Its own store rather than the default one: the posture is a setting on a
+      # store row, and a spec that flips it on the shared row leaves every later
+      # example in the shard reading hidden prices.
       response '200', 'no amounts on a storefront that hides prices' do
+        let(:store) { create(:store, default: true, preferred_storefront_access: 'prices_hidden') }
+        let(:product) { create(:product, store: store, price: 100) }
+        let(:variant) { product.default_variant }
         let(:'x-spree-api-key') { api_key.token }
         let(:body) { { items: [{ variant_id: variant.prefixed_id, quantity: 1 }] } }
-
-        before { store.update!(preferred_storefront_access: 'prices_hidden') }
 
         schema Spree::Api::OpenAPI::SchemaHelper.ref('StorePricePreview')
 
