@@ -25,7 +25,11 @@ module Spree
 
     belongs_to :store, class_name: 'Spree::Store'
     belongs_to :seller, class_name: 'Spree::Seller', optional: true
-    has_many :components, class_name: 'Spree::BundleComponent', dependent: :destroy, inverse_of: :bundle
+    # +autosave+ so the composition is written with its parent — a component the
+    # payload removed is marked for destruction and a quantity it changed goes
+    # in the same save.
+    has_many :components, class_name: 'Spree::BundleComponent', dependent: :destroy,
+                          inverse_of: :bundle, autosave: true
     has_many :variants, through: :components, source: :variant
     has_many :bundle_line_items, class_name: 'Spree::BundleLineItem', dependent: :destroy, inverse_of: :bundle
     has_many :line_items, through: :bundle_line_items
@@ -39,6 +43,7 @@ module Spree
     DISCOUNT_KINDS = %w[amount percentage].freeze
 
     before_validation :normalize_slug, if: -> { slug.blank? && title.present? }
+    after_save :flush_pending_components
     before_validation :adopt_component_seller, if: -> { seller_id.nil? && components.any? }
 
     validates :title, :slug, presence: true
@@ -135,6 +140,43 @@ module Spree
       components.map { |component| component.available_units(stock_location: location) / component.quantity }.min
     end
 
+    # Flat-payload writer for the composition: the payload is the whole set, so
+    # a component the caller left out is one they removed — which is how an
+    # editor that sends everything it has reads. Prefixed ids are accepted, the
+    # way every other v3 write accepts them.
+    #
+    # See {Spree::TypedAssociations#assign_typed_association}.
+    def components=(rows)
+      rows = Array(rows)
+
+      # Records are an ordinary association assignment; the payload vocabulary
+      # is for hashes, which is what a request carries.
+      unless rows.all? { |row| row.respond_to?(:to_h) && !row.is_a?(Spree.base_class) }
+        return assign_typed_association(:components, rows)
+      end
+
+      # The payload is the whole set: a variant named again is the same row with
+      # a new quantity, and a row the payload leaves out is one the operator
+      # removed. Built eagerly rather than deferred, so the composition is what
+      # the parent validates — a cross-seller set is refused before it is
+      # written, not after.
+      wanted = rows.map { |row| Spree::BundleComponent.new(row.to_h) }
+      existing = components.index_by(&:variant_id)
+      wanted_ids = wanted.map(&:variant_id)
+
+      wanted.each do |row|
+        if (component = existing[row.variant_id])
+          component.quantity = row.quantity
+        else
+          components.build(variant_id: row.variant_id, quantity: row.quantity)
+        end
+      end
+
+      components.each do |component|
+        component.mark_for_destruction unless wanted_ids.include?(component.variant_id)
+      end
+    end
+
     # The warehouse a marketplace bundle ships from: the seller's own. A store
     # with no sellers asks the store's whole network instead, which is what a
     # nil location means to the quantifier.
@@ -146,6 +188,10 @@ module Spree
     end
 
     private
+
+    def flush_pending_components
+      flush_pending_typed_association(:components)
+    end
 
     # A Chinese title parameterizes to its digits and nothing else — 套餐 1
     # becomes "1" — so a title with anything non-ASCII keeps its own text, which

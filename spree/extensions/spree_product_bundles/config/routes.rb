@@ -12,6 +12,13 @@
 Spree::Core::Engine.add_routes do
   namespace :api, defaults: { format: 'json' } do
     namespace :v3 do
+      # The operator's own surface: a set is created and edited from the panel,
+      # so its CRUD is the Admin API's, with the same scopes and abilities every
+      # other admin resource has.
+      namespace :admin do
+        resources :product_bundles, only: [:index, :show, :create, :update, :destroy]
+      end
+
       namespace :store do
         # One collection and one member: the client's four calls differ in
         # filter rather than in shape.

@@ -69,6 +69,26 @@ its group row with it and stops the set saving anything.
 card each: the title, how many sets the lines hold, what they cost, what they
 saved, how many more the shelf could fill, and the cart's own lines.
 
+## In the panel
+
+```
+GET    /api/v3/admin/product_bundles        # the operator's list
+POST   /api/v3/admin/product_bundles        # create one from components
+PATCH  /api/v3/admin/product_bundles/:id    # edit it, or take it off sale
+DELETE /api/v3/admin/product_bundles/:id    # remove it, leaving the components
+```
+
+The Admin API's own resource: full CRUD, secret-key scopes
+(`read_product_bundles` / `write_product_bundles`) and CanCanCan, like every
+other admin resource. The composition is written flat and it is the whole set —
+a component the payload leaves out is one the operator removed:
+
+```json
+{ "title": "双人下午茶套餐", "status": "active",
+  "preferred_discount_kind": "amount", "preferred_discount_value": 20,
+  "components": [{ "variant_id": "variant_…", "quantity": 1 },
+                 { "variant_id": "variant_…", "quantity": 2 }] }
+```
 
 ## Wiring
 

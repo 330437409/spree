@@ -1,0 +1,30 @@
+{
+  "admin": {
+    "product_bundles_plugin": {
+      "nav": "套餐",
+      "table": {
+        "title": "套餐",
+        "search_placeholder": "搜索套餐",
+        "empty": "还没有套餐"
+      },
+      "fields": {
+        "title": "名称",
+        "status": "状态",
+        "components": "组成商品",
+        "goods_price": "单买合计",
+        "price": "套餐价",
+        "saving": "优惠",
+        "available": "可售套数"
+      },
+      "statuses": {
+        "draft": "草稿",
+        "active": "已上架",
+        "archived": "已下架"
+      },
+      "delete_confirm": {
+        "title": "删除这个套餐？",
+        "message": "「{{name}}」将被删除，组成它的商品不受影响。"
+      }
+    }
+  }
+}

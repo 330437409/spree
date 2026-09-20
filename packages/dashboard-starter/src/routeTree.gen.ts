@@ -32,6 +32,7 @@ import { Route as ReportsIndexRouteImport } from './../../dashboard/src/routes/_
 import { Route as PurchaseOrdersIndexRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/purchase-orders/index'
 import { Route as PromotionsIndexRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/promotions/index'
 import { Route as ProductsIndexRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/products/index'
+import { Route as ProductBundlesDotindexRouteImport } from './../../dashboard-plugin-product-bundles/src/routes/product-bundles.index'
 import { Route as OrdersIndexRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/orders/index'
 import { Route as InventoryIndexRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/inventory/index'
 import { Route as CustomersIndexRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/customers/index'
@@ -221,6 +222,11 @@ const PromotionsIndexRoute = PromotionsIndexRouteImport.update({
 const ProductsIndexRoute = ProductsIndexRouteImport.update({
   id: '/products/',
   path: '/products/',
+  getParentRoute: () => authenticatedStoreIdRoute,
+} as any)
+const ProductBundlesDotindexRoute = ProductBundlesDotindexRouteImport.update({
+  id: '/product-bundles/',
+  path: '/product-bundles/',
   getParentRoute: () => authenticatedStoreIdRoute,
 } as any)
 const OrdersIndexRoute = OrdersIndexRouteImport.update({
@@ -679,6 +685,7 @@ export interface FileRoutesByFullPath {
   '/$storeId/customers/': typeof CustomersIndexRoute
   '/$storeId/inventory/': typeof InventoryIndexRoute
   '/$storeId/orders/': typeof OrdersIndexRoute
+  '/$storeId/product-bundles/': typeof ProductBundlesDotindexRoute
   '/$storeId/products/': typeof ProductsIndexRoute
   '/$storeId/promotions/': typeof PromotionsIndexRoute
   '/$storeId/purchase-orders/': typeof PurchaseOrdersIndexRoute
@@ -776,6 +783,7 @@ export interface FileRoutesByTo {
   '/$storeId/customers': typeof CustomersIndexRoute
   '/$storeId/inventory': typeof InventoryIndexRoute
   '/$storeId/orders': typeof OrdersIndexRoute
+  '/$storeId/product-bundles': typeof ProductBundlesDotindexRoute
   '/$storeId/products': typeof ProductsIndexRoute
   '/$storeId/promotions': typeof PromotionsIndexRoute
   '/$storeId/purchase-orders': typeof PurchaseOrdersIndexRoute
@@ -877,6 +885,7 @@ export interface FileRoutesById {
   '/_authenticated/$storeId/customers/': typeof CustomersIndexRoute
   '/_authenticated/$storeId/inventory/': typeof InventoryIndexRoute
   '/_authenticated/$storeId/orders/': typeof OrdersIndexRoute
+  '/_authenticated/$storeId/product-bundles/': typeof ProductBundlesDotindexRoute
   '/_authenticated/$storeId/products/': typeof ProductsIndexRoute
   '/_authenticated/$storeId/promotions/': typeof PromotionsIndexRoute
   '/_authenticated/$storeId/purchase-orders/': typeof PurchaseOrdersIndexRoute
@@ -978,6 +987,7 @@ export interface FileRouteTypes {
     | '/$storeId/customers/'
     | '/$storeId/inventory/'
     | '/$storeId/orders/'
+    | '/$storeId/product-bundles/'
     | '/$storeId/products/'
     | '/$storeId/promotions/'
     | '/$storeId/purchase-orders/'
@@ -1075,6 +1085,7 @@ export interface FileRouteTypes {
     | '/$storeId/customers'
     | '/$storeId/inventory'
     | '/$storeId/orders'
+    | '/$storeId/product-bundles'
     | '/$storeId/products'
     | '/$storeId/promotions'
     | '/$storeId/purchase-orders'
@@ -1175,6 +1186,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$storeId/customers/'
     | '/_authenticated/$storeId/inventory/'
     | '/_authenticated/$storeId/orders/'
+    | '/_authenticated/$storeId/product-bundles/'
     | '/_authenticated/$storeId/products/'
     | '/_authenticated/$storeId/promotions/'
     | '/_authenticated/$storeId/purchase-orders/'
@@ -1380,6 +1392,13 @@ declare module '@tanstack/react-router' {
       path: '/products'
       fullPath: '/$storeId/products/'
       preLoaderRoute: typeof ProductsIndexRouteImport
+      parentRoute: typeof authenticatedStoreIdRoute
+    }
+    '/_authenticated/$storeId/product-bundles/': {
+      id: '/_authenticated/$storeId/product-bundles/'
+      path: '/product-bundles'
+      fullPath: '/$storeId/product-bundles/'
+      preLoaderRoute: typeof ProductBundlesDotindexRouteImport
       parentRoute: typeof authenticatedStoreIdRoute
     }
     '/_authenticated/$storeId/orders/': {
@@ -2019,6 +2038,7 @@ interface authenticatedStoreIdRouteChildren {
   CustomersIndexRoute: typeof CustomersIndexRoute
   InventoryIndexRoute: typeof InventoryIndexRoute
   OrdersIndexRoute: typeof OrdersIndexRoute
+  ProductBundlesDotindexRoute: typeof ProductBundlesDotindexRoute
   ProductsIndexRoute: typeof ProductsIndexRoute
   PromotionsIndexRoute: typeof PromotionsIndexRoute
   PurchaseOrdersIndexRoute: typeof PurchaseOrdersIndexRoute
@@ -2083,6 +2103,7 @@ const authenticatedStoreIdRouteChildren: authenticatedStoreIdRouteChildren = {
   CustomersIndexRoute: CustomersIndexRoute,
   InventoryIndexRoute: InventoryIndexRoute,
   OrdersIndexRoute: OrdersIndexRoute,
+  ProductBundlesDotindexRoute: ProductBundlesDotindexRoute,
   ProductsIndexRoute: ProductsIndexRoute,
   PromotionsIndexRoute: PromotionsIndexRoute,
   PurchaseOrdersIndexRoute: PurchaseOrdersIndexRoute,
