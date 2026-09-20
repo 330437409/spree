@@ -172,7 +172,12 @@ module Spree
 
     # @return [Array<String>]
     def priced_product_ids
-      priced_line_items.joins(variant: :product).distinct.pluck(Spree::Product.arel_table[:id])
+      # `reorder(nil)` drops the line-items association's default order
+      # (`created_at`), which a SELECT DISTINCT may not order by: PostgreSQL
+      # and MySQL both refuse it, and only SQLite tolerates it. The same drop
+      # `digital_line_items` makes for the same reason.
+      priced_line_items.reorder(nil).joins(variant: :product).distinct.
+        pluck(Spree::Product.arel_table[:id])
     end
 
     def outstanding_balance

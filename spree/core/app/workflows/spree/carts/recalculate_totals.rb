@@ -102,7 +102,7 @@ module Spree
       # @param relation [ActiveRecord::Relation] discounts, fees or tax lines
       # @return [ActiveRecord::Relation]
       def priced_rows(relation)
-        line_item_ids = cart.priced_line_items.select(:id)
+        line_item_ids = cart.priced_line_items.reorder(nil).select(:id)
 
         relation.where(line_item_id: nil).or(relation.where(line_item_id: line_item_ids))
       end
