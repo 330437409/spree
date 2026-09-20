@@ -108,6 +108,30 @@ describe('carts', () => {
       const result = await client.carts.items.delete('cart_1', 'li_1', opts)
       expect(result.id).toBe('cart_1')
     })
+
+    it('writes a set of lines in one request', async () => {
+      let capturedBody: { items?: unknown[] } = {}
+      server.use(
+        http.post(`${TEST_BASE_URL}/api/v3/store/carts/cart_1/items/batch`, async ({ request }) => {
+          capturedBody = (await request.json()) as { items?: unknown[] }
+          return HttpResponse.json({ id: 'cart_1', total_quantity: 5 })
+        }),
+      )
+
+      const result = await client.carts.items.batch(
+        'cart_1',
+        {
+          items: [
+            { variant_id: 'var_1', quantity: 2 },
+            { line_item_id: 'li_1', quantity: 3 },
+          ],
+        },
+        opts,
+      )
+
+      expect(capturedBody.items).toHaveLength(2)
+      expect(result.total_quantity).toBe(5)
+    })
   })
 
   describe('discountCodes', () => {
