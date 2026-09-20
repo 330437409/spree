@@ -10,12 +10,14 @@ module SpreeFlashSales
   class PricePreviewSource
     # @param variant [Spree::Variant]
     # @param quantity [Integer]
-    # @param customer [Object, nil] unused today: a seckill prices the same for
-    #   everyone the activity can serve, and the caps are enforced at the claim
-    # @param context [Hash] `flash_sale_id` names the activity
+    # @param customer [Object, nil] whose live ticket answers when the request
+    #   names no activity — a cart being priced does not have to say which
+    #   activity each of its lines came from, because the ticket it holds does
+    # @param context [Hash] `flash_sale_id` names the activity; omitted, the
+    #   customer's own holding tickets are asked
     # @return [Hash, nil] nil to decline, which leaves the catalogue to price it
     def self.call(variant:, quantity:, customer: nil, context: {})
-      flash_sale = activity_for(context)
+      flash_sale = activity_for(context) || ticketed_activity_for(variant, customer)
       return nil if flash_sale.nil?
 
       item = flash_sale.items.find_by(variant: variant)
@@ -34,6 +36,25 @@ module SpreeFlashSales
       }
     end
 
+    # Writes the activity's price onto the cart's lines for the tickets this
+    # customer is holding — the claim's own price, applied where the line already
+    # exists. Called by the preview when the request brings a cart, because that
+    # is the last moment before payment at which the server knows both.
+    #
+    # @param cart [Spree::Cart]
+    # @param customer [Object, nil]
+    # @return [void]
+    def self.apply!(cart:, customer: nil)
+      return if customer.nil?
+
+      Spree::FlashSaleTicket.holding.where(customer: customer).find_each do |ticket|
+        variants = ticket.flash_sale.items.select(:variant_id)
+        cart.line_items.where(variant_id: variants).find_each do |line_item|
+          Spree::FlashSales::ApplyTicketPrice.call(ticket: ticket, line_item: line_item)
+        end
+      end
+    end
+
     # Only an activity whose window is open prices anything: a scheduled one has
     # not started, and an ended one is not offered anywhere.
     # @return [Spree::FlashSale, nil]
@@ -41,12 +62,29 @@ module SpreeFlashSales
       id = context[:flash_sale_id] || context['flash_sale_id']
       return nil if id.blank?
 
-      sale = Spree::FlashSale.find_by_prefix_id(id)
+      live(Spree::FlashSale.find_by_prefix_id(id))
+    end
+    private_class_method :activity_for
+
+    # The activity behind a ticket this customer holds for this goods — the same
+    # answer a named activity gives, found from what they are already holding.
+    # @return [Spree::FlashSale, nil]
+    def self.ticketed_activity_for(variant, customer)
+      return nil if customer.nil?
+
+      ticket = Spree::FlashSaleTicket.holding.where(customer: customer).order(:expires_at).detect do |candidate|
+        candidate.flash_sale.items.exists?(variant: variant)
+      end
+      live(ticket&.flash_sale)
+    end
+    private_class_method :ticketed_activity_for
+
+    def self.live(sale)
       return nil unless sale&.window_status == 'live'
 
       sale
     end
-    private_class_method :activity_for
+    private_class_method :live
 
     # Whether the activity still has units to sell — what the client renders
     # 活动库存不足 from, and the reason a page should not offer the seckill price

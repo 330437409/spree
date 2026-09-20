@@ -54,4 +54,67 @@ RSpec.describe SpreeFlashSales::PricePreviewSource do
 
     expect(preview(flash_sale_id: flash_sale.prefixed_id).flags['claimable']).to be(false)
   end
+
+  # A cart being priced does not have to say which activity each line came from:
+  # the ticket the customer holds does, and it is their own.
+  describe 'when the request names no activity' do
+    let(:customer) { create(:customer) }
+    let(:slot) { create(:flash_sale_slot, flash_sale: flash_sale, pool: 10) }
+
+    def preview_as(customer)
+      Spree::PricePreview.call(items: [{ variant: variant, quantity: 1 }], customer: customer).value
+    end
+
+    it 'prices from the ticket the customer is holding' do
+      Spree::FlashSales::ClaimTicket.call(customer: customer, item: item, quantity: 1, slot: slot)
+
+      expect(preview_as(customer).rows.first.unit_amount).to eq(60)
+    end
+
+    it 'prices nothing from another customer’s ticket' do
+      Spree::FlashSales::ClaimTicket.call(customer: create(:customer), item: item, quantity: 1, slot: slot)
+
+      expect(preview_as(customer).rows.first.unit_amount).to eq(100)
+    end
+
+    it 'prices nothing once the ticket is gone' do
+      ticket = Spree::FlashSales::ClaimTicket.call(customer: customer, item: item, quantity: 1, slot: slot).value
+      ticket.release!(reason: 'canceled')
+
+      expect(preview_as(customer).rows.first.unit_amount).to eq(100)
+    end
+  end
+
+  # The settle page's call brings a cart, and this is where the price is written
+  # onto the lines it holds.
+  describe 'when the request brings a cart' do
+    let(:customer) { create(:customer) }
+    let(:slot) { create(:flash_sale_slot, flash_sale: flash_sale, pool: 10) }
+    let(:cart) { create(:cart, store: store, customer: customer) }
+
+    it 'writes the activity’s price onto the cart' do
+      create(:line_item, cart: cart, variant: variant, quantity: 2, price: 100)
+      ticket = Spree::FlashSales::ClaimTicket.call(customer: customer, item: item, quantity: 2, slot: slot).value
+
+      described_class.apply!(cart: cart, customer: customer)
+
+      expect(cart.reload.total.to_d).to eq(120)
+      expect(cart.discounts.where(code: "flash_sale:#{ticket.prefixed_id}").count).to eq(1)
+    end
+
+    it 'leaves another customer’s cart alone' do
+      create(:line_item, cart: cart, variant: variant, quantity: 1, price: 100)
+      Spree::FlashSales::ClaimTicket.call(customer: create(:customer), item: item, quantity: 1, slot: slot)
+
+      described_class.apply!(cart: cart, customer: customer)
+
+      expect(cart.reload.discounts.count).to eq(0)
+    end
+
+    it 'does nothing for a guest' do
+      create(:line_item, cart: cart, variant: variant, quantity: 1, price: 100)
+
+      expect { described_class.apply!(cart: cart, customer: nil) }.not_to change { cart.reload.discounts.count }
+    end
+  end
 end

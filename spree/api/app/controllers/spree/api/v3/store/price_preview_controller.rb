@@ -10,19 +10,48 @@ module Spree
         # There is exactly one of it — a plan that needs another field adds it
         # here rather than opening a second price calculation.
         class PricePreviewController < Store::BaseController
+          include Spree::Api::V3::CartResolvable
+
           # POST /api/v3/store/price_preview
+          #
+          # Two ways to ask the same question: a set of variants, before anything
+          # exists, or a cart, at the settle page. A cart carries its own context,
+          # so its lines are priced in its currency and by the sources it is
+          # already holding.
           def create
-            items = resolved_items
+            cart = find_cart if params[:cart_id].present?
             return if performed?
 
+            items = cart ? cart_items(cart) : resolved_items
+            return if performed?
+
+            # A source that has to write what it prices does it here, where the
+            # request has told it everything it needs. The preview is a
+            # computation rather than a resource, and this is the write it owns.
+            apply_sources(cart) if cart
+
             result = Spree::PricePreview.call(
-              items: items, customer: current_user, context: source_context
+              items: items, currency: cart&.currency, customer: current_user, context: source_context
             )
 
             render json: serializer_class.new(result.value, params: serializer_params).to_h
           end
 
           private
+
+          # Every line the cart holds: the tick that chooses some of them is the
+          # cart's own state, and selecting them is not built yet.
+          def cart_items(cart)
+            cart.line_items.map do |line_item|
+              { variant: line_item.variant, quantity: line_item.quantity }
+            end
+          end
+
+          def apply_sources(cart)
+            Spree.price_preview_sources.each do |source|
+              source.apply!(cart: cart, customer: current_user) if source.respond_to?(:apply!)
+            end
+          end
 
           def serializer_class
             Spree::Api::V3::Store::PricePreviewSerializer
