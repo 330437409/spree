@@ -27,9 +27,10 @@ RSpec.describe 'Cart Selection API', type: :request, swagger_doc: 'api-reference
       security [api_key: [], bearer_auth: []]
       description <<~DESC
         Ticks or unticks lines of the cart in one write, over a set of line ids: one tick,
-        or a whole group's. The ticks are durable cart state — completion copies the ticked
-        lines into the order — so no request in the checkout path names the selection
-        again. The cart that comes back carries the new ticks beside the chosen count.
+        or a whole group's. The ticks are durable cart state — the cart prices the ticked
+        lines and completion copies them into the order — so no request in the checkout
+        path names the selection again. The cart that comes back carries the new ticks
+        beside the money of the lines that are left ticked.
       DESC
 
       sdk_example 'carts/selection-update'
@@ -52,7 +53,7 @@ RSpec.describe 'Cart Selection API', type: :request, swagger_doc: 'api-reference
         required: %w[selected line_item_ids]
       }
 
-      response '200', 'the cart, with the write applied' do
+      response '200', 'the cart, priced over the lines that are left ticked' do
         let(:'x-spree-api-key') { api_key.token }
         let(:'Authorization') { "Bearer #{jwt_token}" }
         let(:body) { { selected: false, line_item_ids: [line_item.prefixed_id] } }
@@ -63,6 +64,8 @@ RSpec.describe 'Cart Selection API', type: :request, swagger_doc: 'api-reference
           data = JSON.parse(response.body)
           expect(data['items'].first['selected']).to be(false)
           expect(data['selected_quantity']).to eq(0)
+          # Nothing is ticked, so nothing is priced.
+          expect(data['item_total']).to eq('0.0')
         end
       end
 
