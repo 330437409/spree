@@ -78,6 +78,7 @@ export { StoreCreditSchema, type StoreCredit } from './StoreCredit';
 export { StoreCreditEventSchema, type StoreCreditEvent } from './StoreCreditEvent';
 export { StorePricePreviewSchema, type StorePricePreview } from './StorePricePreview';
 export { StorePricePreviewItemSchema, type StorePricePreviewItem } from './StorePricePreviewItem';
+export { StoreShareSchema, type StoreShare } from './StoreShare';
 export { TaxIdentifierSchema, type TaxIdentifier } from './TaxIdentifier';
 export { TaxLineSchema, type TaxLine } from './TaxLine';
 export { VariantSchema, type Variant } from './Variant';

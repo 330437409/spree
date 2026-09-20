@@ -25,6 +25,7 @@ module Spree
                                :delivery_method_rules,
                                :seller_requirements,
                                :price_preview_sources,
+                               :shareable_targets,
                                :delivery_rate_providers,
                                :digital_asset_providers,
                                :delivery_profile_types,
@@ -175,6 +176,24 @@ module Spree
       # catalogue alone cannot, and an extension that has one appends itself.
       initializer 'spree.register.price_preview_sources', before: :load_config_initializers do |app|
         app.config.spree.price_preview_sources = []
+      end
+
+      # What a Store API share can be about, each type answering the relation
+      # the route resolves its target through. A target must also implement
+      # `share_descriptor` to be shareable — the map says where to look, the
+      # record says what the card contains. One payload for every kind of thing
+      # this storefront shares (docs/plans/6.1-store-api-miniprogram-gaps.md).
+      initializer 'spree.register.shareable_targets', before: :load_config_initializers do |app|
+        app.config.spree.shareable_targets = {
+          'product' => lambda { |store, channel, customer|
+            base = store.products.available(
+              Time.current, Spree::Current.currency, include_preorderable: true
+            )
+            Spree.products_for_context_service.call(
+              store: store, channel: channel, customer: customer, base: base
+            ).value
+          }
+        }
       end
 
       # Same reason again: a tax provider gem, or a host app, registers its

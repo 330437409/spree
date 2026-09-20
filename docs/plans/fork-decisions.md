@@ -772,6 +772,15 @@ Plan: `6.1-seller-scoped-pricing.md`'s step 4, which had to consume the timer `6
 
 **The window is hidden with the price; the shelf figures are not.** `price_ends_at` is the answered price's own context — a countdown to a price nobody may see is meaningless — so a storefront that hides prices hides it too. The stock figures (`available_quantity`, `stock_location_quantity`, `in_stock`) are inventory rather than price and travel either way, which is the posture the read has always had: what the goods cost is hidden, whether they are there is not.
 
+## 2026-09-20 (later) — A share link's values are escaped, and what can be shared is a seam
+
+Plan: `6.1-store-api-miniprogram-gaps.md`'s one share payload — the last piece of its first migration step, and the surface four other plans were each about to compose for themselves.
+
+**The link's values are percent-escaped, because this API's own ids carry the grammar's separator.** The client's decoder splits `typeId` on `_`, turns each `-` into `=`, and joins the parts with `&` (`static/behaviors/locationLinkBehavior.js:7-13`), so a prefixed id like `prod_UkLWZg9DAJ` would decode as two fields — `id-prod` and `UkLWZg9DAJ`. The composer escapes `% _ - & =` in every value and the decoder is left untouched: the page reads its query through a URL parser, which is where an escaped value comes back as it was written. A second implementation of this grammar would have to remember the escaping, which is the third reason there is one composer.
+
+**What can be shared is a config seam, not a branch in the route.** `Spree.shareable_targets` maps an `api_type` shorthand to the relation its target is resolved through — the product row resolves through the store's available catalogue, narrowed by the request's channel and the buyer's catalogs, so another store's product and a product this storefront does not show are both 404s. An extension adds its type to the map; a record that does not answer `share_descriptor` is not shareable whatever the map says. The referral, coupon, group-buy and product-authentication plans add their own types without touching the route.
+
+**The QR and the poster are absent on purpose, and the fields ship anyway.** The mini-program identity capability that mints them does not exist yet, and no domain may fetch a token itself — so a target answers them nil and a client renders what it has. They are in the payload from the start so that the day the capability lands, a client's rendering does not change.
 ## 2026-09-20 (later) — A bundle's rule is a preference, and an extension's API is its own document
 
 Plan: `6.1-product-bundles.md`, whose first four migration steps are built.

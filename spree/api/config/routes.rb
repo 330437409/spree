@@ -36,6 +36,12 @@ Spree::Core::Engine.add_routes do
         # (docs/plans/6.1-store-api-miniprogram-gaps.md).
         resource :price_preview, only: [:create], controller: 'price_preview'
 
+        # The one share payload: a WeChat share card for whatever the request
+        # names — a product today, an invitation, a coupon or a team later.
+        # Composing one may mint what the card needs, which is why it is a
+        # write (docs/plans/6.1-store-api-miniprogram-gaps.md).
+        resources :shares, only: [:create]
+
         # Catalog
         resources :products, only: [:index, :show] do
           collection do
