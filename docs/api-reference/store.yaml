@@ -679,6 +679,7 @@ paths:
                   meta_description:
                   meta_keywords:
                   children_count: 1
+                  products_count: 1
                   parent_id:
                   description: ''
                   description_html: ''
@@ -696,6 +697,7 @@ paths:
                   meta_description:
                   meta_keywords:
                   children_count: 1
+                  products_count: 1
                   parent_id: ctg_UkLWZg9DAJ
                   description: ''
                   description_html: ''
@@ -713,6 +715,7 @@ paths:
                   meta_description:
                   meta_keywords:
                   children_count: 0
+                  products_count: 0
                   parent_id: ctg_gbHJdmfrXB
                   description: ''
                   description_html: ''
@@ -813,6 +816,7 @@ paths:
                 meta_description:
                 meta_keywords:
                 children_count: 1
+                products_count: 1
                 parent_id: ctg_UkLWZg9DAJ
                 description: ''
                 description_html: ''
@@ -1376,8 +1380,8 @@ paths:
             application/json:
               example:
                 id: prod_UkLWZg9DAJ
-                name: Product 3336885
-                slug: product-3336885
+                name: Product 3376885
+                slug: product-3376885
                 meta_title:
                 meta_description:
                 meta_keywords:
@@ -1407,6 +1411,16 @@ paths:
                   price_list_id:
                 original_price:
                 seller_id:
+                sale_option_values:
+                - id: optval_UkLWZg9DAJ
+                  option_type_id: opt_UkLWZg9DAJ
+                  name: small
+                  label: S
+                  position: 1
+                  color_code:
+                  option_type_name: size
+                  option_type_label: Size
+                  image_url:
                 prior_price:
                   id: _AXs1igzRC6
                   amount: '9.99'
@@ -1512,7 +1526,7 @@ paths:
                   options:
                   - id: ctg_gbHJdmfrXB
                     name: Shirts
-                    permalink: category-34/shirts
+                    permalink: category-35/shirts
                     count: 2
                 sort_options:
                 - id: manual
@@ -5486,8 +5500,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 3539789
-                  slug: product-3539789
+                  name: Product 3579789
+                  slug: product-3579789
                   options_text: ''
                   price: '10.0'
                   display_price: "$10.00"
@@ -5704,8 +5718,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 355179
-                  slug: product-355179
+                  name: Product 359179
+                  slug: product-359179
                   options_text: ''
                   price: '10.0'
                   display_price: "$10.00"
@@ -9892,7 +9906,7 @@ paths:
                 variant:
                   id: variant_gbHJdmfrXB
                   product_id: prod_gbHJdmfrXB
-                  sku: SKU-443
+                  sku: SKU-449
                   options_text: ''
                   track_inventory: true
                   media_count: 0
@@ -12583,6 +12597,8 @@ components:
           nullable: true
         children_count:
           type: number
+        products_count:
+          type: number
         parent_id:
           type: string
           nullable: true
@@ -12626,6 +12642,7 @@ components:
       - meta_description
       - meta_keywords
       - children_count
+      - products_count
       - parent_id
       - description
       - description_html
@@ -15148,6 +15165,10 @@ components:
           items:
             "$ref": "#/components/schemas/OptionType"
         option_values:
+          type: array
+          items:
+            "$ref": "#/components/schemas/OptionValue"
+        sale_option_values:
           type: array
           items:
             "$ref": "#/components/schemas/OptionValue"

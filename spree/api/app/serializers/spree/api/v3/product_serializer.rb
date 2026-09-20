@@ -17,7 +17,11 @@ module Spree
                  preorder: :boolean,
                  price: 'Price',
                  original_price: ['Price', nullable: true],
-                 tags: [:string, multi: true]
+                 tags: [:string, multi: true],
+                 # Named rather than resolved through the association: the
+                 # admin package has no copy of this store serializer's class,
+                 # so a resolved name would not exist in its own barrel.
+                 sale_option_values: 'OptionValue[]'
 
         attributes :name, :slug,
                    :meta_title, :meta_description, :meta_keywords,
@@ -142,6 +146,12 @@ module Spree
         many :option_values,
              resource: proc { Spree.api.option_value_serializer },
              if: proc { expand?('option_values') }
+
+        # What the goods can be picked in: the values on the variants a shopper
+        # can buy, rather than every value the catalogue knows about.
+        many :sale_option_values,
+             resource: proc { Spree.api.option_value_serializer },
+             if: proc { expand?('sale_option_values') }
 
         many :categories,
              proc { |categories, params|

@@ -44,6 +44,13 @@ RSpec.describe 'Categories API', type: :request, swagger_doc: 'api-reference/sto
           # Should not include categories from other stores
           ids = data['data'].map { |t| t['id'] }
           expect(ids).not_to include(other_category.prefixed_id)
+
+          # The menu's own figures: products counted through the subtree, and
+          # the children a node can be opened into.
+          by_name = data['data'].index_by { |row| row['name'] }
+          expect(by_name['Catalog']['products_count']).to eq(1)
+          expect(by_name[category.name]['children_count']).to eq(1)
+          expect(by_name[child_category.name]['products_count']).to eq(0)
         end
       end
 
