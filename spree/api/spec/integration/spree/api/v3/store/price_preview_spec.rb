@@ -23,6 +23,9 @@ RSpec.describe 'Price Preview API', type: :request, swagger_doc: 'api-reference/
         currency, the country the buyer is taxed in, and the customer when there is one. It is
         the one price calculation the Store API offers, and the price it answers is the price
         the cart writes.
+
+        A cart is priced over the lines the shopper has ticked for checkout: an unticked line
+        waits in the cart without a price, the same way it waits without money.
       DESC
 
       parameter name: 'x-spree-api-key', in: :header, type: :string, required: true,
@@ -162,9 +165,17 @@ RSpec.describe 'Price Preview API', type: :request, swagger_doc: 'api-reference/
         run_test!
       end
 
-      # The settle page's own shape: a cart rather than a list of variants.
+      # The settle page's own shape: a cart rather than a list of variants, and
+      # priced over the lines the shopper ticked — an unticked line waits in
+      # the cart without a price, the same way it waits without money.
       response '200', 'the lines a cart holds' do
-        let(:cart) { create(:cart, store: store).tap { |record| create(:line_item, cart: record, variant: variant, quantity: 2, price: 100) } }
+        let(:cart) do
+          create(:cart, store: store).tap do |record|
+            create(:line_item, cart: record, variant: variant, quantity: 2, price: 100)
+            unticked = create(:line_item, cart: record, quantity: 1, price: 50)
+            unticked.update_column(:selected, false)
+          end
+        end
         let(:'x-spree-api-key') { api_key.token }
         # A guest reaches their own cart with its token, the same way the cart
         # endpoints do.
