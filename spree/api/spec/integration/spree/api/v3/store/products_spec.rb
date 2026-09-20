@@ -59,9 +59,14 @@ RSpec.describe 'Products API', type: :request, swagger_doc: 'api-reference/store
                              'option_types, seller, seller.policies)'
       parameter name: :fields, in: :query, type: :string, required: false,
                 description: 'Comma-separated list of fields to include (e.g., name,slug,price). id is always included.'
+      # `explode: false` is what makes this a comma-separated list rather than a
+      # repeated parameter — Rails reads a repeated plain key as its last value,
+      # so the exploded spelling would quietly answer with one product.
       parameter name: :ids, in: :query, type: :array, required: false,
-                description: 'Batch load: the prefixed product IDs to answer with, in one request ' \
-                             '(at most 100). An ID the store does not sell is simply absent from the answer.'
+                style: :form, explode: false,
+                description: 'Batch load: the prefixed product IDs to answer with, in one ' \
+                             'comma-separated request (at most 100). An ID the store does not ' \
+                             'sell, or never had, is simply absent from the answer.'
 
       # The batch load the mini program's product lists are built from: the IDs
       # it already holds, answered as a scoped collection rather than a search.

@@ -168,6 +168,11 @@ export interface RegisterParams {
   metadata?: Record<string, unknown>
 }
 
+export interface PurchaseHistoryParams extends ListParams {
+  /** Ordering: 'recent' (default, most recently bought first) or 'frequent' (bought most often first) */
+  sort?: 'recent' | 'frequent'
+}
+
 export interface PricePreviewParams {
   /** Currency to price in; defaults to the request's own */
   currency?: string
@@ -178,6 +183,8 @@ export interface PricePreviewParams {
 export interface ProductListParams extends ListParams {
   /** Sort: 'price', '-price', 'best_selling', 'name', '-name', '-available_on', 'available_on' */
   sort?: string
+  /** Batch load: the prefixed product IDs to answer with, in one request (at most 100) */
+  ids?: string[]
   /** Full-text search across name and SKU */
   search?: string
   /** Filter: name contains */

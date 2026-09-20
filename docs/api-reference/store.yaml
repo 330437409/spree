@@ -313,7 +313,7 @@ paths:
                 - key: wechat
                   kind: redirect
                   label: WeChat
-                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--32aae41ae6f1d2501f91357517e67a979983585a
+                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--23d865d93691cf0741d18e2316655edafbda873e
                   requires_email: true
               schema:
                 type: object
@@ -1206,6 +1206,16 @@ paths:
           id is always included.
         schema:
           type: string
+      - name: ids
+        in: query
+        required: false
+        style: form
+        explode: false
+        description: 'Batch load: the prefixed product IDs to answer with, in one
+          comma-separated request (at most 100). An ID the store does not sell, or
+          never had, is simply absent from the answer.'
+        schema:
+          type: array
       responses:
         '200':
           description: products found
@@ -1214,8 +1224,8 @@ paths:
               example:
                 data:
                 - id: prod_UkLWZg9DAJ
-                  name: Product 3039085
-                  slug: product-3039085
+                  name: Product 3119085
+                  slug: product-3119085
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -1246,8 +1256,8 @@ paths:
                   original_price:
                   seller_id:
                 - id: prod_gbHJdmfrXB
-                  name: Product 3048209
-                  slug: product-3048209
+                  name: Product 3128209
+                  slug: product-3128209
                   meta_title:
                   meta_description:
                   meta_keywords:
@@ -1308,6 +1318,16 @@ paths:
                 required:
                 - data
                 - meta
+        '422':
+          description: more ids than one batch may ask for
+          content:
+            application/json:
+              example:
+                error:
+                  code: validation_error
+                  message: ids must be at most 100
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
         '401':
           description: unauthorized - invalid or missing API key
           content:
@@ -1376,8 +1396,8 @@ paths:
             application/json:
               example:
                 id: prod_UkLWZg9DAJ
-                name: Product 3316885
-                slug: product-3316885
+                name: Product 3396885
+                slug: product-3396885
                 meta_title:
                 meta_description:
                 meta_keywords:
@@ -1512,7 +1532,7 @@ paths:
                   options:
                   - id: ctg_gbHJdmfrXB
                     name: Shirts
-                    permalink: category-34/shirts
+                    permalink: category-36/shirts
                     count: 2
                 sort_options:
                 - id: manual
@@ -5486,8 +5506,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 3519789
-                  slug: product-3519789
+                  name: Product 3649789
+                  slug: product-3649789
                   options_text: ''
                   price: '10.0'
                   display_price: "$10.00"
@@ -5704,8 +5724,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 353179
-                  slug: product-353179
+                  name: Product 366179
+                  slug: product-366179
                   options_text: ''
                   price: '10.0'
                   display_price: "$10.00"
@@ -8611,6 +8631,217 @@ paths:
                 external_data:
                   type: object
                   description: Provider-specific completion data
+  "/api/v3/store/customers/me/purchase_history":
+    get:
+      summary: List purchased products
+      tags:
+      - Customers
+      security:
+      - api_key: []
+        bearer_auth: []
+      description: |
+        The products the authenticated customer has already bought, for the shelves a
+        storefront builds from their own history: ordered by when they bought it
+        (`sort=recent`, the default) or by how often they did (`sort=frequent`).
+
+        Only products the store still sells are answered, and a product bought from
+        another store, or in an order that was never completed, is not part of it.
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: sort
+        in: query
+        required: false
+        description: 'Ordering of the history: recent (default, most recently bought
+          first) or frequent (bought most often first)'
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        description: 'Page number (default: 1)'
+        schema:
+          type: integer
+      - name: limit
+        in: query
+        required: false
+        description: 'Number of results per page (default: 25, max: 100)'
+        schema:
+          type: integer
+      - name: expand
+        in: query
+        required: false
+        description: Comma-separated associations to expand (variants, media, option_values)
+        schema:
+          type: string
+      - name: fields
+        in: query
+        required: false
+        description: Comma-separated list of fields to include (e.g., name,slug,price).
+          id is always included.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: the products bought most often, first
+          content:
+            application/json:
+              example:
+                data:
+                - id: prod_UkLWZg9DAJ
+                  name: Product 3627945
+                  slug: product-3627945
+                  meta_title:
+                  meta_description:
+                  meta_keywords:
+                  variant_count: 1
+                  available_on:
+                  preorder_ships_at:
+                  purchasable: true
+                  preorder: false
+                  in_stock: false
+                  backorderable: true
+                  available: true
+                  description: Illum in tempore est veniam nulla id magni quam. Distinctio
+                    temporibus doloremque quod maiores impedit sequi. Ipsam est laudantium
+                    error voluptatibus. Suscipit earum repellendus quos voluptatibus
+                    reiciendis culpa. Reiciendis voluptate natus omnis dolore voluptatum
+                    cum. Totam aspernatur sunt rerum optio natus nihil nostrum provident.
+                    Numquam delectus sint est totam temporibus minima. Minus fugiat
+                    similique unde ipsa quis rem voluptatem. Voluptatem cum alias
+                    repellat sint quos dolorum ut. Corrupti tempore explicabo excepturi
+                    nostrum numquam ea natus recusandae. Ipsum esse commodi fugiat
+                    voluptate. Eius temporibus sunt corrupti adipisci nam. Commodi
+                    ex eius incidunt dolore amet ducimus. Saepe quos rerum mollitia
+                    commodi. Enim minima voluptates natus odio ad. Explicabo molestiae
+                    mollitia adipisci non blanditiis tenetur. Alias quisquam rem natus
+                    at debitis dolorum sequi doloremque. Magni labore ducimus dicta
+                    quo praesentium molestiae corrupti quas. Ullam aspernatur rem
+                    fuga fugit atque cum libero laborum. Beatae dolore veniam fugit
+                    officia esse.
+                  description_html: |-
+                    Illum in tempore est veniam nulla id magni quam. Distinctio temporibus doloremque quod maiores impedit sequi. Ipsam est laudantium error voluptatibus. Suscipit earum repellendus quos voluptatibus reiciendis culpa.
+                    Reiciendis voluptate natus omnis dolore voluptatum cum. Totam aspernatur sunt rerum optio natus nihil nostrum provident. Numquam delectus sint est totam temporibus minima. Minus fugiat similique unde ipsa quis rem voluptatem. Voluptatem cum alias repellat sint quos dolorum ut.
+                    Corrupti tempore explicabo excepturi nostrum numquam ea natus recusandae. Ipsum esse commodi fugiat voluptate. Eius temporibus sunt corrupti adipisci nam. Commodi ex eius incidunt dolore amet ducimus.
+                    Saepe quos rerum mollitia commodi. Enim minima voluptates natus odio ad. Explicabo molestiae mollitia adipisci non blanditiis tenetur.
+                    Alias quisquam rem natus at debitis dolorum sequi doloremque. Magni labore ducimus dicta quo praesentium molestiae corrupti quas. Ullam aspernatur rem fuga fugit atque cum libero laborum. Beatae dolore veniam fugit officia esse.
+                  default_variant_id: variant_UkLWZg9DAJ
+                  buy_box_variant_id: variant_UkLWZg9DAJ
+                  thumbnail_url:
+                  tags: []
+                  price:
+                    id: price_UkLWZg9DAJ
+                    amount: '19.99'
+                    amount_in_cents: 1999
+                    compare_at_amount:
+                    compare_at_amount_in_cents:
+                    currency: USD
+                    display_amount: "$19.99"
+                    display_compare_at_amount:
+                    price_list_id:
+                  original_price:
+                  seller_id:
+                - id: prod_gbHJdmfrXB
+                  name: Product 3634689
+                  slug: product-3634689
+                  meta_title:
+                  meta_description:
+                  meta_keywords:
+                  variant_count: 1
+                  available_on:
+                  preorder_ships_at:
+                  purchasable: true
+                  preorder: false
+                  in_stock: false
+                  backorderable: true
+                  available: true
+                  description: Deleniti ab ratione dolorem possimus magnam maxime
+                    quaerat. Veritatis molestiae perspiciatis eum eveniet. Doloribus
+                    aspernatur provident eveniet voluptate adipisci. Deleniti recusandae
+                    quae vel beatae. Doloribus nesciunt tenetur placeat reprehenderit.
+                    Atque vitae tempora velit consequatur tenetur. Quam necessitatibus
+                    natus pariatur aliquid sapiente delectus. Modi dolorum veniam
+                    incidunt autem quisquam doloremque. Sed porro quam libero perspiciatis
+                    corrupti tempora et. Et necessitatibus quibusdam perferendis cumque
+                    nihil culpa. Veritatis aperiam voluptatum voluptatem vero nulla.
+                    Vel accusantium eveniet deleniti facere rerum. Harum placeat eius
+                    optio iusto distinctio non totam minus. Placeat culpa dignissimos
+                    voluptates sint suscipit. Ratione cupiditate libero laborum consequuntur
+                    quod. Ipsam aliquid rem iusto sed. Nemo ex optio provident voluptas.
+                    Dolores laudantium neque libero rem nesciunt ipsa exercitationem.
+                    Incidunt porro minus corporis laboriosam id iusto fugit aspernatur.
+                  description_html: |-
+                    Deleniti ab ratione dolorem possimus magnam maxime quaerat. Veritatis molestiae perspiciatis eum eveniet. Doloribus aspernatur provident eveniet voluptate adipisci. Deleniti recusandae quae vel beatae. Doloribus nesciunt tenetur placeat reprehenderit.
+                    Atque vitae tempora velit consequatur tenetur. Quam necessitatibus natus pariatur aliquid sapiente delectus. Modi dolorum veniam incidunt autem quisquam doloremque.
+                    Sed porro quam libero perspiciatis corrupti tempora et. Et necessitatibus quibusdam perferendis cumque nihil culpa. Veritatis aperiam voluptatum voluptatem vero nulla.
+                    Vel accusantium eveniet deleniti facere rerum. Harum placeat eius optio iusto distinctio non totam minus. Placeat culpa dignissimos voluptates sint suscipit. Ratione cupiditate libero laborum consequuntur quod. Ipsam aliquid rem iusto sed.
+                    Nemo ex optio provident voluptas. Dolores laudantium neque libero rem nesciunt ipsa exercitationem. Incidunt porro minus corporis laboriosam id iusto fugit aspernatur.
+                  default_variant_id: variant_gbHJdmfrXB
+                  buy_box_variant_id: variant_gbHJdmfrXB
+                  thumbnail_url:
+                  tags: []
+                  price:
+                    id: price_gbHJdmfrXB
+                    amount: '19.99'
+                    amount_in_cents: 1999
+                    compare_at_amount:
+                    compare_at_amount_in_cents:
+                    currency: USD
+                    display_amount: "$19.99"
+                    display_compare_at_amount:
+                    price_list_id:
+                  original_price:
+                  seller_id:
+                meta:
+                  page: 1
+                  limit: 25
+                  count: 2
+                  pages: 1
+                  from: 1
+                  to: 2
+                  in: 2
+                  previous:
+                  next:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/Product"
+                  meta:
+                    "$ref": "#/components/schemas/PaginationMeta"
+                required:
+                - data
+                - meta
+        '422':
+          description: an ordering that does not exist
+          content:
+            application/json:
+              example:
+                error:
+                  code: validation_error
+                  message: 'sort must be one of: recent, frequent'
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              example:
+                error:
+                  code: authentication_required
+                  message: Authentication required
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
   "/api/v3/store/customers/me/store_credits":
     get:
       summary: List store credits
@@ -9892,7 +10123,7 @@ paths:
                 variant:
                   id: variant_gbHJdmfrXB
                   product_id: prod_gbHJdmfrXB
-                  sku: SKU-441
+                  sku: SKU-456
                   options_text: ''
                   track_inventory: true
                   media_count: 0

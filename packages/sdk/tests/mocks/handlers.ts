@@ -504,6 +504,10 @@ export const handlers = [
 
   http.get(`${API_PREFIX}/customers/me/orders/:id`, () => HttpResponse.json(fixtures.order)),
 
+  http.get(`${API_PREFIX}/customers/me/purchase_history`, () =>
+    HttpResponse.json({ data: [fixtures.product], meta: paginationMeta }),
+  ),
+
   // Customer > Addresses
   http.get(`${API_PREFIX}/customers/me/addresses`, () =>
     HttpResponse.json({ data: [fixtures.address], meta: paginationMeta }),
