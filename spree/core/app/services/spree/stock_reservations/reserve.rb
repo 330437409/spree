@@ -69,8 +69,12 @@ module Spree
 
       private
 
+      # What the purchase is about, not what the cart happens to hold: a line
+      # the shopper has unticked is not being bought, so holding stock for it
+      # takes that stock away from everyone else for nothing
+      # (docs/plans/fork-decisions.md, 2026-09-20, the money scoping).
       def build_targets(cart)
-        cart.line_items.includes(variant: { stock_levels: :stock_location }).filter_map do |line_item|
+        cart.priced_line_items.includes(variant: { stock_levels: :stock_location }).filter_map do |line_item|
           variant = line_item.variant
           next unless variant&.should_track_inventory?
 

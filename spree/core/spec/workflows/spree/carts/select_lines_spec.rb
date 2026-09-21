@@ -40,6 +40,54 @@ module Spree
       expect(select(cart.line_items, true)).to be_success
     end
 
+    describe 'the stock a line holds' do
+      let(:unticked) { cart.line_items.last }
+
+      before do
+        stub_store_preferences(store, stock_reservations_enabled: true)
+        cart.line_items.each do |line_item|
+          variant = line_item.variant
+          variant.update!(track_inventory: true)
+          variant.stock_levels.first.tap do |level|
+            level.stock_location.update!(active: true)
+            level.update!(backorderable: false)
+            level.set_count_on_hand(5)
+          end
+        end
+      end
+
+      # A line nobody is buying must not keep its stock out of the shop until
+      # the reservation expires.
+      it 'gives the stock back when a tick comes off' do
+        Spree::StockReservations::Reserve.call(cart: cart)
+        expect(cart.stock_reservations.count).to eq(2)
+
+        select(unticked, false)
+
+        expect(cart.stock_reservations.reload.pluck(:line_item_id)).to eq([cart.line_items.first.id])
+        expect(unticked.variant.stock_levels.first.reload.reserved_count).to eq(0)
+      end
+
+      # Ticking a line back is a shopper taking a place in the queue again.
+      it 'takes the hold back when the line is ticked again' do
+        select(unticked, false)
+        select(unticked, true)
+
+        expect(cart.stock_reservations.reload.pluck(:line_item_id)).to include(unticked.id)
+      end
+
+      # A tick moved nothing, so nothing about the hold moved either — not even
+      # its clock.
+      it 'leaves the holds alone when the write changes nothing' do
+        Spree::StockReservations::Reserve.call(cart: cart)
+        held = cart.stock_reservations.reload.pluck(:line_item_id, :quantity, :expires_at)
+
+        select(cart.line_items, true)
+
+        expect(cart.stock_reservations.reload.pluck(:line_item_id, :quantity, :expires_at)).to eq(held)
+      end
+    end
+
     it 'writes only the lines it is given' do
       touched = cart.line_items.first
 

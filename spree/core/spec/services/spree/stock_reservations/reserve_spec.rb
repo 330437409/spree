@@ -102,6 +102,26 @@ describe Spree::StockReservations::Reserve do
       expect { result }.not_to change(Spree::StockReservation, :count)
       expect(result).to be_success
     end
+
+    # A cart line the shopper has unticked is not being bought, so holding its
+    # stock takes it away from everyone else for nothing.
+    it 'holds stock only for the lines a cart is buying' do
+      cart = create(:cart_with_line_items, store: store, line_items_count: 2)
+      kept, unticked = cart.line_items.to_a
+      cart.line_items.each do |line_item|
+        line_item.variant.update!(track_inventory: true)
+        line_item.variant.stock_levels.first.tap do |level|
+          level.stock_location.update!(active: true)
+          level.update!(backorderable: false)
+          level.set_count_on_hand(5)
+        end
+      end
+      unticked.update_column(:selected, false)
+
+      described_class.call(cart: cart)
+
+      expect(cart.stock_reservations.reload.pluck(:line_item_id)).to eq([kept.id])
+    end
   end
 
   context 'when stock_reservations_enabled is false' do

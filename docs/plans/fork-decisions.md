@@ -954,3 +954,13 @@ Plan: `6.1-store-api-miniprogram-gaps.md`'s wishlist-grouping row, which guessed
 **`category_id` narrows through the store's own catalogue, and a category the store does not have is a 404.** The filter is not `where(category_id: params[:category_id])` falling back to an empty page: a tab naming another store's category, or one deleted since the page was drawn, is a tab that should not exist, and saying so is how the client finds out to re-read the tabs. Same line the controllers hold everywhere else — an incidental id is resolved through `current_store.<association>`.
 
 **`collect/page`'s `offShelfList` is the client's own arithmetic, deliberately.** The old server split unavailable goods out for it; here the item payload carries the good and its variant, and the storefront decides what to show as unsellable — the `goodsShowRule` the client already applies. A server-side "off the shelf" flag would be promotion and availability state this API does not own yet.
+
+## 2026-09-21 (the unticked line's stock) — A line nobody is buying stops holding stock
+
+The piece `2026-09-20 (later still)` left open: an unticked cart line kept its reservation until it expired.
+
+**The hold follows the tick.** `Spree::Carts::SelectLines` withdraws the reservation of every line it unticked — the stock goes back on the shelf at once rather than at the reservation's expiry — and takes a hold again for the lines it ticked, because a tick is the shopper saying this line is being bought. `Reserve` builds its targets from `priced_line_items` rather than every line the cart holds, so a later write to the cart cannot re-hold a line nobody ticked. Together the two halves mean the hold always matches what the cart's money is about.
+
+**A tick that cannot be held still stands.** Ticking a line the shelf cannot cover is refused at checkout, not at the tick: the failure is the reservation service's, and the selection write answers with the cart rather than an error the shopper cannot act on from that page.
+
+**Only what moved.** A client re-sending the same set — select-all over an already-ticked cart — touches no reservation, not even its clock, which is the rule the money math already followed.
