@@ -78,10 +78,15 @@ module Spree
               # An account with no password has nothing to type here; what it
               # can show is the phone it signs in with, and whether that is
               # enough is the deployment's answer rather than this layer's.
+              #
+              # A number is required before the service is asked. The service
+              # answers "no number is no change" for a *write*, which is right
+              # there and would be a way past this bar here: an account with
+              # neither password nor phone would be erased on a session alone.
               verifier = Spree::Dependencies.customer_phone_verification_service
 
-              if verifier.nil?
-                # No way to check a code here, so the refusal is the one
+              if verifier.nil? || current_user.phone.blank?
+                # Nothing to check a code against, so the refusal is the one
                 # upstream gives: an account that cannot present a password
                 # cannot be erased through this route.
                 render_current_password_invalid

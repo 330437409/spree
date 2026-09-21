@@ -104,5 +104,17 @@ RSpec.describe 'the account flows that spend a code', type: :request do
       expect(response).to have_http_status(:unprocessable_content)
       expect(Spree::DataRequest.count).to eq(0)
     end
+
+    # The service answers "no number is no change" for a write, which is right
+    # there and would be a way past this bar here: not even a session holder
+    # erases an account that can prove nothing.
+    it 'refuses an account that has neither a password nor a number' do
+      customer.update_column(:phone, nil)
+
+      close
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(Spree::DataRequest.count).to eq(0)
+    end
   end
 end
