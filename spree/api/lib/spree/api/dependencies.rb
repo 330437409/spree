@@ -18,6 +18,7 @@ module Spree
         order_serializer: 'Spree::Api::V3::OrderSerializer',
         order_group_serializer: 'Spree::Api::V3::OrderGroupSerializer',
         line_item_serializer: 'Spree::Api::V3::LineItemSerializer',
+        promotion_candidate_serializer: 'Spree::Api::V3::PromotionCandidateSerializer',
         payment_serializer: 'Spree::Api::V3::PaymentSerializer',
         payment_session_serializer: 'Spree::Api::V3::PaymentSessionSerializer',
         payment_setup_session_serializer: 'Spree::Api::V3::PaymentSetupSessionSerializer',

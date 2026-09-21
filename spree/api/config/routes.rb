@@ -75,6 +75,10 @@ Spree::Core::Engine.add_routes do
           # whole group's (docs/plans/6.1-store-api-miniprogram-gaps.md).
           resource :selection, only: [:update], controller: 'carts/selection'
 
+          # The shopper's own answer when a line could be discounted by
+          # more than one promotion (docs/plans/6.1-store-api-miniprogram-gaps.md).
+          resource :promotion_selection, only: [:create], controller: 'carts/promotion_selections'
+
           # The item counts alone, for a badge read on pages that have no other
           # business with the cart (docs/plans/6.1-store-api-miniprogram-gaps.md).
           resource :count, only: [:show], controller: 'carts/count'

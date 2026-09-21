@@ -28,6 +28,17 @@ module Spree
         cleanup_stale_rows
       end
 
+      # The promotions that could discount this line, in the engine's own terms.
+      # Public because a storefront's picker offers exactly this list, and
+      # because a shopper's choice has to name one of its entries
+      # (docs/plans/6.1-store-api-miniprogram-gaps.md).
+      #
+      # @param line_item [Spree::LineItem]
+      # @return [Array<Hash>] each with :action, :promotion, :amount, :label, :code
+      def candidates_for(line_item)
+        line_item_candidates(line_item)
+      end
+
       # @param action [Spree::PromotionAction]
       # @return [Boolean] whether the action currently yields any candidate
       def candidate_for?(action)
@@ -100,7 +111,7 @@ module Spree
 
       def apply_line_item_discounts
         order.priced_line_items.each do |line_item|
-          applicable = select_applicable(line_item_candidates(line_item))
+          applicable = applicable_candidates(line_item)
           applicable.each do |candidate|
             amount = clamp(candidate[:amount], discountable_base(line_item))
             next if amount.zero?
@@ -108,6 +119,24 @@ module Spree
             persist_discount(line_item, candidate, amount)
           end
         end
+      end
+
+      # A line the shopper has picked a promotion for plays that promotion's own
+      # best action, rather than the engine's winner among all of them — the
+      # picker is the answer to "which of these do you want", and re-pricing
+      # without honouring it would undo the choice on the next recalculation.
+      #
+      # The choice falls back to the winner the moment it stops applying to the
+      # line (the goods changed, the promotion expired or was deleted), because
+      # a stale choice is not a discount.
+      def applicable_candidates(line_item)
+        candidates = line_item_candidates(line_item)
+        return select_applicable(candidates) if line_item.chosen_promotion_id.blank?
+
+        chosen = candidates.select { |candidate| candidate[:promotion].id == line_item.chosen_promotion_id }
+        return select_applicable(candidates) if chosen.empty?
+
+        select_applicable(chosen)
       end
 
       def line_item_candidates(line_item)

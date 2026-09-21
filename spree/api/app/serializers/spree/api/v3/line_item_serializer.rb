@@ -16,7 +16,9 @@ module Spree
                  thumbnail_url: [:string, nullable: true],
                  preorder: :boolean, preorder_ships_at: [:string, nullable: true],
                  selected: :boolean,
-                 seller_id: [:string, nullable: true]
+                 seller_id: [:string, nullable: true],
+                 promotion_id: [:string, nullable: true],
+                 promotion_candidates: { multi: true }
 
         attribute :variant_id do |line_item|
           line_item.variant&.prefixed_id
@@ -39,6 +41,21 @@ module Spree
         # The variant's "ships by" promise while it's a pre-order.
         attribute :preorder_ships_at do |line_item|
           line_item.variant&.preorder_ships_at&.iso8601 if line_item.variant&.preorder?
+        end
+
+        # The promotion this line's own discount came from, if any — what a
+        # picker shows as the chosen entry. A share of an order-wide promotion
+        # is not this: it is not something the shopper picked for this line.
+        attribute :promotion_id do |line_item|
+          line_item.applied_promotion&.prefixed_id
+        end
+
+        # The promotions that could discount this line, for the picker a
+        # storefront offers when there is more than one
+        # (docs/plans/6.1-store-api-miniprogram-gaps.md).
+        many :promotion_candidates,
+             resource: proc { Spree.api.promotion_candidate_serializer } do |line_item|
+          line_item.promotion_candidates
         end
 
         # `selected` is cart state: whether this line takes part in checkout.

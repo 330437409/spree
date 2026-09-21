@@ -611,6 +611,27 @@ export class StoreClient {
         }),
     },
 
+    promotionSelection: {
+      /**
+       * Choose which promotion discounts a line, when more than one could.
+       *
+       * The promotion has to be one of the line's `promotion_candidates` —
+       * the list the cart payload carries — and a promotion that applies to
+       * several lines needs `line_item_id` to say which one is meant.
+       * @param cartId - Cart prefixed ID
+       * @param params - The promotion, its code, and the line when it matters
+       */
+      create: (
+        cartId: string,
+        params: { promotion_id: string; promotion_code?: string; line_item_id?: string },
+        options?: RequestOptions,
+      ): Promise<Cart> =>
+        this.request<Cart>('POST', `/carts/${cartId}/promotion_selection`, {
+          ...options,
+          body: params,
+        }),
+    },
+
     items: {
       /**
        * Write a set of lines in one request — a combo added whole, an order
