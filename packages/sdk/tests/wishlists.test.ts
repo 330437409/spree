@@ -34,6 +34,17 @@ describe('wishlists', () => {
   })
 
   describe('items', () => {
+    it('lists what the wishlist holds', async () => {
+      const result = await client.wishlists.items.list('wl_1', { category_id: 'ctg_1' }, opts)
+      expect(result.data).toHaveLength(1)
+      expect(result.meta.page).toBe(1)
+    })
+
+    it('lists the categories its goods fall into', async () => {
+      const result = await client.wishlists.items.categories('wl_1', opts)
+      expect(result.data[0].name).toBe('Clothing')
+    })
+
     it('adds an item', async () => {
       const result = await client.wishlists.items.create(
         'wl_1',

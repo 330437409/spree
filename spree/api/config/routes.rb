@@ -152,6 +152,11 @@ Spree::Core::Engine.add_routes do
             # A customer calling off their own order: creating a cancellation,
             # not a `cancel` action (docs/plans/6.1-store-api-miniprogram-gaps.md).
             resource :cancellation, only: [:create], controller: 'orders/cancellations'
+            # Paying what the order still owes from the customer's own stored
+            # value — the balance payment, which spends through the store
+            # credit apply service so the payment PIN keeps its say
+            # (docs/plans/6.1-store-api-miniprogram-gaps.md).
+            resource :store_credits, only: [:create], controller: 'orders/store_credits'
           end
           # What this customer has already bought, ordered by when they bought
           # it or by how often (docs/plans/6.1-store-api-miniprogram-gaps.md).
@@ -200,7 +205,14 @@ Spree::Core::Engine.add_routes do
 
         # Wishlists
         resources :wishlists do
-          resources :items, only: [:create, :update, :destroy], controller: 'wishlist_items'
+          resources :items, only: [:index, :create, :update, :destroy], controller: 'wishlist_items' do
+            collection do
+              # The tabs above a wishlist page: the categories the collected
+              # goods fall into, and what the items read filters by
+              # (docs/plans/6.1-store-api-miniprogram-gaps.md).
+              get :categories
+            end
+          end
         end
 
         # Digital Downloads

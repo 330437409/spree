@@ -75,9 +75,13 @@ module Spree
 
       # Balance still to collect after applied store credit, never negative.
       #
+      # The floor is a BigDecimal, not the literal 0: a settled order would
+      # otherwise answer with an Integer, which the serializers emit as a JSON
+      # number where every other money figure is a decimal string.
+      #
       # @return [BigDecimal]
       def amount_due
-        [outstanding_balance - total_applied_store_credit, 0].max
+        [outstanding_balance - total_applied_store_credit, BigDecimal(0)].max
       end
 
       # @return [Boolean]

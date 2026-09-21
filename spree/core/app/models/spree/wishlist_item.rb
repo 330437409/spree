@@ -20,6 +20,9 @@ module Spree
     validates :variant, uniqueness: { scope: [:wishlist] }
     validates :quantity, numericality: { only_integer: true, greater_than: 0 }
 
+    # What a wishlist page opens on: the good collected last.
+    scope :recent_first, -> { order(created_at: :desc) }
+
     def price(currency)
       variant.amount_in(currency[:currency])
     end

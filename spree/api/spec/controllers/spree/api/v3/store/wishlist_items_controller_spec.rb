@@ -15,6 +15,75 @@ RSpec.describe Spree::Api::V3::Store::WishlistItemsController, type: :controller
     request.headers['Authorization'] = "Bearer #{jwt_token}"
   end
 
+  describe 'GET #index' do
+    it 'lists what was collected last first' do
+      older = create(:wishlist_item, wishlist: wishlist, variant: create(:variant), created_at: 2.days.ago)
+
+      get :index, params: { wishlist_id: wishlist.prefixed_id }
+
+      expect(response).to have_http_status(:ok)
+      expect(json_response['data'].map { |item| item['id'] }).to eq([wishlist_item.prefixed_id, older.prefixed_id])
+    end
+
+    it 'narrows to a category when the tab asks for one' do
+      category = create(:category, store: store)
+      product.categories << category
+      other_item = create(:wishlist_item, wishlist: wishlist, variant: create(:variant))
+
+      get :index, params: { wishlist_id: wishlist.prefixed_id, category_id: category.prefixed_id }
+
+      ids = json_response['data'].map { |item| item['id'] }
+      expect(ids).to eq([wishlist_item.prefixed_id])
+      expect(ids).not_to include(other_item.prefixed_id)
+    end
+
+    # A tab naming a category this store does not have — a sibling store's, or
+    # one deleted since the page was rendered — is not a filter that selects
+    # nothing, it is a tab that has no business existing.
+    it 'answers 404 for a category of another store' do
+      other_store_category = create(:category, store: create(:store))
+
+      get :index, params: { wishlist_id: wishlist.prefixed_id, category_id: other_store_category.prefixed_id }
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'answers 404 for another customer’s wishlist' do
+      other_wishlist = create(:wishlist, customer: create(:user), store: store)
+
+      get :index, params: { wishlist_id: other_wishlist.prefixed_id }
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  describe 'GET #categories' do
+    it 'answers the categories the collected goods fall into, and no others' do
+      category = create(:category, store: store)
+      product.categories << category
+      create(:wishlist_item, wishlist: wishlist, variant: create(:variant))
+      create(:category, store: store, name: 'Nothing collected from here')
+
+      get :categories, params: { wishlist_id: wishlist.prefixed_id }
+
+      expect(response).to have_http_status(:ok)
+      expect(json_response['data'].map { |entry| entry['id'] }).to eq([category.prefixed_id])
+      expect(json_response['data'].first['name']).to eq(category.name)
+    end
+
+    it 'does not answer a sibling store’s category' do
+      other_store = create(:store)
+      other_category = create(:category, store: other_store)
+      other_product = create(:product, store: other_store)
+      other_product.categories << other_category
+      create(:wishlist_item, wishlist: wishlist, variant: other_product.default_variant)
+
+      get :categories, params: { wishlist_id: wishlist.prefixed_id }
+
+      expect(json_response['data']).to be_empty
+    end
+  end
+
   describe 'POST #create' do
     let(:new_product) { create(:product) }
     let(:new_variant) { create(:variant, product: new_product) }

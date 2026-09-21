@@ -516,6 +516,10 @@ export const handlers = [
 
   http.get(`${API_PREFIX}/customers/me/orders/:id`, () => HttpResponse.json(fixtures.order)),
 
+  http.post(`${API_PREFIX}/customers/me/orders/:id/store_credits`, () =>
+    HttpResponse.json(fixtures.order),
+  ),
+
   http.delete(
     `${API_PREFIX}/customers/me/orders/:id`,
     () => new HttpResponse(null, { status: 204 }),
@@ -760,6 +764,14 @@ export const handlers = [
   http.delete(`${API_PREFIX}/wishlists/:id`, () => new HttpResponse(null, { status: 204 })),
 
   // Wishlist Items
+  http.get(`${API_PREFIX}/wishlists/:wishlistId/items`, () =>
+    HttpResponse.json({ data: [fixtures.wishlistItem], meta: paginationMeta }),
+  ),
+
+  http.get(`${API_PREFIX}/wishlists/:wishlistId/items/categories`, () =>
+    HttpResponse.json({ data: [fixtures.category] }),
+  ),
+
   http.post(`${API_PREFIX}/wishlists/:wishlistId/items`, () =>
     HttpResponse.json(fixtures.wishlistItem),
   ),

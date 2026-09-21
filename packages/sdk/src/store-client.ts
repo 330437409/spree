@@ -1063,6 +1063,13 @@ export class StoreClient {
         current_password?: string
         accepts_email_marketing?: boolean
         phone?: string
+        nickname?: string
+        gender?: 'male' | 'female'
+        /** yyyy-MM-dd; the timezone a customer was born in is not a store's to know */
+        birthday?: string
+        city?: string
+        /** ActiveStorage direct-upload signed id; comes back as avatar_url */
+        avatar?: string
         /** Arbitrary key-value metadata (stored, not returned in responses) */
         metadata?: Record<string, unknown>
       },
@@ -1270,6 +1277,19 @@ export class StoreClient {
           ...options,
           params: getParams(params),
         }),
+
+      /**
+       * Pay an order from the customer's own balance
+       *
+       * All or nothing: a balance that covers only part of the order is
+       * refused, with the shortfall in the message. The balance is spent
+       * through the store credit apply service — where the payment PIN is
+       * consulted — and what it applies is captured in the same call.
+       */
+      storeCredits: {
+        apply: (orderId: string, options?: RequestOptions): Promise<Order> =>
+          this.request<Order>('POST', `/customers/me/orders/${orderId}/store_credits`, options),
+      },
 
       /**
        * Hide an order from the customer's own history
@@ -1585,6 +1605,33 @@ export class StoreClient {
      * Nested resource: Wishlist items
      */
     items: {
+      /**
+       * List what a wishlist holds, most recently collected first
+       *
+       * `category_id` narrows it to one category — the ids come from
+       * `items.categories`, and a category this store does not have answers
+       * 404 rather than an empty page.
+       */
+      list: (
+        wishlistId: string,
+        params?: ListParams & { category_id?: string; expand?: string[] },
+        options?: RequestOptions,
+      ): Promise<PaginatedResponse<WishlistItem>> =>
+        this.request<PaginatedResponse<WishlistItem>>('GET', `/wishlists/${wishlistId}/items`, {
+          ...options,
+          params: transformListParams({ ...params }),
+        }),
+
+      /**
+       * The categories a wishlist's goods fall into — the tabs above the list
+       */
+      categories: (wishlistId: string, options?: RequestOptions): Promise<{ data: Category[] }> =>
+        this.request<{ data: Category[] }>(
+          'GET',
+          `/wishlists/${wishlistId}/items/categories`,
+          options,
+        ),
+
       /**
        * Add an item to a wishlist
        */
