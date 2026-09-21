@@ -23,11 +23,10 @@ module Spree
       include ActiveModel::Model
       include ActiveModel::Attributes
 
-      # What the API knows how to render. A verification may carry a kind
-      # outside this list — it falls back to a generic error rather than
-      # being swallowed.
-      KINDS = %w[required invalid locked].freeze
-
+      # The kinds the API knows how to render — `required`, `invalid`,
+      # `locked` — are mapped in its own error handler. A verification may
+      # carry one outside that set, which falls back to a generic error
+      # rather than being swallowed.
       attribute :kind
       attribute :message
 
