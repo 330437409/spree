@@ -14,6 +14,7 @@ module Spree
                  po_document_byte_size: ['number | null'],
                  currency: :string, locale: [:string, nullable: true], total_quantity: :number,
                  coupon_code: [:string, nullable: true],
+                 status: [:string, enum: Spree::Order::STATUSES],
                  fulfillment_status: [:string, nullable: true, enum: Spree::Order::FULFILLMENT_STATUSES],
                  payment_status: [:string, nullable: true, enum: Spree::Order::PAYMENT_STATUSES],
                  item_total: [:string, nullable: true], display_item_total: [:string, nullable: true],
@@ -33,6 +34,7 @@ module Spree
                  payment_deadline: [:string, nullable: true],
                  withdrawal_period_ends_at: [:string, nullable: true],
                  within_withdrawal_period: :boolean,
+                 cancellable: :boolean,
                  billing_address: { nullable: true }, shipping_address: { nullable: true },
                  gift_card: { nullable: true }, market: { nullable: true }
 
@@ -57,6 +59,15 @@ module Spree
 
         attribute :within_withdrawal_period do |order|
           order.within_withdrawal_period?
+        end
+
+        # Whether the customer can still call this order off: the gate a cancel
+        # button reads, so one that would be refused is not offered. The
+        # workflow answers the same question again when the write arrives,
+        # because an order can be dispatched in between
+        # (docs/plans/6.1-store-api-miniprogram-gaps.md).
+        attribute :cancellable do |order|
+          order.allow_cancel?
         end
 
         # The checkout handle this order was born from (nil for admin drafts).
@@ -90,9 +101,13 @@ module Spree
           order.po_document.blob&.byte_size if order.po_document.attached?
         end
 
+        # `status` is customer-facing here for one reason: a customer who calls
+        # their own order off has to be able to see that it was
+        # (docs/plans/6.1-store-api-miniprogram-gaps.md). The two statuses below
+        # describe how the order is being served; this one describes what it is.
         attributes :number, :email, :customer_note, :po_number,
                    :currency, :locale, :total_quantity, :coupon_code,
-                   :fulfillment_status, :payment_status,
+                   :status, :fulfillment_status, :payment_status,
                    completed_at: :iso8601
 
         # Nulled for gated (prices_hidden) guests, consistent with cart and
