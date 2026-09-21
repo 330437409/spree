@@ -13,8 +13,13 @@ module Spree
     # (docs/plans/6.1-store-api-miniprogram-gaps.md).
     class PayWithStoreCredit < Spree::Workflow
       # @param order [Spree::Order] the order to settle
-      def perform(order:)
+      # @param proof [String, nil] what the customer presented for whichever
+      #   verification the tender requires — the payment PIN, when they have
+      #   one that is required
+      def perform(order:, proof: nil)
         super
+
+        @proof = proof
 
         step :ensure_something_is_owed
         step :ensure_balance_covers
@@ -60,7 +65,7 @@ module Spree
       end
 
       def apply
-        result = Spree.store_credit_apply_service.call(order: order)
+        result = Spree.store_credit_apply_service.call(order: order, proof: @proof)
         failure(order, result.error) if result.failure?
       end
 

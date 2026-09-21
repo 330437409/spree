@@ -489,6 +489,57 @@ module Spree
     Rails.application.config.spree.seller_requirements = value
   end
 
+  # Second factors a tender may demand before it spends stored value, consulted
+  # by {Spree::StoreCredits::Apply} and reported to clients as the purchase's
+  # own verdict. The payment PIN is the first member
+  # (docs/plans/6.1-phone-verification-and-payment-pin.md).
+  #
+  # @return [Array<Spree::PaymentVerification>]
+  def self.payment_verifications
+    Rails.application.config.spree.payment_verifications
+  end
+
+  def self.payment_verifications=(value)
+    Rails.application.config.spree.payment_verifications = value
+  end
+
+  # Asks every registered verification that is required for this purchase,
+  # and answers the first refusal.
+  #
+  # Public because two callers need the same answer at different moments: the
+  # tender asks it where the money moves, and a customer-facing route asks it
+  # before it takes a lock — a refusal writes a failed-attempt counter, and a
+  # counter written inside a transaction the refusal then rolls back is a
+  # lockout that never engages.
+  #
+  # @param order [Spree::Order, Spree::Cart]
+  # @param proof [Object, nil] what the caller presented
+  # @return [Spree::PaymentVerification::Refusal, nil]
+  def self.payment_verification_refusal(order:, proof: nil)
+    payment_verifications.each do |verification|
+      next unless verification.required?(order: order)
+
+      refusal = verification.verify(order: order, proof: proof)
+      return refusal if refusal
+    end
+
+    nil
+  end
+
+  # The channels a system notification can travel over, each a
+  # {Spree::NotificationChannel::Base} subclass. The registry is the extension
+  # seam: a merchant's own SMS vendor, or a fourth channel, is a subclass plus
+  # a registration (docs/plans/6.1-notifications.md).
+  #
+  # @return [Array<Class>]
+  def self.notification_channels
+    Rails.application.config.spree.notification_channels
+  end
+
+  def self.notification_channels=(value)
+    Rails.application.config.spree.notification_channels = value
+  end
+
   def self.delivery_method_rules
     Rails.application.config.spree.delivery_method_rules
   end

@@ -16,10 +16,10 @@ module Spree
             # can pay, and what happens when it cannot cover the order, is the
             # workflow's call (docs/plans/6.1-store-api-miniprogram-gaps.md).
             #
-            # No payment PIN is read here on purpose: the balance is spent
-            # through Spree::StoreCredits::Apply, which is where the PIN is
-            # consulted, so a second check in this layer would be the only one
-            # the next tender needs to bypass
+            # The payment PIN is passed through and never judged here: the
+            # balance is spent through Spree::StoreCredits::Apply, which is
+            # where the tender's verifications are consulted, so a check in
+            # this layer would be the only one the next tender needs to bypass
             # (docs/plans/6.1-phone-verification-and-payment-pin.md).
             class StoreCreditsController < Store::BaseController
               prepend_before_action :require_authentication!
@@ -27,7 +27,18 @@ module Spree
 
               # POST /api/v3/store/customers/me/orders/:order_id/store_credits
               def create
-                result = Spree.order_pay_with_store_credit_workflow.call(order: @order)
+                # Asked before the workflow takes its lock: a refusal writes a
+                # failed-attempt counter, and a counter written inside the
+                # workflow's transaction is rolled back by the very refusal
+                # that produced it — a lockout that never engages. The tender
+                # asks the same question again where the money moves, which is
+                # what makes this a pre-check rather than the guard.
+                refusal = Spree.payment_verification_refusal(order: @order, proof: params[:pay_password])
+                return render_verification_refusal(refusal) if refusal
+
+                result = Spree.order_pay_with_store_credit_workflow.call(
+                  order: @order, proof: params[:pay_password]
+                )
 
                 if result.success?
                   render json: Spree.api.order_serializer.new(@order, params: serializer_params).to_h

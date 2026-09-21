@@ -1,0 +1,8 @@
+---
+en:
+  spree:
+    notifications:
+      errors:
+        credentials_missing: SecretId, SecretKey and SmsSdkAppId are all needed to send
+        sign_name_not_approved: "the signature \"%{sign_name}\" is not approved on this account"
+        template_missing: "no template is configured for the \"%{event}\" message"

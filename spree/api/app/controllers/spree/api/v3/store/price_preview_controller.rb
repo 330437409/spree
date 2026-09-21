@@ -19,7 +19,9 @@ module Spree
           # so its lines are priced in its currency and by the sources it is
           # already holding.
           def create
-            cart = find_cart if params[:cart_id].present?
+            # Held for the serializer as well: the settle page's verdict about
+            # the balance is about this cart.
+            @cart = cart = find_cart if params[:cart_id].present?
             return if performed?
 
             items = cart ? cart_items(cart) : resolved_items
@@ -44,6 +46,13 @@ module Spree
           end
 
           private
+
+          # The cart rides the serializer so the balance verdict is answered
+          # from the purchase this preview priced rather than from the customer
+          # alone.
+          def serializer_params
+            super.merge(cart: @cart)
+          end
 
           # The lines the cart prices, not every line it holds: the tick that
           # chooses between them is cart state, and a preview of what is being

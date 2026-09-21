@@ -1,0 +1,34 @@
+---
+en:
+  spree:
+    verification_codes:
+      errors:
+        code_expired: This verification code has expired. Please request a new one.
+        code_invalid: That verification code is not correct.
+        pin_missing: This customer has no payment PIN.
+        pin_code_needs_own_phone: A payment code can only be sent to your own number.
+        change_phone_needs_code: Send a verification code to the new number and pass it as code.
+        cancel_needs_code: Confirm the account closure with a verification code sent to your phone.
+        phone_missing: A phone number is required.
+        purpose_invalid: Purpose must be one of account, payment.
+        channel_invalid: Channel must be sms. Voice needs a voice transport this deployment does not have.
+        phone_and_code_required: A phone number and a code are both required.
+        required_missing: Say whether the PIN is required.
+      pin:
+        required: Enter your payment PIN.
+        invalid: That payment PIN is not correct.
+        locked: Too many wrong attempts. Try again in 30 minutes.
+  activerecord:
+    errors:
+      models:
+        spree/payment_pin:
+          attributes:
+            pin:
+              six_digits: must be six digits
+              too_simple: must not be six identical digits or a straight run
+            pin_confirmation:
+              mismatch: does not match the PIN
+            code:
+              invalid: is not correct
+            pay_password:
+              invalid: is not correct

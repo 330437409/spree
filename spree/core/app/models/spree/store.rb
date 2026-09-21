@@ -162,6 +162,12 @@ module Spree
     # B2B store collects it from everyone, a mixed store only offers it.
     preference :address_requires_company, :boolean, default: false
     preference :address_requires_phone, :boolean, default: false
+    # How long a verification code lives and how many wrong guesses it survives
+    # before it is spent. Both are the store's rather than constants, because
+    # the client sets neither and a merchant's risk appetite is their own
+    # (docs/plans/6.1-phone-verification-and-payment-pin.md).
+    preference :verification_code_ttl_minutes, :integer, default: 5
+    preference :verification_code_max_attempts, :integer, default: 5
     # digital assets preferences
     preference :limit_digital_download_count, :boolean, default: true
     preference :limit_digital_download_days, :boolean, default: true

@@ -21,6 +21,10 @@ module Spree
       preference :rate_limit_register, :integer, default: 3, env: 'SPREE_RATE_LIMIT_REGISTER' # per IP
       preference :rate_limit_refresh, :integer, default: 10, env: 'SPREE_RATE_LIMIT_REFRESH' # per IP
       preference :rate_limit_password_reset, :integer, default: 3, env: 'SPREE_RATE_LIMIT_PASSWORD_RESET' # per IP
+      # Higher than the others on purpose: sending a code is a normal step in
+      # several flows, and a storefront behind one address is several people.
+      # The limit that stops SMS pumping is the number's own, not this one.
+      preference :rate_limit_verification_send, :integer, default: 10, env: 'SPREE_RATE_LIMIT_VERIFICATION_SEND' # per IP
 
       # Request body size limit in bytes
       preference :max_request_body_size, :integer, default: 102_400, env: 'SPREE_MAX_REQUEST_BODY_SIZE' # 100KB

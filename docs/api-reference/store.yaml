@@ -2973,6 +2973,7 @@ paths:
                 store_credit_total: '0.0'
                 display_store_credit_total: "$0.00"
                 covered_by_store_credit: false
+                balance_not_password: true
                 discounts: []
                 fees: []
                 items:
@@ -6905,6 +6906,7 @@ paths:
                 store_credit_total: '0.0'
                 display_store_credit_total: "$0.00"
                 covered_by_store_credit: false
+                balance_not_password: true
                 discounts: []
                 fees:
                 - id: fee_UkLWZg9DAJ
@@ -7213,6 +7215,7 @@ paths:
                 store_credit_total: '110.0'
                 display_store_credit_total: "-$110.00"
                 covered_by_store_credit: true
+                balance_not_password: true
                 discounts: []
                 fees: []
                 items:
@@ -7563,6 +7566,7 @@ paths:
                 store_credit_total: '0.0'
                 display_store_credit_total: "$0.00"
                 covered_by_store_credit: false
+                balance_not_password: true
                 discounts: []
                 fees: []
                 items:
@@ -8719,6 +8723,7 @@ paths:
                   store_credit_total: '0.0'
                   display_store_credit_total: "$0.00"
                   covered_by_store_credit: false
+                  balance_not_password: true
                   discounts: []
                   fees: []
                   items:
@@ -9047,6 +9052,7 @@ paths:
                 store_credit_total: '0.0'
                 display_store_credit_total: "$0.00"
                 covered_by_store_credit: false
+                balance_not_password: true
                 discounts: []
                 fees: []
                 items:
@@ -13347,6 +13353,7 @@ paths:
                   store_credit_total: '0.0'
                   display_store_credit_total: "$0.00"
                   covered_by_store_credit: false
+                  balance_not_password: true
                   discounts: []
                   fees: []
                   items:
@@ -13873,6 +13880,7 @@ paths:
                 quantity: 1
                 purchasable: true
                 flags: {}
+                balance_not_password: true
                 items:
                 - variant_id: variant_UkLWZg9DAJ
                   product_id: prod_UkLWZg9DAJ
@@ -16914,6 +16922,8 @@ components:
           nullable: true
         covered_by_store_credit:
           type: boolean
+        balance_not_password:
+          type: boolean
         discounts:
           type: array
           items:
@@ -17000,6 +17010,7 @@ components:
       - store_credit_total
       - display_store_credit_total
       - covered_by_store_credit
+      - balance_not_password
       - discounts
       - fees
       - items
@@ -18126,6 +18137,8 @@ components:
           type: boolean
         flags:
           type: object
+        balance_not_password:
+          type: boolean
         items:
           type: array
           items:
@@ -18136,6 +18149,7 @@ components:
       - quantity
       - purchasable
       - flags
+      - balance_not_password
       - items
       x-typelizer: true
     StoreShare:

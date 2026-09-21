@@ -12,16 +12,20 @@ module Spree
 
             # POST /api/v3/store/carts/:cart_id/store_credits
             def create
+              refusal = Spree.payment_verification_refusal(order: @cart, proof: params[:pay_password])
+              return render_verification_refusal(refusal) if refusal
+
               with_order_lock do
                 result = Spree.store_credit_apply_service.call(
                   order: @cart,
-                  amount: params[:amount].try(:to_f)
+                  amount: params[:amount].try(:to_f),
+                  proof: params[:pay_password]
                 )
 
                 if result.success?
                   render_cart
                 else
-                  render_service_error(result.error)
+                  render_result_error(result)
                 end
               end
             end

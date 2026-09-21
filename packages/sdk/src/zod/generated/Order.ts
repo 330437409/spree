@@ -59,6 +59,7 @@ export const OrderSchema = z.object({
   store_credit_total: z.string().nullable(),
   display_store_credit_total: z.string().nullable(),
   covered_by_store_credit: z.boolean(),
+  balance_not_password: z.boolean(),
   discounts: z.array(AppliedPromotionSchema),
   fees: z.array(FeeSchema),
   items: z.array(LineItemSchema),

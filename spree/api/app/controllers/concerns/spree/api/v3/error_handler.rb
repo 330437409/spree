@@ -64,6 +64,20 @@ module Spree
           parameter_missing: 'parameter_missing',
           parameter_invalid: 'parameter_invalid',
 
+          # A code that expired, was already spent or ran out of attempts, as
+          # against one that simply did not match: the client shows them
+          # differently because the customer does something different about
+          # each.
+          verification_code_expired: 'verification_code_expired',
+          verification_code_invalid: 'verification_code_invalid',
+
+          # The tender refused for want of a second factor. A client that
+          # cannot tell "you never set one" from "that one was wrong" from
+          # "you are locked out" retries the wrong thing.
+          payment_pin_required: 'payment_pin_required',
+          payment_pin_invalid: 'payment_pin_invalid',
+          payment_pin_locked: 'payment_pin_locked',
+
           # Payment errors
           payment_failed: 'payment_failed',
           payment_processing_error: 'payment_processing_error',
@@ -147,6 +161,22 @@ module Spree
 
         # Maps symbolic line-item rejections onto the API error-code vocabulary.
         #
+        # A tender refused for want of a second factor. The refusal's own kind
+        # decides the code, because the three are three different things for
+        # the client to do: prompt, let them try again, or tell them to wait.
+        #
+        # @param refusal [Spree::PaymentVerification::Refusal]
+        def render_verification_refusal(refusal)
+          codes = {
+            'required' => ERROR_CODES[:payment_pin_required],
+            'invalid' => ERROR_CODES[:payment_pin_invalid],
+            'locked' => ERROR_CODES[:payment_pin_locked]
+          }
+
+          render_error(code: codes.fetch(refusal.kind, ERROR_CODES[:processing_error]),
+                       message: refusal.message, status: :unprocessable_content)
+        end
+
         # @param errors [ActiveModel::Errors, Object] structured rejection from a workflow
         # @param default [String] fallback when no recognized symbol is present
         # @return [String] a value from {ERROR_CODES}

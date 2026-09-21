@@ -3,7 +3,17 @@ module Spree
     class Apply
       prepend Spree::ServiceModule::Base
 
-      def call(order:, amount: nil)
+      # @param order [Spree::Order, Spree::Cart] the purchase being settled
+      # @param amount [BigDecimal, nil] how much of the balance to spend,
+      #   defaulting to everything the purchase still owes
+      # @param proof [Object, nil] what the caller presented for any
+      #   verification this tender requires — the payment PIN, a code
+      # @param verify [Boolean] whether to ask the verifications at all. False
+      #   is for a caller that is not the customer settling: an internal
+      #   recomputation of what is already applied moves no new money, and an
+      #   operator applying stored value does so under their own
+      #   authorization rather than the customer's PIN
+      def call(order:, amount: nil, proof: nil, verify: true)
         @order = order
         return failed unless @order
 
@@ -14,6 +24,9 @@ module Spree
         remaining_total = [amount ? [amount, @order.outstanding_balance].min : @order.outstanding_balance, 0].max
 
         return failure(nil, Spree.t(:error_user_does_not_have_any_store_credits)) unless @order.customer&.store_credits&.any?
+
+        refusal = Spree.payment_verification_refusal(order: @order, proof: proof) if verify
+        return failure(nil, refusal) if refusal
 
         ApplicationRecord.transaction do
           existing = @order.payments.store_credits.where(status: :checkout)
