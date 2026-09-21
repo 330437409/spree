@@ -5,6 +5,13 @@ module Spree
         # Admin API Line Item Serializer
         # Extends the store serializer with metadata visibility
         class LineItemSerializer < V3::LineItemSerializer
+          # The inherited association, pointed at this branch's own twin so
+          # the payload and the generated type agree.
+          many :promotion_candidates,
+               resource: proc { Spree.api.admin_promotion_candidate_serializer } do |line_item|
+            line_item.promotion_candidates
+          end
+
           # The Admin API has no guest gating — money fields inherited from the
           # store serializer are always present, so override their nullability.
           typelize price: [:string, nullable: false], display_price: [:string, nullable: false],
