@@ -117,6 +117,11 @@ Spree::Core::Engine.add_routes do
         # Policies (return policy, privacy policy, terms of service, etc.)
         resources :policies, only: [:index, :show]
 
+        # The merchant's own vocabulary for why an order was called off, so a
+        # customer cancelling one picks from it rather than typing prose
+        # (docs/plans/6.1-store-api-miniprogram-gaps.md).
+        resources :order_cancellation_reasons, only: [:index]
+
         # Password Resets (top-level, no auth required)
         resources :password_resets, only: [:create, :update], controller: 'customer/password_resets'
 
@@ -141,6 +146,9 @@ Spree::Core::Engine.add_routes do
           patch '/', action: :update, controller: '/spree/api/v3/store/customers'
 
           resources :orders, only: [:index, :show] do
+            # A customer calling off their own order: creating a cancellation,
+            # not a `cancel` action (docs/plans/6.1-store-api-miniprogram-gaps.md).
+            resource :cancellation, only: [:create], controller: 'orders/cancellations'
             # Paying what the order still owes from the customer's own stored
             # value — the balance payment, which spends through the store
             # credit apply service so the payment PIN keeps its say

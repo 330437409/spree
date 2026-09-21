@@ -313,7 +313,7 @@ paths:
                 - key: wechat
                   kind: redirect
                   label: WeChat
-                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--e89a253239008b9e01708458a483a849f2284e69
+                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--952896e0effd27b077f5232a28208962a362cdab
                   requires_email: true
               schema:
                 type: object
@@ -2897,6 +2897,7 @@ paths:
                 payment_deadline: '2026-01-15T12:30:00Z'
                 withdrawal_period_ends_at:
                 within_withdrawal_period: true
+                cancellable: true
                 cart_id: cart_UkLWZg9DAJ
                 channel_id: ch_UkLWZg9DAJ
                 company_id:
@@ -2911,6 +2912,7 @@ paths:
                 locale: en
                 total_quantity: 1
                 coupon_code:
+                status: placed
                 fulfillment_status: backorder
                 payment_status: paid
                 completed_at: '2026-01-15T12:00:00.000Z'
@@ -3059,6 +3061,8 @@ paths:
                   response_code: BGS-449038697740
                   number: R1001-P1
                   status: completed
+                  merchant_id:
+                  gateway_transaction_id:
                   amount: '20.0'
                   display_amount: "$20.00"
                   source_type: credit_card
@@ -4012,6 +4016,8 @@ paths:
                   response_code: 1-SC-20260115120000000000
                   number: cart_UkLWZg9DAJ-P1
                   status: checkout
+                  merchant_id:
+                  gateway_transaction_id:
                   amount: '10.0'
                   display_amount: "$10.00"
                   source_type: store_credit
@@ -4268,6 +4274,8 @@ paths:
                   response_code: 1-SC-20260115120000000000
                   number: cart_UkLWZg9DAJ-P1
                   status: invalid
+                  merchant_id:
+                  gateway_transaction_id:
                   amount: '10.0'
                   display_amount: "$10.00"
                   source_type: store_credit
@@ -5377,6 +5385,8 @@ paths:
                 response_code:
                 number: cart_UkLWZg9DAJ-P1
                 status: checkout
+                merchant_id:
+                gateway_transaction_id:
                 amount: '10.0'
                 display_amount: "$10.00"
                 source_type:
@@ -6108,6 +6118,8 @@ paths:
                   response_code: 1-SC-20260115120000000000
                   number: cart_UkLWZg9DAJ-P1
                   status: checkout
+                  merchant_id:
+                  gateway_transaction_id:
                   amount: '10.0'
                   display_amount: "$10.00"
                   source_type: store_credit
@@ -6418,6 +6430,7 @@ paths:
                 payment_deadline: '2026-01-15T12:30:00Z'
                 withdrawal_period_ends_at:
                 within_withdrawal_period: true
+                cancellable: true
                 cart_id:
                 channel_id: ch_UkLWZg9DAJ
                 company_id:
@@ -6432,6 +6445,7 @@ paths:
                 locale: en
                 total_quantity: 1
                 coupon_code:
+                status: placed
                 fulfillment_status:
                 payment_status:
                 completed_at: '2026-01-15T12:00:00.000Z'
@@ -6722,6 +6736,7 @@ paths:
                 payment_deadline:
                 withdrawal_period_ends_at:
                 within_withdrawal_period: true
+                cancellable: true
                 cart_id:
                 channel_id: ch_UkLWZg9DAJ
                 company_id:
@@ -6736,6 +6751,7 @@ paths:
                 locale: en
                 total_quantity: 1
                 coupon_code:
+                status: placed
                 fulfillment_status: unfulfilled
                 payment_status: paid
                 completed_at: '2026-01-15T12:00:00.000Z'
@@ -6893,6 +6909,8 @@ paths:
                   response_code: 1-SC-20260115120000000000
                   number: R1001-P1
                   status: completed
+                  merchant_id:
+                  gateway_transaction_id:
                   amount: '110.0'
                   display_amount: "$110.00"
                   source_type: store_credit
@@ -6984,6 +7002,343 @@ paths:
                     - does not cover the $110.00 still due on this order
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  "/api/v3/store/order_cancellation_reasons":
+    get:
+      summary: List the merchant’s reasons for calling an order off
+      tags:
+      - Orders
+      security:
+      - api_key: []
+      description: |
+        The merchant's own vocabulary for why an order was called off, for a customer
+        picking one when they cancel an order of their own. Only the reasons still in use
+        are listed — a retired one stays on the orders that already carry it without being
+        offered again.
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: the reasons in use
+          content:
+            application/json:
+              example:
+                data:
+                - id: ocr_UkLWZg9DAJ
+                  name: Changed my mind
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/StoreOrderCancellationReason"
+                required:
+                - data
+  "/api/v3/store/customers/me/orders/{order_id}/cancellation":
+    post:
+      summary: Call off one of the customer’s own orders
+      tags:
+      - Orders
+      security:
+      - api_key: []
+        bearer_auth: []
+      description: |
+        A customer calling off their own order. It is creating a cancellation rather than
+        performing a cancel action: one act, happening once, whose result is the order in
+        its canceled state — which is what the response carries, with `cancellable` now
+        false.
+
+        Whether an order can still be called off is decided when the write arrives, not by
+        the button: an order whose parcel has been dispatched is refused. The list a
+        customer picks their reason from is `GET /order_cancellation_reasons`.
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        required: true
+        description: Bearer token for the signed-in customer
+        schema:
+          type: string
+      - name: order_id
+        in: path
+        required: true
+        description: Order prefixed ID (e.g., or_abc123)
+        schema:
+          type: string
+      responses:
+        '200':
+          description: the order, called off
+          content:
+            application/json:
+              example:
+                id: or_UkLWZg9DAJ
+                market_id: mkt_UkLWZg9DAJ
+                payment_deadline:
+                withdrawal_period_ends_at:
+                within_withdrawal_period: false
+                cancellable: false
+                cart_id:
+                channel_id: ch_UkLWZg9DAJ
+                company_id:
+                company_name:
+                po_document_filename:
+                po_document_byte_size:
+                number: R1001
+                email: demetrice@parisianarmstrong.com
+                customer_note:
+                po_number:
+                currency: USD
+                locale: en
+                total_quantity: 1
+                coupon_code:
+                status: canceled
+                fulfillment_status: canceled
+                payment_status: none
+                completed_at: '2026-01-15T12:00:00.000Z'
+                item_total: '10.0'
+                display_item_total: "$10.00"
+                adjustment_total: '0.0'
+                display_adjustment_total: "$0.00"
+                discount_total: '0.0'
+                display_discount_total: "$0.00"
+                tax_total: '0.0'
+                display_tax_total: "$0.00"
+                included_tax_total: '0.0'
+                display_included_tax_total: "$0.00"
+                additional_tax_total: '0.0'
+                display_additional_tax_total: "$0.00"
+                total: '110.0'
+                display_total: "$110.00"
+                gift_card_total: '0.0'
+                display_gift_card_total: "$0.00"
+                amount_due: "-0.0"
+                display_amount_due: "$0.00"
+                delivery_total: '100.0'
+                display_delivery_total: "$100.00"
+                fee_total: '0.0'
+                display_fee_total: "$0.00"
+                store_credit_total: '0.0'
+                display_store_credit_total: "$0.00"
+                covered_by_store_credit: false
+                discounts: []
+                fees: []
+                items:
+                - id: li_UkLWZg9DAJ
+                  variant_id: variant_UkLWZg9DAJ
+                  seller_id:
+                  preorder: false
+                  preorder_ships_at:
+                  quantity: 1
+                  currency: USD
+                  name: Product 3929550
+                  slug: product-3929550
+                  options_text: ''
+                  selected: true
+                  price: '10.0'
+                  display_price: "$10.00"
+                  total: '10.0'
+                  display_total: "$10.00"
+                  adjustment_total: '0.0'
+                  display_adjustment_total: "$0.00"
+                  additional_tax_total: '0.0'
+                  display_additional_tax_total: "$0.00"
+                  included_tax_total: '0.0'
+                  display_included_tax_total: "$0.00"
+                  discount_total: '0.0'
+                  display_discount_total: "$0.00"
+                  pre_tax_amount: '10.0'
+                  display_pre_tax_amount: "$10.00"
+                  discounted_amount: '10.0'
+                  display_discounted_amount: "$10.00"
+                  display_compare_at_amount: "$0.00"
+                  compare_at_amount:
+                  thumbnail_url:
+                  option_values: []
+                  digital_links: []
+                fulfillments:
+                - id: ful_UkLWZg9DAJ
+                  number: R1001-F1
+                  tracking: U10000
+                  tracking_url:
+                  pickup_point_data:
+                  selected_delivery_rate_id: dr_gbHJdmfrXB
+                  unpriced: false
+                  cost: '100.0'
+                  display_cost: "$100.00"
+                  total: '100.0'
+                  display_total: "$100.00"
+                  discount_total: '0.0'
+                  display_discount_total: "$0.00"
+                  additional_tax_total: '0.0'
+                  display_additional_tax_total: "$0.00"
+                  included_tax_total: '0.0'
+                  display_included_tax_total: "$0.00"
+                  tax_total: '0.0'
+                  display_tax_total: "$0.00"
+                  status: canceled
+                  fulfillment_type: shipping
+                  fulfilled_at:
+                  delivered_at:
+                  items:
+                  - item_id: li_UkLWZg9DAJ
+                    variant_id: variant_UkLWZg9DAJ
+                    quantity: 1
+                  deliveries:
+                  - id: dlv_UkLWZg9DAJ
+                    tracking_number: U10000
+                    carrier:
+                    carrier_name:
+                    service:
+                    status: pending
+                    tracking_url:
+                    estimated_delivery_at:
+                    delivered_at:
+                  delivery_method:
+                    id: dm_UkLWZg9DAJ
+                    name: UPS Ground 148
+                    code: UPS_GROUND_166
+                    estimated_transit_business_days_min:
+                    estimated_transit_business_days_max:
+                    digital: false
+                    pickup: false
+                    pickup_point: false
+                  stock_location:
+                    id: sloc_UkLWZg9DAJ
+                    name: Lizette Herman
+                    address1: 1600 Pennsylvania Ave NW
+                    city: Washington
+                    zipcode: '20500'
+                    country_code: US
+                    country_name: United States
+                    state_code: AL
+                    state_text: AL
+                    pickup_ready_in_minutes:
+                    pickup_instructions:
+                  delivery_rates:
+                  - id: dr_gbHJdmfrXB
+                    delivery_method_id: dm_UkLWZg9DAJ
+                    name: UPS Ground 148
+                    selected: true
+                    cost: '10.0'
+                    total: '10.0'
+                    additional_tax_total: '0.0'
+                    included_tax_total: '0.0'
+                    tax_total: '0.0'
+                    carrier:
+                    service_level:
+                    estimated_delivery_date:
+                    unpriced: false
+                    freight_summary:
+                    display_cost: "$10.00"
+                    display_total: "$10.00"
+                    display_additional_tax_total: "$0.00"
+                    display_included_tax_total: "$0.00"
+                    display_tax_total: "$0.00"
+                    delivery_method:
+                      id: dm_UkLWZg9DAJ
+                      name: UPS Ground 148
+                      code: UPS_GROUND_166
+                      estimated_transit_business_days_min:
+                      estimated_transit_business_days_max:
+                      digital: false
+                      pickup: false
+                      pickup_point: false
+                payments: []
+                billing_address:
+                  id: addr_EfhxLZ9ck8
+                  label:
+                  first_name: John
+                  last_name: Doe
+                  full_name: John Doe
+                  address1: 503 Lovely Street
+                  address2: Northwest
+                  postal_code: '10118'
+                  city: New York
+                  phone: 555-555-0199
+                  company: Company
+                  country_name: United States
+                  country_code: US
+                  state_text: NY
+                  state_code: NY
+                  quick_checkout: false
+                  is_default_billing: false
+                  is_default_shipping: false
+                  state_abbr: NY
+                  country_iso: US
+                  state_name: New York
+                shipping_address:
+                  id: addr_VqXmZF31wY
+                  label:
+                  first_name: John
+                  last_name: Doe
+                  full_name: John Doe
+                  address1: 504 Lovely Street
+                  address2: Northwest
+                  postal_code: '10118'
+                  city: New York
+                  phone: 555-555-0199
+                  company: Company
+                  country_name: United States
+                  country_code: US
+                  state_text: NY
+                  state_code: NY
+                  quick_checkout: false
+                  is_default_billing: false
+                  is_default_shipping: false
+                  state_abbr: NY
+                  country_iso: US
+                  state_name: New York
+                gift_card:
+                market:
+                  id: mkt_UkLWZg9DAJ
+                  name: United States
+                  currency: USD
+                  default_locale: en
+                  tax_inclusive: false
+                  default: true
+                  country_codes:
+                  - US
+                  supported_locales:
+                  - en
+              schema:
+                "$ref": "#/components/schemas/Order"
+        '422':
+          description: an order that can no longer be called off
+          content:
+            application/json:
+              example:
+                error:
+                  code: validation_error
+                  message: cannot be canceled once its goods have been dispatched
+                  details:
+                    base:
+                    - cannot be canceled once its goods have been dispatched
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason_id:
+                  type: string
+                  example: ocr_abc123
+                  description: One of the store’s cancellation reasons, from the reasons
+                    read
+                note:
+                  type: string
+                  example: Found it cheaper elsewhere
+                  description: What the customer said, kept on the order beside the
+                    reason
   "/api/v3/store/customers/me/addresses":
     get:
       summary: List customer addresses
@@ -7883,6 +8238,7 @@ paths:
                   payment_deadline: '2026-01-15T12:30:00Z'
                   withdrawal_period_ends_at:
                   within_withdrawal_period: true
+                  cancellable: true
                   cart_id:
                   channel_id: ch_UkLWZg9DAJ
                   company_id:
@@ -7897,6 +8253,7 @@ paths:
                   locale: en
                   total_quantity: 1
                   coupon_code:
+                  status: placed
                   fulfillment_status:
                   payment_status:
                   completed_at: '2026-01-15T12:00:00.000Z'
@@ -8207,6 +8564,7 @@ paths:
                 payment_deadline: '2026-01-15T12:30:00Z'
                 withdrawal_period_ends_at:
                 within_withdrawal_period: true
+                cancellable: true
                 cart_id:
                 channel_id: ch_UkLWZg9DAJ
                 company_id:
@@ -8221,6 +8579,7 @@ paths:
                 locale: en
                 total_quantity: 1
                 coupon_code:
+                status: placed
                 fulfillment_status:
                 payment_status:
                 completed_at: '2026-01-15T12:00:00.000Z'
@@ -11034,7 +11393,7 @@ paths:
                 variant:
                   id: variant_gbHJdmfrXB
                   product_id: prod_gbHJdmfrXB
-                  sku: SKU-489
+                  sku: SKU-492
                   options_text: ''
                   track_inventory: true
                   media_count: 0
@@ -12164,6 +12523,7 @@ paths:
                   payment_deadline: '2026-01-15T12:30:00Z'
                   withdrawal_period_ends_at:
                   within_withdrawal_period: true
+                  cancellable: true
                   cart_id:
                   channel_id: ch_UkLWZg9DAJ
                   company_id: comp_UkLWZg9DAJ
@@ -12178,6 +12538,7 @@ paths:
                   locale: en
                   total_quantity: 1
                   coupon_code:
+                  status: placed
                   fulfillment_status:
                   payment_status:
                   completed_at: '2026-01-15T12:00:00.000Z'
@@ -15588,6 +15949,8 @@ components:
           nullable: true
         within_withdrawal_period:
           type: boolean
+        cancellable:
+          type: boolean
         cart_id:
           type: string
           nullable: true
@@ -15626,6 +15989,12 @@ components:
         coupon_code:
           type: string
           nullable: true
+        status:
+          type: string
+          enum:
+          - draft
+          - placed
+          - canceled
         fulfillment_status:
           type: string
           nullable: true
@@ -15770,6 +16139,7 @@ components:
       - payment_deadline
       - withdrawal_period_ends_at
       - within_withdrawal_period
+      - cancellable
       - cart_id
       - channel_id
       - company_id
@@ -15784,6 +16154,7 @@ components:
       - locale
       - total_quantity
       - coupon_code
+      - status
       - fulfillment_status
       - payment_status
       - completed_at
@@ -15875,6 +16246,12 @@ components:
           - type: string
           description: The values listed are the built-in ones; extensions may add
             more.
+        merchant_id:
+          type: string
+          nullable: true
+        gateway_transaction_id:
+          type: string
+          nullable: true
         amount:
           type: string
           nullable: true
@@ -15905,6 +16282,8 @@ components:
       - response_code
       - number
       - status
+      - merchant_id
+      - gateway_transaction_id
       - amount
       - display_amount
       - source_type
@@ -16818,6 +17197,17 @@ components:
           type: string
       required:
       - id
+      x-typelizer: true
+    StoreOrderCancellationReason:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+      required:
+      - id
+      - name
       x-typelizer: true
     StorePricePreviewItem:
       type: object
