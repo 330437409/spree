@@ -341,6 +341,11 @@ module Spree
     }
     scope :with_deleted_bill_address, -> { joins(:bill_address).where.not(Address.table_name => { deleted_at: nil }) }
     scope :with_deleted_ship_address, -> { joins(:ship_address).where.not(Address.table_name => { deleted_at: nil }) }
+    # The customer's own history, split by whether they have taken an order off
+    # it. A hidden order keeps the state of the sale — only its place in the
+    # customer's list is gone, so the merchant's scopes never apply these.
+    scope :hidden_by_customer, -> { where.not(customer_hidden_at: nil) }
+    scope :visible_to_customer, -> { where(customer_hidden_at: nil) }
 
     # shows completed orders first, by their completed_at date, then uncompleted orders by their created_at
     scope :reverse_chronological, -> { order(Arel.sql('spree_orders.completed_at IS NULL'), completed_at: :desc, created_at: :desc) }
@@ -667,6 +672,14 @@ module Spree
       fulfillment_status.nil? || %w{unfulfilled backorder canceled}.include?(fulfillment_status)
     end
     alias can_cancel? allow_cancel?
+
+    # Takes the order off the customer's own list. Nothing about the sale
+    # changes, so the write skips validations and leaves +updated_at+ alone —
+    # a merchant's recently-updated views should not light up because a
+    # customer tidied their history.
+    def hide_from_customer!
+      update_column(:customer_hidden_at, Time.current)
+    end
 
     def all_inventory_units_returned?
       inventory_units.all?(&:returned?)

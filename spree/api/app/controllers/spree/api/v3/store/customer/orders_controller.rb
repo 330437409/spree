@@ -6,6 +6,18 @@ module Spree
           class OrdersController < ResourceController
             prepend_before_action :require_authentication!
 
+            # DELETE /api/v3/store/customers/me/orders/:id
+            #
+            # Takes the order off the customer's own list. Nothing is destroyed
+            # — the row stays for the merchant, with fulfillment, refunds and
+            # reporting untouched — which is what the customer is asking for:
+            # gone from *their* history
+            # (docs/plans/6.1-store-api-miniprogram-gaps.md).
+            def destroy
+              @resource.hide_from_customer!
+              head :no_content
+            end
+
             protected
 
             def model_class
@@ -24,8 +36,12 @@ module Spree
               :orders
             end
 
+            # Every action here is the customer's own side of their orders, so
+            # hiding one removes it from the list and from a lookup by id alike.
+            # The merchant reaches the order through the Admin API, where
+            # nothing is hidden.
             def scope
-              super.for_store(current_store).complete
+              super.for_store(current_store).complete.visible_to_customer
             end
 
             # The withdrawal deadline reads both on every row, so without
