@@ -63,8 +63,10 @@ module Spree
                    tags: [:string, multi: true],
                    metadata: 'Record<string, unknown>'
 
-          # Admin-only attributes
-          attributes :status, :last_ip_address, :considered_risky,
+          # Admin-only attributes — `status` is not among them any more: the
+          # store payload carries it for the customer who called their own
+          # order off, and this serializer inherits it.
+          attributes :last_ip_address, :considered_risky,
                      :confirmation_delivered, :store_owner_notification_delivered,
                      :payment_total, :display_payment_total, :metadata,
                      :cancel_note,
