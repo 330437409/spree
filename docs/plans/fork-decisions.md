@@ -900,3 +900,17 @@ Plan: `6.1-store-api-miniprogram-gaps.md`'s `order/cancelOrder` row: "Store API 
 **`status` joins the store order payload for this reason and no other.** A customer who has just called their order off has to be able to see that it was, and the payload carried only `fulfillment_status` and `payment_status` — how the order is being served, not what it is. The value list is `Spree::Order::STATUSES`, the same closed set the admin payload uses.
 
 **The reasons are the merchant's own, and retired ones stay behind.** `GET /api/v3/store/order_cancellation_reasons` lists the active reasons — merchant-owned like the return and claim vocabularies, so nothing branches on the value. A retired reason is not offered again while staying on the orders that already carry it, which is what reporting needs. A reason from another store is not a reason here: the read resolves it through the store's own list and the workflow holds the same line, so the refusal never depends on which of the two got there first.
+
+## 2026-09-21 (the customer's own profile) — What a person says about themselves is a column, and erasure reaches all of it
+
+Plan: `6.1-store-api-miniprogram-gaps.md`'s customer-account rows.
+
+**The profile is four columns, not metadata and not custom fields** (the author's ruling, 2026-09-21). `nickname`, `gender`, `birthday` and `city` are read on every app boot and will be segmented on — a birthday campaign wants an index, not a JSON scan — while metadata is documented as private developer data and custom fields are store-owned, which a global customer is not. The cost is named: a fifth profile field is a migration.
+
+**The avatar needed no column: the customer already had one.** `avatar` has been an ActiveStorage attachment since 6.0, so the profile exposes it as `avatar_url` and accepts a direct-upload signed id as `avatar` — the same read/write split the admin profile already makes, because a URL is what a reader can use and a signed id is what an uploader has.
+
+**"New user" is a count on the payload, not an endpoint.** The client asks `info/newUserCheck` to choose between first-order offers and what the customer usually buys; the payload carries `orders_count` — the completed orders this customer has in the request's store, so a sibling store's buyer is still new here — and the client derives its boolean.
+
+**Erasure and the access export both name the whole profile.** A nickname identifies as well as the name it was registered with, so `Customers::Anonymize` clears all four columns and the picture, `Customers::DataExport` discloses them (the avatar by filename, since the file itself is purged), and the personal-data tripwire now watches for a `nickname`, a `birthday` or a `city` on any table — it would have missed all three before.
+
+**Account closure is the erasure request, not a second soft-close** (the author's ruling, 2026-09-21). The mini program's 注销账户 is `POST /customers/me/data_requests` with `kind=erasure`; its four blockers — open orders, membership, balance, after-sales — are not enforced, because the right to erasure does not depend on what the customer still owes or holds, and the orders survive as anonymised records either way. One consequence is written down for the phone plan: the confirmation this path asks for is the account password, and a WeChat account has none, so the phone-code attestation from `6.1-phone-verification-and-payment-pin.md` is what will confirm for those accounts.
