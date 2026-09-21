@@ -325,7 +325,7 @@ paths:
                 - key: wechat
                   kind: redirect
                   label: WeChat
-                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--6e7c876d999ec49e77ed3f80387c15d96dff2498
+                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--a846f7282bd74d92426f40884fa8b2aba8d05ad7
                   requires_email: true
               schema:
                 type: object
@@ -11093,6 +11093,349 @@ paths:
                   message: record not found
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  "/api/v3/store/wishlists/{wishlist_id}/items":
+    get:
+      summary: List the goods on a wishlist
+      tags:
+      - Wishlists
+      security:
+      - api_key: []
+        bearer_auth: []
+      description: |
+        What the customer has collected, most recently collected first. `category_id` narrows it to
+        one category: the ids come from the categories read beside it, and a category this store
+        does not have answers 404 rather than an empty page.
+      x-codeSamples:
+      - lang: javascript
+        label: Spree SDK
+        source: |-
+          import { createClient } from '@spree/sdk'
+
+          const client = createClient({
+            baseUrl: 'https://your-store.com',
+            publishableKey: '<api-key>',
+          })
+
+          // What the customer has collected, most recently collected first — narrowed to
+          // one category when a tab is selected.
+          const items = await client.wishlists.items.list(
+            'wl_abc123',
+            { category_id: 'ctg_abc123', expand: ['product'] },
+            { token: '<token>' },
+          )
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: wishlist_id
+        in: path
+        required: true
+        description: Wishlist prefixed ID (e.g., wl_abc123)
+        schema:
+          type: string
+      - name: category_id
+        in: query
+        required: false
+        description: Category prefixed ID, from the categories read beside this one
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+      - name: sort
+        in: query
+        required: false
+        description: 'Sort order. Prefix with - for descending. Values: created_at,
+          -created_at'
+        schema:
+          type: string
+      - name: expand
+        in: query
+        required: false
+        description: Comma-separated associations to expand (variant, product)
+        schema:
+          type: string
+      responses:
+        '200':
+          description: collected goods listed
+          content:
+            application/json:
+              example:
+                data:
+                - id: wi_UkLWZg9DAJ
+                  variant_id: variant_UkLWZg9DAJ
+                  product_id: prod_UkLWZg9DAJ
+                  wishlist_id: wl_UkLWZg9DAJ
+                  quantity: 1
+                  variant:
+                    id: variant_UkLWZg9DAJ
+                    product_id: prod_UkLWZg9DAJ
+                    sku: SKU-486
+                    options_text: ''
+                    track_inventory: true
+                    media_count: 0
+                    preorder_ships_at:
+                    thumbnail_url:
+                    purchasable: true
+                    in_stock: false
+                    backorderable: true
+                    preorder: false
+                    weight: 0.0
+                    height:
+                    width:
+                    depth:
+                    weight_unit: lb
+                    dimensions_unit: in
+                    minimum_order_quantity: 1
+                    order_multiple: 1
+                    purchase_unit: unit
+                    units_per_carton:
+                    price:
+                      id: price_UkLWZg9DAJ
+                      amount: '19.99'
+                      amount_in_cents: 1999
+                      compare_at_amount:
+                      compare_at_amount_in_cents:
+                      currency: USD
+                      display_amount: "$19.99"
+                      display_compare_at_amount:
+                      price_list_id:
+                    original_price:
+                    seller_id:
+                    option_values: []
+                meta:
+                  page: 1
+                  limit: 25
+                  count: 1
+                  pages: 1
+                  from: 1
+                  to: 1
+                  in: 1
+                  previous:
+                  next:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/WishlistItem"
+                  meta:
+                    "$ref": "#/components/schemas/PaginationMeta"
+                required:
+                - data
+                - meta
+        '404':
+          description: the wishlist is not this customer’s
+          content:
+            application/json:
+              example:
+                error:
+                  code: record_not_found
+                  message: Wishlist not found
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+    post:
+      summary: Add item to wishlist
+      tags:
+      - Wishlists
+      security:
+      - api_key: []
+        bearer_auth: []
+      description: Adds a variant to the wishlist
+      x-codeSamples:
+      - lang: javascript
+        label: Spree SDK
+        source: |-
+          import { createClient } from '@spree/sdk'
+
+          const client = createClient({
+            baseUrl: 'https://your-store.com',
+            publishableKey: '<api-key>',
+          })
+
+          const item = await client.wishlists.items.create(
+            'wl_abc123',
+            {
+              variant_id: 'variant_abc123',
+              quantity: 1,
+            },
+            {
+              token: '<token>',
+            },
+          )
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: wishlist_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '201':
+          description: item added
+          content:
+            application/json:
+              example:
+                id: wi_gbHJdmfrXB
+                variant_id: variant_gbHJdmfrXB
+                product_id: prod_gbHJdmfrXB
+                wishlist_id: wl_UkLWZg9DAJ
+                quantity: 1
+                variant:
+                  id: variant_gbHJdmfrXB
+                  product_id: prod_gbHJdmfrXB
+                  sku: SKU-498
+                  options_text: ''
+                  track_inventory: true
+                  media_count: 0
+                  preorder_ships_at:
+                  thumbnail_url:
+                  purchasable: true
+                  in_stock: false
+                  backorderable: true
+                  preorder: false
+                  weight: 0.0
+                  height:
+                  width:
+                  depth:
+                  weight_unit: lb
+                  dimensions_unit: in
+                  minimum_order_quantity: 1
+                  order_multiple: 1
+                  purchase_unit: unit
+                  units_per_carton:
+                  price:
+                    id: price_gbHJdmfrXB
+                    amount: '19.99'
+                    amount_in_cents: 1999
+                    compare_at_amount:
+                    compare_at_amount_in_cents:
+                    currency: USD
+                    display_amount: "$19.99"
+                    display_compare_at_amount:
+                    price_list_id:
+                  original_price:
+                  seller_id:
+                  option_values: []
+              schema:
+                "$ref": "#/components/schemas/WishlistItem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                variant_id:
+                  type: string
+                  example: variant_abc123
+                quantity:
+                  type: integer
+                  example: 1
+              required:
+              - variant_id
+  "/api/v3/store/wishlists/{wishlist_id}/items/categories":
+    get:
+      summary: List the categories a wishlist’s goods fall into
+      tags:
+      - Wishlists
+      security:
+      - api_key: []
+        bearer_auth: []
+      description: |
+        The tabs above a wishlist page: one entry per category any collected good is in, in the
+        order the catalogue presents categories in. Categories with nothing collected in them are
+        not listed, and neither are a sibling store's.
+      x-codeSamples:
+      - lang: javascript
+        label: Spree SDK
+        source: |-
+          import { createClient } from '@spree/sdk'
+
+          const client = createClient({
+            baseUrl: 'https://your-store.com',
+            publishableKey: '<api-key>',
+          })
+
+          // The categories any collected good falls into — the tabs above the list.
+          // Uncollected categories are not here, so a tab always has something behind it.
+          const { data: categories } = await client.wishlists.items.categories('wl_abc123', {
+            token: '<token>',
+          })
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: wishlist_id
+        in: path
+        required: true
+        description: Wishlist prefixed ID (e.g., wl_abc123)
+        schema:
+          type: string
+      responses:
+        '200':
+          description: categories listed
+          content:
+            application/json:
+              example:
+                data:
+                - id: ctg_UkLWZg9DAJ
+                  name: Tea
+                  permalink: tea
+                  position: 0
+                  depth: 0
+                  meta_title:
+                  meta_description:
+                  meta_keywords:
+                  children_count: 0
+                  products_count: 1
+                  parent_id:
+                  description: ''
+                  description_html: ''
+                  image_url:
+                  square_image_url:
+                  is_root: true
+                  is_child: false
+                  is_leaf: true
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/Category"
+                required:
+                - data
   "/api/v3/store/wishlists":
     get:
       summary: List wishlists
@@ -11462,115 +11805,6 @@ paths:
       responses:
         '204':
           description: wishlist deleted
-  "/api/v3/store/wishlists/{wishlist_id}/items":
-    post:
-      summary: Add item to wishlist
-      tags:
-      - Wishlists
-      security:
-      - api_key: []
-        bearer_auth: []
-      description: Adds a variant to the wishlist
-      x-codeSamples:
-      - lang: javascript
-        label: Spree SDK
-        source: |-
-          import { createClient } from '@spree/sdk'
-
-          const client = createClient({
-            baseUrl: 'https://your-store.com',
-            publishableKey: '<api-key>',
-          })
-
-          const item = await client.wishlists.items.create(
-            'wl_abc123',
-            {
-              variant_id: 'variant_abc123',
-              quantity: 1,
-            },
-            {
-              token: '<token>',
-            },
-          )
-      parameters:
-      - name: x-spree-api-key
-        in: header
-        required: true
-        schema:
-          type: string
-      - name: Authorization
-        in: header
-        required: true
-        schema:
-          type: string
-      - name: wishlist_id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        '201':
-          description: item added
-          content:
-            application/json:
-              example:
-                id: wi_gbHJdmfrXB
-                variant_id: variant_gbHJdmfrXB
-                product_id: prod_gbHJdmfrXB
-                wishlist_id: wl_UkLWZg9DAJ
-                quantity: 1
-                variant:
-                  id: variant_gbHJdmfrXB
-                  product_id: prod_gbHJdmfrXB
-                  sku: SKU-495
-                  options_text: ''
-                  track_inventory: true
-                  media_count: 0
-                  preorder_ships_at:
-                  thumbnail_url:
-                  purchasable: true
-                  in_stock: false
-                  backorderable: true
-                  preorder: false
-                  weight: 0.0
-                  height:
-                  width:
-                  depth:
-                  weight_unit: lb
-                  dimensions_unit: in
-                  minimum_order_quantity: 1
-                  order_multiple: 1
-                  purchase_unit: unit
-                  units_per_carton:
-                  price:
-                    id: price_gbHJdmfrXB
-                    amount: '19.99'
-                    amount_in_cents: 1999
-                    compare_at_amount:
-                    compare_at_amount_in_cents:
-                    currency: USD
-                    display_amount: "$19.99"
-                    display_compare_at_amount:
-                    price_list_id:
-                  original_price:
-                  seller_id:
-                  option_values: []
-              schema:
-                "$ref": "#/components/schemas/WishlistItem"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                variant_id:
-                  type: string
-                  example: variant_abc123
-                quantity:
-                  type: integer
-                  example: 1
-              required:
-              - variant_id
   "/api/v3/store/wishlists/{wishlist_id}/items/{id}":
     delete:
       summary: Remove item from wishlist

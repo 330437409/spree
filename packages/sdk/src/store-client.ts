@@ -1606,6 +1606,33 @@ export class StoreClient {
      */
     items: {
       /**
+       * List what a wishlist holds, most recently collected first
+       *
+       * `category_id` narrows it to one category — the ids come from
+       * `items.categories`, and a category this store does not have answers
+       * 404 rather than an empty page.
+       */
+      list: (
+        wishlistId: string,
+        params?: ListParams & { category_id?: string; expand?: string[] },
+        options?: RequestOptions,
+      ): Promise<PaginatedResponse<WishlistItem>> =>
+        this.request<PaginatedResponse<WishlistItem>>('GET', `/wishlists/${wishlistId}/items`, {
+          ...options,
+          params: transformListParams({ ...params }),
+        }),
+
+      /**
+       * The categories a wishlist's goods fall into — the tabs above the list
+       */
+      categories: (wishlistId: string, options?: RequestOptions): Promise<{ data: Category[] }> =>
+        this.request<{ data: Category[] }>(
+          'GET',
+          `/wishlists/${wishlistId}/items/categories`,
+          options,
+        ),
+
+      /**
        * Add an item to a wishlist
        */
       create: (

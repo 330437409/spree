@@ -205,7 +205,14 @@ Spree::Core::Engine.add_routes do
 
         # Wishlists
         resources :wishlists do
-          resources :items, only: [:create, :update, :destroy], controller: 'wishlist_items'
+          resources :items, only: [:index, :create, :update, :destroy], controller: 'wishlist_items' do
+            collection do
+              # The tabs above a wishlist page: the categories the collected
+              # goods fall into, and what the items read filters by
+              # (docs/plans/6.1-store-api-miniprogram-gaps.md).
+              get :categories
+            end
+          end
         end
 
         # Digital Downloads
