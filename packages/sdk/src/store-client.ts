@@ -1596,7 +1596,11 @@ export class StoreClient {
        * The categories a wishlist's goods fall into — the tabs above the list
        */
       categories: (wishlistId: string, options?: RequestOptions): Promise<{ data: Category[] }> =>
-        this.request<{ data: Category[] }>('GET', `/wishlists/${wishlistId}/items/categories`, options),
+        this.request<{ data: Category[] }>(
+          'GET',
+          `/wishlists/${wishlistId}/items/categories`,
+          options,
+        ),
 
       /**
        * Add an item to a wishlist
