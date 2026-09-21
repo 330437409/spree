@@ -55,5 +55,59 @@ RSpec.describe Spree::Api::V3::Store::Customer::OrdersController, type: :control
         expect(json_response['error']['code']).to eq('authentication_required')
       end
     end
+
+    context 'when a hidden order is on the account' do
+      let!(:hidden_order) do
+        create(:completed_order_with_totals, store: store, customer: user).
+          tap(&:hide_from_customer!)
+      end
+
+      it 'leaves it out of the list' do
+        get :index
+
+        numbers = json_response['data'].map { |o| o['number'] }
+        expect(numbers).to eq([order.number])
+      end
+
+      it 'answers 404 for it, too — the customer’s side of the order is gone' do
+        get :show, params: { id: hidden_order.prefixed_id }
+
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+  end
+
+  describe 'DELETE #destroy' do
+    it 'takes the order off the customer’s list, leaving the row for the merchant' do
+      delete :destroy, params: { id: order.prefixed_id }
+
+      expect(response).to have_http_status(:no_content)
+      expect(order.reload.customer_hidden_at).to be_present
+      expect(order.completed_at).to be_present
+    end
+
+    it 'leaves the order in the merchant’s own scope' do
+      delete :destroy, params: { id: order.prefixed_id }
+
+      expect(Spree::Order.for_store(store)).to include(order.reload)
+    end
+
+    it 'answers 404 for an order that is not theirs' do
+      delete :destroy, params: { id: other_user_order.prefixed_id }
+
+      expect(response).to have_http_status(:not_found)
+      expect(other_user_order.reload.customer_hidden_at).to be_nil
+    end
+
+    context 'without authentication' do
+      before { request.headers['Authorization'] = nil }
+
+      it 'returns unauthorized' do
+        delete :destroy, params: { id: order.prefixed_id }
+
+        expect(response).to have_http_status(:unauthorized)
+        expect(order.reload.customer_hidden_at).to be_nil
+      end
+    end
   end
 end

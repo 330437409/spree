@@ -313,7 +313,7 @@ paths:
                 - key: wechat
                   kind: redirect
                   label: WeChat
-                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--952896e0effd27b077f5232a28208962a362cdab
+                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--be98aa5062e462c71b5fa456403785c40f625815
                   requires_email: true
               schema:
                 type: object
@@ -6790,8 +6790,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 3906410
-                  slug: product-3906410
+                  name: Product 3936410
+                  slug: product-3936410
                   options_text: ''
                   selected: true
                   price: '10.0'
@@ -6855,8 +6855,8 @@ paths:
                     delivered_at:
                   delivery_method:
                     id: dm_UkLWZg9DAJ
-                    name: UPS Ground 146
-                    code: UPS_GROUND_164
+                    name: UPS Ground 149
+                    code: UPS_GROUND_167
                     estimated_transit_business_days_min:
                     estimated_transit_business_days_max:
                     digital: false
@@ -6877,7 +6877,7 @@ paths:
                   delivery_rates:
                   - id: dr_gbHJdmfrXB
                     delivery_method_id: dm_UkLWZg9DAJ
-                    name: UPS Ground 146
+                    name: UPS Ground 149
                     selected: true
                     cost: '10.0'
                     total: '10.0'
@@ -6896,8 +6896,8 @@ paths:
                     display_tax_total: "$0.00"
                     delivery_method:
                       id: dm_UkLWZg9DAJ
-                      name: UPS Ground 146
-                      code: UPS_GROUND_164
+                      name: UPS Ground 149
+                      code: UPS_GROUND_167
                       estimated_transit_business_days_min:
                       estimated_transit_business_days_max:
                       digital: false
@@ -6937,7 +6937,7 @@ paths:
                   first_name: John
                   last_name: Doe
                   full_name: John Doe
-                  address1: 495 Lovely Street
+                  address1: 505 Lovely Street
                   address2: Northwest
                   postal_code: '10118'
                   city: New York
@@ -6959,7 +6959,7 @@ paths:
                   first_name: John
                   last_name: Doe
                   full_name: John Doe
-                  address1: 496 Lovely Street
+                  address1: 506 Lovely Street
                   address2: Northwest
                   postal_code: '10118'
                   city: New York
@@ -7138,8 +7138,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 3929550
-                  slug: product-3929550
+                  name: Product 3959550
+                  slug: product-3959550
                   options_text: ''
                   selected: true
                   price: '10.0'
@@ -7203,8 +7203,8 @@ paths:
                     delivered_at:
                   delivery_method:
                     id: dm_UkLWZg9DAJ
-                    name: UPS Ground 148
-                    code: UPS_GROUND_166
+                    name: UPS Ground 151
+                    code: UPS_GROUND_169
                     estimated_transit_business_days_min:
                     estimated_transit_business_days_max:
                     digital: false
@@ -7225,7 +7225,7 @@ paths:
                   delivery_rates:
                   - id: dr_gbHJdmfrXB
                     delivery_method_id: dm_UkLWZg9DAJ
-                    name: UPS Ground 148
+                    name: UPS Ground 151
                     selected: true
                     cost: '10.0'
                     total: '10.0'
@@ -7244,8 +7244,8 @@ paths:
                     display_tax_total: "$0.00"
                     delivery_method:
                       id: dm_UkLWZg9DAJ
-                      name: UPS Ground 148
-                      code: UPS_GROUND_166
+                      name: UPS Ground 151
+                      code: UPS_GROUND_169
                       estimated_transit_business_days_min:
                       estimated_transit_business_days_max:
                       digital: false
@@ -7258,7 +7258,7 @@ paths:
                   first_name: John
                   last_name: Doe
                   full_name: John Doe
-                  address1: 503 Lovely Street
+                  address1: 513 Lovely Street
                   address2: Northwest
                   postal_code: '10118'
                   city: New York
@@ -7280,7 +7280,7 @@ paths:
                   first_name: John
                   last_name: Doe
                   full_name: John Doe
-                  address1: 504 Lovely Street
+                  address1: 514 Lovely Street
                   address2: Northwest
                   postal_code: '10118'
                   city: New York
@@ -8792,6 +8792,65 @@ paths:
                 "$ref": "#/components/schemas/Order"
         '404':
           description: order belongs to another user
+          content:
+            application/json:
+              example:
+                error:
+                  code: order_not_found
+                  message: Order not found
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+    delete:
+      summary: Hide an order from the customer’s own list
+      tags:
+      - Customers
+      security:
+      - api_key: []
+        bearer_auth: []
+      description: |
+        Takes the order off the customer’s own list. Nothing is deleted: the order stays for
+        the merchant, with fulfillment, refunds and reporting untouched. Hiding removes it
+        from the customer’s side of their orders — the list and a lookup by id alike — and
+        there is no un-hide, so this answers to the shape a delete has.
+      x-codeSamples:
+      - lang: javascript
+        label: Spree SDK
+        source: |-
+          import { createClient } from '@spree/sdk'
+
+          const client = createClient({
+            baseUrl: 'https://your-store.com',
+            publishableKey: '<api-key>',
+          })
+
+          // Takes the order off the customer's own history. The order itself stays —
+          // fulfillment, refunds and the merchant's reporting are untouched.
+          await client.customer.orders.delete('or_abc123', {
+            token: '<token>',
+          })
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        required: true
+        description: Bearer token for the signed-in customer
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        description: Order prefixed ID (e.g., or_abc123)
+        schema:
+          type: string
+      responses:
+        '204':
+          description: order hidden
+        '404':
+          description: order belongs to another customer
           content:
             application/json:
               example:
@@ -11393,7 +11452,7 @@ paths:
                 variant:
                   id: variant_gbHJdmfrXB
                   product_id: prod_gbHJdmfrXB
-                  sku: SKU-492
+                  sku: SKU-495
                   options_text: ''
                   track_inventory: true
                   media_count: 0

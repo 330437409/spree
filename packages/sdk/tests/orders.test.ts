@@ -40,5 +40,9 @@ describe('orders', () => {
       const result = await client.customer.orders.storeCredits.apply('or_abc123', opts)
       expect(result.id).toBe('or_1')
     })
+
+    it('hides a customer order', async () => {
+      await expect(client.customer.orders.delete('or_abc123', opts)).resolves.toBeUndefined()
+    })
   })
 })
