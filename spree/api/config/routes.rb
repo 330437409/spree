@@ -79,6 +79,10 @@ Spree::Core::Engine.add_routes do
           # more than one promotion (docs/plans/6.1-store-api-miniprogram-gaps.md).
           resource :promotion_selection, only: [:create], controller: 'carts/promotion_selections'
 
+          # What else the shopper might want, from what is in the basket
+          # (docs/plans/6.1-store-api-miniprogram-gaps.md).
+          resources :recommendations, only: [:index], controller: 'carts/recommendations'
+
           # The item counts alone, for a badge read on pages that have no other
           # business with the cart (docs/plans/6.1-store-api-miniprogram-gaps.md).
           resource :count, only: [:show], controller: 'carts/count'
