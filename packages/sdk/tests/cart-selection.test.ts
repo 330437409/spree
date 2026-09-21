@@ -34,4 +34,39 @@ describe('cart selection', () => {
     expect(cart.selected_quantity).toBe(1)
     expect(cart.items?.[0].selected).toBe(false)
   })
+  it('sends the promotion the shopper chose for a line', async () => {
+    let capturedBody: Record<string, unknown> = {}
+    server.use(
+      http.post(`${API_PREFIX}/carts/cart_1/promotion_selection`, async ({ request }) => {
+        capturedBody = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({
+          id: 'cart_1',
+          number: 'R123456',
+          items: [
+            {
+              id: 'li_1',
+              variant_id: 'var_1',
+              quantity: 2,
+              promotion_id: 'promo_2',
+              promotion_candidates: [
+                { id: 'promo_1', name: 'Save 5', amount: '5.0' },
+                { id: 'promo_2', name: 'Save 30', amount: '30.0' },
+              ],
+            },
+          ],
+        })
+      }),
+    )
+
+    const cart = await createTestClient().carts.promotionSelection.create(
+      'cart_1',
+      { promotion_id: 'promo_2', line_item_id: 'li_1' },
+      { token: 'user-jwt' },
+    )
+
+    expect(capturedBody.promotion_id).toBe('promo_2')
+    expect(capturedBody.line_item_id).toBe('li_1')
+    expect(cart.items?.[0].promotion_id).toBe('promo_2')
+  })
+
 })

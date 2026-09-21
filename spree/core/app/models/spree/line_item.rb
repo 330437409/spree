@@ -17,6 +17,10 @@ module Spree
       belongs_to :variant, -> { with_deleted }, class_name: 'Spree::Variant'
     end
     belongs_to :tax_category, -> { with_deleted }, class_name: 'Spree::TaxCategory', optional: true
+    # The promotion the shopper picked for this line when more than one could
+    # apply. No `dependent:` — a line is not the promotion's child, and a
+    # deleted promotion simply leaves a choice that no longer matches anything.
+    belongs_to :chosen_promotion, class_name: 'Spree::Promotion', optional: true
     belongs_to :price_list, -> { with_deleted }, class_name: 'Spree::PriceList', optional: true
     # Snapshotted from the variant when the line is added — see copy_seller.
     # Nil is the operator's own first-party item.
@@ -136,6 +140,30 @@ module Spree
     # @return [Spree::Cart, Spree::Order, nil]
     def owner
       order || cart
+    end
+
+    # The promotions that could discount this line, as the engine sees them —
+    # what a storefront's picker offers, and what a shopper's choice has to come
+    # from. Asked rather than stored: the candidate set is a fact about the
+    # cart's current promotions, goods and totals, and it changes the moment any
+    # of them do (docs/plans/6.1-store-api-miniprogram-gaps.md).
+    #
+    # @return [Array<Hash>] each with :action, :promotion, :amount, :label, :code
+    def promotion_candidates
+      return [] if owner.nil?
+
+      Spree::Adjusters::Promotion.new(owner).candidates_for(self)
+    end
+
+    # The promotion whose line-level action this line actually got, if any — the
+    # line's own discount, not a share of an order-wide one, which is the
+    # promotion a picker shows as chosen.
+    #
+    # @return [Spree::Promotion, nil]
+    def applied_promotion
+      promotion_discounts.
+        detect { |discount| discount.promotion_action&.discount_scope.to_s == 'line_item' }&.
+        promotion
     end
 
     # Bridge for legacy callers assigning +current_order+ (now a Spree::Cart)

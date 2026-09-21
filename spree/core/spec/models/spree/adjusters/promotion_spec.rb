@@ -32,6 +32,56 @@ describe Spree::Adjusters::Promotion, type: :model do
     expect(rows.map(&:amount)).to all(eq(-7))
   end
 
+  # The picker's answer outranks the engine's: a shopper who chose the weaker
+  # promotion gets the weaker one, and only on the line they chose it for.
+  it 'applies the promotion the shopper picked for a line' do
+    weak = line_promo(2)
+    strong = line_promo(7)
+    weak.activate(order: order)
+    strong.activate(order: order)
+
+    chosen_line, other_line = order.line_items.to_a
+    chosen_line.update!(chosen_promotion: weak)
+
+    described_class.adjust(order)
+
+    rows = order.discounts.reload
+    expect(rows.where(line_item_id: chosen_line.id).map(&:promotion_id).uniq).to eq([weak.id])
+    expect(rows.where(line_item_id: chosen_line.id).map(&:amount)).to all(eq(-2))
+    expect(rows.where(line_item_id: other_line.id).map(&:promotion_id).uniq).to eq([strong.id])
+  end
+
+  # A choice that stops applying to the line is not a discount: the engine's
+  # winner takes the line back rather than the line losing its discount.
+  it 'falls back to the winner when the chosen promotion stops applying' do
+    weak = line_promo(2)
+    strong = line_promo(7)
+    weak.activate(order: order)
+    strong.activate(order: order)
+
+    chosen_line = order.line_items.first
+    chosen_line.update!(chosen_promotion: weak)
+
+    weak.update!(expires_at: 1.day.ago, starts_at: 2.days.ago)
+    described_class.adjust(order)
+
+    rows = order.discounts.reload.where(line_item_id: chosen_line.id)
+    expect(rows.map(&:promotion_id).uniq).to eq([strong.id])
+  end
+
+  # What a picker offers, and therefore what a choice may name.
+  it 'answers the candidates for a line' do
+    weak = line_promo(2)
+    strong = line_promo(7)
+    weak.activate(order: order)
+    strong.activate(order: order)
+
+    candidates = described_class.new(order).candidates_for(order.line_items.first)
+
+    expect(candidates.map { |candidate| candidate[:promotion].id }).to contain_exactly(weak.id, strong.id)
+    expect(candidates.map { |candidate| candidate[:amount] }).to contain_exactly(-2, -7)
+  end
+
   it 'reinstates the losing promotion when the winner stops being eligible' do
     weak = line_promo(2)
     strong = line_promo(7)

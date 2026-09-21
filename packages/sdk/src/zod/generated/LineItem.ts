@@ -2,6 +2,7 @@
 import { z } from 'zod';
 import { DigitalLinkSchema } from './DigitalLink';
 import { OptionValueSchema } from './OptionValue';
+import { PromotionCandidateSchema } from './PromotionCandidate';
 import { SellerSchema } from './Seller';
 import { TaxLineSchema } from './TaxLine';
 
@@ -11,6 +12,8 @@ export const LineItemSchema = z.object({
   seller_id: z.string().nullable(),
   preorder: z.boolean(),
   preorder_ships_at: z.string().nullable(),
+  promotion_id: z.string().nullable(),
+  promotion_candidates: z.array(PromotionCandidateSchema),
   quantity: z.number(),
   currency: z.string(),
   name: z.string(),

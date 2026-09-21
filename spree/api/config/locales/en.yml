@@ -23,6 +23,10 @@ en:
         cart_batch_unknown_line: One of the lines named is not in this cart.
         cart_selection_requires_lines: Name at least one line of this cart to select or deselect.
         cart_selection_requires_state: Pass selected as true or false.
+        promotion_selection_requires_promotion: Name the promotion to use for this line.
+        promotion_selection_not_a_candidate: That promotion does not apply to any line of this cart.
+        promotion_selection_not_a_candidate_for_line: That promotion does not apply to this line.
+        promotion_selection_ambiguous: That promotion applies to more than one line — name the line with line_item_id.
         unknown_share_target: This store shares nothing of type %{type}.
         not_shareable: "%{type} cannot be shared."
         share_target_required: target_type and target_id are required.

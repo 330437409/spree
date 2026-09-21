@@ -66,6 +66,7 @@ export { ProductFiltersSchema, type ProductFilters } from './ProductFilters';
 export { ProductPublicationSchema, type ProductPublication } from './ProductPublication';
 export { ProductTypeSchema, type ProductType } from './ProductType';
 export { PromotionSchema, type Promotion } from './Promotion';
+export { PromotionCandidateSchema, type PromotionCandidate } from './PromotionCandidate';
 export { RefundSchema, type Refund } from './Refund';
 export { ReturnSchema, type Return } from './Return';
 export { ReturnLineItemSchema, type ReturnLineItem } from './ReturnLineItem';

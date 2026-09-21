@@ -325,7 +325,7 @@ paths:
                 - key: wechat
                   kind: redirect
                   label: WeChat
-                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--a846f7282bd74d92426f40884fa8b2aba8d05ad7
+                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--436125ff295d54845fdd93ecbd5b0821e6bacbff
                   requires_email: true
               schema:
                 type: object
@@ -1794,6 +1794,8 @@ paths:
                     seller_id:
                     preorder: false
                     preorder_ships_at:
+                    promotion_id:
+                    promotion_candidates: []
                     quantity: 1
                     currency: USD
                     name: Product 225715
@@ -1915,6 +1917,8 @@ paths:
                     seller_id:
                     preorder: false
                     preorder_ships_at:
+                    promotion_id:
+                    promotion_candidates: []
                     quantity: 1
                     currency: USD
                     name: Product 2262171
@@ -2468,6 +2472,8 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 1
                   currency: USD
                   name: Product 2313263
@@ -2756,6 +2762,8 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 1
                   currency: USD
                   name: Product 2338992
@@ -2973,6 +2981,8 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 1
                   currency: USD
                   name: Product 2364794
@@ -3317,6 +3327,8 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 1
                   currency: USD
                   name: Product 2652614
@@ -3518,6 +3530,8 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 1
                   currency: USD
                   name: Product 2663461
@@ -3707,6 +3721,8 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 1
                   currency: USD
                   name: Product 2688182
@@ -4006,6 +4022,8 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 1
                   currency: USD
                   name: Product 2705702
@@ -4264,6 +4282,8 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 1
                   currency: USD
                   name: Product 2749569
@@ -4483,6 +4503,8 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 1
                   currency: USD
                   name: Product 27763
@@ -4515,6 +4537,8 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 1
                   currency: USD
                   name: Product 278298
@@ -4747,6 +4771,8 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 1
                   currency: USD
                   name: Product 2849165
@@ -5672,6 +5698,8 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 2
                   currency: USD
                   name: Product 3831497
@@ -5769,6 +5797,259 @@ paths:
                         description: Arbitrary key-value metadata for the line
               required:
               - items
+        required: true
+  "/api/v3/store/carts/{cart_id}/promotion_selection":
+    post:
+      summary: Choose which promotion discounts a line
+      tags:
+      - Carts
+      security:
+      - api_key: []
+        bearer_auth: []
+      description: |
+        The shopper's answer when more than one promotion could discount a line. The engine
+        computes the candidates and applies one winner; this names another of them, and every
+        recalculation after it gives that line the promotion the shopper chose.
+
+        Both identities come from the server's own list — the cart's line carries
+        `promotion_candidates` — so a promotion that does not apply to the line, or a code that
+        no longer matches the candidate's, is refused rather than guessed at. A promotion that
+        applies to several lines needs `line_item_id` to say which one is meant.
+      x-codeSamples:
+      - lang: javascript
+        label: Spree SDK
+        source: |-
+          import { createClient } from '@spree/sdk'
+
+          const client = createClient({
+            baseUrl: 'https://your-store.com',
+            publishableKey: '<api-key>',
+          })
+
+          // When a line could be discounted by more than one promotion, the shopper picks
+          // one. The promotion has to be one of the line's `promotion_candidates`, and the
+          // cart comes back priced with it.
+          const cart = await client.carts.promotionSelection.create(
+            'cart_abc123',
+            {
+              promotion_id: 'promo_abc123',
+              line_item_id: 'li_abc123',
+            },
+            {
+              token: '<token>',
+            },
+          )
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        required: false
+        description: Bearer token for authenticated customers
+        schema:
+          type: string
+      - name: x-spree-token
+        in: header
+        required: false
+        description: Cart token for guest access
+        schema:
+          type: string
+      - name: cart_id
+        in: path
+        required: true
+        description: Cart prefixed ID (e.g., cart_abc123)
+        schema:
+          type: string
+      responses:
+        '200':
+          description: the cart, priced with the chosen promotion
+          content:
+            application/json:
+              example:
+                id: cart_UkLWZg9DAJ
+                selected_quantity: 2
+                market_id: mkt_UkLWZg9DAJ
+                channel_id: ch_UkLWZg9DAJ
+                preferred_stock_location_id:
+                company_id:
+                company_name:
+                po_number_required: false
+                po_document_filename:
+                po_document_byte_size:
+                number: cart_UkLWZg9DAJ
+                token: GEejCp4jUmTnRk3rfRorAKc3
+                email:
+                customer_note:
+                po_number:
+                currency: USD
+                locale: en
+                total_quantity: 2
+                warnings:
+                - code: delivery_unavailable
+                  message: Product 3851189 cannot be delivered to the selected address
+                  line_item_id: li_UkLWZg9DAJ
+                coupon_code:
+                item_total: '39.98'
+                display_item_total: "$39.98"
+                adjustment_total: "-5.0"
+                display_adjustment_total: "-$5.00"
+                discount_total: "-5.0"
+                display_discount_total: "-$5.00"
+                tax_total: '0.0'
+                display_tax_total: "$0.00"
+                included_tax_total: '0.0'
+                display_included_tax_total: "$0.00"
+                additional_tax_total: '0.0'
+                display_additional_tax_total: "$0.00"
+                total: '34.98'
+                display_total: "$34.98"
+                gift_card_total: '0.0'
+                display_gift_card_total: "$0.00"
+                amount_due: '34.98'
+                display_amount_due: "$34.98"
+                delivery_total: '0.0'
+                display_delivery_total: "$0.00"
+                fee_total: '0.0'
+                display_fee_total: "$0.00"
+                store_credit_total: '0.0'
+                display_store_credit_total: "$0.00"
+                covered_by_store_credit: false
+                current_step: address
+                completed_steps: []
+                requirements:
+                - code: email_required
+                  step: address
+                  field: email
+                  message: Email address is required
+                - code: delivery_method_required
+                  step: delivery
+                  field: delivery_method
+                  message: Select a delivery method for all fulfillments
+                - code: payment_required
+                  step: payment
+                  field: payment
+                  message: Add a payment method
+                order_minimum:
+                order_minimum_shortfall:
+                below_order_minimum: false
+                freight_summary:
+                shipping_eq_billing_address: true
+                discounts:
+                - id: discount_UkLWZg9DAJ
+                  promotion_id: promo_UkLWZg9DAJ
+                  name: Promo
+                  description:
+                  code:
+                  amount: "-5.0"
+                  display_amount: "-$5.00"
+                - id: discount_gbHJdmfrXB
+                  promotion_id: promo_gbHJdmfrXB
+                  name: Promo
+                  description:
+                  code:
+                  amount: '0.0'
+                  display_amount: "$0.00"
+                fees: []
+                items:
+                - id: li_UkLWZg9DAJ
+                  variant_id: variant_UkLWZg9DAJ
+                  seller_id:
+                  preorder: false
+                  preorder_ships_at:
+                  promotion_id: promo_UkLWZg9DAJ
+                  promotion_candidates:
+                  - id: promo_UkLWZg9DAJ
+                    code:
+                    name: Promo
+                    description:
+                    amount: '5.0'
+                    display_amount: "$5.00"
+                  - id: promo_gbHJdmfrXB
+                    code:
+                    name: Promo
+                    description:
+                    amount: '30.0'
+                    display_amount: "$30.00"
+                  quantity: 2
+                  currency: USD
+                  name: Product 3851189
+                  slug: product-3851189
+                  options_text: ''
+                  selected: true
+                  price: '19.99'
+                  display_price: "$19.99"
+                  total: '34.98'
+                  display_total: "$34.98"
+                  adjustment_total: "-5.0"
+                  display_adjustment_total: "-$5.00"
+                  additional_tax_total: '0.0'
+                  display_additional_tax_total: "$0.00"
+                  included_tax_total: '0.0'
+                  display_included_tax_total: "$0.00"
+                  discount_total: "-5.0"
+                  display_discount_total: "-$5.00"
+                  pre_tax_amount: '34.98'
+                  display_pre_tax_amount: "$34.98"
+                  discounted_amount: '34.98'
+                  display_discounted_amount: "$34.98"
+                  display_compare_at_amount: "$0.00"
+                  compare_at_amount:
+                  thumbnail_url:
+                  option_values: []
+                  digital_links: []
+                fulfillments: []
+                payments: []
+                billing_address:
+                shipping_address:
+                payment_methods: []
+                gift_card:
+                market:
+                  id: mkt_UkLWZg9DAJ
+                  name: United States
+                  currency: USD
+                  default_locale: en
+                  tax_inclusive: false
+                  default: true
+                  country_codes:
+                  - US
+                  supported_locales:
+                  - en
+              schema:
+                "$ref": "#/components/schemas/Cart"
+        '422':
+          description: a promotion this line could not be discounted by
+          content:
+            application/json:
+              example:
+                error:
+                  code: validation_error
+                  message: That promotion does not apply to this line.
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                promotion_id:
+                  type: string
+                  example: promo_abc123
+                  description: One of the line’s promotion_candidates
+                promotion_code:
+                  type: string
+                  example: SAVE5
+                  description: The candidate’s own code, when it has one
+                line_item_id:
+                  type: string
+                  example: li_abc123
+                  description: Which line, when the promotion applies to more than
+                    one
+              required:
+              - promotion_id
         required: true
   "/api/v3/store/carts/{cart_id}/selection":
     patch:
@@ -5904,10 +6185,12 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 2
                   currency: USD
-                  name: Product 3857961
-                  slug: product-3857961
+                  name: Product 3877961
+                  slug: product-3877961
                   options_text: ''
                   selected: false
                   price: '19.99'
@@ -6108,10 +6391,12 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 1
                   currency: USD
-                  name: Product 3879789
-                  slug: product-3879789
+                  name: Product 3899789
+                  slug: product-3899789
                   options_text: ''
                   selected: true
                   price: '10.0'
@@ -6330,10 +6615,12 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 1
                   currency: USD
-                  name: Product 389179
-                  slug: product-389179
+                  name: Product 391179
+                  slug: product-391179
                   options_text: ''
                   selected: true
                   price: '10.0'
@@ -6513,6 +6800,8 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 1
                   currency: USD
                   name: Product 288496
@@ -6812,10 +7101,12 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 1
                   currency: USD
-                  name: Product 3936410
-                  slug: product-3936410
+                  name: Product 3956410
+                  slug: product-3956410
                   options_text: ''
                   selected: true
                   price: '10.0'
@@ -6961,7 +7252,7 @@ paths:
                   first_name: John
                   last_name: Doe
                   full_name: John Doe
-                  address1: 505 Lovely Street
+                  address1: 509 Lovely Street
                   address2: Northwest
                   postal_code: '10118'
                   city: New York
@@ -6983,7 +7274,7 @@ paths:
                   first_name: John
                   last_name: Doe
                   full_name: John Doe
-                  address1: 506 Lovely Street
+                  address1: 510 Lovely Street
                   address2: Northwest
                   postal_code: '10118'
                   city: New York
@@ -7160,10 +7451,12 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 1
                   currency: USD
-                  name: Product 3959550
-                  slug: product-3959550
+                  name: Product 3979550
+                  slug: product-3979550
                   options_text: ''
                   selected: true
                   price: '10.0'
@@ -7282,7 +7575,7 @@ paths:
                   first_name: John
                   last_name: Doe
                   full_name: John Doe
-                  address1: 513 Lovely Street
+                  address1: 517 Lovely Street
                   address2: Northwest
                   postal_code: '10118'
                   city: New York
@@ -7304,7 +7597,7 @@ paths:
                   first_name: John
                   last_name: Doe
                   full_name: John Doe
-                  address1: 514 Lovely Street
+                  address1: 518 Lovely Street
                   address2: Northwest
                   postal_code: '10118'
                   city: New York
@@ -8314,6 +8607,8 @@ paths:
                     seller_id:
                     preorder: false
                     preorder_ships_at:
+                    promotion_id:
+                    promotion_candidates: []
                     quantity: 1
                     currency: USD
                     name: Product 2535270
@@ -8640,6 +8935,8 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
+                  promotion_id:
+                  promotion_candidates: []
                   quantity: 1
                   currency: USD
                   name: Product 2555633
@@ -11184,7 +11481,7 @@ paths:
                   variant:
                     id: variant_UkLWZg9DAJ
                     product_id: prod_UkLWZg9DAJ
-                    sku: SKU-486
+                    sku: SKU-488
                     options_text: ''
                     track_inventory: true
                     media_count: 0
@@ -11308,7 +11605,7 @@ paths:
                 variant:
                   id: variant_gbHJdmfrXB
                   product_id: prod_gbHJdmfrXB
-                  sku: SKU-498
+                  sku: SKU-500
                   options_text: ''
                   track_inventory: true
                   media_count: 0
@@ -12938,6 +13235,8 @@ paths:
                     seller_id:
                     preorder: false
                     preorder_ships_at:
+                    promotion_id:
+                    promotion_candidates: []
                     quantity: 1
                     currency: USD
                     name: Product 2525649
@@ -15863,6 +16162,13 @@ components:
         preorder_ships_at:
           type: string
           nullable: true
+        promotion_id:
+          type: string
+          nullable: true
+        promotion_candidates:
+          type: array
+          items:
+            "$ref": "#/components/schemas/PromotionCandidate"
         quantity:
           type: number
         currency:
@@ -15952,6 +16258,8 @@ components:
       - seller_id
       - preorder
       - preorder_ships_at
+      - promotion_id
+      - promotion_candidates
       - quantity
       - currency
       - name
@@ -17230,6 +17538,32 @@ components:
       required:
       - id
       - name
+      x-typelizer: true
+    PromotionCandidate:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        amount:
+          type: string
+        display_amount:
+          type: string
+      required:
+      - id
+      - code
+      - name
+      - description
+      - amount
+      - display_amount
       x-typelizer: true
     Promotion:
       type: object

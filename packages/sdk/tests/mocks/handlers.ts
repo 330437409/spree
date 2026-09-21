@@ -325,6 +325,10 @@ export const handlers = [
   http.post(`${API_PREFIX}/carts/:cartId/complete`, () => HttpResponse.json(fixtures.order)),
 
   // Carts > Items
+  http.post(`${API_PREFIX}/carts/:cartId/promotion_selection`, () =>
+    HttpResponse.json(fixtures.cart),
+  ),
+
   http.post(`${API_PREFIX}/carts/:cartId/items`, () => HttpResponse.json(fixtures.cart)),
 
   http.patch(`${API_PREFIX}/carts/:cartId/items/:id`, () => HttpResponse.json(fixtures.cart)),

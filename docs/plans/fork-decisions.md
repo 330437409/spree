@@ -964,3 +964,15 @@ The piece `2026-09-20 (later still)` left open: an unticked cart line kept its r
 **A tick that cannot be held still stands.** Ticking a line the shelf cannot cover is refused at checkout, not at the tick: the failure is the reservation service's, and the selection write answers with the cart rather than an error the shopper cannot act on from that page.
 
 **Only what moved.** A client re-sending the same set — select-all over an already-ticked cart — touches no reservation, not even its clock, which is the rule the money math already followed.
+
+## 2026-09-21 (the picker's answer) — The shopper's choice outranks the engine's winner
+
+Plan: `6.1-store-api-miniprogram-gaps.md`'s promotion-selection row, whose Key Decision called the candidate computation the seam to reuse.
+
+**The candidate set already existed; it was private.** `Spree::Adjusters::Promotion` computes, for every line, the promotions that could discount it (`line_item_candidates`, memoized) and then applies one winner. The work was to publish that list (`candidates_for`) and to let a choice name one of its entries — not to teach the engine anything new. The cart payload carries it per line as `promotion_candidates`, beside `promotion_id`.
+
+**The preference is a column on the line, and the policy seam is untouched.** `spree_line_items.chosen_promotion_id`, like `selected`: a line's own state, and not a discount row — those are rebuilt on every recalculation and would forget it. The adjuster honours the choice in `apply_line_item_discounts` rather than in `select_applicable`, because the plan says 6.1 stacking "replaces just that method" and a choice is a line-level question, not a change to how candidates compete.
+
+**A stale choice is not a discount.** When the chosen promotion stops applying to its line — the goods changed, it expired, it was deleted — the line falls back to the engine's winner rather than losing its discount. The choice stays on the record, so it takes effect again if the promotion becomes applicable again; nothing clears a column behind the shopper's back.
+
+**Both identities come from the server's own list.** The write refuses a promotion that is not a candidate for the line, and a code that no longer matches the candidate's own: a list that went stale between rendering and choosing is a stale list, not a licence to apply the id to whatever answers to it today. A promotion that discounts several lines of the cart needs `line_item_id`, because "this promotion" then means more than one line and the write should say what it means.
