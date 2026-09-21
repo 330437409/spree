@@ -122,6 +122,24 @@ module SpreeWechatPay
       )
     end
 
+    # The merchant this gateway sells under, in WeChat's own number. The mini
+    # program passes it straight to the confirm-receipt handshake, so it is
+    # publishable rather than secret — WeChat issues it for the client to say.
+    #
+    # @return [String, nil]
+    def merchant_id
+      preferred_merchant_id
+    end
+
+    # WeChat's own identifier for the transaction a payment recorded, nil until
+    # one exists. Read from what {#payment_metadata} wrote onto the payment.
+    #
+    # @param payment [Spree::Payment]
+    # @return [String, nil]
+    def transaction_id_for(payment)
+      payment.metadata['wechat_pay_transaction_id']
+    end
+
     # Built per call rather than memoized: an operator who corrects a credential
     # expects the next payment to use it, and re-parsing a key costs nothing
     # beside the network call it precedes.

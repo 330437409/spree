@@ -8,6 +8,8 @@ export const PaymentSchema = z.object({
   response_code: z.string().nullable(),
   number: z.string(),
   status: z.string(),
+  merchant_id: z.string().nullable(),
+  gateway_transaction_id: z.string().nullable(),
   amount: z.string().nullable(),
   display_amount: z.string().nullable(),
   source_type: z.string().nullable(),

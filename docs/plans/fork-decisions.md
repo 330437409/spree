@@ -871,6 +871,14 @@ Plan: `6.1-store-api-miniprogram-gaps.md`'s order-list row, whose keyword filter
 
 **A filter the reference documented and the code never had is corrected.** The Store reference's order list documented `q[state_eq]` and `q[payment_state_eq]`; the allowlist carries `status` and `payment_status`. This is the quiet kind of wrong: Ransack ignores a filter it cannot build rather than refusing it, so a client following the reference got an unfiltered list and no error to notice. The reference now names the filters that exist, and the keyword's reach.
 
+## 2026-09-20 (the confirm-receipt identifiers) — A payment names its gateway's identifiers, and the gateway answers a contract
+
+Plan: `6.1-store-api-miniprogram-gaps.md`'s order-payload row, which lists `merchantTradeNo`, `orderNo` and `transactionId` as fields this plan owns.
+
+**They ride the payment, not the order.** They describe one payment: the merchant the sale was taken for, the reference the gateway knows that order by, and the gateway's own id for the transaction. So the order payload carries them where it already carries payments — `payments[]` — and the client picks the one that was paid. Reading the client's names against ours also settled what each one is: `merchantTradeNo` is not a trade number at all but WeChat's **merchant number** (the mchid), `orderNo` is the **merchant order number** our `Payment#response_code` already carries, and `transactionId` is WeChat's own — which for this flow lands in the payment's metadata, because `response_code` is already spoken for.
+
+**The generic serializer asks the gateway, and the gateway answers a contract.** `merchant_id` and `gateway_transaction_id` are read through `try` off whatever payment method the payment used: the WeChat gem answers both (`preferred_merchant_id`, and the metadata its own `payment_metadata` wrote), every other gateway answers neither and the fields are null. The API layer never names the provider gem — the same duck-typed shape the share composer and the pricing sources use — and the merchant number is publishable by nature: WeChat issues it for the client to hand back inside `wx.openBusinessView`.
+
 ## 2026-09-21 — The balance refuses nothing yet, because a gift card is not a line here
 
 Plan: `6.1-store-api-miniprogram-gaps.md`'s settlement-page work. The client's settle page carries a verdict the old server computed — "订单商品不支持" with a list of the goods the balance cannot pay for (`pagesF/settlement/settlement.js:733`, `settlement.wxml:80,167`) — and the author ruled the rule worth having (2026-09-21).
