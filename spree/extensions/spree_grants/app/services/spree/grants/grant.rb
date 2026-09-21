@@ -23,18 +23,7 @@ module Spree
         return failure(nil, :key_missing) if key.blank?
 
         existing = find_existing(store: store, kind: kind, key: key)
-
-        if existing
-          # The key is the whole identity of a debt, so a row somebody removed
-          # is not a debt to hand back, and a key already spent on another
-          # customer is a key this kind built too loosely.
-          return failure(existing, :already_recorded) if existing.deleted?
-          return failure(existing, :key_belongs_to_another_customer) if customer.present? &&
-                                                                        existing.customer_id.present? &&
-                                                                        existing.customer_id != customer.id
-
-          return success(existing)
-        end
+        return answer_for(existing, customer) if existing
 
         record = Spree::Grant.new(
           store: store,
@@ -57,13 +46,31 @@ module Spree
           # is the row that won, which is what the caller would have got a
           # moment earlier.
           existing = find_existing(store: store, kind: kind, key: key)
-          return existing ? success(existing) : failure(record, :already_recorded)
+          return existing ? answer_for(existing, customer) : failure(record, :already_recorded)
         end
 
         saved ? success(record) : failure(record, record.errors)
       end
 
       private
+
+      # The answer a key somebody already holds gets. The key is the whole
+      # identity of a debt, so a row removed from the table is not a debt to
+      # hand back, and a key already spent on another customer is a key this
+      # kind built too loosely.
+      #
+      # @param existing [Spree::Grant]
+      # @param customer [Object, nil]
+      # @return [Spree::ServiceModule::Result]
+      def answer_for(existing, customer)
+        return failure(existing, :already_recorded) if existing.deleted?
+
+        if customer.present? && existing.customer_id.present? && existing.customer_id != customer.id
+          return failure(existing, :key_belongs_to_another_customer)
+        end
+
+        success(existing)
+      end
 
       # @param kind [Class, String] the registered kind, or its `api_type`
       # @return [Class]
