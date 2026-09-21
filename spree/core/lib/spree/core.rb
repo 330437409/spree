@@ -540,6 +540,19 @@ module Spree
     Rails.application.config.spree.notification_channels = value
   end
 
+  # The kinds of thing a store can owe a customer, each a class the plan that
+  # owns the thing registers. The row is {Spree::Grant}
+  # (docs/plans/6.1-grant-and-benefit-primitive.md).
+  #
+  # @return [Array<Class>]
+  def self.grant_kinds
+    Rails.application.config.spree.grant_kinds
+  end
+
+  def self.grant_kinds=(value)
+    Rails.application.config.spree.grant_kinds = value
+  end
+
   def self.delivery_method_rules
     Rails.application.config.spree.delivery_method_rules
   end

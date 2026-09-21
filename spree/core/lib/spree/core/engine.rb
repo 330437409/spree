@@ -26,6 +26,7 @@ module Spree
                                :seller_requirements,
                                :payment_verifications,
                                :notification_channels,
+                               :grant_kinds,
                                :price_preview_sources,
                                :shareable_targets,
                                :delivery_rate_providers,
@@ -178,6 +179,13 @@ module Spree
 
       initializer 'spree.register.notification_channels', before: :load_config_initializers do |app|
         app.config.spree.notification_channels = []
+      end
+
+      # A registry of kinds, all of them registered by consumers: core owns
+      # the row (Spree::Grant), and no kind ships with it
+      # (docs/plans/6.1-grant-and-benefit-primitive.md).
+      initializer 'spree.register.grant_kinds', before: :load_config_initializers do |app|
+        app.config.spree.grant_kinds = []
       end
 
       initializer 'spree.register.delivery_rate_providers', before: :load_config_initializers do |app|
