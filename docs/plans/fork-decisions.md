@@ -914,3 +914,13 @@ Plan: `6.1-store-api-miniprogram-gaps.md`'s `order/delUserOrder`, which asked fo
 **The customer's other order writes do not read the flag, and must not start.** Calling an order off is a fact about the sale, not about the customer's list, so the cancellation finds the order through the customer's own association whether or not it is hidden — and the order-level balance payment, when it lands, is the same kind of write. Hiding says nothing about what the customer may still do with their order.
 
 **What the flag deliberately does not reach: everything that is not that list.** The purchase history still counts a hidden order's goods — they were bought, and one-tap reorder is built on that fact — and no merchant surface reads the flag at all. What was asked for is a customer taking an order off their own list; each further reach (history, ratings, notifications) is its own decision with its own reason, and quietly widening this one is how a "hide" turns into a second, invisible delete.
+
+## 2026-09-21 (the unticked line's stock) — A line nobody is buying stops holding stock
+
+The piece `2026-09-20 (later still)` left open: an unticked cart line kept its reservation until it expired.
+
+**The hold follows the tick.** `Spree::Carts::SelectLines` withdraws the reservation of every line it unticked — the stock goes back on the shelf at once rather than at the reservation's expiry — and takes a hold again for the lines it ticked, because a tick is the shopper saying this line is being bought. `Reserve` builds its targets from `priced_line_items` rather than every line the cart holds, so a later write to the cart cannot re-hold a line nobody ticked. Together the two halves mean the hold always matches what the cart's money is about.
+
+**A tick that cannot be held still stands.** Ticking a line the shelf cannot cover is refused at checkout, not at the tick: the failure is the reservation service's, and the selection write answers with the cart rather than an error the shopper cannot act on from that page.
+
+**Only what moved.** A client re-sending the same set — select-all over an already-ticked cart — touches no reservation, not even its clock, which is the rule the money math already followed.
