@@ -13322,6 +13322,7 @@ paths:
                 store_credit_total: '50.0'
                 display_store_credit_total: "-$50.00"
                 covered_by_store_credit: false
+                balance_not_password: true
                 gift_card:
                 market:
                   id: mkt_UkLWZg9DAJ
@@ -13588,6 +13589,7 @@ paths:
                   store_credit_total: '0.0'
                   display_store_credit_total: "$0.00"
                   covered_by_store_credit: false
+                  balance_not_password: true
                   gift_card:
                   market:
                     id: mkt_UkLWZg9DAJ
@@ -13831,6 +13833,7 @@ paths:
                 store_credit_total: '0.0'
                 display_store_credit_total: "$0.00"
                 covered_by_store_credit: false
+                balance_not_password: true
                 gift_card:
                 market:
                   id: mkt_UkLWZg9DAJ
@@ -14107,6 +14110,7 @@ paths:
                 store_credit_total: '0.0'
                 display_store_credit_total: "$0.00"
                 covered_by_store_credit: false
+                balance_not_password: true
                 gift_card:
                 market:
                   id: mkt_UkLWZg9DAJ
@@ -14271,6 +14275,7 @@ paths:
                 store_credit_total: '0.0'
                 display_store_credit_total: "$0.00"
                 covered_by_store_credit: false
+                balance_not_password: true
                 gift_card:
                 market:
                   id: mkt_UkLWZg9DAJ
@@ -14547,6 +14552,7 @@ paths:
                 store_credit_total: '0.0'
                 display_store_credit_total: "$0.00"
                 covered_by_store_credit: false
+                balance_not_password: true
                 gift_card:
                 market:
                   id: mkt_UkLWZg9DAJ
@@ -14746,6 +14752,7 @@ paths:
                 store_credit_total: '0.0'
                 display_store_credit_total: "$0.00"
                 covered_by_store_credit: false
+                balance_not_password: true
                 gift_card:
                 market:
                   id: mkt_UkLWZg9DAJ
@@ -14923,6 +14930,7 @@ paths:
                 store_credit_total: '0.0'
                 display_store_credit_total: "$0.00"
                 covered_by_store_credit: false
+                balance_not_password: true
                 gift_card:
                 market:
                   id: mkt_UkLWZg9DAJ
@@ -15074,6 +15082,7 @@ paths:
                 store_credit_total: '0.0'
                 display_store_credit_total: "$0.00"
                 covered_by_store_credit: false
+                balance_not_password: true
                 gift_card:
                 market:
                   id: mkt_UkLWZg9DAJ
@@ -44243,7 +44252,7 @@ components:
         promotion_candidates:
           type: array
           items:
-            "$ref": "#/components/schemas/SpreeApiV3PromotionCandidate"
+            "$ref": "#/components/schemas/PromotionCandidate"
         quantity:
           type: number
         currency:
@@ -45005,6 +45014,8 @@ components:
           type: string
         covered_by_store_credit:
           type: boolean
+        balance_not_password:
+          type: boolean
         items:
           type: array
           items:
@@ -45241,6 +45252,7 @@ components:
       - store_credit_total
       - display_store_credit_total
       - covered_by_store_credit
+      - balance_not_password
       - gift_card
       - market
       - external_references
@@ -46329,6 +46341,32 @@ components:
       - preference_schema
       - calculator
       - line_items
+      x-typelizer: true
+    PromotionCandidate:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        amount:
+          type: string
+        display_amount:
+          type: string
+      required:
+      - id
+      - code
+      - name
+      - description
+      - amount
+      - display_amount
       x-typelizer: true
     PromotionRule:
       type: object

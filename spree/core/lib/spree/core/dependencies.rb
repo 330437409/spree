@@ -171,6 +171,12 @@ module Spree
         customer_create_workflow: 'Spree::Customers::Create',
         customer_anonymize_workflow: 'Spree::Customers::Anonymize',
         customer_data_export_service: 'Spree::Customers::DataExport',
+        # Proof that the writer holds a phone number, asked before the customer
+        # write believes one. Nil — the default — means nothing verifies a
+        # number here and the write is what it always was; a deployment that
+        # installs a verification service points this at it
+        # (docs/plans/6.1-phone-verification-and-payment-pin.md).
+        customer_phone_verification_service: nil,
 
         # products — every server-side write path runs through these, so a
         # :validate handler sees dashboard edits, CSV imports and seeds alike

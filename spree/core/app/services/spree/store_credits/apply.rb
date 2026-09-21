@@ -3,7 +3,12 @@ module Spree
     class Apply
       prepend Spree::ServiceModule::Base
 
-      def call(order:, amount: nil)
+      # @param order [Spree::Order, Spree::Cart] the purchase being settled
+      # @param amount [BigDecimal, nil] how much of the balance to spend,
+      #   defaulting to everything the purchase still owes
+      # @param proof [Object, nil] what the caller presented for any
+      #   verification this tender requires — the payment PIN, a code
+      def call(order:, amount: nil, proof: nil)
         @order = order
         return failed unless @order
 
@@ -14,6 +19,9 @@ module Spree
         remaining_total = [amount ? [amount, @order.outstanding_balance].min : @order.outstanding_balance, 0].max
 
         return failure(nil, Spree.t(:error_user_does_not_have_any_store_credits)) unless @order.customer&.store_credits&.any?
+
+        refusal = verification_refusal(proof)
+        return failure(nil, refusal) if refusal
 
         ApplicationRecord.transaction do
           existing = @order.payments.store_credits.where(status: :checkout)
@@ -35,6 +43,25 @@ module Spree
       end
 
       private
+
+      # The tender's second factor, asked once before anything is written: a
+      # verification that is required and refuses stops the spend, and one
+      # that is not required is not consulted at all. It runs here rather than
+      # in a controller because this is the only door to the balance — a
+      # check in the API layer would guard the caller that remembered it
+      # (docs/plans/6.1-phone-verification-and-payment-pin.md).
+      #
+      # @return [Spree::PaymentVerification::Refusal, nil]
+      def verification_refusal(proof)
+        Spree.payment_verifications.each do |verification|
+          next unless verification.required?(order: @order)
+
+          refusal = verification.verify(order: @order, proof: proof)
+          return refusal if refusal
+        end
+
+        nil
+      end
 
       # Update existing checkout store credit payments in place to avoid
       # creating unnecessary invalid payment records on every recalculation.

@@ -14,7 +14,7 @@ module Spree
 
           typelize currency: :string, total: [:number, nullable: true], quantity: :number,
                    purchasable: :boolean, items: 'StorePricePreviewItem[]',
-                   flags: 'Record<string, unknown>'
+                   flags: 'Record<string, unknown>', balance_not_password: :boolean
 
           attributes :currency
 
@@ -34,6 +34,16 @@ module Spree
 
           attribute :flags do |preview|
             preview.flags
+          end
+
+          # The settle page's own verdict, on the settle page's own read: the
+          # same question the tender asks when the balance is spent, so a client
+          # is never told to skip a check the server still makes. A preview that
+          # priced no cart has nothing to settle and nothing to ask for
+          # (docs/plans/6.1-phone-verification-and-payment-pin.md).
+          attribute :balance_not_password do |preview|
+            cart = params[:cart]
+            cart.nil? || !cart.balance_requires_verification?
           end
 
           attribute :items do |preview|

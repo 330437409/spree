@@ -16,10 +16,10 @@ module Spree
             # can pay, and what happens when it cannot cover the order, is the
             # workflow's call (docs/plans/6.1-store-api-miniprogram-gaps.md).
             #
-            # No payment PIN is read here on purpose: the balance is spent
-            # through Spree::StoreCredits::Apply, which is where the PIN is
-            # consulted, so a second check in this layer would be the only one
-            # the next tender needs to bypass
+            # The payment PIN is passed through and never judged here: the
+            # balance is spent through Spree::StoreCredits::Apply, which is
+            # where the tender's verifications are consulted, so a check in
+            # this layer would be the only one the next tender needs to bypass
             # (docs/plans/6.1-phone-verification-and-payment-pin.md).
             class StoreCreditsController < Store::BaseController
               prepend_before_action :require_authentication!
@@ -27,7 +27,13 @@ module Spree
 
               # POST /api/v3/store/customers/me/orders/:order_id/store_credits
               def create
-                result = Spree.order_pay_with_store_credit_workflow.call(order: @order)
+                # The PIN travels to the tender and is never read here: this
+                # layer does not decide whether a second factor is required,
+                # and a check added here would be the one a second tender
+                # forgets.
+                result = Spree.order_pay_with_store_credit_workflow.call(
+                  order: @order, proof: params[:pay_password]
+                )
 
                 if result.success?
                   render json: Spree.api.order_serializer.new(@order, params: serializer_params).to_h

@@ -1,0 +1,8 @@
+---
+zh-CN:
+  spree:
+    notifications:
+      errors:
+        credentials_missing: 发送短信需要 SecretId、SecretKey 和 SmsSdkAppId
+        sign_name_not_approved: "该账号下没有通过审核的短信签名「%{sign_name}」"
+        template_missing: "没有为「%{event}」消息配置模板"

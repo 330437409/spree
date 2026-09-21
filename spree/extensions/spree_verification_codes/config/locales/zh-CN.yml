@@ -1,0 +1,29 @@
+---
+zh-CN:
+  spree:
+    verification_codes:
+      errors:
+        code_expired: 验证码已过期，请重新获取
+        code_invalid: 验证码错误
+        pin_missing: 该账户尚未设置支付密码
+        pin_code_needs_own_phone: 支付密码的验证码只能发送到您本人的手机号
+        change_phone_needs_code: 请先向新手机号发送验证码，并在 code 中传入
+        cancel_needs_code: 请用手机收到的验证码确认注销
+      pin:
+        required: 请输入支付密码
+        invalid: 支付密码错误
+        locked: 密码错误次数过多，请 30 分钟后再试
+  activerecord:
+    errors:
+      models:
+        spree/payment_pin:
+          attributes:
+            pin:
+              six_digits: 须为 6 位数字
+              too_simple: 不能是 6 位相同数字或连续数字
+            pin_confirmation:
+              mismatch: 与支付密码不一致
+            code:
+              invalid: 错误
+            pay_password:
+              invalid: 错误

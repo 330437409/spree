@@ -15,13 +15,14 @@ module Spree
               with_order_lock do
                 result = Spree.store_credit_apply_service.call(
                   order: @cart,
-                  amount: params[:amount].try(:to_f)
+                  amount: params[:amount].try(:to_f),
+                  proof: params[:pay_password]
                 )
 
                 if result.success?
                   render_cart
                 else
-                  render_service_error(result.error)
+                  render_result_error(result)
                 end
               end
             end

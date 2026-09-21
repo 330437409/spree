@@ -17,7 +17,7 @@ module Spree
 
             # POST /api/v3/store/customers/me/data_requests
             def create
-              return render_current_password_invalid if erasure? && !valid_current_password?
+              return if erasure? && !erasure_certified?
 
               result = Spree::DataRequests::Create.call(
                 store: current_store,
@@ -59,6 +59,44 @@ module Spree
             end
 
             private
+
+            # Erasure is confirmed by the account password, or — for an account
+            # that has none, which every account created through WeChat has —
+            # by a code issued to the account's own phone. The same bar either
+            # way: proof that whoever is asking is whoever this history
+            # belongs to.
+            #
+            # @return [Boolean] false when the request was refused and answered
+            def erasure_certified?
+              if current_user.password_digest.present?
+                return true if valid_current_password?
+
+                render_current_password_invalid
+                return false
+              end
+
+              # An account with no password has nothing to type here; what it
+              # can show is the phone it signs in with, and whether that is
+              # enough is the deployment's answer rather than this layer's.
+              verifier = Spree::Dependencies.customer_phone_verification_service
+
+              if verifier.nil?
+                # No way to check a code here, so the refusal is the one
+                # upstream gives: an account that cannot present a password
+                # cannot be erased through this route.
+                render_current_password_invalid
+              elsif verifier.constantize.certified?(phone: current_user.phone, code: params[:code])
+                return true
+              else
+                render_error(
+                  code: ErrorHandler::ERROR_CODES[:verification_code_invalid],
+                  message: Spree.t('verification_codes.errors.cancel_needs_code'),
+                  status: :unprocessable_content
+                )
+              end
+
+              false
+            end
 
             # Anything that is not an explicit erasure is a request to read —
             # the safe reading of an ambiguous parameter.

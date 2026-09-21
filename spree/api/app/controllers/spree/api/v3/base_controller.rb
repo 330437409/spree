@@ -76,6 +76,9 @@ module Spree
         # return, a vetoed cart add) the same way Admin ones do.
         def render_result_error(result)
           error = result.error
+          refusal = verification_refusal_within(error)
+          return render_verification_refusal(refusal) if refusal
+
           errors = error.respond_to?(:value) ? error.value : error
 
           if errors.is_a?(ActiveModel::Errors)
@@ -83,6 +86,23 @@ module Spree
           else
             render_service_error(error)
           end
+        end
+
+        # A tender's refusal, wherever a result carries it: a service failure
+        # holds its error inside a ResultError, and a workflow that passes that
+        # on wraps it again — so the refusal is found by walking in rather than
+        # by every controller knowing how deep it sits.
+        #
+        # @param error [Object]
+        # @return [Spree::PaymentVerification::Refusal, nil]
+        def verification_refusal_within(error)
+          while error.respond_to?(:value)
+            return error if error.is_a?(Spree::PaymentVerification::Refusal)
+
+            error = error.value
+          end
+
+          error.is_a?(Spree::PaymentVerification::Refusal) ? error : nil
         end
 
         # Override to use current_user from JWT authentication

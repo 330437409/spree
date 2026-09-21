@@ -24,6 +24,8 @@ module Spree
                                :commission_rules,
                                :delivery_method_rules,
                                :seller_requirements,
+                               :payment_verifications,
+                               :notification_channels,
                                :price_preview_sources,
                                :shareable_targets,
                                :delivery_rate_providers,
@@ -166,6 +168,16 @@ module Spree
       # a marketplace's own requirement kinds, core's concatenate after.
       initializer 'spree.register.seller_requirements', before: :load_config_initializers do |app|
         app.config.spree.seller_requirements = []
+      end
+
+      # A seam rather than a set of kinds: a verification guards a tender, and
+      # the gem that owns one registers it (docs/plans/6.1-phone-verification-and-payment-pin.md).
+      initializer 'spree.register.payment_verifications', before: :load_config_initializers do |app|
+        app.config.spree.payment_verifications = []
+      end
+
+      initializer 'spree.register.notification_channels', before: :load_config_initializers do |app|
+        app.config.spree.notification_channels = []
       end
 
       initializer 'spree.register.delivery_rate_providers', before: :load_config_initializers do |app|

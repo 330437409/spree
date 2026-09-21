@@ -16,6 +16,17 @@ module Spree
       end
       alias covered_by_store_credit covered_by_store_credit?
 
+      # Whether spending this purchase's balance asks the customer for a second
+      # factor — the verdict a client reads so it knows to prompt before it
+      # calls. It is the same question the tender asks when the money moves, so
+      # a client is never told to skip a check the server would still make
+      # (docs/plans/6.1-phone-verification-and-payment-pin.md).
+      #
+      # @return [Boolean]
+      def balance_requires_verification?
+        Spree.payment_verifications.any? { |verification| verification.required?(order: self) }
+      end
+
       # Only store credit for this store and the record's currency.
       #
       # @return [BigDecimal]

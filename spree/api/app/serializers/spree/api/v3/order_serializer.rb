@@ -28,6 +28,7 @@ module Spree
                  store_credit_total: [:string, nullable: true], display_store_credit_total: [:string, nullable: true],
                  gift_card_total: [:string, nullable: true], display_gift_card_total: [:string, nullable: true],
                  covered_by_store_credit: :boolean,
+                 balance_not_password: :boolean,
                  total: [:string, nullable: true], display_total: [:string, nullable: true],
                  amount_due: [:string, nullable: true], display_amount_due: [:string, nullable: true],
                  completed_at: [:string, nullable: true],
@@ -132,6 +133,15 @@ module Spree
 
         attribute :covered_by_store_credit do |order|
           order.covered_by_store_credit?
+        end
+
+        # Whether the balance can be spent without presenting anything. The
+        # client reads it as licence to send an empty string, so it means "this
+        # customer has no PIN that is required" and never "this order skips the
+        # check" — it is computed from the same question the tender asks
+        # (docs/plans/6.1-phone-verification-and-payment-pin.md).
+        attribute :balance_not_password do |order|
+          !order.balance_requires_verification?
         end
 
         many :order_promotions, key: :discounts, resource: proc { Spree.api.applied_promotion_serializer }

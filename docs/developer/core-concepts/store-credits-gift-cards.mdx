@@ -447,6 +447,38 @@ When a registered customer holds several store credits, the oldest is spent
 first (`Spree::StoreCredit.oldest_first`). Store credits do not expire — only
 gift cards carry an expiry, on their own record.
 
+### Second Factors on a Tender
+
+Spending a customer's stored value can require proof that it is really them —
+a payment PIN, a code from their phone, an operator's own factor. That is a
+registry rather than a rule, because every tender may want a different one:
+`Spree.payment_verifications` holds objects registered by whatever implements
+the factor, and the balance settlement consults them before it writes anything.
+
+```ruby
+# server/config/initializers/spree.rb
+Spree.payment_verifications << MyApp::PinVerification.new
+```
+
+A verification answers two questions:
+
+- `required?(order:)` — whether this purchase must present the factor at all
+- `verify(order:, proof:)` — `nil` when the proof stands, or a
+  `Spree::PaymentVerification::Refusal` with a `kind` (`required`, `invalid`,
+  `locked`) and the message the customer reads
+
+The same answer is reported to clients as `balance_not_password` on the order
+payload and on the price preview. It means "this customer has no such factor
+that is required" — a fact about their account, never a way for a particular
+order to skip the check.
+
+<Note>
+A verification is consulted by `Spree::StoreCredits::Apply`, which every
+balance spend goes through — the cart's, the admin's, an order's. A check in
+your own controller would guard the caller that remembered it and leave the
+rest open.
+</Note>
+
 ## Related Documentation
 
 - [Payments](/developer/core-concepts/payments) — Payment processing and methods

@@ -489,6 +489,34 @@ module Spree
     Rails.application.config.spree.seller_requirements = value
   end
 
+  # Second factors a tender may demand before it spends stored value, consulted
+  # by {Spree::StoreCredits::Apply} and reported to clients as the purchase's
+  # own verdict. The payment PIN is the first member
+  # (docs/plans/6.1-phone-verification-and-payment-pin.md).
+  #
+  # @return [Array<Spree::PaymentVerification>]
+  def self.payment_verifications
+    Rails.application.config.spree.payment_verifications
+  end
+
+  def self.payment_verifications=(value)
+    Rails.application.config.spree.payment_verifications = value
+  end
+
+  # The channels a system notification can travel over, each a
+  # {Spree::NotificationChannel::Base} subclass. The registry is the extension
+  # seam: a merchant's own SMS vendor, or a fourth channel, is a subclass plus
+  # a registration (docs/plans/6.1-notifications.md).
+  #
+  # @return [Array<Class>]
+  def self.notification_channels
+    Rails.application.config.spree.notification_channels
+  end
+
+  def self.notification_channels=(value)
+    Rails.application.config.spree.notification_channels = value
+  end
+
   def self.delivery_method_rules
     Rails.application.config.spree.delivery_method_rules
   end
