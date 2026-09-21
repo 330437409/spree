@@ -20,6 +20,10 @@ module SpreeVerificationCodes
       # Erasure is the flow's job and this gem's rows are this gem's: the one
       # sanctioned erasure path says a table holding customer-identifiable data
       # extends it, so both of these columns are forgotten from its own hooks.
+      # A customer destroyed outright has no flow to hook: the bus is how this
+      # gem hears about it.
+      Spree.subscribers << Spree::CustomerDeletedSubscriber unless Spree.subscribers.include?(Spree::CustomerDeletedSubscriber)
+
       Spree.hooks.register('customers.anonymize.validate', 'SpreeVerificationCodes::ForgetCustomer::RememberPhone')
       Spree.hooks.register('customers.anonymize.after_anonymize', 'SpreeVerificationCodes::ForgetCustomer')
     end
