@@ -150,6 +150,12 @@ RSpec.describe 'Customers API', type: :request, swagger_doc: 'api-reference/stor
           password_confirmation: { type: :string, example: 'newpassword123' },
           accepts_email_marketing: { type: :boolean, example: true },
           phone: { type: :string, example: '+1 555 123 4567' },
+          nickname: { type: :string, example: 'AdaBear' },
+          gender: { type: :string, enum: Spree::Customer::GENDERS, example: 'female' },
+          birthday: { type: :string, format: 'date', example: '1990-05-01' },
+          city: { type: :string, example: 'Suzhou' },
+          avatar: { type: :string, example: 'signed_blob_id',
+                    description: 'ActiveStorage direct-upload signed id; comes back as avatar_url' },
           metadata: { type: :object, example: { preferred_contact: 'email' } }
         }
       }
@@ -157,7 +163,10 @@ RSpec.describe 'Customers API', type: :request, swagger_doc: 'api-reference/stor
       response '200', 'profile updated' do
         let(:'x-spree-api-key') { api_key.token }
         let(:'Authorization') { "Bearer #{jwt_token}" }
-        let(:body) { { first_name: 'Updated', last_name: 'Name' } }
+        let(:body) do
+          { first_name: 'Updated', last_name: 'Name', nickname: 'AdaBear',
+            gender: 'female', birthday: '1990-05-01', city: 'Suzhou' }
+        end
 
         schema '$ref' => '#/components/schemas/Customer'
 
@@ -165,6 +174,8 @@ RSpec.describe 'Customers API', type: :request, swagger_doc: 'api-reference/stor
           data = JSON.parse(response.body)
           expect(data['first_name']).to eq('Updated')
           expect(data['last_name']).to eq('Name')
+          expect(data.values_at('nickname', 'gender', 'birthday', 'city')).
+            to eq(%w[AdaBear female 1990-05-01 Suzhou])
         end
       end
 

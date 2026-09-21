@@ -96,7 +96,13 @@ paths:
                   last_name: Bode
                   phone:
                   accepts_email_marketing: false
+                  nickname:
+                  gender:
+                  city:
                   email_marketing_consent_updated_at: '2026-01-15T12:00:00Z'
+                  birthday:
+                  avatar_url:
+                  orders_count: 0
                   full_name: Julie Bode
                   available_store_credit_total: '0'
                   display_available_store_credit_total: "$0.00"
@@ -204,7 +210,13 @@ paths:
                   last_name: Harvey
                   phone:
                   accepts_email_marketing: false
+                  nickname:
+                  gender:
+                  city:
                   email_marketing_consent_updated_at: '2026-01-15T12:00:00Z'
+                  birthday:
+                  avatar_url:
+                  orders_count: 0
                   full_name: Yuki Harvey
                   available_store_credit_total: '0'
                   display_available_store_credit_total: "$0.00"
@@ -313,7 +325,7 @@ paths:
                 - key: wechat
                   kind: redirect
                   label: WeChat
-                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--be98aa5062e462c71b5fa456403785c40f625815
+                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--6e7c876d999ec49e77ed3f80387c15d96dff2498
                   requires_email: true
               schema:
                 type: object
@@ -383,7 +395,13 @@ paths:
                   last_name:
                   phone:
                   accepts_email_marketing: false
+                  nickname:
+                  gender:
+                  city:
                   email_marketing_consent_updated_at: '2026-01-15T12:00:00Z'
+                  birthday:
+                  avatar_url:
+                  orders_count: 0
                   full_name: Ada
                   available_store_credit_total: '0'
                   display_available_store_credit_total: "$0.00"
@@ -561,7 +579,13 @@ paths:
                   last_name: Stiedemann
                   phone:
                   accepts_email_marketing: false
+                  nickname:
+                  gender:
+                  city:
                   email_marketing_consent_updated_at: '2026-01-15T12:00:00Z'
+                  birthday:
+                  avatar_url:
+                  orders_count: 0
                   full_name: Lucas Stiedemann
                   available_store_credit_total: '0'
                   display_available_store_credit_total: "$0.00"
@@ -8909,7 +8933,13 @@ paths:
                   last_name: Doe
                   phone: "+1234567890"
                   accepts_email_marketing: true
+                  nickname:
+                  gender:
+                  city:
                   email_marketing_consent_updated_at: '2026-01-15T12:00:00Z'
+                  birthday:
+                  avatar_url:
+                  orders_count: 0
                   full_name: John Doe
                   available_store_credit_total: '0'
                   display_available_store_credit_total: "$0.00"
@@ -9030,7 +9060,13 @@ paths:
                 last_name: Rowe
                 phone: 555-555-0199
                 accepts_email_marketing: false
+                nickname:
+                gender:
+                city:
                 email_marketing_consent_updated_at: '2026-01-15T12:00:00Z'
+                birthday:
+                avatar_url:
+                orders_count: 0
                 full_name: Felix Rowe
                 available_store_credit_total: '0'
                 display_available_store_credit_total: "$0.00"
@@ -9154,10 +9190,17 @@ paths:
             publishableKey: '<api-key>',
           })
 
+          // The profile a storefront shows back: a nickname, how the customer describes
+          // themselves, a birthday and the city they usually buy from. An avatar is an
+          // upload — send the signed id the direct upload answered with.
           const customer = await client.customer.update(
             {
               first_name: 'John',
               last_name: 'Doe',
+              nickname: 'AdaBear',
+              gender: 'female',
+              birthday: '1990-05-01',
+              city: 'Suzhou',
               metadata: { preferred_contact: 'email' },
             },
             {
@@ -9187,7 +9230,13 @@ paths:
                 last_name: Name
                 phone: 555-555-0199
                 accepts_email_marketing: false
+                nickname: AdaBear
+                gender: female
+                city: Suzhou
                 email_marketing_consent_updated_at: '2026-01-15T12:00:00Z'
+                birthday: '1990-05-01'
+                avatar_url:
+                orders_count: 0
                 full_name: Updated Name
                 available_store_credit_total: '0'
                 display_available_store_credit_total: "$0.00"
@@ -9323,6 +9372,27 @@ paths:
                 phone:
                   type: string
                   example: "+1 555 123 4567"
+                nickname:
+                  type: string
+                  example: AdaBear
+                gender:
+                  type: string
+                  enum:
+                  - male
+                  - female
+                  example: female
+                birthday:
+                  type: string
+                  format: date
+                  example: '1990-05-01'
+                city:
+                  type: string
+                  example: Suzhou
+                avatar:
+                  type: string
+                  example: signed_blob_id
+                  description: ActiveStorage direct-upload signed id; comes back as
+                    avatar_url
                 metadata:
                   type: object
                   example:
@@ -14710,9 +14780,29 @@ components:
           nullable: true
         accepts_email_marketing:
           type: boolean
+        nickname:
+          type: string
+          nullable: true
+        gender:
+          type: string
+          nullable: true
+          enum:
+          - male
+          - female
+        city:
+          type: string
+          nullable: true
         email_marketing_consent_updated_at:
           type: string
           nullable: true
+        birthday:
+          type: string
+          nullable: true
+        avatar_url:
+          type: string
+          nullable: true
+        orders_count:
+          type: number
         full_name:
           type: string
         available_store_credit_total:
@@ -14746,7 +14836,13 @@ components:
       - last_name
       - phone
       - accepts_email_marketing
+      - nickname
+      - gender
+      - city
       - email_marketing_consent_updated_at
+      - birthday
+      - avatar_url
+      - orders_count
       - full_name
       - available_store_credit_total
       - display_available_store_credit_total

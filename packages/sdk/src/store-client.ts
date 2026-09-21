@@ -1063,6 +1063,13 @@ export class StoreClient {
         current_password?: string
         accepts_email_marketing?: boolean
         phone?: string
+        nickname?: string
+        gender?: 'male' | 'female'
+        /** yyyy-MM-dd; the timezone a customer was born in is not a store's to know */
+        birthday?: string
+        city?: string
+        /** ActiveStorage direct-upload signed id; comes back as avatar_url */
+        avatar?: string
         /** Arbitrary key-value metadata (stored, not returned in responses) */
         metadata?: Record<string, unknown>
       },

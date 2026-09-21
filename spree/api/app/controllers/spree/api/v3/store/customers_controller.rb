@@ -82,9 +82,13 @@ module Spree
             }
           end
 
+          # `avatar` is the direct-upload signed id the SPA and the storefront
+          # both send; `avatar_url` is what comes back, because a URL is what
+          # a reader can use (the same split the admin profile makes).
           def permitted_params
             params.permit(:email, :password, :password_confirmation, :first_name, :last_name,
-                          :accepts_email_marketing, :phone, :current_password, metadata: {})
+                          :accepts_email_marketing, :phone, :current_password,
+                          :nickname, :gender, :birthday, :city, :avatar, metadata: {})
           end
 
           private

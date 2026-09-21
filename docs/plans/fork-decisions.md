@@ -928,3 +928,17 @@ Plan: `6.1-store-api-miniprogram-gaps.md`'s `order/balancePayOrder`, which ruled
 **The PIN is not read in the API layer, on purpose.** The plan's seam is `Spree.payment_verifications`, consulted once by the apply service; a check in this endpoint would guard exactly one caller and let every other one through. The client's `payPassword` is therefore ignored until that registry lands — written down because a parameter accepted and not checked is the kind of thing that looks handled.
 
 **A type bug this shipped: `amount_due` answered an Integer when nothing was due.** `[outstanding_balance - total_applied_store_credit, 0].max` takes the literal `0` when the balance is settled, and the serializers emit a BigDecimal as a decimal string but an Integer as a JSON number — so a paid order answered `amount_due: 0` where every other order answers a string, which is what the response schema declares. The floor is a `BigDecimal(0)` now, which is the shape `LineItem#taxable_amount` already uses. It surfaced only because this is the first recorded example of a *paid* order.
+
+## 2026-09-21 (the customer's own profile) — What a person says about themselves is a column, and erasure reaches all of it
+
+Plan: `6.1-store-api-miniprogram-gaps.md`'s customer-account rows.
+
+**The profile is four columns, not metadata and not custom fields** (the author's ruling, 2026-09-21). `nickname`, `gender`, `birthday` and `city` are read on every app boot and will be segmented on — a birthday campaign wants an index, not a JSON scan — while metadata is documented as private developer data and custom fields are store-owned, which a global customer is not. The cost is named: a fifth profile field is a migration.
+
+**The avatar needed no column: the customer already had one.** `avatar` has been an ActiveStorage attachment since 6.0, so the profile exposes it as `avatar_url` and accepts a direct-upload signed id as `avatar` — the same read/write split the admin profile already makes, because a URL is what a reader can use and a signed id is what an uploader has.
+
+**"New user" is a count on the payload, not an endpoint.** The client asks `info/newUserCheck` to choose between first-order offers and what the customer usually buys; the payload carries `orders_count` — the completed orders this customer has in the request's store, so a sibling store's buyer is still new here — and the client derives its boolean.
+
+**Erasure and the access export both name the whole profile.** A nickname identifies as well as the name it was registered with, so `Customers::Anonymize` clears all four columns and the picture, `Customers::DataExport` discloses them (the avatar by filename, since the file itself is purged), and the personal-data tripwire now watches for a `nickname`, a `birthday` or a `city` on any table — it would have missed all three before.
+
+**Account closure is the erasure request, not a second soft-close** (the author's ruling, 2026-09-21). The mini program's 注销账户 is `POST /customers/me/data_requests` with `kind=erasure`; its four blockers — open orders, membership, balance, after-sales — are not enforced, because the right to erasure does not depend on what the customer still owes or holds, and the orders survive as anonymised records either way. One consequence is written down for the phone plan: the confirmation this path asks for is the account password, and a WeChat account has none, so the phone-code attestation from `6.1-phone-verification-and-payment-pin.md` is what will confirm for those accounts.

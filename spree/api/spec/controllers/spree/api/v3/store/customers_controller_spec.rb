@@ -182,6 +182,30 @@ RSpec.describe Spree::Api::V3::Store::CustomersController, type: :controller do
       expect(json_response).to include('id', 'email', 'first_name', 'last_name', 'phone', 'accepts_email_marketing')
     end
 
+    # The profile the storefront reads on every boot, and the count it
+    # branches on: a first-time buyer sees first-order offers where a regular
+    # sees what they usually buy.
+    it 'returns the profile and what the customer has bought here' do
+      user.update!(nickname: 'AdaBear', gender: 'female', birthday: '1990-05-01', city: 'Suzhou')
+      create(:completed_order_with_totals, store: store, customer: user)
+      create(:completed_order_with_totals, store: create(:store), customer: user)
+
+      get :show
+
+      expect(json_response).to include(
+        'nickname' => 'AdaBear', 'gender' => 'female', 'birthday' => '1990-05-01',
+        'city' => 'Suzhou', 'orders_count' => 1, 'avatar_url' => nil
+      )
+    end
+
+    it 'counts only orders that were completed' do
+      create(:order_with_line_items, store: store, customer: user)
+
+      get :show
+
+      expect(json_response['orders_count']).to eq(0)
+    end
+
     context 'customer groups' do
       it 'exposes current-store group memberships' do
         wholesale_group = create(:customer_group, store: store, name: 'Wholesale')
@@ -309,6 +333,27 @@ RSpec.describe Spree::Api::V3::Store::CustomersController, type: :controller do
       patch :update, params: { first_name: 'Updated' }
 
       expect(json_response['first_name']).to eq('Updated')
+    end
+
+    # What the storefront's profile form sends, in a form's own words: an
+    # empty gender means the customer would rather not say.
+    it 'saves the profile fields' do
+      patch :update, params: { nickname: 'AdaBear', gender: 'female', birthday: '1990-05-01', city: 'Suzhou' }
+
+      expect(response).to have_http_status(:ok)
+      user.reload
+      expect(user.nickname).to eq('AdaBear')
+      expect(user.gender).to eq('female')
+      expect(user.birthday).to eq(Date.new(1990, 5, 1))
+      expect(user.city).to eq('Suzhou')
+      expect(json_response['birthday']).to eq('1990-05-01')
+    end
+
+    it 'stores an empty gender as unset' do
+      patch :update, params: { gender: '' }
+
+      expect(response).to have_http_status(:ok)
+      expect(user.reload.gender).to be_nil
     end
 
     it 'updates phone' do

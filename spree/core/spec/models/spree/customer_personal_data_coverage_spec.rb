@@ -18,10 +18,13 @@ RSpec.describe 'personal data coverage' do
   PII_COLUMN_PATTERNS = [
     /\Aemail\z/, /_email\z/,
     /\Aphone\z/, /_phone\z/,
-    /\Afirst_?name\z/, /\Alast_?name\z/, /\Afull_name\z/,
+    /\Afirst_?name\z/, /\Alast_?name\z/, /\Afull_name\z/, /\Anickname\z/,
     /\Aip_address\z/, /_ip_address\z/,
     /\Auser_agent\z/,
-    /\Aaddress\d?\z/, /\Apostal_code\z/,
+    /\Aaddress\d?\z/, /\Apostal_code\z/, /\Acity\z/,
+    # A date of birth is a quasi-identifier on its own and one of the three
+    # fields that identify most people when combined with a postcode.
+    /\Abirthday\z/, /\Adate_of_birth\z/,
     /\Anote\z/, /_note\z/
   ].freeze
 
@@ -146,7 +149,8 @@ RSpec.describe 'personal data coverage' do
   # a customer with data in every one of these places and asserts the export
   # named whatever the erasure changed.
   it 'discloses every field its erasure goes on to clear' do
-    customer = create(:customer, email: 'subject@example.com')
+    customer = create(:customer, email: 'subject@example.com',
+                                 nickname: 'AdaBear', birthday: '1990-05-01', city: 'Suzhou')
     card = create(:credit_card, name: 'Ada Lovelace')
     card.update_columns(customer_id: customer.id, metadata: { 'wallet' => 'apple-pay' })
     group = create(:order_group, store: @default_store, customer: customer)
@@ -161,7 +165,8 @@ RSpec.describe 'personal data coverage' do
     disclosed = JSON.generate(payload)
 
     # Every value about to be wiped should appear somewhere in the response.
-    values = ['Ada Lovelace', 'apple-pay', 'vip', '203.0.113.9', 'Mozilla/5.0']
+    values = ['Ada Lovelace', 'apple-pay', 'vip', '203.0.113.9', 'Mozilla/5.0',
+              'AdaBear', '1990-05-01', 'Suzhou']
     undisclosed = values.reject { |value| disclosed.include?(value) }
 
     expect(undisclosed).to be_empty, <<~MESSAGE
@@ -175,6 +180,7 @@ RSpec.describe 'personal data coverage' do
 
     surviving = values.select do |value|
       [card.reload.name, card.metadata.to_s, group.reload.metadata.to_s,
+       customer.reload.attributes.slice('nickname', 'birthday', 'city').to_s,
        Spree::ConsentRecord.where(owner: customer).pluck(:ip_address, :user_agent).to_s].
         any? { |held| held.include?(value) }
     end
