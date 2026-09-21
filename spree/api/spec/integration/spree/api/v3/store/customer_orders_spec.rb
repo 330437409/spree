@@ -28,10 +28,12 @@ RSpec.describe 'Customer Orders API', type: :request, swagger_doc: 'api-referenc
                 description: 'Filter by completed before date (ISO 8601)'
       parameter name: 'q[number_eq]', in: :query, type: :string, required: false,
                 description: 'Filter by exact order number (e.g., R123456)'
-      parameter name: 'q[state_eq]', in: :query, type: :string, required: false,
-                description: 'Filter by order state (complete, returned, canceled)'
-      parameter name: 'q[payment_state_eq]', in: :query, type: :string, required: false,
-                description: 'Filter by payment state (paid, balance_due, credit_owed, void, failed)'
+      parameter name: 'q[status_eq]', in: :query, type: :string, required: false,
+                description: 'Filter by order status (draft, placed, canceled)'
+      parameter name: 'q[payment_status_eq]', in: :query, type: :string, required: false,
+                description: 'Filter by payment status (paid, balance_due, credit_owed, void, failed)'
+      parameter name: 'q[multi_search]', in: :query, type: :string, required: false,
+                description: 'Search the order number, the purchase-order reference, the buyer’s name and email, and the names of the goods the order holds'
       parameter name: 'q[total_gteq]', in: :query, type: :number, required: false,
                 description: 'Filter by minimum total'
       parameter name: 'q[total_lteq]', in: :query, type: :number, required: false,

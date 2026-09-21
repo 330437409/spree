@@ -7509,17 +7509,24 @@ paths:
         description: Filter by exact order number (e.g., R123456)
         schema:
           type: string
-      - name: q[state_eq]
+      - name: q[status_eq]
         in: query
         required: false
-        description: Filter by order state (complete, returned, canceled)
+        description: Filter by order status (draft, placed, canceled)
         schema:
           type: string
-      - name: q[payment_state_eq]
+      - name: q[payment_status_eq]
         in: query
         required: false
-        description: Filter by payment state (paid, balance_due, credit_owed, void,
+        description: Filter by payment status (paid, balance_due, credit_owed, void,
           failed)
+        schema:
+          type: string
+      - name: q[multi_search]
+        in: query
+        required: false
+        description: Search the order number, the purchase-order reference, the buyer’s
+          name and email, and the names of the goods the order holds
         schema:
           type: string
       - name: q[total_gteq]
