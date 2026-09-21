@@ -51,6 +51,13 @@ RSpec.shared_examples 'a purchase totals host' do
       allow(record).to receive(:total_applied_store_credit).and_return(10)
       expect(record.amount_due).to eq(50)
     end
+
+    # The serializers emit a BigDecimal as a decimal string and an Integer as
+    # a JSON number, so a settled order would answer in a different type than
+    # every other order.
+    it 'answers a decimal when nothing is due' do
+      expect(new_record(total: 100, payment_total: 100).amount_due).to be_a(BigDecimal)
+    end
   end
 
   describe '#fulfillment_discount' do

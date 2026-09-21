@@ -313,7 +313,7 @@ paths:
                 - key: wechat
                   kind: redirect
                   label: WeChat
-                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--e89a253239008b9e01708458a483a849f2284e69
+                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--be98aa5062e462c71b5fa456403785c40f625815
                   requires_email: true
               schema:
                 type: object
@@ -6673,6 +6673,335 @@ paths:
                   message: Order not found
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  "/api/v3/store/customers/me/orders/{order_id}/store_credits":
+    post:
+      summary: Pay an order from the customer’s own balance
+      tags:
+      - Orders
+      security:
+      - api_key: []
+        bearer_auth: []
+      description: |
+        Settles what the order still owes from the customer's stored value — the balance
+        payment an unpaid order offers. It is all or nothing: a balance that covers only part
+        of the order is refused, with the shortfall named in the message, because a partially
+        paid order would otherwise answer as if it were paid while the rest is still owed.
+
+        The balance is spent through the store credit apply service — where the payment PIN
+        is consulted — and what it applies is captured in the same call, because an order is
+        paid rather than reserved. A canceled order, or one that owes nothing, is refused.
+      x-codeSamples:
+      - lang: javascript
+        label: Spree SDK
+        source: |-
+          import { createClient } from '@spree/sdk'
+
+          const client = createClient({
+            baseUrl: 'https://your-store.com',
+            publishableKey: '<api-key>',
+          })
+
+          // Pays what the order still owes from the customer's own balance. All or
+          // nothing: a balance that does not cover the order is refused, with the
+          // shortfall in the message.
+          const order = await client.customer.orders.storeCredits.apply('or_abc123', {
+            token: '<token>',
+          })
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        required: true
+        description: Bearer token for the signed-in customer
+        schema:
+          type: string
+      - name: order_id
+        in: path
+        required: true
+        description: Order prefixed ID (e.g., or_abc123)
+        schema:
+          type: string
+      responses:
+        '200':
+          description: the order, paid from the balance
+          content:
+            application/json:
+              example:
+                id: or_UkLWZg9DAJ
+                market_id: mkt_UkLWZg9DAJ
+                payment_deadline:
+                withdrawal_period_ends_at:
+                within_withdrawal_period: true
+                cancellable: true
+                cart_id:
+                channel_id: ch_UkLWZg9DAJ
+                company_id:
+                company_name:
+                po_document_filename:
+                po_document_byte_size:
+                number: R1001
+                email: inell@leannon.biz
+                customer_note:
+                po_number:
+                currency: USD
+                locale: en
+                total_quantity: 1
+                coupon_code:
+                status: placed
+                fulfillment_status: unfulfilled
+                payment_status: paid
+                completed_at: '2026-01-15T12:00:00.000Z'
+                item_total: '10.0'
+                display_item_total: "$10.00"
+                adjustment_total: '0.0'
+                display_adjustment_total: "$0.00"
+                discount_total: '0.0'
+                display_discount_total: "$0.00"
+                tax_total: '0.0'
+                display_tax_total: "$0.00"
+                included_tax_total: '0.0'
+                display_included_tax_total: "$0.00"
+                additional_tax_total: '0.0'
+                display_additional_tax_total: "$0.00"
+                total: '110.0'
+                display_total: "$110.00"
+                gift_card_total: '0.0'
+                display_gift_card_total: "$0.00"
+                amount_due: '0.0'
+                display_amount_due: "$0.00"
+                delivery_total: '100.0'
+                display_delivery_total: "$100.00"
+                fee_total: '0.0'
+                display_fee_total: "$0.00"
+                store_credit_total: '110.0'
+                display_store_credit_total: "-$110.00"
+                covered_by_store_credit: true
+                discounts: []
+                fees: []
+                items:
+                - id: li_UkLWZg9DAJ
+                  variant_id: variant_UkLWZg9DAJ
+                  seller_id:
+                  preorder: false
+                  preorder_ships_at:
+                  quantity: 1
+                  currency: USD
+                  name: Product 3936410
+                  slug: product-3936410
+                  options_text: ''
+                  selected: true
+                  price: '10.0'
+                  display_price: "$10.00"
+                  total: '10.0'
+                  display_total: "$10.00"
+                  adjustment_total: '0.0'
+                  display_adjustment_total: "$0.00"
+                  additional_tax_total: '0.0'
+                  display_additional_tax_total: "$0.00"
+                  included_tax_total: '0.0'
+                  display_included_tax_total: "$0.00"
+                  discount_total: '0.0'
+                  display_discount_total: "$0.00"
+                  pre_tax_amount: '10.0'
+                  display_pre_tax_amount: "$10.00"
+                  discounted_amount: '10.0'
+                  display_discounted_amount: "$10.00"
+                  display_compare_at_amount: "$0.00"
+                  compare_at_amount:
+                  thumbnail_url:
+                  option_values: []
+                  digital_links: []
+                fulfillments:
+                - id: ful_UkLWZg9DAJ
+                  number: R1001-F1
+                  tracking: U10000
+                  tracking_url:
+                  pickup_point_data:
+                  selected_delivery_rate_id: dr_gbHJdmfrXB
+                  unpriced: false
+                  cost: '100.0'
+                  display_cost: "$100.00"
+                  total: '100.0'
+                  display_total: "$100.00"
+                  discount_total: '0.0'
+                  display_discount_total: "$0.00"
+                  additional_tax_total: '0.0'
+                  display_additional_tax_total: "$0.00"
+                  included_tax_total: '0.0'
+                  display_included_tax_total: "$0.00"
+                  tax_total: '0.0'
+                  display_tax_total: "$0.00"
+                  status: unfulfilled
+                  fulfillment_type: shipping
+                  fulfilled_at:
+                  delivered_at:
+                  items:
+                  - item_id: li_UkLWZg9DAJ
+                    variant_id: variant_UkLWZg9DAJ
+                    quantity: 1
+                  deliveries:
+                  - id: dlv_UkLWZg9DAJ
+                    tracking_number: U10000
+                    carrier:
+                    carrier_name:
+                    service:
+                    status: pending
+                    tracking_url:
+                    estimated_delivery_at:
+                    delivered_at:
+                  delivery_method:
+                    id: dm_UkLWZg9DAJ
+                    name: UPS Ground 149
+                    code: UPS_GROUND_167
+                    estimated_transit_business_days_min:
+                    estimated_transit_business_days_max:
+                    digital: false
+                    pickup: false
+                    pickup_point: false
+                  stock_location:
+                    id: sloc_UkLWZg9DAJ
+                    name: Chasidy Renner
+                    address1: 1600 Pennsylvania Ave NW
+                    city: Washington
+                    zipcode: '20500'
+                    country_code: US
+                    country_name: United States
+                    state_code: AL
+                    state_text: AL
+                    pickup_ready_in_minutes:
+                    pickup_instructions:
+                  delivery_rates:
+                  - id: dr_gbHJdmfrXB
+                    delivery_method_id: dm_UkLWZg9DAJ
+                    name: UPS Ground 149
+                    selected: true
+                    cost: '10.0'
+                    total: '10.0'
+                    additional_tax_total: '0.0'
+                    included_tax_total: '0.0'
+                    tax_total: '0.0'
+                    carrier:
+                    service_level:
+                    estimated_delivery_date:
+                    unpriced: false
+                    freight_summary:
+                    display_cost: "$10.00"
+                    display_total: "$10.00"
+                    display_additional_tax_total: "$0.00"
+                    display_included_tax_total: "$0.00"
+                    display_tax_total: "$0.00"
+                    delivery_method:
+                      id: dm_UkLWZg9DAJ
+                      name: UPS Ground 149
+                      code: UPS_GROUND_167
+                      estimated_transit_business_days_min:
+                      estimated_transit_business_days_max:
+                      digital: false
+                      pickup: false
+                      pickup_point: false
+                payments:
+                - id: py_UkLWZg9DAJ
+                  payment_method_id: pm_UkLWZg9DAJ
+                  response_code: 1-SC-20260115120000000000
+                  number: R1001-P1
+                  status: completed
+                  merchant_id:
+                  gateway_transaction_id:
+                  amount: '110.0'
+                  display_amount: "$110.00"
+                  source_type: store_credit
+                  source_id: credit_UkLWZg9DAJ
+                  source:
+                    id: credit_UkLWZg9DAJ
+                    amount: '110.0'
+                    amount_used: '110.0'
+                    amount_remaining: '0.0'
+                    display_amount: "$110.00"
+                    display_amount_used: "$110.00"
+                    display_amount_remaining: "$0.00"
+                    currency: USD
+                  payment_method:
+                    id: pm_UkLWZg9DAJ
+                    name: Store Credit 6
+                    description: Store Credit
+                    type: store_credit
+                    session_required: false
+                    source_required: true
+                billing_address:
+                  id: addr_EfhxLZ9ck8
+                  label:
+                  first_name: John
+                  last_name: Doe
+                  full_name: John Doe
+                  address1: 505 Lovely Street
+                  address2: Northwest
+                  postal_code: '10118'
+                  city: New York
+                  phone: 555-555-0199
+                  company: Company
+                  country_name: United States
+                  country_code: US
+                  state_text: NY
+                  state_code: NY
+                  quick_checkout: false
+                  is_default_billing: false
+                  is_default_shipping: false
+                  state_abbr: NY
+                  country_iso: US
+                  state_name: New York
+                shipping_address:
+                  id: addr_VqXmZF31wY
+                  label:
+                  first_name: John
+                  last_name: Doe
+                  full_name: John Doe
+                  address1: 506 Lovely Street
+                  address2: Northwest
+                  postal_code: '10118'
+                  city: New York
+                  phone: 555-555-0199
+                  company: Company
+                  country_name: United States
+                  country_code: US
+                  state_text: NY
+                  state_code: NY
+                  quick_checkout: false
+                  is_default_billing: false
+                  is_default_shipping: false
+                  state_abbr: NY
+                  country_iso: US
+                  state_name: New York
+                gift_card:
+                market:
+                  id: mkt_UkLWZg9DAJ
+                  name: United States
+                  currency: USD
+                  default_locale: en
+                  tax_inclusive: false
+                  default: true
+                  country_codes:
+                  - US
+                  supported_locales:
+                  - en
+              schema:
+                "$ref": "#/components/schemas/Order"
+        '422':
+          description: a balance that does not cover the order
+          content:
+            application/json:
+              example:
+                error:
+                  code: validation_error
+                  message: does not cover the $110.00 still due on this order
+                  details:
+                    base:
+                    - does not cover the $110.00 still due on this order
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
   "/api/v3/store/order_cancellation_reasons":
     get:
       summary: List the merchant’s reasons for calling an order off
@@ -6809,8 +7138,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 3909550
-                  slug: product-3909550
+                  name: Product 3959550
+                  slug: product-3959550
                   options_text: ''
                   selected: true
                   price: '10.0'
@@ -6874,8 +7203,8 @@ paths:
                     delivered_at:
                   delivery_method:
                     id: dm_UkLWZg9DAJ
-                    name: UPS Ground 146
-                    code: UPS_GROUND_164
+                    name: UPS Ground 151
+                    code: UPS_GROUND_169
                     estimated_transit_business_days_min:
                     estimated_transit_business_days_max:
                     digital: false
@@ -6896,7 +7225,7 @@ paths:
                   delivery_rates:
                   - id: dr_gbHJdmfrXB
                     delivery_method_id: dm_UkLWZg9DAJ
-                    name: UPS Ground 146
+                    name: UPS Ground 151
                     selected: true
                     cost: '10.0'
                     total: '10.0'
@@ -6915,8 +7244,8 @@ paths:
                     display_tax_total: "$0.00"
                     delivery_method:
                       id: dm_UkLWZg9DAJ
-                      name: UPS Ground 146
-                      code: UPS_GROUND_164
+                      name: UPS Ground 151
+                      code: UPS_GROUND_169
                       estimated_transit_business_days_min:
                       estimated_transit_business_days_max:
                       digital: false
@@ -6929,7 +7258,7 @@ paths:
                   first_name: John
                   last_name: Doe
                   full_name: John Doe
-                  address1: 495 Lovely Street
+                  address1: 513 Lovely Street
                   address2: Northwest
                   postal_code: '10118'
                   city: New York
@@ -6951,7 +7280,7 @@ paths:
                   first_name: John
                   last_name: Doe
                   full_name: John Doe
-                  address1: 496 Lovely Street
+                  address1: 514 Lovely Street
                   address2: Northwest
                   postal_code: '10118'
                   city: New York
@@ -11123,7 +11452,7 @@ paths:
                 variant:
                   id: variant_gbHJdmfrXB
                   product_id: prod_gbHJdmfrXB
-                  sku: SKU-490
+                  sku: SKU-495
                   options_text: ''
                   track_inventory: true
                   media_count: 0

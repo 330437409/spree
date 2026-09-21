@@ -1272,6 +1272,19 @@ export class StoreClient {
         }),
 
       /**
+       * Pay an order from the customer's own balance
+       *
+       * All or nothing: a balance that covers only part of the order is
+       * refused, with the shortfall in the message. The balance is spent
+       * through the store credit apply service — where the payment PIN is
+       * consulted — and what it applies is captured in the same call.
+       */
+      storeCredits: {
+        apply: (orderId: string, options?: RequestOptions): Promise<Order> =>
+          this.request<Order>('POST', `/customers/me/orders/${orderId}/store_credits`, options),
+      },
+
+      /**
        * Hide an order from the customer's own history
        *
        * The order is not deleted — the merchant keeps it, with fulfillment and
