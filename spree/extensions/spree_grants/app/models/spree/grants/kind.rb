@@ -62,20 +62,24 @@ module Spree
       # @return [Spree::ServiceModule::Result]
       def self.consume!(grant)
         return refuse(grant, :not_consumable) unless consumable?
+        return refuse(grant, :not_usable) unless grant.consume!
 
-        grant.update!(status: 'consumed')
-
-        accept(grant)
+        accept(grant.reload)
       end
 
+      # The answer a kind gives when it has consumed the grant itself, so a
+      # kind's own service and the default one speak the same shape.
+      #
       # @param grant [Spree::Grant]
       # @return [Spree::ServiceModule::Result]
       def self.accept(grant)
         Spree::ServiceModule::Result.new(true, grant)
       end
 
+      # …and when it will not: the reason is what the caller is told.
+      #
       # @param grant [Spree::Grant]
-      # @param reason [Symbol, String] what the caller is told
+      # @param reason [Symbol, String]
       # @return [Spree::ServiceModule::Result]
       def self.refuse(grant, reason)
         Spree::ServiceModule::Result.new(false, grant, Spree::ServiceModule::ResultError.new(reason))

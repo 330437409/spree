@@ -3,6 +3,10 @@ module Spree
     # Records that something is owed, once.
     #
     # See {Spree::Grants.grant!} for the keywords.
+    #
+    # Named for what it does, which puts a service of the same word beside the
+    # row it writes: here `Grant` is this class, and the row is always spelled
+    # out as `Spree::Grant`.
     class Grant
       prepend Spree::ServiceModule::Base
 
@@ -19,7 +23,18 @@ module Spree
         return failure(nil, :key_missing) if key.blank?
 
         existing = find_existing(store: store, kind: kind, key: key)
-        return success(existing) if existing
+
+        if existing
+          # The key is the whole identity of a debt, so a row somebody removed
+          # is not a debt to hand back, and a key already spent on another
+          # customer is a key this kind built too loosely.
+          return failure(existing, :already_recorded) if existing.deleted?
+          return failure(existing, :key_belongs_to_another_customer) if customer.present? &&
+                                                                        existing.customer_id.present? &&
+                                                                        existing.customer_id != customer.id
+
+          return success(existing)
+        end
 
         record = Spree::Grant.new(
           store: store,
@@ -34,7 +49,18 @@ module Spree
           metadata: metadata || {}
         )
 
-        record.save ? success(record) : failure(record, record.errors)
+        saved = begin
+          record.save
+        rescue ActiveRecord::RecordNotUnique
+          # The key was taken between the lookup and the insert — another job
+          # on the same debt, or a request somebody submitted twice. The answer
+          # is the row that won, which is what the caller would have got a
+          # moment earlier.
+          existing = find_existing(store: store, kind: kind, key: key)
+          return existing ? success(existing) : failure(record, :already_recorded)
+        end
+
+        saved ? success(record) : failure(record, record.errors)
       end
 
       private

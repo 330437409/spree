@@ -29,6 +29,8 @@ Spree::Grants.grant!(
 | `Spree::Grants::Kind` | The three-method contract: `idempotency_key_for`, `consumable?`, `expires?` — plus `consume!` |
 | `Spree::Grants` | The one door: `grant!`, `claim!`, `consume!`, `revoke!` |
 
+A row is `granted` while the debt is recorded — with a holder or without one — and `claimed` when `claim!` put a holder on a row that had none. A consumer that renders "claimed or not" reads the status; one that asks "whose is this" reads the owner.
+
 ## Registering a kind
 
 A kind is a class the plan that owns the thing defines, in its own gem, and
@@ -52,6 +54,18 @@ Spree.grant_kinds << SpreeMembership::GrantKinds::Right
 The row's `kind` column stores the class's `api_type`, which is derived from
 its name unless the kind pins one — so renaming a class does not change what
 every stored row means. Only registered kinds may be written.
+
+A kind consumed in part overrides `consume!` and answers with `accept` or
+`refuse`; the primitive holds no balance, so the counting is the owner's:
+
+```ruby
+def self.consume!(grant)
+  return refuse(grant, :nothing_left) if lot_for(grant).remaining.zero?
+
+  SpreePoints::Spend.call(grant: grant, amount: 1)
+  accept(grant)
+end
+```
 
 `Spree::Grants.grant!` is idempotent by that key: a job that runs twice records
 nothing the second time and is answered with the row the first run wrote. The

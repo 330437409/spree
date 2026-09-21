@@ -34,6 +34,26 @@ RSpec.describe Spree::Grants do
       expect(Spree::Grant.count).to eq(1)
     end
 
+    it 'refuses to hand back a row somebody removed, and says so' do
+      first = described_class.grant!(store: store, customer: customer, kind: 'spec_gift', context: '2026-09')
+      first.value.destroy
+
+      result = described_class.grant!(store: store, customer: customer, kind: 'spec_gift', context: '2026-09')
+
+      expect(result).to be_failure
+      expect(result.error.value).to eq(:already_recorded)
+      expect(Spree::Grant.with_deleted.where(kind: 'spec_gift').count).to eq(1)
+    end
+
+    it 'refuses a key another customer already holds' do
+      described_class.grant!(store: store, customer: other_customer, kind: 'spec_gift', context: '2026-09')
+
+      result = described_class.grant!(store: store, customer: customer, kind: 'spec_gift', context: '2026-09')
+
+      expect(result).to be_failure
+      expect(result.error.value).to eq(:key_belongs_to_another_customer)
+    end
+
     it 'lets a caller that built the key itself pass it in' do
       result = described_class.grant!(store: store, customer: customer, kind: 'spec_gift', idempotency_key: 'built:by:caller')
 
@@ -58,7 +78,10 @@ RSpec.describe Spree::Grants do
     it 'falls back to the default store when neither the caller nor the request names one' do
       store
 
-      expect(described_class.grant!(customer: customer, kind: 'spec_gift', context: '2026-09').value.store).to eq(Spree::Store.default)
+      granted = described_class.grant!(customer: customer, kind: 'spec_gift', context: '2026-09').value
+
+      expect(granted.store).to eq(Spree::Store.default)
+      expect(granted.store).not_to eq(store)
     end
 
     it 'refuses a shorthand no gem registered' do
@@ -173,6 +196,30 @@ RSpec.describe Spree::Grants do
       expect(result).to be_failure
       expect(result.error.value).to eq(:not_consumable)
       expect(grant.reload.status).to eq('granted')
+    end
+
+    it 'refuses a kind that answers something the door cannot read' do
+      sloppy = Class.new(Spree::Grants::Kind) do
+        def self.api_type
+          'spec_sloppy'
+        end
+
+        def self.idempotency_key_for(context)
+          "sloppy:#{context}"
+        end
+
+        def self.consume!(grant)
+          grant.update!(status: 'consumed')
+          true
+        end
+      end
+      Spree.grant_kinds << sloppy
+      grant = create(:grant, store: store, customer: customer, kind: 'spec_sloppy')
+
+      result = described_class.consume!(grant)
+
+      expect(result).to be_failure
+      expect(result.error.value).to eq(:unexpected_answer)
     end
 
     it 'refuses a row whose kind is no longer registered' do

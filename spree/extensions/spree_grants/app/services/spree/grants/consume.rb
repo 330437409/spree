@@ -18,10 +18,14 @@ module Spree
         return failure(grant, :unknown_kind) if kind.nil?
 
         result = kind.consume!(grant)
-        # A kind that builds its own result instead of using its own helpers
-        # still answers in the shape this door promises.
+        # A kind answers with {Spree::Grants::Kind.accept} or
+        # {Spree::Grants::Kind.refuse}; anything else is a contract it has not
+        # met, refused here rather than raised at the caller.
+        return failure(grant, :unexpected_answer) unless result.is_a?(Spree::ServiceModule::Result)
         return result if result.error.nil? || result.error.is_a?(Spree::ServiceModule::ResultError)
 
+        # …and a kind that built its own result around a bare reason still
+        # answers in the shape this door promises.
         Spree::ServiceModule::Result.new(result.success, result.value,
                                         Spree::ServiceModule::ResultError.new(result.error))
       end

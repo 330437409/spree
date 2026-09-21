@@ -36,7 +36,11 @@ module Spree
     # @param metadata [Hash, nil]
     # @param store [Spree::Store, nil] the store the debt belongs to; falls
     #   back to the current request's, which is why a job passes it
-    # @return [Spree::ServiceModule::Result] value is the grant
+    # @return [Spree::ServiceModule::Result] value is the grant, except when
+    #   the key is taken: the row that holds it is the value of a refusal
+    #   (`:already_recorded` for a row somebody removed,
+    #   `:key_belongs_to_another_customer` for a key this customer is not on)
+    # @raise [Spree::Grants::UnknownKind] when the kind is not registered
     def self.grant!(**options)
       Grant.call(**options)
     end

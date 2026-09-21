@@ -50,7 +50,9 @@ module Spree
     validate :expires_at_must_belong_to_a_kind_that_expires
 
     scope :expired, -> { where(expires_at: ..Time.current) }
-    scope :expiring_before, ->(date) { where(expires_at: ..date) }
+    # What a warning banner asks: still in time, but not for long. A grant that
+    # lapsed last month is not on its way to expiring.
+    scope :expiring_before, ->(date) { where(expires_at: Time.current..date) }
     scope :usable, lambda {
       with_status(:granted, :claimed).
         where(arel_table[:expires_at].eq(nil).or(arel_table[:expires_at].gt(Time.current)))
@@ -66,7 +68,28 @@ module Spree
 
     # @return [Boolean] whether this grant is still owed and still in time
     def usable?
-      (granted? || claimed?) && (expires_at.nil? || expires_at.future?)
+      !deleted? && (granted? || claimed?) && (expires_at.nil? || expires_at.future?)
+    end
+
+    # Takes the debt in one statement, so two callers racing for the same
+    # grant cannot both be told they took it: the row leaves the usable set
+    # under the same conditions `usable` states, and the second update matches
+    # nothing.
+    #
+    # @return [Boolean] whether this call was the one that consumed it
+    def consume!
+      self.class.where(id: id).merge(self.class.usable).
+        update_all(status: 'consumed', updated_at: Time.current) == 1
+    end
+
+    # Puts a holder on an unclaimed grant, in one statement and for the same
+    # reason as {#consume!}.
+    #
+    # @param customer [Object]
+    # @return [Boolean] whether this call was the one that claimed it
+    def claim!(customer)
+      self.class.where(id: id, customer_id: nil).merge(self.class.usable).
+        update_all(customer_id: customer.id, status: 'claimed', updated_at: Time.current) == 1
     end
 
     private

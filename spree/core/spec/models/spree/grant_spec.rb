@@ -3,6 +3,7 @@ require 'spec_helper'
 RSpec.describe Spree::Grant, type: :model do
   let(:store) { @default_store }
   let(:customer) { create(:customer) }
+  let(:other_customer) { create(:customer) }
 
   # A kind is a class the registry holds; this one is enough to answer the
   # three things the row asks of it.
@@ -84,6 +85,27 @@ RSpec.describe Spree::Grant, type: :model do
       expect(described_class.usable).not_to include(consumed, revoked)
     end
 
+    it 'counts a claimed grant as still owed' do
+      grant = create(:grant, store: store, customer: customer, status: 'claimed')
+
+      expect(grant).to be_usable
+      expect(described_class.usable).to include(grant)
+    end
+
+    it 'is not owed once the row is gone' do
+      grant = create(:grant, store: store, customer: customer)
+      grant.destroy
+
+      expect(grant).not_to be_usable
+      expect(described_class.usable).not_to include(grant)
+    end
+
+    it 'leaves out of a warning what already lapsed' do
+      lapsed = create(:grant, store: store, customer: customer, expires_at: 1.day.ago)
+
+      expect(described_class.expiring_before(7.days.from_now)).not_to include(lapsed)
+    end
+
     it 'answers what a warning banner asks' do
       soon = create(:grant, store: store, customer: customer, expires_at: 3.days.from_now)
       later = create(:grant, store: store, customer: customer, expires_at: 30.days.from_now)
@@ -105,6 +127,38 @@ RSpec.describe Spree::Grant, type: :model do
       register_kind('forever_card', expires: false)
 
       expect(build(:grant, store: store, customer: customer, kind: 'forever_card')).to be_valid
+    end
+  end
+
+  describe 'taking a grant' do
+    it 'consumes it once, whoever asks' do
+      grant = create(:grant, store: store, customer: customer)
+
+      expect(grant.consume!).to be(true)
+      expect(grant.consume!).to be(false)
+      expect(grant.reload.status).to eq('consumed')
+    end
+
+    it 'refuses to consume what is expired or already spent' do
+      expired = create(:grant, store: store, customer: customer, expires_at: 1.minute.ago)
+      spent = create(:grant, store: store, customer: customer, status: 'consumed')
+
+      expect(expired.consume!).to be(false)
+      expect(spent.consume!).to be(false)
+    end
+
+    it 'claims an unclaimed grant once, whoever asks' do
+      grant = create(:grant, store: store, customer: nil)
+
+      expect(grant.claim!(customer)).to be(true)
+      expect(grant.claim!(other_customer)).to be(false)
+      expect(grant.reload.customer_id).to eq(customer.id)
+    end
+
+    it 'refuses to claim what is expired' do
+      grant = create(:grant, store: store, customer: nil, expires_at: 1.minute.ago)
+
+      expect(grant.claim!(customer)).to be(false)
     end
   end
 
