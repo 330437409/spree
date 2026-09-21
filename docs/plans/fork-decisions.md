@@ -901,6 +901,48 @@ Plan: `6.1-store-api-miniprogram-gaps.md`'s `order/cancelOrder` row: "Store API 
 
 **The reasons are the merchant's own, and retired ones stay behind.** `GET /api/v3/store/order_cancellation_reasons` lists the active reasons — merchant-owned like the return and claim vocabularies, so nothing branches on the value. A retired reason is not offered again while staying on the orders that already carry it, which is what reporting needs. A reason from another store is not a reason here: the read resolves it through the store's own list and the workflow holds the same line, so the refusal never depends on which of the two got there first.
 
+## 2026-09-21 (the hidden order) — Hiding is the customer's own history, not the order
+
+Plan: `6.1-store-api-miniprogram-gaps.md`'s `order/delUserOrder`, which asked for a per-customer hide flag rather than a soft delete.
+
+**A `customer_hidden_at` column on the order, reached through `DELETE /api/v3/store/customers/me/orders/{id}`.** One customer per order means the flag belongs on the order itself — a join table would model many viewers where there is one — and a timestamp records *when*, which is the first thing a support conversation needs. The write wears a delete because that is what the customer is asking for: they want the order gone from their history, and the client's own name for it is `delUserOrder`.
+
+**"Gone" is the customer's side of their orders — the list and the lookup by id alike.** `Store::Customer::OrdersController#scope` reads `visible_to_customer`, so one scope answers both: a hidden order leaves the list and 404s on `show`. The merchant's side never reads the flag — the row keeps its state and its place in fulfillment, refunds and reporting, and the Admin API has no notion of hidden — which is the whole point of not making this a soft delete. A filter on the list endpoint alone, or a second scope for `show`, would have been two places to keep in step.
+
+**There is deliberately no un-hide.** The plan asks for a delete, the client offers no undo, and a way back needs its own surface — a "hidden orders" list the customer has no way to reach once the row is out of sight — rather than a flag nobody can see. Written down so the next reader does not "finish" the feature by adding one.
+
+**The customer's other order writes do not read the flag, and must not start.** Calling an order off is a fact about the sale, not about the customer's list, so the cancellation finds the order through the customer's own association whether or not it is hidden — and the order-level balance payment, when it lands, is the same kind of write. Hiding says nothing about what the customer may still do with their order.
+
+**What the flag deliberately does not reach: everything that is not that list.** The purchase history still counts a hidden order's goods — they were bought, and one-tap reorder is built on that fact — and no merchant surface reads the flag at all. What was asked for is a customer taking an order off their own list; each further reach (history, ratings, notifications) is its own decision with its own reason, and quietly widening this one is how a "hide" turns into a second, invisible delete.
+
+## 2026-09-21 (the balance payment) — An order is paid from the balance, not reserved against it
+
+Plan: `6.1-store-api-miniprogram-gaps.md`'s `order/balancePayOrder`, which ruled on 2026-09-18 that the plan owns paying an *order* from stored value and that it must spend through `Spree::StoreCredits::Apply`.
+
+**A `store_credits` resource under the customer's own order: `POST /api/v3/store/customers/me/orders/{order_id}/store_credits`.** The cart's balance is addressed the same way (`carts/{cart_id}/store_credits`), and the customer's own order is where their balance may be spent — a guest order has no balance to spend, which is the nesting rather than a rule to remember. It answers with the order, because that is the only thing the write can be read in terms of.
+
+**The balance is spent through the service and captured in the same call.** `Spree::StoreCredits::Apply` writes a `checkout` payment, which on a *cart* is exactly right — the money must stay reversible until the customer submits. On a completed order it is only a reservation: the customer cannot spend that balance anywhere else, and nothing later captures it, so the workflow captures what it applied. Trying to pay from the order would otherwise leave an order that says `balance_due` with the money already held.
+
+**All or nothing, and the refusal names the shortfall.** The client's call is one act — it sends the PIN and nothing else (`miniprogram/components/order/balance-pay/balance-pay.js:66-78` sends `{ id, payPassword }`) and reads a truthy response as "paid" — so applying what a short balance happens to cover would answer a partial payment as a paid order while the rest is still owed. A balance that cannot cover the order is refused with the amount still due in the message, which is also the old server's own verdict (its `511015` branch: 礼品卡余额不足). **No `amount` parameter and no un-apply**: a partial balance payment is not what was asked for, and once captured the money is spent — undoing that is a refund, which is the merchant's.
+
+**The PIN is not read in the API layer, on purpose.** The plan's seam is `Spree.payment_verifications`, consulted once by the apply service; a check in this endpoint would guard exactly one caller and let every other one through. The client's `payPassword` is therefore ignored until that registry lands — written down because a parameter accepted and not checked is the kind of thing that looks handled.
+
+**A type bug this shipped: `amount_due` answered an Integer when nothing was due.** `[outstanding_balance - total_applied_store_credit, 0].max` takes the literal `0` when the balance is settled, and the serializers emit a BigDecimal as a decimal string but an Integer as a JSON number — so a paid order answered `amount_due: 0` where every other order answers a string, which is what the response schema declares. The floor is a `BigDecimal(0)` now, which is the shape `LineItem#taxable_amount` already uses. It surfaced only because this is the first recorded example of a *paid* order.
+
+## 2026-09-21 (the customer's own profile) — What a person says about themselves is a column, and erasure reaches all of it
+
+Plan: `6.1-store-api-miniprogram-gaps.md`'s customer-account rows.
+
+**The profile is four columns, not metadata and not custom fields** (the author's ruling, 2026-09-21). `nickname`, `gender`, `birthday` and `city` are read on every app boot and will be segmented on — a birthday campaign wants an index, not a JSON scan — while metadata is documented as private developer data and custom fields are store-owned, which a global customer is not. The cost is named: a fifth profile field is a migration.
+
+**The avatar needed no column: the customer already had one.** `avatar` has been an ActiveStorage attachment since 6.0, so the profile exposes it as `avatar_url` and accepts a direct-upload signed id as `avatar` — the same read/write split the admin profile already makes, because a URL is what a reader can use and a signed id is what an uploader has.
+
+**"New user" is a count on the payload, not an endpoint.** The client asks `info/newUserCheck` to choose between first-order offers and what the customer usually buys; the payload carries `orders_count` — the completed orders this customer has in the request's store, so a sibling store's buyer is still new here — and the client derives its boolean.
+
+**Erasure and the access export both name the whole profile.** A nickname identifies as well as the name it was registered with, so `Customers::Anonymize` clears all four columns and the picture, `Customers::DataExport` discloses them (the avatar by filename, since the file itself is purged), and the personal-data tripwire now watches for a `nickname`, a `birthday` or a `city` on any table — it would have missed all three before.
+
+**Account closure is the erasure request, not a second soft-close** (the author's ruling, 2026-09-21). The mini program's 注销账户 is `POST /customers/me/data_requests` with `kind=erasure`; its four blockers — open orders, membership, balance, after-sales — are not enforced, because the right to erasure does not depend on what the customer still owes or holds, and the orders survive as anonymised records either way. One consequence is written down for the phone plan: the confirmation this path asks for is the account password, and a WeChat account has none, so the phone-code attestation from `6.1-phone-verification-and-payment-pin.md` is what will confirm for those accounts.
+
 ## 2026-09-21 (the wishlist's tabs) — The categories come from the goods, and the list pages
 
 Plan: `6.1-store-api-miniprogram-gaps.md`'s wishlist-grouping row, which guessed the grouping "needs a field on the wishlist item".

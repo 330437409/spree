@@ -516,6 +516,15 @@ export const handlers = [
 
   http.get(`${API_PREFIX}/customers/me/orders/:id`, () => HttpResponse.json(fixtures.order)),
 
+  http.post(`${API_PREFIX}/customers/me/orders/:id/store_credits`, () =>
+    HttpResponse.json(fixtures.order),
+  ),
+
+  http.delete(
+    `${API_PREFIX}/customers/me/orders/:id`,
+    () => new HttpResponse(null, { status: 204 }),
+  ),
+
   http.get(`${API_PREFIX}/customers/me/purchase_history`, () =>
     HttpResponse.json({ data: [fixtures.product], meta: paginationMeta }),
   ),

@@ -83,4 +83,25 @@ describe Spree::Customer, type: :model do
       expect(customer.prefixed_id).to start_with('cust_')
     end
   end
+
+  # The profile a storefront form edits. Whitespace and "" are how a form says
+  # "nothing", which the columns keep as NULL.
+  describe 'profile fields' do
+    it 'strips whitespace and stores an empty answer as NULL' do
+      customer.nickname = '  AdaBear  '
+      customer.gender = ''
+      customer.city = '   '
+
+      expect(customer.nickname).to eq('AdaBear')
+      expect(customer.gender).to be_nil
+      expect(customer.city).to be_nil
+    end
+
+    it 'accepts the genders a person may describe themselves with' do
+      expect(build(:customer, gender: 'male')).to be_valid
+      expect(build(:customer, gender: 'female')).to be_valid
+      expect(build(:customer, gender: nil)).to be_valid
+      expect(build(:customer, gender: 'other')).not_to be_valid
+    end
+  end
 end

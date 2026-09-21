@@ -163,6 +163,13 @@ module Spree
           selected_locale: nil,
           metadata: {},
           internal_note: nil,
+          # What the customer said about themselves. A name they chose is as
+          # identifying as the one they registered with — a profile field
+          # added to the customer belongs in this list in the same change.
+          nickname: nil,
+          gender: nil,
+          birthday: nil,
+          city: nil,
           # The credential goes with the identity. Left in place, whoever knew
           # the old password could sign back in and write the name and phone
           # straight back — and a second erasure would then be refused as
