@@ -9,6 +9,8 @@ class CreateSpreePaymentPins < ActiveRecord::Migration[8.1]
       t.integer :failed_attempts, null: false, default: 0
       t.datetime :locked_until
       t.datetime :deleted_at
+      # jsonb on PostgreSQL (binary, indexable); json on MySQL/SQLite.
+      t.respond_to?(:jsonb) ? t.jsonb(:metadata) : t.json(:metadata)
       t.timestamps
     end
 

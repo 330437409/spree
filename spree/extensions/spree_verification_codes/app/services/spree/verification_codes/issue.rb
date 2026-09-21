@@ -24,10 +24,10 @@ module Spree
         @purpose = purpose.to_s
 
         return failure(nil, :phone_missing) if @phone.blank?
-        return success(nil) if PhoneRateLimit.exceeded?(phone: @phone)
+        return success(nil) if PhoneRateLimit.exceeded?(store: @store, phone: @phone)
 
         record = issue(channel)
-        PhoneRateLimit.record(phone: @phone)
+        PhoneRateLimit.record(store: @store, phone: @phone)
 
         success(record)
       end

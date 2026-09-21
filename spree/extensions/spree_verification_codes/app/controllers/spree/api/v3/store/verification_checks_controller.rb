@@ -13,6 +13,15 @@ module Spree
         class VerificationChecksController < Store::BaseController
           allow_guest_storefront_access!
 
+          # A check is a bcrypt comparison per accepted request, on an endpoint
+          # a guest can reach: without a ceiling of its own the only bound on
+          # unauthenticated hashing would be the API's blanket budget. It
+          # shares the send's preference because the two are one flow.
+          rate_limit to: Spree::Api::Config[:rate_limit_verification_send],
+                     within: Spree::Api::Config[:rate_limit_window].seconds,
+                     store: Rails.cache,
+                     with: RATE_LIMIT_RESPONSE
+
           # Authentication stays optional — the door reads the customer when a
           # token is present (the PIN's codes are theirs alone) and serves a
           # guest when none is. The guest opt-out above is what opens the
@@ -22,9 +31,10 @@ module Spree
           #
           # Body: { phone, code, purpose }
           def create
-            return render_invalid_parameter('phone and code are required') if params[:phone].blank? || params[:code].blank?
+            return render_invalid_parameter(Spree.t('verification_codes.errors.phone_and_code_required')) if params[:phone].blank? || params[:code].blank?
 
             result = Spree::VerificationCodes::Check.call(
+              store: current_store,
               phone: params[:phone],
               code: params[:code],
               purpose: params[:purpose].presence

@@ -27,6 +27,7 @@ module Spree
     belongs_to :customer, class_name: "::#{Spree.customer_class}"
 
     validates :customer, presence: true, uniqueness: { scope: spree_base_uniqueness_scope }
+    validates :required, inclusion: { in: [true, false] }
     validates :pin, format: { with: /\A\d{6}\z/, message: :six_digits }, if: -> { pin.present? }
     validate :pin_is_not_a_guess, if: -> { pin.present? }
 
@@ -50,6 +51,11 @@ module Spree
     # @param candidate [String, nil]
     # @return [Boolean]
     def verify(candidate)
+      # A lockout that has run its course is over: the counter that armed it
+      # goes with it, so the next wrong guess re-arms a full window rather
+      # than locking on the first try.
+      clear_failed_attempts! if locked_until.present? && !locked?
+
       return false if locked?
       return false unless authenticate_pin(candidate.to_s)
 
@@ -66,13 +72,22 @@ module Spree
     def record_failed_attempt!
       with_lock do
         increment(:failed_attempts)
-        self.locked_until = LOCKOUT_DURATION.from_now if failed_attempts >= MAX_ATTEMPTS
+        # Armed once, when the threshold is crossed. Re-arming on every later
+        # guess would let a customer tapping retry — or an attacker looping
+        # the request — hold the window open forever.
+        self.locked_until = LOCKOUT_DURATION.from_now if locked_until.nil? && failed_attempts >= MAX_ATTEMPTS
         save!
       end
     end
 
+    # Skips the row lock and the write when there is nothing to clear, which
+    # is the common case on the money path: a customer whose counter is at
+    # zero and who is not locked.
+    #
     # @return [void]
     def clear_failed_attempts!
+      return if failed_attempts.zero? && locked_until.nil?
+
       with_lock { update!(failed_attempts: 0, locked_until: nil) }
     end
   end

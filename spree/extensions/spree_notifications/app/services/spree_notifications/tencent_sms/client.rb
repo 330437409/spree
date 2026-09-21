@@ -1,3 +1,4 @@
+require 'digest'
 require 'faraday'
 require 'json'
 
@@ -17,6 +18,15 @@ module SpreeNotifications
       VERSION = '2021-01-11'
       OPEN_TIMEOUT = 5
       READ_TIMEOUT = 10
+
+      # A vendor that is down must not cost a full timeout per queued message.
+      # After a handful of transport failures inside a minute the account stops
+      # being called until the window passes — sends then fail in the same
+      # words a refusal uses, which the channel already reports once. Counted
+      # in the cache, because it is a fact about the last minute rather than a
+      # record of anything.
+      FAILURE_WINDOW = 1.minute
+      FAILURE_LIMIT = 5
 
       # @param secret_id [String]
       # @param secret_key [String]
@@ -65,12 +75,15 @@ module SpreeNotifications
       # @return [Hash] the response envelope without its error, or a raised
       #   {SpreeNotifications::DeliveryError}
       def request(action:, payload:)
+        raise DeliveryError.new(circuit_message, code: 'CircuitOpen') if circuit_open?
+
         body = @signer.body_for(payload)
         response = connection.post do |request|
           request.body = body
           @signer.headers(action: action, body: body).each { |name, value| request.headers[name] = value }
         end
 
+        reset_failures
         envelope = JSON.parse(response.body).fetch('Response', {})
 
         if (error = envelope['Error'])
@@ -78,6 +91,41 @@ module SpreeNotifications
         end
 
         envelope
+      rescue Faraday::Error => error
+        # A transport failure is the vendor being unreachable rather than
+        # refusing: counted toward the circuit, and raised for the job to
+        # report.
+        count_failure
+        raise error
+      end
+
+      # @return [String]
+      def circuit_message
+        'Tencent Cloud SMS is not answering; sending is paused for a moment'
+      end
+
+      # @return [Boolean]
+      def circuit_open?
+        Rails.cache.read(failure_key).to_i >= FAILURE_LIMIT
+      end
+
+      # @return [void]
+      def count_failure
+        Rails.cache.increment(failure_key, 1, expires_in: FAILURE_WINDOW) ||
+          Rails.cache.write(failure_key, 1, expires_in: FAILURE_WINDOW)
+      end
+
+      # @return [void]
+      def reset_failures
+        Rails.cache.delete(failure_key)
+      end
+
+      # Keyed by the account rather than the store: one application id is one
+      # vendor relationship, however many stores bill through it.
+      #
+      # @return [String]
+      def failure_key
+        "spree_notifications/tencent_sms/failures/#{Digest::SHA256.hexdigest(@sms_sdk_app_id.to_s)[0, 16]}"
       end
 
       def connection

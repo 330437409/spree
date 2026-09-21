@@ -9,6 +9,11 @@ en:
         pin_code_needs_own_phone: A payment code can only be sent to your own number.
         change_phone_needs_code: Send a verification code to the new number and pass it as code.
         cancel_needs_code: Confirm the account closure with a verification code sent to your phone.
+        phone_missing: A phone number is required.
+        purpose_invalid: Purpose must be one of account, payment.
+        channel_invalid: Channel must be sms. Voice needs a voice transport this deployment does not have.
+        phone_and_code_required: A phone number and a code are both required.
+        required_missing: Say whether the PIN is required.
       pin:
         required: Enter your payment PIN.
         invalid: That payment PIN is not correct.

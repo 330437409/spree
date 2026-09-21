@@ -18,6 +18,10 @@ module Spree
       # @return [Spree::ServiceModule::Result] value is the PIN row
       def call(store:, customer:, code:, pin:, confirmation: nil)
         record = find_or_build(store, customer)
+        # A PIN arrives as a string from a form and as a number from a client
+        # that typed one; the second must not be a 500 where the first is a
+        # field error.
+        pin = pin.to_s
         record.pin = pin
 
         return failure(record) unless confirmation_matches?(record, pin, confirmation)
@@ -25,7 +29,7 @@ module Spree
         # cost the customer a message.
         return failure(record) unless record.valid?
 
-        unless Spree::VerificationCode.consume(phone: customer.phone, purpose: 'payment', code: code)
+        unless Spree::VerificationCode.consume(store: store, phone: customer.phone, purpose: 'payment', code: code)
           # A message rather than a symbolic type: `code` is not an attribute
           # of a PIN, and ActiveModel reads the attribute to build a symbol's
           # message — which raises for a key the model does not have. The field
@@ -37,6 +41,12 @@ module Spree
         # A PIN that did not exist before is one to be asked for; changing an
         # existing one leaves the customer's own switch where they set it.
         record.required = true if record.new_record?
+        # A new PIN starts with a clean slate: the counters belong to the
+        # credential that was guessed at, and a support unlock that restored a
+        # locked row would otherwise hand the customer a new PIN that is still
+        # locked out.
+        record.failed_attempts = 0
+        record.locked_until = nil
         return failure(record) unless record.save
 
         success(record)

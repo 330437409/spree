@@ -27,9 +27,9 @@ module Spree
           #
           # Body: { phone, purpose, channel, ticket }
           def create
-            return render_invalid_parameter('phone is required') if params[:phone].blank?
-            return render_invalid_parameter('purpose must be one of account, payment') unless valid_purpose?
-            return render_invalid_parameter('channel must be one of sms, voice') unless valid_channel?
+            return render_invalid_parameter(Spree.t('verification_codes.errors.phone_missing')) if params[:phone].blank?
+            return render_invalid_parameter(Spree.t('verification_codes.errors.purpose_invalid')) unless valid_purpose?
+            return render_invalid_parameter(Spree.t('verification_codes.errors.channel_invalid')) unless valid_channel?
             return render_pin_not_allowed unless pin_send_allowed?
 
             result = Spree::VerificationCodes::Issue.call(
@@ -64,8 +64,12 @@ module Spree
             Spree::VerificationCode::PURPOSES.include?(purpose)
           end
 
+          # `voice` is a channel the row vocabulary knows and this deployment
+          # cannot send on yet: the platform's sender has no voice transport,
+          # so accepting it would deliver another SMS while the record claimed
+          # a phone call. Refused by name until a vendor is configured.
           def valid_channel?
-            Spree::VerificationCode::CHANNELS.include?(params[:channel].presence || 'sms')
+            (params[:channel].presence || 'sms') == 'sms'
           end
 
           # The PIN's codes are for a signed-in customer's own number and

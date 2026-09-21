@@ -84,6 +84,19 @@ RSpec.describe '/api/v3/store/payment_pin', type: :request do
       expect(response.parsed_body['error']['details']).to have_key('pin')
     end
 
+    # A client that types a PIN without quotes sends a number. Its digits are
+    # the PIN it meant, so it is read as one — and never as a 500, which is
+    # what handing a non-string to a digest writer would be.
+    it 'reads a PIN that arrived as a number as its digits' do
+      issue_code
+
+      put '/api/v3/store/payment_pin', headers: bearer_headers,
+          params: { code: '123456', pay_password: 246_813 }
+
+      expect(response).to have_http_status(:ok)
+      expect(Spree::PaymentPin.find_by(store: store, customer: user).verify('246813')).to be_truthy
+    end
+
     it 'refuses a mismatched confirmation' do
       issue_code
 
@@ -115,6 +128,13 @@ RSpec.describe '/api/v3/store/payment_pin', type: :request do
 
     it 'refuses without the flag rather than reading its absence as false' do
       patch '/api/v3/store/payment_pin', headers: bearer_headers, params: {}
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(record.reload.required).to be true
+    end
+
+    it 'refuses a cleared switch rather than storing null' do
+      patch '/api/v3/store/payment_pin', headers: bearer_headers, params: { required: '' }
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(record.reload.required).to be true

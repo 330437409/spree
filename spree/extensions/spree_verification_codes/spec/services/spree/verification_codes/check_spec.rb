@@ -8,7 +8,7 @@ RSpec.describe Spree::VerificationCodes::Check do
     create(:verification_code, store: store, phone: phone, purpose: purpose, code: '123456', **attrs)
   end
 
-  subject(:result) { described_class.call(phone: phone, code: code, purpose: purpose) }
+  subject(:result) { described_class.call(store: store, phone: phone, code: code, purpose: purpose) }
 
   let(:code) { '123456' }
   let(:purpose) { nil }
@@ -25,15 +25,21 @@ RSpec.describe Spree::VerificationCodes::Check do
   it 'refuses another code, and counts the attempt against the one that was sent' do
     record = issue_code
 
-    result = described_class.call(phone: phone, code: '999999')
+    result = described_class.call(store: store, phone: phone, code: '999999')
 
     expect(result).to be_failure
     expect(result.error.value).to eq(:invalid)
     expect(record.reload.attempts).to eq(1)
   end
 
+  it 'refuses a code another store issued' do
+    create(:verification_code, store: create(:store), phone: phone, purpose: 'account', code: '123456')
+
+    expect(result.error.value).to eq(:expired)
+  end
+
   it 'refuses a number nothing was sent to' do
-    expect(described_class.call(phone: phone, code: '123456').error.value).to eq(:expired)
+    expect(described_class.call(store: store, phone: phone, code: '123456').error.value).to eq(:expired)
   end
 
   it 'refuses a code that already expired' do
@@ -68,7 +74,7 @@ RSpec.describe Spree::VerificationCodes::Check do
   it 'answers only for the family the caller named' do
     issue_code(purpose: 'payment')
 
-    expect(described_class.call(phone: phone, code: code, purpose: 'account').error.value).to eq(:expired)
-    expect(described_class.call(phone: phone, code: code, purpose: 'payment')).to be_success
+    expect(described_class.call(store: store, phone: phone, code: code, purpose: 'account').error.value).to eq(:expired)
+    expect(described_class.call(store: store, phone: phone, code: code, purpose: 'payment')).to be_success
   end
 end

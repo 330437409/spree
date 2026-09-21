@@ -46,17 +46,21 @@ module Spree
       digits.sub(/\A86(?=1\d{10}\z)/, '')
     end
 
-    # The code this number and purpose may still be proved with.
+    # The code this store, number and purpose may still be proved with.
     #
-    # Only the newest one counts: asking for another code replaces the one
-    # before it, so a customer who taps twice cannot leave two live codes
-    # behind and a guessed-at older code is not a second way in.
+    # Only the newest code counts, spent or not: asking for another replaces
+    # the one before it, so a customer who taps twice cannot leave two live
+    # codes behind and a spent code cannot hand the older one behind it a
+    # second write. The store is part of the question — a code this store
+    # issued is the only code it accepts, and a store column that is written
+    # and never read is a tenancy the next reader would believe in.
     #
+    # @param store [Spree::Store]
     # @param phone [String]
     # @param purpose [String] one of {PURPOSES}
     # @return [Spree::VerificationCode, nil]
-    def self.usable_for(phone:, purpose:)
-      record = where(phone: normalize_phone(phone), purpose: purpose, consumed_at: nil).recent_first.first
+    def self.usable_for(store:, phone:, purpose:)
+      record = where(store: store, phone: normalize_phone(phone), purpose: purpose).recent_first.first
 
       record if record&.usable?
     end
@@ -65,17 +69,28 @@ module Spree
     # write that needed it, so however many times a code passes the check it
     # can be spent exactly once.
     #
+    # The row is locked for the whole spend, so two requests carrying the same
+    # code cannot both read it as unspent and both spend it: the second waits,
+    # finds it spent, and is refused.
+    #
+    # @param store [Spree::Store]
     # @param phone [String]
     # @param purpose [String]
     # @param code [String] what the caller typed
     # @return [Spree::VerificationCode, nil] the code it spent, or nil when
     #   there was nothing to spend
-    def self.consume(phone:, purpose:, code:)
-      record = usable_for(phone: phone, purpose: purpose)
+    def self.consume(store:, phone:, purpose:, code:)
+      record = usable_for(store: store, phone: phone, purpose: purpose)
       return nil if record.nil?
-      return nil unless record.check!(code)
 
-      record.update!(consumed_at: Time.current)
+      record.with_lock do
+        record.reload
+        return nil if record.consumed_at.present?
+        return nil unless record.check!(code)
+
+        record.update!(consumed_at: Time.current)
+      end
+
       record
     end
 
@@ -96,9 +111,9 @@ module Spree
       end
     end
 
-    # @return [Boolean] within its window and with attempts left
+    # @return [Boolean] unspent, within its window, and with attempts left
     def usable?
-      !expired? && attempts < max_attempts
+      consumed_at.nil? && !expired? && attempts < max_attempts
     end
 
     # @return [Boolean]

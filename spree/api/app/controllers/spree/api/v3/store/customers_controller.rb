@@ -27,7 +27,9 @@ module Spree
               # without them says only that someone ticked a box.
               ip_address: request.remote_ip,
               user_agent: request.user_agent,
-              **permitted_params.except(:current_password).to_h.symbolize_keys
+              # `code` is the phone change's proof, not a registration
+              # attribute: the create workflow has no such keyword.
+              **permitted_params.except(:current_password, :code).to_h.symbolize_keys
             )
 
             if result.success?
@@ -105,9 +107,16 @@ module Spree
           #
           # @return [Boolean] false when the write was refused and answered
           def phone_change_certified?(phone)
-            verifier = Spree::Dependencies.customer_phone_verification_service
+            # A write that carries no number is not a phone change: the seam
+            # below refuses a blank number by design, so the question is only
+            # asked when there is one.
+            return true if phone.blank?
+
+            verifier = Spree.customer_phone_verification_service
             return true if verifier.nil?
-            return true if verifier.constantize.certified?(phone: phone, current: current_user.phone, code: params[:code])
+            return true if verifier.certified?(
+              store: current_store, phone: phone, current: current_user.phone, code: params[:code]
+            )
 
             render_error(
               code: ErrorHandler::ERROR_CODES[:verification_code_invalid],

@@ -30,7 +30,11 @@ module SpreeVerificationCodes
       return refusal(:required) if pin.nil?
       return nil if pin.verify(proof)
 
-      pin.record_failed_attempt!
+      # Only a presented-and-wrong proof is a guess. A caller that presented
+      # nothing — an operator applying stored value, an internal recomputation
+      # a host app runs — is refused without being counted against, or ordinary
+      # back-office activity would lock the customer out of their own balance.
+      pin.record_failed_attempt! if proof.present?
 
       refusal(pin.locked? ? :locked : :invalid)
     end

@@ -73,11 +73,14 @@ RSpec.describe 'POST /api/v3/store/verification_codes', type: :request do
     expect(response).to have_http_status(:unprocessable_content)
   end
 
-  it 'sends the voice fallback the client offers ten seconds in' do
+  # The client offers a voice fallback ten seconds in, and this deployment has
+  # no voice transport: accepting it would deliver another SMS while the record
+  # claimed a phone call, so it is refused by name until one is configured.
+  it 'refuses the voice fallback it cannot deliver' do
     send_code(channel: 'voice')
 
-    expect(response).to have_http_status(:accepted)
-    expect(Spree::VerificationCode.last.channel).to eq('voice')
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(Spree::VerificationCode.count).to eq(0)
   end
 
   describe 'a payment code' do

@@ -16,6 +16,12 @@ module SpreeVerificationCodes
       # only where nothing has: a deployment that named its own service keeps
       # it.
       Spree::Dependencies.customer_phone_verification_service ||= 'Spree::VerificationCodes::VerifyPhone'
+
+      # Erasure is the flow's job and this gem's rows are this gem's: the one
+      # sanctioned erasure path says a table holding customer-identifiable data
+      # extends it, so both of these columns are forgotten from its own hooks.
+      Spree.hooks.register('customers.anonymize.validate', 'SpreeVerificationCodes::ForgetCustomer::RememberPhone')
+      Spree.hooks.register('customers.anonymize.after_anonymize', 'SpreeVerificationCodes::ForgetCustomer')
     end
 
     # A code is five minutes of somebody's identity and a PIN is the key to

@@ -9,6 +9,11 @@ zh-CN:
         pin_code_needs_own_phone: 支付密码的验证码只能发送到您本人的手机号
         change_phone_needs_code: 请先向新手机号发送验证码，并在 code 中传入
         cancel_needs_code: 请用手机收到的验证码确认注销
+        phone_missing: 请填写手机号
+        purpose_invalid: purpose 只能是 account 或 payment
+        channel_invalid: channel 目前只能是 sms；语音通道尚未接入
+        phone_and_code_required: 手机号和验证码都不能为空
+        required_missing: 请说明是否需要支付密码
       pin:
         required: 请输入支付密码
         invalid: 支付密码错误

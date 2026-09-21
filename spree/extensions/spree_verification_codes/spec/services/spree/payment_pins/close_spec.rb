@@ -29,7 +29,7 @@ RSpec.describe Spree::PaymentPins::Close do
   it 'spends the code' do
     result
 
-    expect(Spree::VerificationCode.usable_for(phone: customer.phone, purpose: 'payment')).to be_nil
+    expect(Spree::VerificationCode.usable_for(store: store, phone: customer.phone, purpose: 'payment')).to be_nil
   end
 
   it 'refuses without the PIN the customer has now' do

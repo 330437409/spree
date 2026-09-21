@@ -46,6 +46,16 @@ RSpec.describe 'the account flows that spend a code', type: :request do
       expect(user.reload.phone).to eq(was)
     end
 
+    # A value with no digits in it is no number, whatever it looks like: read
+    # as one, it would let a session take a junk "number" and then pass the
+    # erasure bar with it.
+    it 'refuses a value that has no digits in it' do
+      patch '/api/v3/store/customers/me', headers: bearer_headers, params: { phone: '+' }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(user.reload.phone).to be_present
+    end
+
     it 'reads a number the account already holds as no change, and asks for nothing' do
       user.update!(phone: phone)
 

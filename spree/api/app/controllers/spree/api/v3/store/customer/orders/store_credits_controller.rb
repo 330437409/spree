@@ -27,10 +27,15 @@ module Spree
 
               # POST /api/v3/store/customers/me/orders/:order_id/store_credits
               def create
-                # The PIN travels to the tender and is never read here: this
-                # layer does not decide whether a second factor is required,
-                # and a check added here would be the one a second tender
-                # forgets.
+                # Asked before the workflow takes its lock: a refusal writes a
+                # failed-attempt counter, and a counter written inside the
+                # workflow's transaction is rolled back by the very refusal
+                # that produced it — a lockout that never engages. The tender
+                # asks the same question again where the money moves, which is
+                # what makes this a pre-check rather than the guard.
+                refusal = Spree.payment_verification_refusal(order: @order, proof: params[:pay_password])
+                return render_verification_refusal(refusal) if refusal
+
                 result = Spree.order_pay_with_store_credit_workflow.call(
                   order: @order, proof: params[:pay_password]
                 )

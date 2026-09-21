@@ -22,7 +22,7 @@ module Spree
         record = Spree::PaymentPin.find_by(store: store, customer: customer)
         return failure(nil, :pin_missing) if record.nil?
 
-        unless Spree::VerificationCode.consume(phone: customer.phone, purpose: 'payment', code: code)
+        unless Spree::VerificationCode.consume(store: store, phone: customer.phone, purpose: 'payment', code: code)
           # A message rather than a symbolic type — see Spree::PaymentPins::Set.
           record.errors.add(:code, Spree.t('verification_codes.errors.code_invalid'))
           return failure(record)

@@ -1354,7 +1354,7 @@ module Spree
       if gift_card.present?
         recalculate_gift_card
       elsif using_store_credit?
-        Spree.store_credit_apply_service.call(order: self)
+        Spree.store_credit_apply_service.call(order: self, verify: false)
       end
     end
 

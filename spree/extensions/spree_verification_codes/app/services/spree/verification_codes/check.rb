@@ -10,6 +10,7 @@ module Spree
     class Check
       prepend Spree::ServiceModule::Base
 
+      # @param store [Spree::Store]
       # @param phone [String]
       # @param code [String] what the customer typed
       # @param purpose [String, nil] the family the caller means. The client
@@ -20,8 +21,8 @@ module Spree
       # @return [Spree::ServiceModule::Result] value is the code row; the error
       #   is `:expired` when there is nothing left to check and `:invalid` when
       #   the code did not match
-      def call(phone:, code:, purpose: nil)
-        record = lookup(phone, purpose)
+      def call(store:, phone:, code:, purpose: nil)
+        record = lookup(store, phone, purpose)
 
         return failure(nil, :expired) if record.nil?
         return success(record) if record.check!(code)
@@ -32,8 +33,8 @@ module Spree
       private
 
       # @return [Spree::VerificationCode, nil]
-      def lookup(phone, purpose)
-        scope = Spree::VerificationCode.where(phone: Spree::VerificationCode.normalize_phone(phone))
+      def lookup(store, phone, purpose)
+        scope = Spree::VerificationCode.where(store: store, phone: Spree::VerificationCode.normalize_phone(phone))
         scope = scope.where(purpose: purpose) if purpose.present?
 
         record = scope.recent_first.first

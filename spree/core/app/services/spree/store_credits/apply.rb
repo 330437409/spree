@@ -8,7 +8,12 @@ module Spree
       #   defaulting to everything the purchase still owes
       # @param proof [Object, nil] what the caller presented for any
       #   verification this tender requires — the payment PIN, a code
-      def call(order:, amount: nil, proof: nil)
+      # @param verify [Boolean] whether to ask the verifications at all. False
+      #   is for a caller that is not the customer settling: an internal
+      #   recomputation of what is already applied moves no new money, and an
+      #   operator applying stored value does so under their own
+      #   authorization rather than the customer's PIN
+      def call(order:, amount: nil, proof: nil, verify: true)
         @order = order
         return failed unless @order
 
@@ -20,7 +25,7 @@ module Spree
 
         return failure(nil, Spree.t(:error_user_does_not_have_any_store_credits)) unless @order.customer&.store_credits&.any?
 
-        refusal = verification_refusal(proof)
+        refusal = Spree.payment_verification_refusal(order: @order, proof: proof) if verify
         return failure(nil, refusal) if refusal
 
         ApplicationRecord.transaction do
@@ -43,25 +48,6 @@ module Spree
       end
 
       private
-
-      # The tender's second factor, asked once before anything is written: a
-      # verification that is required and refuses stops the spend, and one
-      # that is not required is not consulted at all. It runs here rather than
-      # in a controller because this is the only door to the balance — a
-      # check in the API layer would guard the caller that remembered it
-      # (docs/plans/6.1-phone-verification-and-payment-pin.md).
-      #
-      # @return [Spree::PaymentVerification::Refusal, nil]
-      def verification_refusal(proof)
-        Spree.payment_verifications.each do |verification|
-          next unless verification.required?(order: @order)
-
-          refusal = verification.verify(order: @order, proof: proof)
-          return refusal if refusal
-        end
-
-        nil
-      end
 
       # Update existing checkout store credit payments in place to avoid
       # creating unnecessary invalid payment records on every recalculation.

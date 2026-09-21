@@ -9,6 +9,17 @@ module Spree
     # consumers above it never learn which vendor answered
     # (docs/plans/6.1-notifications.md).
     class Sms < Spree::NotificationChannel::Base
+      # Pinned rather than derived from the class name: an event names 'sms',
+      # and a vendor that subclasses this channel (a different transport, the
+      # same channel) must still answer to it — a derived name would leave the
+      # deployment believing it was sending through its transport while this
+      # one kept handling every message.
+      #
+      # @return [String]
+      def self.channel_name
+        'sms'
+      end
+
       # The credentials are the store's own account, one per channel.
       #
       # @return [String]
@@ -32,10 +43,12 @@ module Spree
         end
 
         integration.deliver_sms(phone: phone_for(recipient), event: event, payload: payload)
-      rescue SpreeNotifications::DeliveryError => error
-        # The vendor refused. Reported rather than raised: the caller's own
-        # record already exists, and a second attempt would send a second
-        # message — the person who asked for one code would receive two.
+      rescue SpreeNotifications::DeliveryError, SpreeNotifications::UndeliverableError => error
+        # The vendor refused, or there was nothing to send with. Both are
+        # reported rather than raised: the caller's own record already exists,
+        # and a second attempt would send a second message — the person who
+        # asked for one code would receive two. Reported once, with the
+        # vendor's or the configuration's own words.
         Rails.error.report(error, handled: true, context: { event: event, channel: self.class.channel_name })
         nil
       end

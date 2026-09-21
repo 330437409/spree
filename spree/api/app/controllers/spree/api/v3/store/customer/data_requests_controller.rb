@@ -83,14 +83,16 @@ module Spree
               # answers "no number is no change" for a *write*, which is right
               # there and would be a way past this bar here: an account with
               # neither password nor phone would be erased on a session alone.
-              verifier = Spree::Dependencies.customer_phone_verification_service
+              verifier = Spree.customer_phone_verification_service
 
               if verifier.nil? || current_user.phone.blank?
                 # Nothing to check a code against, so the refusal is the one
                 # upstream gives: an account that cannot present a password
                 # cannot be erased through this route.
                 render_current_password_invalid
-              elsif verifier.constantize.certified?(phone: current_user.phone, code: params[:code])
+              elsif verifier.certified?(
+                store: current_store, phone: current_user.phone, code: params[:code]
+              )
                 return true
               else
                 render_error(

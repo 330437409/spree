@@ -91,7 +91,7 @@ module Spree
           def render_missing_required
             render_error(
               code: ErrorHandler::ERROR_CODES[:parameter_missing],
-              message: 'required is required',
+              message: Spree.t('verification_codes.errors.required_missing'),
               status: :unprocessable_content
             )
           end

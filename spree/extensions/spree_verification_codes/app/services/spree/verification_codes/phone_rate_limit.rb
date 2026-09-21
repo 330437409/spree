@@ -18,17 +18,23 @@ module Spree
         { name: 'day', limit: 10, window: 1.day }
       ].freeze
 
+      # The store is part of the key: one store's sends must not spend
+      # another's budget, and a merchant reading their own bill should see
+      # their own traffic.
+      #
+      # @param store [Spree::Store]
       # @param phone [String] normalized
       # @return [Boolean]
-      def self.exceeded?(phone:)
-        WINDOWS.any? { |window| count(phone: phone, window: window) >= window[:limit] }
+      def self.exceeded?(store:, phone:)
+        WINDOWS.any? { |window| count(store: store, phone: phone, window: window) >= window[:limit] }
       end
 
+      # @param store [Spree::Store]
       # @param phone [String] normalized
       # @return [void]
-      def self.record(phone:)
+      def self.record(store:, phone:)
         WINDOWS.each do |window|
-          key = cache_key(phone, window)
+          key = cache_key(store, phone, window)
           # `increment` starts a counter only where the store does; where it
           # answers nil the key is not there yet and the window opens now.
           Rails.cache.increment(key, 1, expires_in: window[:window]) ||
@@ -37,13 +43,13 @@ module Spree
       end
 
       # @return [Integer]
-      def self.count(phone:, window:)
-        Rails.cache.read(cache_key(phone, window)).to_i
+      def self.count(store:, phone:, window:)
+        Rails.cache.read(cache_key(store, phone, window)).to_i
       end
 
       # @return [String]
-      def self.cache_key(phone, window)
-        "verification_codes/#{window[:name]}/#{Digest::SHA256.hexdigest(phone)[0, 32]}"
+      def self.cache_key(store, phone, window)
+        "verification_codes/#{store.id}/#{window[:name]}/#{Digest::SHA256.hexdigest(phone)[0, 32]}"
       end
 
       private_class_method :count, :cache_key
