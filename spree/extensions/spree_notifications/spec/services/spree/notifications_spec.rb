@@ -81,6 +81,14 @@ RSpec.describe Spree::Notifications do
     end
   end
 
+  # ActiveJob logs every job's arguments, and one of them is a verification
+  # code in clear.
+  describe 'the delivery job' do
+    it 'never logs its arguments' do
+      expect(Spree::Notifications::DeliverJob.log_arguments?).to be false
+    end
+  end
+
   describe '.params_for' do
     it 'reads the event’s parameters in the order its template numbers them' do
       expect(described_class.params_for('verification_code', { code: '123456', minutes: 5 })).to eq(['123456', 5])
