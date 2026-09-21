@@ -28,6 +28,9 @@ module SpreeVerificationCodes
       # Required and then vanished: a row removed between the read and the
       # spend is a refusal rather than a free pass.
       return refusal(:required) if pin.nil?
+      # Nothing presented is not a wrong guess: the client that ignored
+      # `balance_not_password` is told to present one, not that it failed.
+      return refusal(:required) if proof.blank?
       return nil if pin.verify(proof)
 
       # Only a presented-and-wrong proof is a guess. A caller that presented

@@ -22,15 +22,18 @@ module Spree
         record = Spree::PaymentPin.find_by(store: store, customer: customer)
         return failure(nil, :pin_missing) if record.nil?
 
-        unless Spree::VerificationCode.consume(store: store, phone: customer.phone, purpose: 'payment', code: code)
-          # A message rather than a symbolic type — see Spree::PaymentPins::Set.
-          record.errors.add(:code, Spree.t('verification_codes.errors.code_invalid'))
-          return failure(record)
-        end
-
+        # The PIN is checked first, so a mistyped one does not burn the message
+        # the customer just received — the same rule Set follows, and the two
+        # paths must not disagree about it.
         unless record.verify(pin)
           record.record_failed_attempt!
           record.errors.add(:pay_password, Spree.t('verification_codes.pin.invalid'))
+          return failure(record)
+        end
+
+        unless Spree::VerificationCode.consume(store: store, phone: customer.phone, purpose: 'payment', code: code)
+          # A message rather than a symbolic type — see Spree::PaymentPins::Set.
+          record.errors.add(:code, Spree.t('verification_codes.errors.code_invalid'))
           return failure(record)
         end
 
