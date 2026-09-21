@@ -871,6 +871,14 @@ Plan: `6.1-store-api-miniprogram-gaps.md`'s order-list row, whose keyword filter
 
 **A filter the reference documented and the code never had is corrected.** The Store reference's order list documented `q[state_eq]` and `q[payment_state_eq]`; the allowlist carries `status` and `payment_status`. This is the quiet kind of wrong: Ransack ignores a filter it cannot build rather than refusing it, so a client following the reference got an unfiltered list and no error to notice. The reference now names the filters that exist, and the keyword's reach.
 
+## 2026-09-21 — The balance refuses nothing yet, because a gift card is not a line here
+
+Plan: `6.1-store-api-miniprogram-gaps.md`'s settlement-page work. The client's settle page carries a verdict the old server computed — "订单商品不支持" with a list of the goods the balance cannot pay for (`pagesF/settlement/settlement.js:733`, `settlement.wxml:80,167`) — and the author ruled the rule worth having (2026-09-21).
+
+**It is not built, and that is a fact about the data model rather than a deferral.** In this codebase a gift card is not merchandise: `Spree::GiftCard` and `Spree::GiftCardBatch` associate with a store, a customer and a batch, and with no product or variant at all — cards are minted in batches of a fixed amount and *applied* at checkout (`carts/gift_cards`), never sold as a cart line. A rule that refuses "a line that is a gift card" therefore has no line to refuse, and code written for it would never run. The old server evidently sold gift cards as goods, which is where its rule came from.
+
+**It belongs to `6.0-6.1-loyalty-gift-cards-store-credits.md`**, the plan that will model buying one. The rule lands there, beside whatever identifies such a purchase, rather than here where it would be dead. If this deployment does sell gift cards today through some other shape — an ordinary product carrying a custom field, say — then the rule has a subject and can be built against that flag; nothing else in the settlement page's tender picture needs work, because the cart read already answers it: `payment_methods` is the list *available for this purchase* (the stored-value method appears only when the customer actually holds a balance), and the applied and available amounts ride `store_credit_total`, `gift_card_total` and the customer's own stored-value read.
+
 ## 2026-09-21 (the hidden order) — Hiding is the customer's own history, not the order
 
 Plan: `6.1-store-api-miniprogram-gaps.md`'s `order/delUserOrder`, which asked for a per-customer hide flag rather than a soft delete.
