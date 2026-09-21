@@ -35,5 +35,10 @@ describe('orders', () => {
       const result = await client.customer.orders.get('or_abc123', undefined, opts)
       expect(result.id).toBe('or_1')
     })
+
+    it('pays an order from the customer’s own balance', async () => {
+      const result = await client.customer.orders.storeCredits.apply('or_abc123', opts)
+      expect(result.id).toBe('or_1')
+    })
   })
 })

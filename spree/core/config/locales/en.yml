@@ -1090,6 +1090,7 @@ en:
         must_be_origin_only: must be an origin (scheme and host) without path, query, or fragment
         no_pickup_point_provider: this delivery method has no pickup point provider configured
         not_cancellable: cannot be canceled once its goods have been dispatched
+        nothing_is_owed: nothing is owed on this order
         oidc_account_not_provisioned: This account is not authorized for this store. Ask an administrator for an invitation.
         oidc_authentication_failed: We could not sign you in with this provider. Please try again.
         oidc_missing_code: The identity provider did not return an authorization code.
@@ -1109,6 +1110,7 @@ en:
         seller_requirement_store_mismatch: must belong to the same store as the seller
         stock_level_immutable: cannot be changed after the hold is taken — release the hold and take it again
         store_association_can_not_be_changed: The store association can not be changed
+        store_credit_does_not_cover_order: does not cover the %{amount} still due on this order
         store_is_already_set: Store is already set
         unknown_custom_field_type: 'is not a known custom field type (expected one of: %{types})'
         unknown_scopes: 'contains unknown scopes: %{scopes}'
