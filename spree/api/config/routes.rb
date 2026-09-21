@@ -140,7 +140,10 @@ Spree::Core::Engine.add_routes do
           get '/', action: :show, controller: '/spree/api/v3/store/customers'
           patch '/', action: :update, controller: '/spree/api/v3/store/customers'
 
-          resources :orders, only: [:index, :show]
+          # Destroying one of these takes the order off the customer's own
+          # list — the row stays for the merchant, so the delete is the
+          # customer's side of it (docs/plans/6.1-store-api-miniprogram-gaps.md).
+          resources :orders, only: [:index, :show, :destroy]
           # What this customer has already bought, ordered by when they bought
           # it or by how often (docs/plans/6.1-store-api-miniprogram-gaps.md).
           resources :purchase_history, only: [:index], controller: 'purchase_history'

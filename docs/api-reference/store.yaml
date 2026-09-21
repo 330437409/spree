@@ -313,7 +313,7 @@ paths:
                 - key: wechat
                   kind: redirect
                   label: WeChat
-                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--f21f2521b12d61b587f1a0545706fe77c580dc2f
+                  authorization_url: https://open.weixin.qq.com/connect/qrconnect?state=eyJfcmFpbHMiOnsiZGF0YSI6eyJwcm92aWRlciI6IndlY2hhdCIsIm5vbmNlIjoiNzIwMTE1YzVmYmIzYjM0NTQxZGQ2N2QwZDk4NzRhYTIiLCJzdG9yZV9pZCI6MX0sImV4cCI6IjIwMjYtMDEtMTVUMTI6MTU6MDAuMDAwWiJ9fQ==--e89a253239008b9e01708458a483a849f2284e69
                   requires_email: true
               schema:
                 type: object
@@ -5640,8 +5640,8 @@ paths:
                   preorder_ships_at:
                   quantity: 2
                   currency: USD
-                  name: Product 3821497
-                  slug: product-3821497
+                  name: Product 3831497
+                  slug: product-3831497
                   options_text: 'Size: S'
                   selected: true
                   price: '10.0'
@@ -5872,8 +5872,8 @@ paths:
                   preorder_ships_at:
                   quantity: 2
                   currency: USD
-                  name: Product 3847961
-                  slug: product-3847961
+                  name: Product 3857961
+                  slug: product-3857961
                   options_text: ''
                   selected: false
                   price: '19.99'
@@ -6076,8 +6076,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 3869789
-                  slug: product-3869789
+                  name: Product 3879789
+                  slug: product-3879789
                   options_text: ''
                   selected: true
                   price: '10.0'
@@ -6296,8 +6296,8 @@ paths:
                   preorder_ships_at:
                   quantity: 1
                   currency: USD
-                  name: Product 388179
-                  slug: product-388179
+                  name: Product 389179
+                  slug: product-389179
                   options_text: ''
                   selected: true
                   price: '10.0'
@@ -8108,6 +8108,65 @@ paths:
                 "$ref": "#/components/schemas/Order"
         '404':
           description: order belongs to another user
+          content:
+            application/json:
+              example:
+                error:
+                  code: order_not_found
+                  message: Order not found
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+    delete:
+      summary: Hide an order from the customer’s own list
+      tags:
+      - Customers
+      security:
+      - api_key: []
+        bearer_auth: []
+      description: |
+        Takes the order off the customer’s own list. Nothing is deleted: the order stays for
+        the merchant, with fulfillment, refunds and reporting untouched. Hiding removes it
+        from the customer’s side of their orders — the list and a lookup by id alike — and
+        there is no un-hide, so this answers to the shape a delete has.
+      x-codeSamples:
+      - lang: javascript
+        label: Spree SDK
+        source: |-
+          import { createClient } from '@spree/sdk'
+
+          const client = createClient({
+            baseUrl: 'https://your-store.com',
+            publishableKey: '<api-key>',
+          })
+
+          // Takes the order off the customer's own history. The order itself stays —
+          // fulfillment, refunds and the merchant's reporting are untouched.
+          await client.customer.orders.delete('or_abc123', {
+            token: '<token>',
+          })
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        required: true
+        description: Bearer token for the signed-in customer
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        description: Order prefixed ID (e.g., or_abc123)
+        schema:
+          type: string
+      responses:
+        '204':
+          description: order hidden
+        '404':
+          description: order belongs to another customer
           content:
             application/json:
               example:
@@ -10709,7 +10768,7 @@ paths:
                 variant:
                   id: variant_gbHJdmfrXB
                   product_id: prod_gbHJdmfrXB
-                  sku: SKU-486
+                  sku: SKU-490
                   options_text: ''
                   track_inventory: true
                   media_count: 0
