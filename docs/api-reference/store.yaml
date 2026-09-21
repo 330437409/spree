@@ -6051,6 +6051,126 @@ paths:
               required:
               - promotion_id
         required: true
+  "/api/v3/store/carts/{cart_id}/recommendations":
+    get:
+      summary: List what else the shopper might want
+      tags:
+      - Carts
+      security:
+      - api_key: []
+        bearer_auth: []
+      description: |
+        A shelf read from what is already in the basket: the categories its goods are in, ranked
+        by what sells, with the basket's own goods left out.
+
+        It answers from the storefront's own catalogue, so a recommendation is never a way to see
+        something the catalogue would not show, and it asks the store's search provider — a store
+        with an index answers from it, a store without one answers from the database.
+      x-codeSamples:
+      - lang: javascript
+        label: Spree SDK
+        source: |-
+          import { createClient } from '@spree/sdk'
+
+          const client = createClient({
+            baseUrl: 'https://your-store.com',
+            publishableKey: '<api-key>',
+          })
+
+          // What else the shopper might want, read from what is already in their basket:
+          // the categories its goods are in, ranked by what sells, without the goods
+          // they already have in front of them.
+          const { data: recommendations } = await client.carts.recommendations.list(
+            'cart_abc123',
+            { limit: 12 },
+            { token: '<token>' },
+          )
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        required: false
+        description: Bearer token for authenticated customers
+        schema:
+          type: string
+      - name: x-spree-token
+        in: header
+        required: false
+        description: Cart token for guest access
+        schema:
+          type: string
+      - name: cart_id
+        in: path
+        required: true
+        description: Cart prefixed ID (e.g., cart_abc123)
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: How many goods to offer (default 12, at most 24)
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: recommendations offered
+          content:
+            application/json:
+              example:
+                data:
+                - id: prod_gbHJdmfrXB
+                  name: Another tea
+                  slug: another-tea
+                  meta_title:
+                  meta_description:
+                  meta_keywords:
+                  variant_count: 1
+                  available_on:
+                  preorder_ships_at:
+                  purchasable: true
+                  preorder: false
+                  in_stock: false
+                  backorderable: true
+                  available: true
+                  description: Veritatis laborum minima praesentium consequuntur inventore.
+                    Excepturi officia sint delectus aliquam labore maxime. Culpa molestiae
+                    aliquid ab eos at blanditiis. Dolores fuga nam provident consectetur
+                    omnis inventore officia. Esse incidunt maxime odio praesentium.
+                    Doloribus odio neque eos velit quae sapiente. A nihil eveniet
+                    eum at. Laboriosam adipisci veniam voluptatem provident. Eaque
+                    dolorem beatae itaque sint maiores cupiditate.
+                  description_html: |-
+                    Veritatis laborum minima praesentium consequuntur inventore. Excepturi officia sint delectus aliquam labore maxime. Culpa molestiae aliquid ab eos at blanditiis. Dolores fuga nam provident consectetur omnis inventore officia. Esse incidunt maxime odio praesentium.
+                    Doloribus odio neque eos velit quae sapiente. A nihil eveniet eum at. Laboriosam adipisci veniam voluptatem provident. Eaque dolorem beatae itaque sint maiores cupiditate.
+                  default_variant_id: variant_gbHJdmfrXB
+                  buy_box_variant_id: variant_gbHJdmfrXB
+                  thumbnail_url:
+                  tags: []
+                  price:
+                    id: price_gbHJdmfrXB
+                    amount: '19.99'
+                    amount_in_cents: 1999
+                    compare_at_amount:
+                    compare_at_amount_in_cents:
+                    currency: USD
+                    display_amount: "$19.99"
+                    display_compare_at_amount:
+                    price_list_id:
+                  original_price:
+                  seller_id:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/Product"
+                required:
+                - data
   "/api/v3/store/carts/{cart_id}/selection":
     patch:
       summary: Choose which lines take part in checkout
@@ -6189,8 +6309,8 @@ paths:
                   promotion_candidates: []
                   quantity: 2
                   currency: USD
-                  name: Product 3877961
-                  slug: product-3877961
+                  name: Product 3887961
+                  slug: product-3887961
                   options_text: ''
                   selected: false
                   price: '19.99'
@@ -6395,8 +6515,8 @@ paths:
                   promotion_candidates: []
                   quantity: 1
                   currency: USD
-                  name: Product 3899789
-                  slug: product-3899789
+                  name: Product 3909789
+                  slug: product-3909789
                   options_text: ''
                   selected: true
                   price: '10.0'
@@ -6619,8 +6739,8 @@ paths:
                   promotion_candidates: []
                   quantity: 1
                   currency: USD
-                  name: Product 391179
-                  slug: product-391179
+                  name: Product 392179
+                  slug: product-392179
                   options_text: ''
                   selected: true
                   price: '10.0'
@@ -7105,8 +7225,8 @@ paths:
                   promotion_candidates: []
                   quantity: 1
                   currency: USD
-                  name: Product 3956410
-                  slug: product-3956410
+                  name: Product 3966410
+                  slug: product-3966410
                   options_text: ''
                   selected: true
                   price: '10.0'
@@ -7252,7 +7372,7 @@ paths:
                   first_name: John
                   last_name: Doe
                   full_name: John Doe
-                  address1: 509 Lovely Street
+                  address1: 511 Lovely Street
                   address2: Northwest
                   postal_code: '10118'
                   city: New York
@@ -7274,7 +7394,7 @@ paths:
                   first_name: John
                   last_name: Doe
                   full_name: John Doe
-                  address1: 510 Lovely Street
+                  address1: 512 Lovely Street
                   address2: Northwest
                   postal_code: '10118'
                   city: New York
@@ -7455,8 +7575,8 @@ paths:
                   promotion_candidates: []
                   quantity: 1
                   currency: USD
-                  name: Product 3979550
-                  slug: product-3979550
+                  name: Product 3989550
+                  slug: product-3989550
                   options_text: ''
                   selected: true
                   price: '10.0'
@@ -7575,7 +7695,7 @@ paths:
                   first_name: John
                   last_name: Doe
                   full_name: John Doe
-                  address1: 517 Lovely Street
+                  address1: 519 Lovely Street
                   address2: Northwest
                   postal_code: '10118'
                   city: New York
@@ -7597,7 +7717,7 @@ paths:
                   first_name: John
                   last_name: Doe
                   full_name: John Doe
-                  address1: 518 Lovely Street
+                  address1: 520 Lovely Street
                   address2: Northwest
                   postal_code: '10118'
                   city: New York
@@ -11481,7 +11601,7 @@ paths:
                   variant:
                     id: variant_UkLWZg9DAJ
                     product_id: prod_UkLWZg9DAJ
-                    sku: SKU-488
+                    sku: SKU-490
                     options_text: ''
                     track_inventory: true
                     media_count: 0
@@ -11605,7 +11725,7 @@ paths:
                 variant:
                   id: variant_gbHJdmfrXB
                   product_id: prod_gbHJdmfrXB
-                  sku: SKU-500
+                  sku: SKU-502
                   options_text: ''
                   track_inventory: true
                   media_count: 0

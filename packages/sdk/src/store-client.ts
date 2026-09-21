@@ -611,6 +611,28 @@ export class StoreClient {
         }),
     },
 
+    recommendations: {
+      /**
+       * What else the shopper might want, from what is already in their basket
+       *
+       * Read from the categories the basket's goods are in, ranked by what
+       * sells, with the basket's own goods left out. Answers from the store's
+       * search provider, so an indexed store and a plain one are answered the
+       * same way.
+       * @param cartId - Cart prefixed ID
+       * @param params - How many goods to offer (default 12, at most 24)
+       */
+      list: (
+        cartId: string,
+        params?: { limit?: number },
+        options?: RequestOptions,
+      ): Promise<{ data: Product[] }> =>
+        this.request<{ data: Product[] }>('GET', `/carts/${cartId}/recommendations`, {
+          ...options,
+          params,
+        }),
+    },
+
     promotionSelection: {
       /**
        * Choose which promotion discounts a line, when more than one could.

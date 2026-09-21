@@ -50,6 +50,7 @@ module Spree
         cart_upsert_items_workflow: 'Spree::Carts::UpsertItems',
         order_upsert_items_workflow: 'Spree::Orders::UpsertItems',
         cart_merge_workflow: 'Spree::Carts::Merge',
+        recommendations_for_cart_service: 'Spree::Recommendations::ForCart',
 
         # checkout
         checkout_advance_service: 'Spree::Checkout::Advance',
