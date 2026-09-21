@@ -235,6 +235,31 @@ describe Spree::Order, type: :model do
     end
   end
 
+  describe '#hide_from_customer!' do
+    let(:order) { create(:completed_order_with_totals, store: store) }
+
+    it 'stamps when the customer took it off their list' do
+      expect { order.hide_from_customer! }.to change { order.reload.customer_hidden_at }.from(nil)
+    end
+
+    # Nothing about the order changed, so merchant-facing views that read
+    # "recently updated" must not light up — and an order whose world has moved
+    # on since it was placed must not fail validations it would never pass
+    # again.
+    it 'leaves the order’s own timestamps alone' do
+      expect { order.hide_from_customer! }.not_to change { order.reload.updated_at }
+    end
+
+    it 'splits the customer’s history in two' do
+      order.hide_from_customer!
+      kept = create(:completed_order_with_totals, store: store)
+
+      expect(Spree::Order.hidden_by_customer).to contain_exactly(order)
+      expect(Spree::Order.visible_to_customer).to include(kept)
+      expect(Spree::Order.visible_to_customer).not_to include(order)
+    end
+  end
+
   describe '#cancel' do
     let(:order) { create(:completed_order_with_totals, store: store) }
     let!(:payment) do

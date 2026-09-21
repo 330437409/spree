@@ -1270,6 +1270,16 @@ export class StoreClient {
           ...options,
           params: getParams(params),
         }),
+
+      /**
+       * Hide an order from the customer's own history
+       *
+       * The order is not deleted — the merchant keeps it, with fulfillment and
+       * refunds untouched — it leaves the customer's side of their orders: the
+       * list and a lookup by id alike, and there is no un-hide.
+       */
+      delete: (id: string, options?: RequestOptions): Promise<void> =>
+        this.request<void>('DELETE', `/customers/me/orders/${id}`, options),
     },
 
     /**
