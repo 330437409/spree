@@ -126,6 +126,32 @@ describe Spree::Order, type: :model do
         expect(described_class.search('4471')).to eq([order_1])
         expect(described_class.search('PO-9999')).to eq([])
       end
+
+      # What was in the order: a shopper looks for "the tea set I bought" as
+      # often as for a number.
+      it 'returns orders based on the goods they hold' do
+        tea = create(:product, name: '青花瓷茶具')
+        cable = create(:product, name: 'Sparks Audio Cable')
+        create(:line_item, order: order_1, variant: tea.default_variant, quantity: 1)
+        create(:line_item, order: order_2, variant: tea.default_variant, quantity: 1)
+        create(:line_item, order: order_3, variant: cable.default_variant, quantity: 1)
+
+        expect(described_class.search('青花瓷')).to match_array([order_1, order_2])
+        expect(described_class.search('cable')).to match_array([order_3])
+        expect(described_class.search('teapot')).to eq([])
+      end
+
+      # An order holding several matching lines is still one order to list and
+      # to count — which is why the goods half is an EXISTS and not a join.
+      it 'returns an order once however many of its lines match' do
+        %w[一 二 三].each do |suffix|
+          create(:line_item, order: order_1,
+                             variant: create(:product, name: "青花瓷茶具#{suffix}").default_variant,
+                             quantity: 1)
+        end
+
+        expect(described_class.search('青花瓷')).to eq([order_1])
+      end
     end
   end
 

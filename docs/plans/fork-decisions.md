@@ -862,3 +862,11 @@ Plan: `6.1-store-api-miniprogram-gaps.md`'s order-reads row, and the correction 
 **Nothing cancels an expired order** (the author's ruling, 2026-09-20). A deadline that fires work of its own would need a background job, an expiry state and a rule for a payment that arrives late — and the merchant already has a cancellation flow for deciding what happens to an order nobody paid for. Written down so the next reader does not "finish" the feature by adding a job.
 
 **The plan's row was wrong, and is corrected in place: 超时赔付 is late-delivery compensation, not payment expiry.** The two client calls the row listed read an approval status and its review nodes, not a payment clock. The deadline those rows were mistaken for was on the order list all along under a different name.
+
+## 2026-09-20 (the order search) — A buyer's keyword search reaches the goods
+
+Plan: `6.1-store-api-miniprogram-gaps.md`'s order-list row, whose keyword filter the client's own search implies.
+
+**`Order.search` now matches the names of the goods an order holds.** A shopper looks for "the tea set I bought" as often as for a number, and their own order list is where they look. It is asked as an **EXISTS rather than a join**: an order with three matching lines is still one order to list, and a join would both repeat it and inflate a paginated count. Upstream's reach — the order number, the purchase-order reference, the buyer's name and email — is untouched, so nothing that found an order before stops finding it.
+
+**A filter the reference documented and the code never had is corrected.** The Store reference's order list documented `q[state_eq]` and `q[payment_state_eq]`; the allowlist carries `status` and `payment_status`. This is the quiet kind of wrong: Ransack ignores a filter it cannot build rather than refusing it, so a client following the reference got an unfiltered list and no error to notice. The reference now names the filters that exist, and the keyword's reach.
