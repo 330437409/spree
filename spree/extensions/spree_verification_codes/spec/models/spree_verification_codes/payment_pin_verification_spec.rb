@@ -64,6 +64,13 @@ RSpec.describe SpreeVerificationCodes::PaymentPinVerification do
       expect(verification.verify(order: order, proof: '246813').kind).to eq('locked')
     end
 
+    # A spend that presented nothing is told to present one — which is what
+    # `balance_not_password` promised it would be asked for.
+    it 'asks for one rather than calling a missing proof wrong' do
+      expect(verification.verify(order: order, proof: nil).kind).to eq('required')
+      expect(verification.verify(order: order, proof: '').kind).to eq('required')
+    end
+
     # Required and then absent: a row taken away between the flag being read
     # and the money moving is a refusal, not a free pass.
     it 'refuses when the PIN was removed after it was asked for' do

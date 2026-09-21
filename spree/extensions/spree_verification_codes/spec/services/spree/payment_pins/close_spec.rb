@@ -40,6 +40,16 @@ RSpec.describe Spree::PaymentPins::Close do
     expect(record.reload.required).to be true
   end
 
+  # The message is only spent by the attempt that succeeds: a mistyped PIN must
+  # not cost the customer an SMS — the rule Set follows, and Close must not
+  # disagree with it.
+  it 'does not spend the code when the PIN is wrong' do
+    described_class.call(store: store, customer: customer, pin: '999999', code: code)
+
+    expect(Spree::VerificationCode.usable_for(store: store, phone: customer.phone, purpose: 'payment')).to be_present
+    expect(described_class.call(store: store, customer: customer, pin: pin, code: code)).to be_success
+  end
+
   # A wrong PIN is a guess at the credential, so it counts against the lockout
   # wherever it is presented.
   it 'counts a wrong PIN against the lockout' do
