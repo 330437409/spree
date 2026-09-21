@@ -18,6 +18,26 @@ RSpec.describe SpreeWechatPay::Gateway do
     expect(described_class.new.default_name).to eq('WeChat Pay')
   end
 
+  # What a mini program's confirm-receipt handshake needs from the gateway: the
+  # merchant it sells under, and its own id for the transaction.
+  describe 'the confirm-receipt identifiers' do
+    it 'answers the merchant it sells under' do
+      gateway.preferred_merchant_id = '1900000109'
+
+      expect(gateway.merchant_id).to eq('1900000109')
+    end
+
+    it 'answers the transaction id a payment recorded' do
+      payment = build(:payment, metadata: { 'wechat_pay_transaction_id' => '420000123420260920' })
+
+      expect(gateway.transaction_id_for(payment)).to eq('420000123420260920')
+    end
+
+    it 'has no transaction id before WeChat has named one' do
+      expect(gateway.transaction_id_for(build(:payment, metadata: {}))).to be_nil
+    end
+  end
+
   describe 'capabilities' do
     it 'always goes through a payment session' do
       expect(gateway.session_required?).to be true
