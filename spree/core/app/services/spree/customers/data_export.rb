@@ -59,11 +59,19 @@ module Spree
           email: customer.email,
           first_name: customer.first_name,
           last_name: customer.last_name,
+          nickname: customer.nickname,
           phone: customer.phone,
+          gender: customer.gender,
+          birthday: customer.birthday&.iso8601,
+          city: customer.city,
           selected_locale: customer.selected_locale,
           tags: customer.tag_list.to_a,
           metadata: customer.metadata.presence,
           internal_note: customer.internal_note,
+          # The picture is purged by the erasure, so the access response has to
+          # name it. A filename rather than a URL: the export outlives the
+          # signed link an attachment would answer with.
+          avatar_filename: customer.avatar.attached? ? customer.avatar.filename.to_s : nil,
           created_at: customer.created_at&.iso8601,
           anonymized_at: customer.anonymized_at&.iso8601
         }

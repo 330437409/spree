@@ -20,6 +20,17 @@ module Spree
 
     attribute :accepts_email_marketing, :boolean, default: false
 
+    # What a customer may describe themselves as. A string column with a
+    # declared set, the house pattern — an app that needs another value adds
+    # it here rather than migrating an enum.
+    GENDERS = %w[male female].freeze
+
+    validates :gender, inclusion: { in: GENDERS }, allow_blank: true
+
+    # A storefront form sends an empty string for "prefer not to say"; the
+    # column says that as NULL.
+    normalizes :nickname, :gender, :city, with: ->(value) { value.to_s.strip.presence }
+
     # Back-compat with callers and auth strategies that check +valid_password?+.
     # Guards a blank digest (password-less accounts) so it returns false instead
     # of raising BCrypt::Errors::InvalidHash on older Rails/bcrypt versions.
