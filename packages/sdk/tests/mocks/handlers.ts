@@ -755,6 +755,14 @@ export const handlers = [
   http.delete(`${API_PREFIX}/wishlists/:id`, () => new HttpResponse(null, { status: 204 })),
 
   // Wishlist Items
+  http.get(`${API_PREFIX}/wishlists/:wishlistId/items`, () =>
+    HttpResponse.json({ data: [fixtures.wishlistItem], meta: paginationMeta }),
+  ),
+
+  http.get(`${API_PREFIX}/wishlists/:wishlistId/items/categories`, () =>
+    HttpResponse.json({ data: [fixtures.category] }),
+  ),
+
   http.post(`${API_PREFIX}/wishlists/:wishlistId/items`, () =>
     HttpResponse.json(fixtures.wishlistItem),
   ),

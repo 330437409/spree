@@ -900,3 +900,15 @@ Plan: `6.1-store-api-miniprogram-gaps.md`'s `order/cancelOrder` row: "Store API 
 **`status` joins the store order payload for this reason and no other.** A customer who has just called their order off has to be able to see that it was, and the payload carried only `fulfillment_status` and `payment_status` — how the order is being served, not what it is. The value list is `Spree::Order::STATUSES`, the same closed set the admin payload uses.
 
 **The reasons are the merchant's own, and retired ones stay behind.** `GET /api/v3/store/order_cancellation_reasons` lists the active reasons — merchant-owned like the return and claim vocabularies, so nothing branches on the value. A retired reason is not offered again while staying on the orders that already carry it, which is what reporting needs. A reason from another store is not a reason here: the read resolves it through the store's own list and the workflow holds the same line, so the refusal never depends on which of the two got there first.
+
+## 2026-09-21 (the wishlist's tabs) — The categories come from the goods, and the list pages
+
+Plan: `6.1-store-api-miniprogram-gaps.md`'s wishlist-grouping row, which guessed the grouping "needs a field on the wishlist item".
+
+**It needs no field: the categories are the goods' own.** A wishlist item reaches its product, and a product is in the catalogue's categories — a field on the item would be a second copy of that, kept in step by hand, and it would go stale the moment the merchandise department moved a product. The tabs are their own read instead (`GET /wishlists/{wishlist_id}/items/categories`) rather than an attribute the client groups by: a page with three hundred collected goods would otherwise fetch all of them to draw five tabs.
+
+**The list is a list.** `GET /wishlists/{wishlist_id}/items` is paginated and ordered by when each good was collected, because that is what a wishlist page opens on; the items had only `create`/`update`/`destroy` before, so the client's `collect/page` — which pages with `current`/`size` and re-reads on every tab change — had nothing to call.
+
+**`category_id` narrows through the store's own catalogue, and a category the store does not have is a 404.** The filter is not `where(category_id: params[:category_id])` falling back to an empty page: a tab naming another store's category, or one deleted since the page was drawn, is a tab that should not exist, and saying so is how the client finds out to re-read the tabs. Same line the controllers hold everywhere else — an incidental id is resolved through `current_store.<association>`.
+
+**`collect/page`'s `offShelfList` is the client's own arithmetic, deliberately.** The old server split unavailable goods out for it; here the item payload carries the good and its variant, and the storefront decides what to show as unsellable — the `goodsShowRule` the client already applies. A server-side "off the shelf" flag would be promotion and availability state this API does not own yet.
