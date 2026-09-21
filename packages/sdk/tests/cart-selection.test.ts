@@ -68,5 +68,4 @@ describe('cart selection', () => {
     expect(capturedBody.line_item_id).toBe('li_1')
     expect(cart.items?.[0].promotion_id).toBe('promo_2')
   })
-
 })

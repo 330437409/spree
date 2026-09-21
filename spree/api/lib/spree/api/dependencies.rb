@@ -128,6 +128,7 @@ module Spree
         admin_collection_serializer: 'Spree::Api::V3::Admin::CollectionSerializer',
         admin_collection_rule_serializer: 'Spree::Api::V3::Admin::CollectionRuleSerializer',
         admin_line_item_serializer: 'Spree::Api::V3::Admin::LineItemSerializer',
+        admin_promotion_candidate_serializer: 'Spree::Api::V3::Admin::PromotionCandidateSerializer',
         admin_option_type_serializer: 'Spree::Api::V3::Admin::OptionTypeSerializer',
         admin_option_value_serializer: 'Spree::Api::V3::Admin::OptionValueSerializer',
         admin_media_serializer: 'Spree::Api::V3::Admin::MediaSerializer',
