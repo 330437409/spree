@@ -22,13 +22,15 @@ module Spree
         existing = find_existing(account, idempotency_key)
         return success(existing) if existing
 
+        signed = signed_amount(amount, reverses)
+
         entry = Spree::LedgerEntry.new(
           store: store,
           account: account,
           kind: kind,
           unit: unit_for(account, reverses),
-          amount: signed_amount(amount, reverses),
-          balance_after: account.ledger_balance,
+          amount: signed,
+          balance_after: snapshot_for(account, signed),
           reverses_entry: reverses,
           idempotency_key: idempotency_key,
           source: source,
@@ -71,6 +73,26 @@ module Spree
         return amount if reverses.nil?
 
         reverses.amount.negative? ? amount.abs : -amount.abs
+      end
+
+      # The snapshot the column promises: where the balance stood *after* this
+      # movement. The account answers where it stands *now* — which is before
+      # this entry is written, because `record!` is the write — so the movement
+      # is added here.
+      #
+      # That addition is what lets an account whose balance *is* its history
+      # (the points account) carry a truthful snapshot: it has nothing else to
+      # apply the movement with, and a caller that has already applied it keeps
+      # no snapshot at all (`ledger_balance` answers nil, as a gift card does —
+      # its `amount_used` is authoritative and a second number here would be
+      # the second source of truth its plan forbids).
+      #
+      # @param account [Object]
+      # @param amount [Numeric]
+      # @return [Numeric, nil]
+      def snapshot_for(account, amount)
+        balance = account.ledger_balance
+        balance.nil? ? nil : balance + amount
       end
 
       # @param account [Object]

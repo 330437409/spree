@@ -23,9 +23,21 @@ RSpec.describe Spree::Ledger do
       expect(result).to be_success
       expect(result.value).to have_attributes(
         store_id: store.id, account: account, kind: 'earn', unit: 'points',
-        amount: 50, balance_after: 120, source: source
+        amount: 50, balance_after: 170, source: source
       )
       expect(result.value.occurred_at).to be_present
+    end
+
+    # The account answers where its balance stands now, and the column
+    # promises where it stood after: for an account whose balance is its
+    # history, that addition is the only way the snapshot can be true.
+    it 'snapshots where the balance stands once the movement is written' do
+      allow(account).to receive(:ledger_balance) { Spree::LedgerEntry.balance_for(account, unit: 'points') }
+
+      described_class.record!(account: account, kind: 'earn', amount: 50, idempotency_key: 'order:1:earn')
+      second = described_class.record!(account: account, kind: 'spend', amount: -20, idempotency_key: 'order:2:spend')
+
+      expect(second.value.balance_after).to eq(30)
     end
 
     it 'leaves the snapshot null where the instrument is authoritative' do
