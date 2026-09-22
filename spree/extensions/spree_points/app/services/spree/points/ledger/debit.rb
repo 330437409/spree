@@ -46,18 +46,17 @@ module Spree
               raise ActiveRecord::Rollback
             end
 
-            lots = account.usable_lots.soonest_first.to_a
+            lots = lots_for(account, reverses)
 
             if lots.sum(&:remaining) < amount
               result = failure(nil, :insufficient_balance)
               raise ActiveRecord::Rollback
             end
 
-            # A reversal moves the other way from what it undoes, and the
-            # ledger decides that sign: what this service passes is the
-            # movement's own magnitude when there is something to reverse.
-            recorded = Spree::Ledger.record!(account: account, kind: reason_key,
-                                             amount: reverses ? amount : -amount,
+            # A spend moves the balance down; a reversal's sign is the
+            # ledger's to decide, and it forces the opposite of what it undoes
+            # whatever arrives here.
+            recorded = Spree::Ledger.record!(account: account, kind: reason_key, amount: -amount,
                                              idempotency_key: key, source: source, reverses: reverses,
                                              seller: seller, order: order)
 
@@ -91,6 +90,25 @@ module Spree
             Spree::PointAllocation.create!(ledger_entry: entry, point_grant: lot, amount: taken)
             left -= taken
           end
+        end
+
+        # Which lots a movement draws on, in order.
+        #
+        # A reversal gives back what the earn's own lots still hold before it
+        # touches the rest of the balance: the allocation trail is what explains
+        # the customer's history, and clawing back one order's points from
+        # another's lot would misattribute both. A spend spends whatever is
+        # closest to lapsing, because that is the lot the customer would lose.
+        #
+        # @return [Array<Spree::PointGrant>]
+        def lots_for(account, reverses)
+          ordered = account.usable_lots.soonest_first.to_a
+          return ordered if reverses.nil?
+
+          own_ids = Spree::PointAllocation.where(ledger_entry: reverses).pluck(:point_grant_id)
+          own, rest = ordered.partition { |lot| own_ids.include?(lot.id) }
+
+          own + rest
         end
 
         # One order spends its points once, so the source is the identity when

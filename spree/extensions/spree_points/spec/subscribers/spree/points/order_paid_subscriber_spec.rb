@@ -56,6 +56,22 @@ RSpec.describe Spree::Points::OrderPaidSubscriber do
     expect(Spree::PointAccount.count).to eq(0)
   end
 
+  it 'leaves a guest order alone' do
+    order.update_columns(customer_id: nil, email: 'guest@example.com')
+
+    expect { handle }.not_to raise_error
+    expect(Spree::PointAccount.count).to eq(0)
+  end
+
+  it 'mints a point that never lapses when the store sets no window' do
+    store.update!(preferred_points_validity_days: 0)
+
+    handle
+
+    expect(Spree::PointGrant.find_by(account: points_account).grant.expires_at).to be_nil
+    expect(points_account.balance).to eq(100)
+  end
+
   it 'credits a customer who has never earned before' do
     expect(Spree::PointAccount.where(customer: order.customer)).to be_empty
 
@@ -64,20 +80,19 @@ RSpec.describe Spree::Points::OrderPaidSubscriber do
     expect(Spree::PointAccount.where(store: store, customer: order.customer).count).to eq(2)
   end
 
-  it 'attributes the movement to the shop when the order has one seller' do
+  # The seller is the column core writes at completion — a basket entirely from
+  # one seller is that seller's order, and a multi-seller checkout is split into
+  # one order per seller — so the movement reads it rather than deriving its own.
+  it 'attributes the movement to the shop the order belongs to' do
     seller = create(:seller, store: store)
-    order.line_items.first.variant.update_columns(seller_id: seller.id)
+    order.update_columns(seller_id: seller.id)
 
     handle
 
     expect(Spree::LedgerEntry.for_account(points_account).first.seller_id).to eq(seller.id)
   end
 
-  it 'leaves the seller empty when the order’s goods come from several' do
-    order.line_items.first.variant.update_columns(seller_id: create(:seller, store: store).id)
-    other_line = create(:line_item, order: order, variant: create(:variant, product: create(:product, store: store)))
-    other_line.variant.update_columns(seller_id: create(:seller, store: store).id)
-
+  it 'leaves the seller empty when the order belongs to no shop' do
     handle
 
     expect(Spree::LedgerEntry.for_account(points_account).first.seller_id).to be_nil

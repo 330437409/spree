@@ -13,38 +13,43 @@ module Spree
 
       def handle(event)
         order = Spree::Order.find_by_prefix_id(event.payload['id'])
-        return if order.nil?
+        # An order whose customer is gone — a deleted account, a guest — has
+        # nobody to owe, and a balance row cannot be written for nobody.
+        return if order.nil? || order.customer.nil?
 
         earned = Earning.call(order: order).value
         return unless earned.positive?
 
-        attribution = Attribution.for(order)
-
         Spree::PointAccount::KINDS.each do |kind|
           account = Spree::PointAccount.for(store: order.store, customer: order.customer, kind: kind)
 
-          Spree::Points::Ledger.credit!(account: account, amount: earned, reason: 'consume',
-                                        idempotency_key: "#{earn_key(order)}:#{kind}", source: order,
-                                        expires_at: expiry_for(account), seller: attribution[:seller],
-                                        order: order)
+          result = Spree::Points::Ledger.credit!(account: account, amount: earned, reason: 'consume',
+                                                 idempotency_key: Spree::Points::Ledger.earn_key(order, kind),
+                                                 source: order, expires_at: expiry_for(account, order.store),
+                                                 seller: order.seller, order: order)
+
+          # A refusal is not a retry: the ledger answers the row it already has,
+          # and refuses a key reused for a *different* movement — an order that
+          # changed between two `order.paid` events recomputes a different
+          # amount, and the customer keeps whatever the first one wrote.
+          if result.failure?
+            Rails.logger.warn("points: order #{order.number} (#{kind}) was not credited: #{result.error}")
+          end
         end
       end
 
       private
 
-      # What the reversal looks up when it is asked to take the earn back.
-      #
-      # @return [String]
-      def earn_key(order)
-        "order:#{order.id}"
-      end
-
       # Points lapse, 成长值 does not: the window is the store's, and the credit
       # service refuses a date on the balance that never lapses.
-      def expiry_for(account)
+      # Points lapse, 成长值 does not: the window is the store's, and a window
+      # of zero is no window at all rather than a lot that is expired the moment
+      # it is minted.
+      def expiry_for(account, store)
         return nil unless account.points?
 
-        account.store.preferred_points_validity_days.to_i.days.from_now
+        days = store.preferred_points_validity_days.to_i
+        days.positive? ? days.days.from_now : nil
       end
     end
   end

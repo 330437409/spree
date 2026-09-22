@@ -8,7 +8,9 @@ RSpec.describe Spree::Points::OrderEarnReversalSubscriber do
   let(:subscriber) { described_class.new }
 
   before do
-    order.update_columns(total: 100, payment_status: 'paid')
+    # The goods are worth what the order totals here, so a return's share is
+    # read against the same figure the earn was computed on.
+    order.update_columns(item_total: 100, total: 100, payment_status: 'paid')
     allow(Spree).to receive(:points_multiplier_service).and_return(nil)
     Spree::Points::OrderPaidSubscriber.new.handle(double('event', payload: { 'id' => order.prefixed_id }))
   end
@@ -17,10 +19,10 @@ RSpec.describe Spree::Points::OrderEarnReversalSubscriber do
     subscriber.send(:reverse_what_the_order_earned, double('event', payload: { 'id' => order.prefixed_id }))
   end
 
-  def refunded(amount)
-    return_record = instance_double(Spree::Return, order: order, refund_total: amount, id: 7)
+  def refunded(amount, id: 7)
+    return_record = instance_double(Spree::Return, order: order, refund_total: amount, id: id)
     allow(Spree::Return).to receive(:find_by_prefix_id).and_return(return_record)
-    subscriber.send(:reverse_the_returns_share, double('event', payload: { 'id' => 'ret_whatever' }))
+    subscriber.send(:reverse_the_returns_share, double('event', payload: { 'id' => "ret_#{id}" }))
   end
 
   it 'takes the whole earn back when the order is called off' do
@@ -53,6 +55,43 @@ RSpec.describe Spree::Points::OrderEarnReversalSubscriber do
 
     expect(points_account.reload.balance).to eq(60)
     expect(Spree::LedgerEntry.for_account(points_account).where(kind: 'consume_return').count).to eq(1)
+  end
+
+  # A return that was refunded and then a cancellation: the two events share
+  # one earn, and together they take back exactly what was earned.
+  it 'takes back only the rest when the order is called off after a refund' do
+    refunded(40)
+    cancelled
+
+    expect(points_account.reload.balance).to eq(0)
+    expect(Spree::LedgerEntry.for_account(points_account).where(kind: 'consume_return').sum(:amount)).to eq(-100)
+  end
+
+  # Two separate returns, not one announced twice: each asks for its own share,
+  # and the pair together must not exceed the earn.
+  it 'takes each of two returns’ shares back' do
+    refunded(40, id: 1)
+    refunded(30, id: 2)
+
+    expect(points_account.reload.balance).to eq(30)
+    expect(Spree::LedgerEntry.for_account(points_account).where(kind: 'consume_return').sum(:amount)).to eq(-70)
+  end
+
+  # The allocation trail is what explains the customer's history, so a clawback
+  # gives back the earn's own lot before it touches the rest of the balance.
+  it 'gives back the earn’s own lot before another one' do
+    other_lot = Spree::PointGrant.joins(:grant).where(account: points_account)
+                                 .where.not(grant_id: Spree::LedgerEntry.where(kind: 'consume')
+                                                                        .joins('INNER JOIN spree_grants ON spree_grants.id = 0').select(:id))
+    Spree::Points::Ledger.credit!(account: points_account, amount: 50, reason: 'manual',
+                                  idempotency_key: 'later:lot', granted_at: nil)
+    own = Spree::PointGrant.where(account: points_account).order(:id).first
+    later = Spree::PointGrant.where(account: points_account).order(:id).last
+
+    cancelled
+
+    expect(own.reload.remaining).to eq(0)
+    expect(later.reload.remaining).to eq(50)
   end
 
   it 'never takes back more than the earn' do

@@ -92,6 +92,15 @@ RSpec.describe Spree::Points::Earning do
       expect(earned).to eq(200)
     end
 
+    # Everything else in this repository answers with a `ServiceModule::Result`,
+    # so the seam takes one of those as readily as a bare number.
+    it 'takes a service that answers with a result' do
+      service = instance_double('multiplier', call: Spree::ServiceModule::Result.new(true, 3))
+      allow(Spree).to receive(:points_multiplier_service).and_return(service)
+
+      expect(earned).to eq(300)
+    end
+
     it 'ignores a service that answers nothing sensible' do
       service = instance_double('multiplier', call: 0)
       allow(Spree).to receive(:points_multiplier_service).and_return(service)

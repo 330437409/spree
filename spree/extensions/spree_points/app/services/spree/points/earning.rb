@@ -72,11 +72,23 @@ module Spree
         earned = per_unit * line.quantity.to_i
         cap = amount(product, LINE_CAP)
 
+        # A cap of zero is no cap rather than a cap of nothing: an operator who
+        # leaves the field empty should not silently lose the goods' own points.
         cap&.positive? ? [earned, cap].min : earned
       end
 
+      # The value is read off the association the preload already filled rather
+      # than through `get_custom_field`, which is its own JOIN: an earn runs for
+      # every paid order, and a query per line per name is a query per line too
+      # many.
       def amount(product, key)
-        product.get_custom_field(key)&.value.to_d
+        namespace, name = key.split('.')
+        field = product.custom_fields.find do |candidate|
+          candidate.custom_field_definition&.namespace == namespace &&
+            candidate.custom_field_definition&.key == name
+        end
+
+        field&.value.to_d
       rescue TypeError, ArgumentError
         # A custom field an operator typed as text rather than as a number is
         # not a reason to lose an order's earn.
@@ -89,11 +101,17 @@ module Spree
         order.line_items.includes(variant: { product: :custom_fields })
       end
 
+      # The seam answers a number — or a service answering with one, which is
+      # how everything else in this repository answers (`ServiceModule::Result`
+      # carries the number as its value).
       def multiplier(order)
         service = Spree.points_multiplier_service
         return 1.to_d if service.blank?
 
-        value = service.call(order: order).to_d
+        answer = service.call(order: order)
+        answer = answer.value if answer.respond_to?(:value)
+        value = answer.to_d
+
         value.positive? ? value : 1.to_d
       end
     end
