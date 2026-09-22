@@ -8,7 +8,7 @@ module Spree
           typelize type: :string, position: :number, published: :boolean,
                    preferences: 'Record<string, unknown> | null'
 
-          attribute(:type) { |right| right.class.api_type }
+          attribute(:type) { |right| Spree::MembershipRight.api_type_for(right.type) }
           attributes :name, :description, :badge, :image_url, :position
           attribute(:published) { |right| right.published? }
           attribute(:preferences) { |right| right.serialized_preferences }

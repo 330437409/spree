@@ -21,10 +21,6 @@ module Spree
             Spree::Api::V3::Store::MembershipTierSerializer
           end
 
-          def scope
-            super.for_store(current_store)
-          end
-
           def apply_collection_sort(collection)
             collection.reorder(:rank, :id)
           end

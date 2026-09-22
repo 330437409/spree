@@ -33,7 +33,7 @@ module Spree
           end
 
           def collection_includes
-            [:customer_group]
+            [:tier_setting]
           end
 
           def scope_includes

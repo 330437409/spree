@@ -27,29 +27,26 @@ module Spree
       #
       # @return [Spree::MembershipTierSetting, nil]
       def tier
-        return nil if customer.nil?
+        return @tier if defined?(@tier)
 
-        Spree::MembershipTierSetting.for_store(store).
-          where(customer_group_id: group_ids_for(customer)).
-          ordered.first
+        @tier = if customer.nil?
+                  nil
+                else
+                  Spree::MembershipTierSetting.for_store(store).
+                    where(customer_group_id: customer.customer_groups.select(:id)).
+                    ordered.first
+                end
       end
 
-      # Every live right of this store's tiers, in the ladder's own order.
+      # Every live right of this store's tiers, in the ladder's own order: the
+      # tiers' ranks, then each tier's own positions.
       #
-      # The order is the tiers' ranks, then each tier's own positions — written
-      # as a CASE because the rights hang from the group rather than from the
-      # settings row, and a join to it would be a join to a table this model has
-      # no association to.
+      # Read once and held: a response groups these and counts them, and both
+      # would otherwise ask the same question again.
       #
-      # @return [ActiveRecord::Relation]
+      # @return [Array<Spree::MembershipRight>]
       def rights
-        group_ids = ladder_ids
-        return Spree::MembershipRight.none if group_ids.empty?
-
-        ordering = Arel::Nodes::Case.new(Spree::MembershipRight.arel_table[:customer_group_id])
-        group_ids.each_with_index { |group_id, index| ordering.when(group_id).then(index) }
-
-        Spree::MembershipRight.where(customer_group_id: group_ids).order(ordering.asc, :position, :id)
+        @rights ||= rights_relation.to_a
       end
 
       # The rights grouped by the panel their kind declares, in the order the
@@ -77,18 +74,12 @@ module Spree
 
       private
 
-      # The group ids of this store's tiers, in rank order.
-      #
-      # @return [Array<Integer>]
-      def ladder_ids
-        Spree::MembershipTierSetting.for_store(store).ordered.pluck(:customer_group_id)
-      end
-
       # @return [ActiveRecord::Relation]
-      def group_ids_for(customer)
-        Spree::CustomerGroupUser.
-          where(user_id: customer.id, user_type: Spree.customer_class.to_s).
-          select(:customer_group_id)
+      def rights_relation
+        Spree::MembershipRight.
+          where(customer_group_id: Spree::MembershipTierSetting.for_store(store).select(:customer_group_id)).
+          joins(:tier_setting).
+          order(Spree::MembershipTierSetting.arel_table[:rank].asc, :position, :id)
       end
     end
   end

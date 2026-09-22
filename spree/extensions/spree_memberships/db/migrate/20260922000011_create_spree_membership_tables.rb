@@ -20,7 +20,6 @@ class CreateSpreeMembershipTables < ActiveRecord::Migration[8.1]
     end
 
     add_index :spree_membership_tier_settings, :customer_group_id, unique: true
-    add_index :spree_membership_tier_settings, [:rank], unique: false
 
     # What a tier grants. STI on `type`, exactly as commission rules and
     # promotion actions are: a kind carries its own settings as preferences, so

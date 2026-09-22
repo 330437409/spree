@@ -19,6 +19,14 @@ module Spree
 
     belongs_to :customer_group, class_name: 'Spree::CustomerGroup', touch: true
 
+    # The settings row of the tier this right hangs on. A `CustomerGroup` is
+    # core's and has no association to this gem's rows, so the pair is spelled
+    # out here rather than reopened there — the shape core itself uses where two
+    # tables are related without an association.
+    has_one :tier_setting, class_name: 'Spree::MembershipTierSetting',
+                           primary_key: :customer_group_id, foreign_key: :customer_group_id,
+                           inverse_of: nil
+
     # Reaches the store through its tier, exactly as a commission rule reaches
     # it through its rate: no second tenancy column, and nothing to keep in sync.
     delegate :store, to: :customer_group, allow_nil: true

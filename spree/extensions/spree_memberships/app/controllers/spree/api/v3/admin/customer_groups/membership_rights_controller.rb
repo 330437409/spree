@@ -14,12 +14,6 @@ module Spree
             subclassed_via -> { SpreeMemberships.membership_rights },
                            unknown_type_error: 'unknown_membership_right_type'
 
-            def types
-              authorize! :read, model_class
-
-              render json: { data: model_class.subclasses_with_preference_schema }
-            end
-
             protected
 
             def model_class
@@ -30,18 +24,12 @@ module Spree
               Spree::Api::V3::Admin::MembershipRightSerializer
             end
 
-            def read_actions
-              super + %w[types]
-            end
-
             def permitted_params
               params.permit(*model_additional_permitted_attributes, :type, :name, :description,
                             :badge, :image_url, :position, :published, preferences: {})
             end
 
             def set_parent
-              return if action_name == 'types'
-
               @parent = Spree::CustomerGroup.for_store(current_store).
                         find_by_prefix_id!(params[:customer_group_id])
             end

@@ -12,15 +12,14 @@ module Spree
                    badge: 'string | null', image_url: 'string | null',
                    published: :boolean, tier: 'Record<string, unknown> | null'
 
-          attribute(:type) { |right| right.class.api_type }
+          attribute(:type) { |right| Spree::MembershipRight.api_type_for(right.type) }
           attribute(:name) { |right| right.display_name }
           attributes :description, :badge, :image_url
           attribute(:published) { |right| right.published? }
           attribute(:tier) do |right|
-            setting = Spree::MembershipTierSetting.find_by(customer_group_id: right.customer_group_id)
-            next if setting.nil?
+            next if right.tier_setting.nil?
 
-            Spree::Api::V3::Store::MembershipTierSerializer.new(setting, params: params).to_h
+            Spree::Api::V3::Store::MembershipTierSerializer.new(right.tier_setting, params: params).to_h
           end
         end
       end

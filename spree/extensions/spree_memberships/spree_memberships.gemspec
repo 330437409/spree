@@ -8,8 +8,8 @@ Gem::Specification.new do |s|
   s.version      = Spree.version
   s.authors      = ['Vendo Connect Inc.', 'Vendo Sp. z o.o.']
   s.email        = 'hello@spreecommerce.org'
-  s.summary      = 'Purchases that are not orders, for Spree Commerce'
-  s.description  = 'One prepaid purchase for a membership, points, a card or a bundle: a row, a payment session and an entitlement issued on settlement'
+  s.summary      = 'Membership tiers and their rights for Spree Commerce'
+  s.description  = 'A tier is a customer group plus one settings row; what it grants are registered rights, and the member centre is a projection of that registry'
   s.homepage     = 'https://spreecommerce.org'
   s.license      = 'BSD-3-Clause'
 
