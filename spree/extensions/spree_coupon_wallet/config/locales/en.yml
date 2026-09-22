@@ -1,0 +1,23 @@
+en:
+  spree:
+    errors:
+      messages:
+        not_a_registered_coupon_campaign: is not a kind of coupon campaign this store has
+        coupon_campaign_needs_a_code_pool: must be a promotion that issues many codes
+    coupon_campaign_types:
+      draw:
+        name: Draw
+      new_customer:
+        name: New customer
+      site_scoped:
+        name: One site
+    # What a customer is told when a coupon does not arrive. The names carry the
+    # domain's prefix because a service refuses with a symbol and the API
+    # renders it through `Spree.t` at the top of that scope.
+    coupon_not_running: This campaign is not giving coupons out right now
+    coupon_not_eligible: You are not eligible for this coupon
+    coupon_limit_reached: You have already taken this coupon
+    coupon_none_left: This campaign has no coupons left
+    coupon_code_not_found: We could not find that coupon code
+    coupon_code_in_use: That coupon is already in use
+    coupon_already_held: That coupon already belongs to somebody else

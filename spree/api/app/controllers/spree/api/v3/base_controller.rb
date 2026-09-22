@@ -84,7 +84,11 @@ module Spree
           if errors.is_a?(ActiveModel::Errors)
             render_validation_error(errors)
           else
-            render_service_error(error)
+            # Unwrapped: a service that refused with a symbol is rendered in the
+            # customer's words (`render_service_error` translates one), where
+            # the wrapper's own `to_s` would put `coupon_not_running` on the
+            # wire.
+            render_service_error(errors)
           end
         end
 
