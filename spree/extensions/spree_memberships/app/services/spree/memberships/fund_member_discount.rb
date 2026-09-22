@@ -14,12 +14,10 @@ module Spree
       # @return [Hash] the contribution, or nothing when the platform funded nothing
       def call(workflow)
         order = workflow.order
-        return {} if order.nil?
-
         tier = Spree::MembershipTierSetting.for_store(order.store).for_customer(order.customer)
         return {} if tier.nil?
 
-        result = Spree::Memberships::MemberDiscount.call(order: order)
+        result = Spree::Memberships::MemberDiscount.call(order: order, tier: tier)
         return {} if result.failure? || result.value.empty?
 
         { discounts: result.value, metadata: metadata_for(tier) }

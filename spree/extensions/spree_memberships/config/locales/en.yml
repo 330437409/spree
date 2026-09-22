@@ -6,6 +6,9 @@ en:
     memberships:
       tier_catalog_name: "%{name} — member price"
       tier_price_list_name: "%{name} — member price list"
+      errors:
+        store_missing: the tier's store cannot be reached
+        catalog_unavailable: the member price catalogue could not be set up
     membership_right_types:
       member_price:
         name: Member price

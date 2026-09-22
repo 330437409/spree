@@ -53,8 +53,4 @@ RSpec.describe Spree::Memberships::FundMemberDiscount do
   it 'contributes nothing when the member price took nothing off the order' do
     expect(described_class.new.call(workflow)).to eq({})
   end
-
-  it 'contributes nothing when the workflow carries no order' do
-    expect(described_class.new.call(double(order: nil))).to eq({})
-  end
 end

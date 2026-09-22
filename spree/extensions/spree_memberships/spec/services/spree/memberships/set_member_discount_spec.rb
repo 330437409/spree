@@ -59,7 +59,7 @@ RSpec.describe Spree::Memberships::SetMemberDiscount do
   it 'takes the price out of effect on zero, keeping the setup' do
     catalog = described_class.call(tier_setting: tier, percentage: 10).value
 
-    result = described_class.call(tier_setting: tier.reload, percentage: 0)
+    result = described_class.call(tier_setting: tier, percentage: 0)
 
     expect(result.value.id).to eq(catalog.id)
     expect(result.value).not_to be_active
@@ -68,9 +68,9 @@ RSpec.describe Spree::Memberships::SetMemberDiscount do
 
   it 'brings the same catalogue back into effect' do
     first = described_class.call(tier_setting: tier, percentage: 10).value
-    described_class.call(tier_setting: tier.reload, percentage: nil)
+    described_class.call(tier_setting: tier, percentage: nil)
 
-    expect(described_class.call(tier_setting: tier.reload, percentage: 10).value.id).to eq(first.id)
+    expect(described_class.call(tier_setting: tier, percentage: 10).value.id).to eq(first.id)
   end
 
   # A catalogue is store-scoped, so there has to be a store to stand it up in.

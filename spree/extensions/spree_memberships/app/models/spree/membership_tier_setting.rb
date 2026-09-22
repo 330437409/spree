@@ -55,18 +55,30 @@ module Spree
       threshold.present? && amount.to_d >= threshold
     end
 
+    # The list this tier prices through: the catalogue's own, when the
+    # catalogue is in effect. Nil when the tier grants no member price.
+    #
+    # One reader for one definition — the discount the operator reads, the
+    # reduction a funded order is measured by and the subsidy's own record all
+    # come through here, so they cannot disagree about what a tier's price is.
+    #
+    # @return [Spree::PriceList, nil]
+    def member_price_list
+      return nil if catalog.nil? || !catalog.active?
+
+      catalog.price_list
+    end
+
     # The member price this tier grants, as a percentage off the shelf price, or
     # nil when it grants none.
     #
-    # Read from the tier's own catalogue rather than stored, so the price a
-    # member is charged and the figure an operator sees are the same number —
-    # and so a catalogue that stopped applying stops being reported.
+    # Read from the tier's own list rather than stored, so the price a member is
+    # charged and the figure an operator sees are the same number — and so a
+    # price that stopped applying stops being reported.
     #
     # @return [BigDecimal, nil]
     def member_discount_percentage
-      return nil if catalog.nil? || !catalog.active?
-
-      catalog.price_list&.price_adjustment_percentage&.abs
+      member_price_list&.price_adjustment_percentage&.abs
     end
 
     # Assigning stages the price; it is written with the save, so a tier that
@@ -85,7 +97,8 @@ module Spree
     # tier's catalog"). Nil and zero take it out of effect.
     #
     # The service assigns the catalogue it stands up — or found — on this
-    # record, and this save is what persists the link.
+    # record, and this save is what persists the link, so a tier that cannot be
+    # saved is never half-priced.
     def apply_member_discount
       return if @pending_member_discount.nil?
 
@@ -94,8 +107,24 @@ module Spree
       )
       return if result.success?
 
-      errors.add(:member_discount_percentage, :invalid)
+      errors.add(:member_discount_percentage, :invalid, message: refusal_for(result))
       throw :abort
+    end
+
+    # The service's own words rather than a bare "is invalid": a percentage its
+    # price list refuses, or a catalogue it cannot stand up, is something the
+    # operator can act on. A workflow's failed record answers with its own
+    # ActiveModel::Errors, which is what the message is built from.
+    def refusal_for(result)
+      refused = result.error.respond_to?(:value) ? result.error.value : result.error
+
+      if refused.respond_to?(:errors) && refused.errors.any?
+        refused.errors.full_messages.to_sentence
+      elsif refused.is_a?(Symbol)
+        Spree.t(refused, scope: 'memberships.errors', default: refused.to_s.humanize)
+      else
+        refused.to_s
+      end
     end
 
     # A tier that is retired stops pricing its group: the members keep the group

@@ -16,34 +16,25 @@ module Spree
       prepend Spree::ServiceModule::Base
 
       # @param order [Spree::Order]
+      # @param tier [Spree::MembershipTierSetting, nil] the tier the caller
+      #   already resolved, when it has one
       # @return [Spree::ServiceModule::Result] value is a Hash of line item id
       #   => the gross amount that line was reduced by
-      def call(order:)
-        tier = Spree::MembershipTierSetting.for_store(order.store).for_customer(order.customer)
+      def call(order:, tier: nil)
+        tier ||= Spree::MembershipTierSetting.for_store(order.store).for_customer(order.customer)
         return success({}) if tier.nil?
 
-        list_ids = price_list_ids(tier)
-        return success({}) if list_ids.empty?
+        price_list = tier.member_price_list
+        return success({}) if price_list.nil?
 
-        success(discounts_for(order, list_ids))
+        success(discounts_for(order, price_list.id))
       end
 
       private
 
-      # Empty when the tier grants no member price, or when its catalogue is out
-      # of effect: a catalogue that is not applying prices nobody.
-      #
-      # @return [Array<Integer>]
-      def price_list_ids(tier)
-        catalog = tier.catalog
-        return [] if catalog.nil? || !catalog.active?
-
-        [catalog.price_list&.id].compact
-      end
-
       # @return [Hash{Integer => BigDecimal}]
-      def discounts_for(order, list_ids)
-        lines = order.line_items.select { |line_item| list_ids.include?(line_item.price_list_id) }
+      def discounts_for(order, price_list_id)
+        lines = order.line_items.select { |line_item| line_item.price_list_id == price_list_id }
         return {} if lines.empty?
 
         bases = base_amounts(lines.map(&:variant_id), order.currency)

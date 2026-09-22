@@ -337,7 +337,18 @@ A marketplace can promise a price the seller never agreed to — a member or VIP
 Whoever promised the funding says what it was worth. An extension contributes the reduction through the `funded_discounts` hook on `Spree::SellerTransfers::Create`, and core writes the row, hands it to the payout provider and reverses it on a refund — at exactly the fraction the earning comes back at, so a refunded order returns the same proportion of everything the platform paid. A discount the *seller* gave is contributed by nobody: a promotion, a store-wide price list or a price the seller set already comes out of their own earning.
 
 ```ruby
-# An extension that funds part of a price says so here.
+# An extension that funds part of a price says so here. The reduction is gross
+# and per line; the metadata is what an operator reading the ledger needs to
+# see why the seller was credited.
+class MyApp::FundedDiscount
+  def call(workflow)
+    reductions = MyApp::Reductions.for(workflow.order)   # { line_item_id => amount }
+    return {} if reductions.empty?
+
+    { discounts: reductions, metadata: { 'funded_by' => 'my_promise' } }
+  end
+end
+
 Spree.hooks.register('seller_transfers.create.funded_discounts', 'MyApp::FundedDiscount')
 ```
 

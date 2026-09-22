@@ -67,10 +67,6 @@ module Spree
         return nil if result.failure?
 
         tier_setting.catalog = result.value
-        # Written through when the tier already exists, so a caller that reloads
-        # it — or never saves it — still prices through the same catalogue. A
-        # new record keeps the assignment in memory for its own save to write.
-        tier_setting.update_column(:catalog_id, result.value.id) if tier_setting.persisted?
 
         result.value
       end
@@ -88,13 +84,19 @@ module Spree
         )
       end
 
-      # A catalogue and a list are both born in draft — that is what the status
-      # means here — so setting a price is what puts the agreement in effect.
-      # The list goes live first: a catalogue in effect with no live list would
-      # be an audience with nothing to price through.
+      # Setting a price is what puts the agreement in effect: the catalogue is
+      # born in draft, and the list inside it is created live — so a list an
+      # operator deactivated directly is the only one this brings back, and a
+      # live one is left alone rather than reactivated on every write.
+      #
+      # The list goes live before the catalogue does: a catalogue in effect with
+      # nothing to price through would be an audience with no prices.
       def switch_on(catalog)
-        result = Spree::PriceLists::Activate.call(price_list: catalog.price_list)
-        return result if result.failure?
+        list = catalog.price_list
+        unless list.active_or_scheduled?
+          result = Spree::PriceLists::Activate.call(price_list: list)
+          return result if result.failure?
+        end
 
         Spree::Catalogs::Activate.call(catalog: catalog)
       end
