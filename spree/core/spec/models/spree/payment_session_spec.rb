@@ -45,6 +45,37 @@ RSpec.describe Spree::PaymentSession, type: :model do
     end
   end
 
+  describe 'its owner' do
+    let(:cart) { create(:cart, store: store) }
+
+    it 'answers the cart it was built for when it is not an order' do
+      payment_session.order = nil
+      payment_session.cart = cart
+
+      expect(payment_session).to be_valid
+      expect(payment_session.owner).to eq(cart)
+    end
+
+    it 'assigns through the owner door and clears the shape it is not' do
+      payment_session.owner = cart
+
+      expect(payment_session.cart).to eq(cart)
+      expect(payment_session.order).to be_nil
+    end
+
+    it 'refuses a record that does not own a session' do
+      expect { payment_session.owner = store }.to raise_error(ArgumentError)
+    end
+
+    # What a deployment registers is data rather than a hard-coded chain, so a
+    # purchase that is not an order appends its own shape without core naming
+    # the class.
+    it 'lists the shapes a session may be for' do
+      expect(described_class.owner_associations).to eq(%i[order cart])
+      expect(Spree::Payment.owner_associations).to eq(%i[order cart order_group])
+    end
+  end
+
   describe 'defaults from order' do
     it 'sets currency from order' do
       session = build(:bogus_payment_session, order: order, payment_method: payment_method,

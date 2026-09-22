@@ -6,6 +6,11 @@ module Spree
 
     include Spree::HasCustomFields
 
+    include Spree::HasPaymentOwner
+    # A cart mid-checkout, the order it becomes — and, registered by the
+    # scenario purchase frame, a purchase that is neither.
+    self.owner_associations = %i[order cart]
+
     self.event_prefix = 'payment_session'
 
     publishes_lifecycle_events
@@ -156,9 +161,6 @@ module Spree
     end
 
     # @return [Spree::Cart, Spree::Order, nil]
-    def owner
-      order || cart
-    end
 
     # Bridge for legacy callers assigning +current_order+ (now a Spree::Cart)
     # to the order association — routes carts to the cart FK instead.
@@ -175,15 +177,6 @@ module Spree
     # clearing the other one. Lets gateways stay owner-agnostic.
     #
     # @param record [Spree::Cart, Spree::Order]
-    def owner=(record)
-      if record.is_a?(Spree::Cart)
-        self.cart = record
-        self.order = nil
-      else
-        self.order = record
-        self.cart = nil
-      end
-    end
 
     private
 
@@ -195,7 +188,10 @@ module Spree
     end
 
     def exactly_one_owner
-      errors.add(:base, :exactly_one_of_cart_or_order, message: Spree.t('errors.messages.exactly_one_of_cart_or_order')) unless [order, cart].compact.one?
+      owners = self.class.owner_associations.filter_map { |association| public_send(association) }
+      return if owners.one?
+
+      errors.add(:base, :exactly_one_of_cart_or_order, message: Spree.t('errors.messages.exactly_one_of_cart_or_order'))
     end
 
     def publish_processing_event

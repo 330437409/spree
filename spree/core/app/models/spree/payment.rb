@@ -17,6 +17,12 @@ module Spree
     include Spree::Payment::Processing
     include Spree::Payment::CustomEvents
 
+    include Spree::HasPaymentOwner
+    # A cart mid-checkout, the order it becomes, a grouped checkout's group —
+    # and, registered by the scenario purchase frame, a purchase that is none
+    # of those.
+    self.owner_associations = %i[order cart order_group]
+
     publishes_lifecycle_events
 
     NON_RISKY_AVS_CODES = ['B', 'D', 'H', 'J', 'M', 'Q', 'T', 'V', 'X', 'Y'].freeze
@@ -445,9 +451,6 @@ module Spree
     # which is nil on a grouped payment.
     #
     # @return [Spree::Cart, Spree::Order, Spree::OrderGroup, nil]
-    def owner
-      order || cart || order_group
-    end
 
     # @return [Boolean] whether this payment covers several orders placed in one
     #   checkout, in which case its per-order shares are {#payment_splits}
