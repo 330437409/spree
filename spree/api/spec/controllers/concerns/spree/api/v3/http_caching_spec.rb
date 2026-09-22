@@ -19,7 +19,7 @@ RSpec.describe Spree::Api::V3::Store::ProductsController, type: :controller do
         it 'sets Vary header for CDN caching' do
           get :index
 
-          expect(response.headers['Vary']).to eq('Accept, x-spree-currency, x-spree-locale, x-spree-channel')
+          expect(response.headers['Vary']).to eq('Accept, x-spree-currency, x-spree-locale, x-spree-channel, x-spree-seller-id')
         end
       end
 

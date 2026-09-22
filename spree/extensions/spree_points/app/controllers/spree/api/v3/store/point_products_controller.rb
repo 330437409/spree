@@ -43,10 +43,12 @@ module Spree
           def scope
             products = audience(super)
 
-            products = products.for_category(params[:category]) if params[:category].present?
-            products = products.featured if ActiveModel::Type::Boolean.new.cast(params[:featured])
+            # `category` and `featured` narrow a page, not a shelf: a detail
+            # read carrying the tab it came from still has to find its good.
+            return products unless action_name == 'index'
 
-            products
+            products = products.for_category(params[:category]) if params[:category].present?
+            params[:featured].present? ? featured_shelf(products) : products
           end
 
           # The operator's order: `position` is theirs to set, and the id
@@ -79,7 +81,13 @@ module Spree
           end
 
           def member_shelf?
-            params[:audience] == 'member'
+            params[:audience].to_s.downcase == 'member'
+          end
+
+          # `true` is the featured strip and `false` its complement, so a
+          # client asking for the plain goods is answered those alone.
+          def featured_shelf(products)
+            ActiveModel::Type::Boolean.new.cast(params[:featured]) ? products.featured : products.where(featured: false)
           end
 
           # A seller's shelf is that seller's goods beside the store's, which

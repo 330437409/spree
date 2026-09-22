@@ -40,6 +40,7 @@ RSpec.describe Spree::PointProduct, type: :model do
     end
 
     it 'a card good needs the group it issues' do
+      expect(build(:point_vip_card_product, store: store, customer_group: nil)).not_to be_valid
       expect(build(:point_vip_card_product, store: store, customer_group: create(:customer_group))).to be_valid
     end
 

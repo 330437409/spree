@@ -40,6 +40,12 @@ RSpec.describe 'GET /api/v3/store/point_products', type: :request do
     expect(response.parsed_body['data'].map { |row| row['name'] }).to eq(['A teapot'])
   end
 
+  it 'answers the goods the featured shelf leaves out when it is the one not asked for' do
+    shelf(featured: false)
+
+    expect(response.parsed_body['data'].map { |row| row['name'] }).to eq(['A cup', 'A kettle'])
+  end
+
   it 'says what a good costs and whether it is on the shelf' do
     shelf
 
@@ -110,5 +116,24 @@ RSpec.describe 'GET /api/v3/store/point_products/:id', type: :request do
     get '/api/v3/store/point_products/ptgood_0000000000', headers: api_key_headers
 
     expect(response).to have_http_status(:not_found)
+  end
+
+  # A good belongs to its own store, so one of another store's is not a good
+  # this store does not stock — it is not here at all.
+  it 'answers 404 for another store’s good' do
+    other = create(:point_product, store: create(:store))
+
+    get "/api/v3/store/point_products/#{other.prefixed_id}", headers: api_key_headers
+
+    expect(response).to have_http_status(:not_found)
+  end
+
+  # The tab a page was read from rides along in the client's query string; a
+  # good that is on the shelf is still on the shelf from its own page.
+  it 'answers a good whose page filter no longer matches it' do
+    get "/api/v3/store/point_products/#{card.prefixed_id}", headers: api_key_headers, params: { category: 'pots' }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body['name']).to eq('A gold card')
   end
 end

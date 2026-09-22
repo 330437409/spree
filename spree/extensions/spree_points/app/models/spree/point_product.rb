@@ -42,7 +42,7 @@ module Spree
     # so this family uses the same words for the same things: `first_party` is
     # the store's own, and the union is what a shelf shows.
     scope :first_party, -> { where(seller_id: nil) }
-    scope :for_seller, ->(seller) { where(seller_id: seller&.id) }
+    scope :for_seller, ->(seller) { where(seller_id: seller.respond_to?(:id) ? seller.id : seller) }
     scope :available_to_seller, ->(seller) { first_party.or(for_seller(seller)) }
 
     # The kinds a payload may name, and their classes.
@@ -52,9 +52,10 @@ module Spree
       SpreePoints.point_product_types
     end
 
-    # @return [Array<Symbol>] every concrete key a kind may carry
+    # @return [Array<Symbol>] every concrete key a kind may carry, read off the
+    #   family so a kind registered later is covered without touching this
     def self.payload_columns
-      %i[coupon_campaign_id customer_group_id variant_id]
+      available_types.filter_map(&:payload_column)
     end
 
     # @return [Boolean] whether a redemption can issue one right now
