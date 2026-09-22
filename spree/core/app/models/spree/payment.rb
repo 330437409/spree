@@ -43,7 +43,6 @@ module Spree
     has_many :payment_splits, class_name: 'Spree::PaymentSplit', dependent: :destroy, inverse_of: :payment
     belongs_to :source, polymorphic: true, optional: true
 
-    validate :exactly_one_owner
 
     has_many :offsets, -> { offset_payment }, class_name: 'Spree::Payment', foreign_key: :source_id
     has_many :capture_events, class_name: 'Spree::PaymentCaptureEvent'
@@ -506,10 +505,6 @@ module Spree
 
       self.avs_response ||= codes[:avs_response]
       self.cvv_response_code ||= codes[:cvv_response_code]
-    end
-
-    def exactly_one_owner
-      errors.add(:base, :exactly_one_of_cart_or_order, message: Spree.t('errors.messages.exactly_one_of_cart_or_order')) unless [order, cart, order_group].compact.one?
     end
 
     def set_amount

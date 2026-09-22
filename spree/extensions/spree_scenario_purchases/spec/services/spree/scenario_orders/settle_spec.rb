@@ -19,4 +19,19 @@ RSpec.describe Spree::ScenarioOrders::Settle do
 
     expect(scenario_order.reload.metadata['issued']).to eq(1)
   end
+
+  # The money arriving is a fact: a kind that cannot be found leaves a paid
+  # purchase an operator reconciles, not one that reads as unpaid while the
+  # customer has been charged.
+  it 'records and reports a settlement it could not issue' do
+    scenario_order.update_column(:kind, 'gone')
+    allow(Rails.error).to receive(:report)
+
+    result = described_class.call(scenario_order: scenario_order)
+
+    expect(result).to be_failure
+    expect(scenario_order.reload).to be_paid
+    expect(scenario_order.metadata['issuance_failed']).to eq('unknown_kind')
+    expect(Rails.error).to have_received(:report)
+  end
 end

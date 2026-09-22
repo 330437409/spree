@@ -11,6 +11,8 @@ module Spree
 
     included do
       class_attribute :owner_associations, instance_accessor: false, default: []
+
+      validate :exactly_one_owner
     end
 
     class_methods do
@@ -59,6 +61,17 @@ module Spree
       self.class.owner_associations.each do |association|
         public_send(:"#{association}=", association == name ? record : nil)
       end
+    end
+
+    # Exactly one of the shapes the model lists, whatever they are: what is for
+    # nothing, or for two things at once, is not for anything.
+    #
+    # @return [void]
+    def exactly_one_owner
+      owners = self.class.owner_associations.filter_map { |association| public_send(association) }
+      return if owners.one?
+
+      errors.add(:base, :exactly_one_of_cart_or_order, message: Spree.t('errors.messages.exactly_one_of_cart_or_order'))
     end
   end
 end

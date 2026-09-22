@@ -40,7 +40,10 @@ module Spree
     validates :kind, presence: true
     validates :currency, presence: true
     validates :amount, numericality: { greater_than_or_equal_to: 0 }
-    validate :kind_must_be_registered
+    # Checked where the kind is chosen, not on every write: a gem that is
+    # uninstalled must not stop an existing purchase from recording that it was
+    # paid.
+    validate :kind_must_be_registered, on: :create
 
     # What the unpaid screens ask for: bought, not settled yet.
     scope :open_now, -> { with_status(:pending, :paying) }
@@ -70,13 +73,38 @@ module Spree
       payment_sessions.order(created_at: :desc).first
     end
 
-    # What the WeChat gateway asks of whatever a session is for: the amount it
-    # charges, the currency, the customer, and a number it can build a merchant
-    # order number from.
+    # The money contract core's payment code reads off whatever it is for —
+    # `Spree::Payment` asks an owner for its total, what it has already been
+    # paid, and whether store credit covers it, and the gateway asks for a
+    # number it can build a merchant order number from.
     #
+    # A purchase charges its own amount once and has no store-credit arithmetic:
+    # paying with a balance is an order's route, not a purchase's, so a
+    # scenario order is never covered by one.
+
+    # @return [BigDecimal]
+    def total
+      amount
+    end
+
     # @return [BigDecimal]
     def total_minus_store_credits
       amount
+    end
+
+    # @return [BigDecimal]
+    def payment_total
+      payments.completed.sum(:amount)
+    end
+
+    # @return [Boolean]
+    def covered_by_store_credit?
+      false
+    end
+
+    # @return [BigDecimal]
+    def available_store_credits
+      0
     end
 
     # @return [String]

@@ -25,7 +25,6 @@ module Spree
             primary_key: :external_id
 
     validates :external_id, :status, :currency, presence: true
-    validate :exactly_one_owner
     validates :external_id, uniqueness: { scope: [:order_id, :payment_method_id] }
     validates :amount, presence: true, numericality: { greater_than: 0 }
 
@@ -185,13 +184,6 @@ module Spree
     def skip_source_requirement(payment_record)
       payment_record.skip_source_requirement = true if payment_record&.source.blank?
       payment_record
-    end
-
-    def exactly_one_owner
-      owners = self.class.owner_associations.filter_map { |association| public_send(association) }
-      return if owners.one?
-
-      errors.add(:base, :exactly_one_of_cart_or_order, message: Spree.t('errors.messages.exactly_one_of_cart_or_order'))
     end
 
     def publish_processing_event
