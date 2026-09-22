@@ -12,13 +12,18 @@ module Spree
         prepend Spree::ServiceModule::Base
 
         # @return [Spree::ServiceModule::Result] value is the ledger entry
-        def call(account:, amount:, reason:, source: nil, idempotency_key: nil)
+        def call(account:, amount:, reason:, source: nil, idempotency_key: nil, reverses: nil,
+                 seller: nil, order: nil)
           whole = BigDecimal(amount.to_s)
           return failure(nil, :amount_must_be_whole) unless whole.frac.zero?
           return failure(nil, :amount_must_be_positive) unless whole.positive?
 
           amount = whole.to_i
-          return failure(nil, :not_a_spendable_balance) unless account.points?
+          # 成长值 is never *spent* — no mall redemption, no deduction — but a
+          # refund takes it back like anything else the order earned. That is a
+          # correction of the history rather than a spend, which is what the
+          # reversal pointer distinguishes.
+          return failure(nil, :not_a_spendable_balance) if !account.points? && reverses.nil?
           return failure(nil, :reason_missing) if reason.blank?
 
           key = idempotency_key.presence || key_for(source)
@@ -48,8 +53,13 @@ module Spree
               raise ActiveRecord::Rollback
             end
 
-            recorded = Spree::Ledger.record!(account: account, kind: reason_key, amount: -amount,
-                                             idempotency_key: key, source: source)
+            # A reversal moves the other way from what it undoes, and the
+            # ledger decides that sign: what this service passes is the
+            # movement's own magnitude when there is something to reverse.
+            recorded = Spree::Ledger.record!(account: account, kind: reason_key,
+                                             amount: reverses ? amount : -amount,
+                                             idempotency_key: key, source: source, reverses: reverses,
+                                             seller: seller, order: order)
 
             if recorded.failure?
               result = failure(recorded.value, recorded.error)

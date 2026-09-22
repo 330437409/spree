@@ -37,6 +37,9 @@ RSpec.configure do |config|
 
   config.before(:each) do
     Rails.cache.clear
+    # The default store is one row shared by the whole suite, so a preference an
+    # example sets would otherwise decide the next example's numbers.
+    @default_store&.update_columns(preferences: {})
     reset_spree_preferences
     I18n.locale = :en
   end
