@@ -11,13 +11,7 @@ module Spree
 
       # @return [Spree::ServiceModule::Result] value is how many rows moved
       def call(now: Time.current)
-        lapsed = Spree::ScenarioOrder.open_now.
-                  joins(:payment_sessions).
-                  where(spree_payment_sessions: { expires_at: ..now })
-
-        moved = Spree::ScenarioOrder.where(id: lapsed.select(:id)).update_all(
-          status: 'expired', updated_at: now
-        )
+        moved = Spree::ScenarioOrder.unsettled.lapsed.update_all(status: 'expired', updated_at: now)
 
         success(moved)
       end

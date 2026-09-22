@@ -6,9 +6,11 @@ module Spree
         # which is what the client passes on to WeChat, and when the attempt
         # lapses.
         #
-        # Deliberately not a `BaseSerializer`: the session's own id and
-        # timestamps belong to the payment machinery, and the client needs the
-        # launch parameters rather than the row.
+        # Deliberately not a `BaseSerializer`, and deliberately not inheriting
+        # the session serializer the cart's own endpoint uses: what a client
+        # needs here is the launch parameters the gateway handed back and when
+        # the attempt lapses, where that one publishes the payment machinery's
+        # own identifiers and totals.
         class ScenarioPaymentSessionSerializer
           include Alba::Resource
           include Typelizer::DSL

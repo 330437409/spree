@@ -36,4 +36,30 @@ RSpec.describe Spree::ScenarioOrder, type: :model do
   it 'has no session until one is opened' do
     expect(scenario_order.payment_session).to be_nil
   end
+
+  # What core's webhook workflow asks before it settles a session: an owner that
+  # cannot answer fails the settlement it was called for, and the notification
+  # is answered 200 either way.
+  it 'is complete from the moment it exists' do
+    expect(scenario_order).to be_completed
+  end
+
+  it 'has nothing to refresh when a payment of it is destroyed' do
+    expect { scenario_order.refresh_payment_total! }.not_to raise_error
+  end
+
+  # A settled purchase has handed over what was bought, and the row is the
+  # record of it; only an open one leaves the customer's list.
+  it 'stays in the history once it is paid, and can be removed while it is not' do
+    expect(scenario_order.can_be_deleted?).to be(true)
+
+    scenario_order.update!(status: 'paid')
+    expect(scenario_order.can_be_deleted?).to be(false)
+  end
+
+  it 'belongs to nobody in particular when asked for a nil customer' do
+    create(:scenario_order, store: store, customer: nil)
+
+    expect(described_class.for_customer(nil)).to be_empty
+  end
 end

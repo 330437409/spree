@@ -12,14 +12,7 @@ module Spree
     # own side table keyed to the grant
     # (docs/plans/6.1-grant-and-benefit-primitive.md).
     class Kind
-      # The name the row stores and a picker reads. Derived from the class the
-      # way {Spree::Base.api_type} derives it, so a kind that renames its class
-      # pins this rather than changing what every stored row means.
-      #
-      # @return [String]
-      def self.api_type
-        to_s.demodulize.underscore
-      end
+      include Spree::RegisteredKind
 
       # The key that makes granting idempotent, built by the kind because only
       # the kind knows what makes its grants one grant: a membership gift is
@@ -67,23 +60,6 @@ module Spree
         accept(grant.reload)
       end
 
-      # The answer a kind gives when it has consumed the grant itself, so a
-      # kind's own service and the default one speak the same shape.
-      #
-      # @param grant [Spree::Grant]
-      # @return [Spree::ServiceModule::Result]
-      def self.accept(grant)
-        Spree::ServiceModule::Result.new(true, grant)
-      end
-
-      # …and when it will not: the reason is what the caller is told.
-      #
-      # @param grant [Spree::Grant]
-      # @param reason [Symbol, String]
-      # @return [Spree::ServiceModule::Result]
-      def self.refuse(grant, reason)
-        Spree::ServiceModule::Result.new(false, grant, Spree::ServiceModule::ResultError.new(reason))
-      end
     end
   end
 end

@@ -444,13 +444,6 @@ module Spree
       has_invalid_status?
     end
 
-    # What this payment was made against — a cart mid-checkout, a single order,
-    # or the group a split checkout produced. Everything reading totals,
-    # currency or gateway options goes through here rather than through #order,
-    # which is nil on a grouped payment.
-    #
-    # @return [Spree::Cart, Spree::Order, Spree::OrderGroup, nil]
-
     # @return [Boolean] whether this payment covers several orders placed in one
     #   checkout, in which case its per-order shares are {#payment_splits}
     def grouped?
@@ -544,7 +537,9 @@ module Spree
     def recalculate_owner_totals
       return if owner.blank?
 
-      owner.refresh_payment_total!
+      # Optional like every other owner method core asks for: an owner that
+      # computes its totals from its payment rows has nothing to refresh.
+      owner.refresh_payment_total! if owner.respond_to?(:refresh_payment_total!)
       owner.update_statuses! if owner.is_a?(Spree::Order) && owner.completed?
     end
 

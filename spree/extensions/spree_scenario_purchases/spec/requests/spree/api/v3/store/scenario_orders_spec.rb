@@ -113,4 +113,14 @@ RSpec.describe 'the purchase itself', type: :request do
     expect(response).to have_http_status(:no_content)
     expect(Spree::ScenarioOrder.for_customer(user)).to be_empty
   end
+
+  # What was bought has been handed over, and the row is the record of it.
+  it 'keeps a settled purchase in the history' do
+    scenario_order.update!(status: 'paid')
+
+    delete "/api/v3/store/scenario_orders/#{scenario_order.prefixed_id}", headers: headers
+
+    expect(response).not_to have_http_status(:no_content)
+    expect(Spree::ScenarioOrder.for_customer(user)).to contain_exactly(scenario_order)
+  end
 end

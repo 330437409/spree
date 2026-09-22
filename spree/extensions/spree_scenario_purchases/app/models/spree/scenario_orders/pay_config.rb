@@ -20,9 +20,8 @@ module Spree
       #
       # @return [Array<Hash>]
       def channels
-        SpreeScenarioPurchases::CHANNELS.filter_map do |channel, gateway_class|
-          next if gateway_class.nil?
-          next if store.nil? || store.payment_methods.active.find_by(type: gateway_class).nil?
+        SpreeScenarioPurchases::CHANNELS.filter_map do |channel, _gateway_class|
+          next if SpreeScenarioPurchases.payment_method_for(store, channel).nil?
 
           { 'channel' => channel }
         end

@@ -15,7 +15,7 @@ module Spree
 
               return render_result_error(result) unless result.success?
 
-              render json: serialize_order(result.value)
+              render json: serialize_resource(result.value)
             end
 
             protected
@@ -33,10 +33,6 @@ module Spree
             def set_scenario_order
               @scenario_order = Spree::ScenarioOrder.for_customer(current_user).
                                 find_by_prefix_id!(params[:scenario_order_id])
-            end
-
-            def serialize_order(order)
-              serializer_class.new(order, params: serializer_params).to_h
             end
           end
         end

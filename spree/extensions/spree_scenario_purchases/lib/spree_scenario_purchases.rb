@@ -30,4 +30,19 @@ module SpreeScenarioPurchases
     'wechat' => 'SpreeWechatPay::Gateway',
     'chinaums' => nil
   }.freeze
+
+  # The gateway that takes a channel's money, if the store has one active. One
+  # resolution point, so what `pay_config` offers and what a purchase is allowed
+  # to use can never disagree: an unserved channel — ChinaUMS today — is a
+  # column value with no method behind it.
+  #
+  # @param store [Spree::Store, nil]
+  # @param channel [String]
+  # @return [Spree::PaymentMethod, nil]
+  def self.payment_method_for(store, channel)
+    class_name = CHANNELS[channel]
+    return nil if class_name.nil? || store.nil?
+
+    store.payment_methods.active.find_by(type: class_name)
+  end
 end

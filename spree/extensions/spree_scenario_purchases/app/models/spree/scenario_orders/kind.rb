@@ -11,14 +11,7 @@ module Spree
     # nothing, because each belongs to the plan that owns the entitlement
     # (docs/plans/6.1-scenario-purchases.md).
     class Kind
-      # The name the row stores and a picker reads. Derived from the class the
-      # way {Spree::Base.api_type} derives it, so a kind that renames its class
-      # pins this rather than changing what every stored row means.
-      #
-      # @return [String]
-      def self.api_type
-        to_s.demodulize.underscore
-      end
+      include Spree::RegisteredKind
 
       # @return [String] the name an operator and a client read
       def self.human_name
@@ -72,24 +65,6 @@ module Spree
       # @return [Spree::ServiceModule::Result]
       def self.reverse!(_scenario_order)
         raise NotImplementedError
-      end
-
-      # The answer a kind gives when it has done what it was asked, so a kind's
-      # own service and the frame speak the same shape.
-      #
-      # @param scenario_order [Spree::ScenarioOrder]
-      # @return [Spree::ServiceModule::Result]
-      def self.accept(scenario_order)
-        Spree::ServiceModule::Result.new(true, scenario_order)
-      end
-
-      # …and when it will not: the reason is what the caller is told.
-      #
-      # @param scenario_order [Spree::ScenarioOrder]
-      # @param reason [Symbol, String]
-      # @return [Spree::ServiceModule::Result]
-      def self.refuse(scenario_order, reason)
-        Spree::ServiceModule::Result.new(false, scenario_order, Spree::ServiceModule::ResultError.new(reason))
       end
     end
   end

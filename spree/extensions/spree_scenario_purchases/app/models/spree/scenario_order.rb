@@ -37,6 +37,13 @@ module Spree
     has_many :payment_sessions, class_name: 'Spree::PaymentSession', dependent: nil
     has_many :payments, class_name: 'Spree::Payment', dependent: nil
 
+    # The attempt being paid through: a purchase can be attempted more than
+    # once, and the client only ever shows the current one. Declared as an
+    # association rather than a method so a page of purchases loads its
+    # sessions in one query.
+    has_one :payment_session, -> { order(created_at: :desc) }, class_name: 'Spree::PaymentSession',
+                              dependent: nil
+
     validates :kind, presence: true
     validates :currency, presence: true
     validates :amount, numericality: { greater_than_or_equal_to: 0 }
@@ -45,32 +52,48 @@ module Spree
     # paid.
     validate :kind_must_be_registered, on: :create
 
-    # What the unpaid screens ask for: bought, not settled yet.
-    scope :open_now, -> { with_status(:pending, :paying) }
-    scope :for_customer, ->(customer) { where(customer_id: customer&.id) }
+    # Bought and not settled yet. The sweep turns these into `expired` once
+    # their window passes; the window itself is the session's own `expires_at`,
+    # which is why `open_now` also excludes them below.
+    scope :unsettled, -> { with_status(:pending, :paying) }
+
+    # Past the window its session gave it. Read rather than copied: a purchase
+    # that lapsed a minute ago is already here, whether or not the sweep has run.
+    scope :lapsed, lambda {
+      where(
+        id: Spree::PaymentSession.where(expires_at: ..Time.current).where.not(scenario_order_id: nil).
+            select(:scenario_order_id)
+      )
+    }
+
+    # What the unpaid screens ask for: bought, not settled, and not past its
+    # window — so what a customer is shown never depends on a job having run.
+    scope :open_now, -> { unsettled.where.not(id: lapsed.select(:id)) }
+    scope :for_customer, lambda { |customer|
+      # A purchase with no customer is one made before there was an account, and
+      # it belongs to whoever later claims it rather than to every guest.
+      customer.nil? ? none : where(customer_id: customer.id)
+    }
 
     # @return [Array<Class>] the kinds a purchase may be
     def self.available_kinds
       SpreeScenarioPurchases.scenario_order_kinds
     end
 
-    # @param kind [String, Symbol, Class] a kind, its `api_type`, or its class
+    # Registered by `api_type` rather than through `registers_subclasses_via`,
+    # because a kind is not a subclass of this model: it is a plain class the
+    # plan that owns the entitlement writes, and what it is registered in is
+    # this frame's own list.
+    #
+    # @param kind [String, Symbol] a kind or its `api_type`
     # @return [Class, nil]
     def self.kind_for(kind)
-      return kind if kind.is_a?(Class)
-
       available_kinds.find { |candidate| candidate.api_type == kind.to_s }
     end
 
     # @return [Class, nil] the registered kind this row names
     def kind_class
       self.class.kind_for(kind)
-    end
-
-    # @return [Spree::PaymentSession, nil] the session this purchase is paid
-    #   through, whichever attempt is the current one
-    def payment_session
-      payment_sessions.order(created_at: :desc).first
     end
 
     # The money contract core's payment code reads off whatever it is for —
@@ -110,6 +133,34 @@ module Spree
     # @return [String]
     def number
       prefixed_id
+    end
+
+    # Whether whatever this is for has finished the part core would otherwise
+    # drive. A purchase has no checkout to complete: paying for it is the whole
+    # of it, so it is complete from the moment it exists. The webhook workflow
+    # asks this before it settles a session, and an owner that cannot answer
+    # fails the settlement it was called for.
+    #
+    # @return [Boolean]
+    def completed?
+      true
+    end
+
+    # A settled purchase stays in the customer's history: what was bought has
+    # been handed over, and the row is the record of it.
+    #
+    # @return [Boolean]
+    def can_be_deleted?
+      !paid?
+    end
+
+    # Called by core after a payment of this owner is destroyed. A purchase
+    # computes what it has been paid from its own payment rows rather than
+    # caching a total, so there is nothing to refresh.
+    #
+    # @return [void]
+    def refresh_payment_total!
+      payment_total
     end
 
     private

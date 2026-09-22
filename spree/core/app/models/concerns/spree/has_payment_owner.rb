@@ -38,13 +38,17 @@ module Spree
 
     # Whatever this is for, in the order the model lists its shapes: an order
     # before the cart it was built from, core's own before a registered one.
+    # Everything reading totals, currency or gateway options goes through here
+    # rather than through `#order`, which is nil on a grouped payment.
     #
     # @return [Object, nil]
     def owner
-      self.class.owner_associations.filter_map { |association| public_send(association) }.first
+      owners.first
     end
 
-    # Assigns the owner and clears the shapes it is not.
+    # Assigns the owning record to the matching association and clears the
+    # shapes it is not, so a gateway stays owner-agnostic: it hands over
+    # whatever it was given and this decides which column that is.
     #
     # @param record [Object, nil]
     # @return [void]
@@ -68,10 +72,16 @@ module Spree
     #
     # @return [void]
     def exactly_one_owner
-      owners = self.class.owner_associations.filter_map { |association| public_send(association) }
       return if owners.one?
 
       errors.add(:base, :exactly_one_of_cart_or_order, message: Spree.t('errors.messages.exactly_one_of_cart_or_order'))
+    end
+
+    private
+
+    # @return [Array<Object>] the owners that are set, in the model's own order
+    def owners
+      self.class.owner_associations.filter_map { |association| public_send(association) }
     end
   end
 end

@@ -17,13 +17,22 @@ module Spree
 
       # @return [Spree::ServiceModule::Result] value is the scenario order
       def call(scenario_order:)
-        return failure(scenario_order, :already_settled) if scenario_order.paid?
+        return failure(scenario_order, :already_settled) unless claim(scenario_order)
 
-        scenario_order.update!(status: 'paid')
-        issue(scenario_order)
+        issue(scenario_order.reload)
       end
 
       private
+
+      # Marks the purchase paid, and only if it was still waiting to be: a
+      # cancel or a lapse that got there first, or a second settlement arriving
+      # beside the first, loses the race rather than taking the row.
+      #
+      # @return [Boolean]
+      def claim(scenario_order)
+        Spree::ScenarioOrder.where(id: scenario_order.id, status: %w[pending paying]).
+          update_all(status: 'paid', updated_at: Time.current) == 1
+      end
 
       # @return [Spree::ServiceModule::Result]
       def issue(scenario_order)
@@ -31,7 +40,7 @@ module Spree
         return record_failure(scenario_order, :unknown_kind) if kind_class.nil?
 
         issued = kind_class.issue!(scenario_order)
-        return record_failure(scenario_order, issued.error) if issued.respond_to?(:failure?) && issued.failure?
+        return record_failure(scenario_order, issued.error) if issued.failure?
 
         success(scenario_order.reload)
       end

@@ -21,7 +21,7 @@ module Spree
               kind: params[:kind],
               store: current_store,
               customer: current_user,
-              channel: params[:channel].presence || 'wechat',
+              channel: params[:channel].presence,
               context: context,
               external_data: external_data
             }

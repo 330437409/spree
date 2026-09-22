@@ -159,8 +159,6 @@ module Spree
       end
     end
 
-    # @return [Spree::Cart, Spree::Order, nil]
-
     # Bridge for legacy callers assigning +current_order+ (now a Spree::Cart)
     # to the order association — routes carts to the cart FK instead.
     def order=(record)
@@ -171,11 +169,6 @@ module Spree
         super
       end
     end
-
-    # Assigns the owning record to the matching association (cart or order),
-    # clearing the other one. Lets gateways stay owner-agnostic.
-    #
-    # @param record [Spree::Cart, Spree::Order]
 
     private
 

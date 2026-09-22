@@ -10,8 +10,9 @@ module Spree
       prepend Spree::ServiceModule::Base
 
       # @return [Spree::ServiceModule::Result] value is the scenario order
-      def call(kind:, store: nil, customer: nil, channel: 'wechat', context: {}, external_data: {})
+      def call(kind:, store: nil, customer: nil, channel: nil, context: {}, external_data: {})
         store ||= Spree::Current.store
+        channel = channel.presence || 'wechat'
         kind_class = Spree::ScenarioOrder.kind_for(kind)
         return failure(nil, :unknown_kind) if kind_class.nil?
         return failure(nil, :not_eligible) unless kind_class.eligible?(customer)
@@ -19,7 +20,7 @@ module Spree
         price = kind_class.price(context)
         return failure(nil, :not_for_sale) if price.nil? || BigDecimal(price.to_s) <= 0
 
-        payment_method = payment_method_for(store, channel)
+        payment_method = SpreeScenarioPurchases.payment_method_for(store, channel)
         return failure(nil, :channel_unavailable) if payment_method.nil?
 
         buy(kind_class: kind_class, store: store, customer: customer, channel: channel,
@@ -45,7 +46,7 @@ module Spree
             kind: kind_class.api_type,
             payment_channel: channel,
             amount: price,
-            currency: store.default_currency,
+            currency: Spree::Current.currency.presence || store.default_currency,
             payload: context
           )
 
@@ -63,18 +64,6 @@ module Spree
         end
 
         result
-      end
-
-      # The gateway that takes this channel's money, if the store has one
-      # active. An unserved channel is a column value with no method behind it
-      # — ChinaUMS today — and is refused rather than guessed at.
-      #
-      # @return [Spree::PaymentMethod, nil]
-      def payment_method_for(store, channel)
-        class_name = SpreeScenarioPurchases::CHANNELS[channel]
-        return nil if class_name.nil?
-
-        store.payment_methods.active.find_by(type: class_name)
       end
     end
   end
