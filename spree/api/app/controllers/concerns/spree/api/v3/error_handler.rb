@@ -193,6 +193,11 @@ module Spree
 
         # Convenience method for service result errors
         def render_service_error(error, code: ERROR_CODES[:processing_error], status: :unprocessable_content)
+          # A service refuses with a symbol wrapped in its result: unwrap it
+          # here rather than at each caller, so a reason reaches the client in
+          # the customer's words instead of as its own name.
+          error = error.value if error.respond_to?(:value)
+
           if error.is_a?(ActiveModel::Errors)
             render_validation_error(error, code: code)
           elsif error.is_a?(String)
