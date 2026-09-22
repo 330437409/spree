@@ -15,21 +15,28 @@ module Spree
         #   still moves the balance — the read then shows the key itself
         # @return [Spree::ServiceModule::Result] value is the lot
         def call(account:, amount:, reason:, idempotency_key:, source: nil, expires_at: nil, granted_at: nil)
-          amount = amount.to_i
-          return failure(nil, :amount_must_be_positive) unless amount.positive?
+          whole = BigDecimal(amount.to_s)
+          return failure(nil, :amount_must_be_whole) unless whole.frac.zero?
+          return failure(nil, :amount_must_be_positive) unless whole.positive?
+
+          amount = whole.to_i
           return failure(nil, :key_missing) if idempotency_key.blank?
           return failure(nil, :reason_missing) if reason.blank?
           # 成长值 never expires: a date on it is a caller that has confused
           # the two balances rather than a fact to keep.
           return failure(nil, :growth_value_does_not_expire) if expires_at.present? && !account.points?
 
-          reason_key = reason.respond_to?(:key) ? reason.key : reason.to_s
+          reason_key = Spree::PointReason.key_for(reason)
           reason_record = reason.is_a?(Spree::PointReason) ? reason : Spree::PointReason.find_by(store: account.store, key: reason_key)
 
           lot = nil
           refused = nil
 
-          account.with_lock do
+          # `requires_new` is what makes the refusals below real: a caller that
+          # already holds a transaction — the order's own, a workflow's — would
+          # otherwise join it, and `ActiveRecord::Rollback` in a joined
+          # transaction undoes nothing because no savepoint was taken.
+          account.with_lock(requires_new: true) do
             # A retry is answered, not credited again: this key already wrote a
             # lot, and the total it bumped is not bumped a second time.
             if (existing = lot_for(account, idempotency_key))

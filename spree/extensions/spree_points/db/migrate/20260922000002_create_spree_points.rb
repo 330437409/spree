@@ -27,8 +27,6 @@ class CreateSpreePoints < ActiveRecord::Migration[8.1]
     create_table :spree_point_reasons do |t|
       t.references :store, null: false, index: false
       t.string  :key, null: false
-      # Null means every kind of balance; otherwise the one it explains.
-      t.string  :balance_kind
       t.string  :label, null: false
       t.integer :position, null: false, default: 0
       t.timestamps
@@ -52,8 +50,8 @@ class CreateSpreePoints < ActiveRecord::Migration[8.1]
 
     add_index :spree_point_grants, :grant_id, unique: true,
               name: 'index_spree_point_grants_on_grant'
-    add_index :spree_point_grants, [:account_id, :remaining],
-              name: 'index_spree_point_grants_on_account_and_remaining'
+    add_index :spree_point_grants, :account_id,
+              name: 'index_spree_point_grants_on_account'
 
     # Which lots a debit drew from: the audit trail, and the basis of a
     # reversal. Not the reason `remaining` is knowable — the lot keeps that.

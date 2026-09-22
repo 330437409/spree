@@ -21,10 +21,6 @@ module Spree
     validates :grant_id, uniqueness: true
     validate :remaining_must_fit_inside_the_lot
 
-    delegate :expires_at, :granted_at, :source, :customer, :store, to: :grant, allow_nil: true
-
-    scope :usable, -> { joins(:grant).merge(Spree::Grant.usable) }
-
     # Soonest-expiry-first, because a lot that expires tomorrow is worth more
     # to the customer today than one that never expires. `NULLS LAST` is not
     # portable — MySQL has no such clause and sorts nulls first — so the

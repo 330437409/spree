@@ -30,11 +30,30 @@ module Spree
                               dependent: :restrict_with_error
 
     validates :kind, presence: true, inclusion: { in: KINDS }
-    validates :kind, uniqueness: { scope: [:store_id, :customer_id, *spree_base_uniqueness_scope] }
+    validates_store_uniqueness :kind, scope: [:customer_id]
     validates :lifetime_earned, numericality: { only_integer: true }
 
-    scope :points, -> { where(kind: POINTS) }
-    scope :growth_value, -> { where(kind: GROWTH_VALUE) }
+    # The row for a balance, written on first use.
+    #
+    # Looked up first, and a lost race answered with the row that won: the
+    # first earn for a new customer can arrive twice at once, and the unique
+    # index would otherwise raise inside the loser's own transaction. The
+    # insert takes a savepoint for the same reason the ledger's does — a
+    # caller's transaction must survive the collision.
+    #
+    # @param store [Spree::Store]
+    # @param customer [Object]
+    # @param kind [String]
+    # @return [Spree::PointAccount]
+    def self.for(store:, customer:, kind:)
+      kind = kind.to_s
+      existing = find_by(store: store, customer: customer, kind: kind)
+      return existing if existing
+
+      transaction(requires_new: true) { create!(store: store, customer: customer, kind: kind) }
+    rescue ActiveRecord::RecordNotUnique
+      find_by!(store: store, customer: customer, kind: kind)
+    end
 
     # @return [Boolean] whether this balance is the spendable one
     def points?
@@ -69,18 +88,20 @@ module Spree
       usable_lots.sum(:remaining)
     end
 
-    # @return [Integer] what is left, and about to lapse, inside the window
-    def expiring_total(within: nil)
-      return 0 if new_record?
+    # What the balance read asks in one query rather than two: how much of the
+    # balance is about to lapse, and the date the next of it does.
+    #
+    # @return [Array(Integer, Time, nil)]
+    def expiring_summary(within: nil)
+      return [0, nil] if new_record?
 
-      expiring_lots(within: within).sum(:remaining)
-    end
+      lots = expiring_lots(within: within)
+      total, soonest = lots.pick(lots.arel_table[:remaining].sum,
+                                 Spree::Grant.arel_table[:expires_at].minimum)
 
-    # @return [Time, nil] the date the next of them lapses
-    def next_expiry(within: nil)
-      return nil if new_record?
-
-      expiring_lots(within: within).minimum('spree_grants.expires_at')
+      # `pick` hands back the raw column for an aggregate, so the date is cast
+      # here rather than arriving as the driver's string.
+      [total.to_i, soonest && Spree::Grant.type_for_attribute(:expires_at).cast(soonest)]
     end
 
     # @return [ActiveRecord::Relation] the lots a spend may draw on
@@ -97,9 +118,7 @@ module Spree
     #
     # @return [Time]
     def self.expiry_warning_window
-      days = Spree::Current.store&.preferred_points_expiry_warning_days.to_i
-
-      days.positive? ? days.days : 30.days
+      (Spree::Current.store&.preferred_points_expiry_warning_days || 30).days
     end
   end
 end

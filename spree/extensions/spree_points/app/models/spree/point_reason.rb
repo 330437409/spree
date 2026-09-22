@@ -4,9 +4,26 @@ module Spree
   # operator action — which is also how the review extension earns without
   # this gem enumerating a reason for it.
   class PointReason < Spree.base_class
-    # Read once per request: a page of movements needs one label each, and the
-    # list is operator data that changes between deploys rather than between
-    # rows.
+    include Spree::SingleStoreResource
+
+    validates :key, presence: true
+    validates_store_uniqueness :key
+    validates :label, presence: true
+
+    scope :ordered, -> { order(:position, :id) }
+
+    # The key a movement is written under: a reason in hand, or the string a
+    # producer passed. The rule lives here so both services read it once.
+    #
+    # @param reason [String, Spree::PointReason]
+    # @return [String]
+    def self.key_for(reason)
+      reason.respond_to?(:key) ? reason.key : reason.to_s
+    end
+
+    # The label a page of movements shows, read once for the page rather than
+    # once per row — the list is operator data that changes between deploys
+    # rather than between rows.
     #
     # @param store [Spree::Store]
     # @param key [String]
@@ -15,18 +32,11 @@ module Spree
     def self.label_for(store, key)
       return key.to_s if store.nil? || key.blank?
 
-      labels = RequestStore.store[:point_reason_labels] ||= {}
-      labels[store.id] ||= for_store(store).pluck(:key, :label).to_h
-      labels[store.id][key.to_s] || key.to_s
+      labels = Rails.cache.fetch("spree_points/reason_labels/#{store.id}", expires_in: 1.minute) do
+        for_store(store).pluck(:key, :label).to_h
+      end
+
+      labels[key.to_s] || key.to_s
     end
-
-    include Spree::SingleStoreResource
-    include Spree::Metadata
-
-    validates :key, presence: true, uniqueness: { scope: [:store_id, *spree_base_uniqueness_scope] }
-    validates :label, presence: true
-
-    scope :for_kind, ->(kind) { where(balance_kind: [nil, kind.to_s]) }
-    scope :ordered, -> { order(:position, :id) }
   end
 end

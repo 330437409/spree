@@ -36,6 +36,7 @@ RSpec.configure do |config|
   end
 
   config.before(:each) do
+    Rails.cache.clear
     reset_spree_preferences
     I18n.locale = :en
   end

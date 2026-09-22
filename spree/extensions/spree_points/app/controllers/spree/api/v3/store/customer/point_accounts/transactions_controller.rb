@@ -27,7 +27,7 @@ module Spree
               end
 
               def scope
-                entries = Spree::LedgerEntry.where(account: @account, store: current_store)
+                entries = super.for_account(@account)
 
                 case params[:filter].presence
                 when 'income' then entries.where(Spree::LedgerEntry.arel_table[:amount].gt(0))

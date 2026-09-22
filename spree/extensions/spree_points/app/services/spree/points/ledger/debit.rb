@@ -13,18 +13,25 @@ module Spree
 
         # @return [Spree::ServiceModule::Result] value is the ledger entry
         def call(account:, amount:, reason:, source: nil, idempotency_key: nil)
-          amount = amount.to_i
-          return failure(nil, :amount_must_be_positive) unless amount.positive?
+          whole = BigDecimal(amount.to_s)
+          return failure(nil, :amount_must_be_whole) unless whole.frac.zero?
+          return failure(nil, :amount_must_be_positive) unless whole.positive?
+
+          amount = whole.to_i
           return failure(nil, :not_a_spendable_balance) unless account.points?
           return failure(nil, :reason_missing) if reason.blank?
 
           key = idempotency_key.presence || key_for(source)
           return failure(nil, :key_missing) if key.blank?
 
-          reason_key = reason.respond_to?(:key) ? reason.key : reason.to_s
+          reason_key = Spree::PointReason.key_for(reason)
           result = nil
 
-          account.with_lock do
+          # `requires_new` is what makes the refusals below real: a caller that
+          # already holds a transaction — the order's own, a workflow's — would
+          # otherwise join it, and `ActiveRecord::Rollback` in a joined
+          # transaction undoes nothing because no savepoint was taken.
+          account.with_lock(requires_new: true) do
             # A retry is answered, not spent again: these lots have already
             # been walked once under this key.
             existing = Spree::LedgerEntry.find_by(account: account, idempotency_key: key)
@@ -53,7 +60,7 @@ module Spree
             result = success(recorded.value)
           end
 
-          result || failure(nil, :not_recorded)
+          result
         end
 
         private

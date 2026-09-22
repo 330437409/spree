@@ -75,6 +75,30 @@ RSpec.describe Spree::Points::Ledger do
       expect(credit!(amount: 0).error.value).to eq(:amount_must_be_positive)
     end
 
+    # Points are an integer count: a fractional one is a producer that has not
+    # rounded, not a balance of 1.5 points.
+    it 'refuses a fractional amount rather than truncating it' do
+      result = credit!(amount: BigDecimal('1.5'))
+
+      expect(result).to be_failure
+      expect(result.error.value).to eq(:amount_must_be_whole)
+      expect(account.balance).to eq(0)
+    end
+
+    # The refusals are real inside a caller's own transaction: without the
+    # savepoint the entry written before the refusal would stay behind.
+    it 'leaves nothing behind when it refuses inside a caller’s transaction' do
+      growth = create(:point_account, store: store, customer: customer, kind: 'growth_value')
+
+      Spree::PointAccount.transaction do
+        described_class.credit!(account: growth, amount: 10, reason: reason,
+                                idempotency_key: 'vip:inside', expires_at: 1.day.from_now)
+      end
+
+      expect(Spree::LedgerEntry.for_account(growth).count).to eq(0)
+      expect(Spree::PointGrant.where(account: growth).count).to eq(0)
+    end
+
     it 'refuses a movement with no key' do
       expect(credit!(idempotency_key: nil).error.value).to eq(:key_missing)
     end
@@ -127,6 +151,21 @@ RSpec.describe Spree::Points::Ledger do
       expect(first).to be_success
       expect(second.value.id).to eq(first.value.id)
       expect(sooner.reload.remaining).to eq(50)
+    end
+
+    # A lot that never expires is spent last: there is no hurry about it. The
+    # ordering column exists because MySQL sorts nulls first on ASC, so the
+    # obvious `order(:expires_at)` would spend it first and pass on the other
+    # two engines.
+    it 'spends a lot that never expires after one that does' do
+      never = described_class.credit!(account: account, amount: 500, reason: reason,
+                                      idempotency_key: 'lot:never').value
+
+      described_class.debit!(account: account, amount: 70, reason: reason, idempotency_key: 'spend:6')
+
+      expect(sooner.reload.remaining).to eq(0)
+      expect(later.reload.remaining).to eq(50)
+      expect(never.reload.remaining).to eq(500)
     end
 
     it 'refuses a spend with no source and no key' do

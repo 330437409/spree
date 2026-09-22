@@ -14,7 +14,7 @@ module Spree
 
           attributes :kind
 
-          attribute(:label) { |entry| Spree::PointReason.label_for(entry.store, entry.kind) }
+          attribute(:label) { |entry| Spree::PointReason.label_for(current_store, entry.kind) }
           # `decimal_string` for both amounts: a decimal column back as
           # BigDecimal renders 50 as "0.5e2".
           attribute(:amount) { |entry| decimal_string(entry.amount) }

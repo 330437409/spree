@@ -10,6 +10,14 @@ RSpec.describe Spree::PointAccount, type: :model do
       expect(build(:point_account, store: store, customer: customer, kind: 'wine_value')).not_to be_valid
     end
 
+    it 'writes the row on first use, twice at once safe' do
+      first = described_class.for(store: store, customer: customer, kind: 'points')
+      second = described_class.for(store: store, customer: customer, kind: 'points')
+
+      expect(second.id).to eq(first.id)
+      expect(described_class.where(store: store, customer: customer, kind: 'points').count).to eq(1)
+    end
+
     it 'is one row per customer per balance' do
       account
 
@@ -27,8 +35,7 @@ RSpec.describe Spree::PointAccount, type: :model do
       fresh = build(:point_account, store: store, customer: customer, kind: 'growth_value')
 
       expect(fresh.balance).to eq(0)
-      expect(fresh.expiring_total).to eq(0)
-      expect(fresh.next_expiry).to be_nil
+      expect(fresh.expiring_summary).to eq([0, nil])
     end
   end
 
@@ -41,8 +48,7 @@ RSpec.describe Spree::PointAccount, type: :model do
     end
 
     it 'leaves out a lot that already lapsed' do
-      lot = create(:point_grant, account: account, amount: 100, remaining: 100)
-      lot.grant.update_columns(expires_at: 1.day.ago)
+      create(:point_grant, account: account, amount: 100, remaining: 100, expires_at: 1.day.ago)
 
       expect(account.balance).to eq(0)
     end
@@ -57,21 +63,20 @@ RSpec.describe Spree::PointAccount, type: :model do
 
   describe 'what is about to lapse' do
     it 'counts only what lapses inside the window, and names the soonest date' do
-      soon = create(:point_grant, account: account, amount: 30, remaining: 30)
-      soon.grant.update_columns(expires_at: 3.days.from_now)
-      later = create(:point_grant, account: account, amount: 70, remaining: 70)
-      later.grant.update_columns(expires_at: 90.days.from_now)
+      create(:point_grant, account: account, amount: 30, remaining: 30, expires_at: 3.days.from_now)
+      create(:point_grant, account: account, amount: 70, remaining: 70, expires_at: 90.days.from_now)
 
-      expect(account.expiring_total).to eq(30)
-      expect(account.next_expiry).to be_within(1.minute).of(3.days.from_now)
+      total, soonest = account.expiring_summary
+
+      expect(total).to eq(30)
+      expect(soonest).to be_within(1.minute).of(3.days.from_now)
     end
 
     it 'follows the store’s window' do
-      lot = create(:point_grant, account: account, amount: 30, remaining: 30)
-      lot.grant.update_columns(expires_at: 10.days.from_now)
+      create(:point_grant, account: account, amount: 30, remaining: 30, expires_at: 10.days.from_now)
 
-      expect(account.expiring_total).to eq(30)
-      expect(account.expiring_total(within: 5.days)).to eq(0)
+      expect(account.expiring_summary.first).to eq(30)
+      expect(account.expiring_summary(within: 5.days).first).to eq(0)
     end
 
     # 成长值 has no dates at all: the credit service refuses one, so the read
@@ -80,8 +85,7 @@ RSpec.describe Spree::PointAccount, type: :model do
       growth = create(:point_account, store: store, customer: customer, kind: 'growth_value')
       create(:point_grant, account: growth, amount: 30, remaining: 30)
 
-      expect(growth.expiring_total).to eq(0)
-      expect(growth.next_expiry).to be_nil
+      expect(growth.expiring_summary).to eq([0, nil])
       expect(growth.balance).to eq(30)
     end
   end
