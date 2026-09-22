@@ -1,0 +1,6 @@
+---
+en:
+  spree:
+    errors:
+      messages:
+        point_lot_overdrawn: cannot leave more in a lot than it was granted with
