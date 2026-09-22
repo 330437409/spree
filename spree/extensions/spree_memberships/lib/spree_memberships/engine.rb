@@ -34,6 +34,14 @@ module SpreeMemberships
         SpreeMemberships.membership_rights.reject! { |registered| registered.name == kind.name }
         SpreeMemberships.membership_rights << kind
       end
+
+      # The member price is the platform's promise, so the platform funds it:
+      # the earning carries the seller's shortfall against the shelf price as a
+      # subsidy beside it. Registered by class name, which is what makes this
+      # survive a reload — and `Spree.hooks.validate!` fails the boot if the
+      # workflow ever stops declaring the hook.
+      Spree.hooks.register('seller_transfers.create.funded_discounts',
+                           'Spree::Memberships::FundMemberDiscount')
     end
   end
 end

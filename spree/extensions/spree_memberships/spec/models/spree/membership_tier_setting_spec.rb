@@ -49,4 +49,48 @@ RSpec.describe Spree::MembershipTierSetting, type: :model do
     tier.update!(threshold: nil)
     expect(tier.qualifies?(1_000)).to be(false)
   end
+
+  # The member price is a catalogue the tier owns and an owned list inside it;
+  # the tier row holds the link and answers what the price is.
+  describe 'the member price' do
+    it 'stands a catalogue up and reports the percentage' do
+      tier.update!(member_discount_percentage: 10)
+
+      expect(tier.reload.catalog).to be_present
+      expect(tier.member_discount_percentage).to eq(10)
+    end
+
+    it 'moves the price without standing up a second catalogue' do
+      tier.update!(member_discount_percentage: 10)
+      catalog = tier.catalog
+
+      tier.update!(member_discount_percentage: 20)
+
+      expect(tier.reload.catalog_id).to eq(catalog.id)
+      expect(tier.member_discount_percentage).to eq(20)
+    end
+
+    it 'reports none while the tier grants none' do
+      expect(tier.member_discount_percentage).to be_nil
+    end
+
+    it 'takes the price out of effect on zero, and reports none' do
+      tier.update!(member_discount_percentage: 10)
+      tier.update!(member_discount_percentage: 0)
+
+      expect(tier.reload.member_discount_percentage).to be_nil
+      expect(tier.catalog).not_to be_active
+    end
+
+    # A retired tier leaves its members the group they were in, so a catalogue
+    # left in effect would outlive the promise that set it up.
+    it 'stops pricing when the tier is retired' do
+      tier.update!(member_discount_percentage: 10)
+      catalog = tier.catalog
+
+      tier.destroy
+
+      expect(catalog.reload).not_to be_active
+    end
+  end
 end

@@ -29,16 +29,7 @@ module Spree
       def tier
         return @tier if defined?(@tier)
 
-        # The highest rung they hold, not the lowest: one writer keeps anybody
-        # on one tier, so two is a setup error, and the honest reading of it is
-        # the better tier rather than the one priced by accident.
-        @tier = if customer.nil?
-                  nil
-                else
-                  Spree::MembershipTierSetting.for_store(store).
-                    where(customer_group_id: customer.customer_groups.select(:id)).
-                    reorder(rank: :desc).first
-                end
+        @tier = Spree::MembershipTierSetting.for_store(store).for_customer(customer)
       end
 
       # Every live right of this store's tiers, in the ladder's own order: the

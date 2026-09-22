@@ -3,6 +3,9 @@ en:
     errors:
       messages:
         not_a_registered_membership_right: is not a kind of right this deployment has
+    memberships:
+      tier_catalog_name: "%{name} — member price"
+      tier_price_list_name: "%{name} — member price list"
     membership_right_types:
       member_price:
         name: Member price
