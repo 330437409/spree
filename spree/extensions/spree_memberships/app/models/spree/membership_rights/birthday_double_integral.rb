@@ -1,0 +1,16 @@
+module Spree
+  module MembershipRights
+    # Double points on the customer's birthday, for the membership plan's
+    # multiplier seam (docs/plans/6.1-points-and-growth-value.md). The day itself
+    # is the customer's own `birthday` column, and the grant that spends this is
+    # an occasion of this kind.
+    class BirthdayDoubleIntegral < Spree::MembershipRight
+      preference :multiplier, :integer, default: 2
+
+      # @return [Integer] what the day's earnings are multiplied by
+      def multiplier
+        preferred_multiplier.to_i
+      end
+    end
+  end
+end
