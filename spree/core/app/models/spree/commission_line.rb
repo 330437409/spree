@@ -74,6 +74,12 @@ module Spree
       line_item || fulfillment
     end
 
+    # @return [Boolean] whether the fee was a share of the sale rather than a
+    #   flat amount — the one kind that moves when the price does
+    def percentage?
+      kind == 'percentage'
+    end
+
     private
 
     def exactly_one_subject

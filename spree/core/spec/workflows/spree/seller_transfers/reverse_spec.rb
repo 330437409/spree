@@ -179,6 +179,81 @@ RSpec.describe Spree::SellerTransfers::Reverse do
     end
   end
 
+  # A subsidy is the platform's own money — added because the platform funded
+  # part of the price — so a refunded sale must not leave it with the seller.
+  describe 'when the order carried a subsidy' do
+    let(:subsidy) { Spree::SellerTransfer.subsidies.last }
+
+    before do
+      earn(80)
+      create(:seller_transfer, :subsidy, :completed, seller: seller, order: order, amount: 20)
+    end
+
+    it 'reverses it beside the earning' do
+      described_class.call(order: order, amount: 30)
+
+      expect(subsidy.reversals.sum(:amount)).to eq(-6)
+    end
+
+    it 'takes back the same share of it as of the earning' do
+      # 30 of a 100 order: a quarter of the earning and a quarter of the
+      # subsidy, which is what makes the seller's net come back whole.
+      described_class.call(order: order, amount: 30)
+
+      expect(Spree::SellerTransfer.reversals_only.sum(:amount)).to eq(-30)
+    end
+
+    # One refund, two reversals, each keyed to the row it reverses — which is
+    # what the index over (refund, reversed row) is there for.
+    it 'keys both reversals to the refund that caused them' do
+      refund = create(:refund, amount: 30)
+
+      described_class.call(order: order, amount: 30, refund: refund)
+
+      expect(subsidy.reversals.first.reversed_from).to eq(subsidy)
+      expect(Spree::SellerTransfer.reversals_only.pluck(:refund_id).uniq).to eq([refund.id])
+    end
+
+    it 'takes the whole of it back when the whole order is refunded' do
+      described_class.call(order: order, amount: 100)
+
+      expect(seller.balance('USD')).to eq(0)
+    end
+
+    # One delivery can write the earning's reversal and die before the
+    # subsidy's; the retry has to finish the job rather than start over.
+    it 'writes only what a redelivery left undone' do
+      earning = Spree::SellerTransfer.earnings.last
+      refund = create(:refund, amount: 30)
+      create(:seller_transfer, :reversal, :completed, seller: seller, order: order, amount: -24,
+                                                   reversed_from: earning, refund: refund)
+
+      described_class.call(order: order, amount: 30, refund: refund)
+
+      expect(subsidy.reversals.count).to eq(1)
+      expect(subsidy.reversals.first.amount).to eq(-6)
+    end
+
+    # The subsidy is the platform's money, and it comes back by the order's own
+    # ratio when there is no earning to follow.
+    it 'takes the subsidy back by the order’s ratio when the earning was worth nothing' do
+      Spree::SellerTransfer.earnings.update_all(amount: 0)
+
+      described_class.call(order: order, amount: 30)
+
+      expect(subsidy.reversals.sum(:amount)).to eq(-6)
+    end
+
+    it 'claws back at the rate the subsidy landed at' do
+      subsidy.update!(settled_amount: 20, settled_currency: 'GBP')
+
+      described_class.call(order: order, amount: 100)
+
+      expect(subsidy.reversals.first.settled_currency).to eq('GBP')
+      expect(subsidy.reversals.first.settled_amount).to eq(-20)
+    end
+  end
+
   describe 'what it will not take back' do
     it 'refuses to claw back more than was credited' do
       earn(80)
@@ -199,6 +274,17 @@ RSpec.describe Spree::SellerTransfers::Reverse do
     it 'does nothing when there was no earning' do
       expect { described_class.call(order: order, amount: 30) }.
         not_to change { Spree::SellerTransfer.count }
+    end
+
+    # A sale the marketplace charged more for than it was worth credits the
+    # seller nothing — a state the earning's own spec covers — and the refund
+    # still has to answer, with nothing, rather than raising on the way to a
+    # zero share.
+    it 'does nothing when the earning is worth nothing' do
+      earn(0)
+
+      expect { described_class.call(order: order, amount: 30) }.
+        not_to change { Spree::SellerTransfer.reversals_only.count }
     end
   end
 

@@ -60,7 +60,8 @@ module Spree
             end
 
             def permitted_params
-              params.permit(*model_additional_permitted_attributes, :rank, :threshold, :validity_days)
+              params.permit(*model_additional_permitted_attributes, :rank, :threshold, :validity_days,
+                            :member_discount_percentage)
             end
 
             def set_customer_group

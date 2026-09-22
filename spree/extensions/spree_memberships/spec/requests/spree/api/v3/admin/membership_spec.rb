@@ -82,5 +82,23 @@ RSpec.describe 'the membership operator reads', type: :request do
 
       expect(response).to have_http_status(:unprocessable_content)
     end
+
+    # The member price is set here and read back here: the operator never has to
+    # visit the catalogues page to say what a tier gives its members.
+    it 'takes a member price with the tier, and answers it back' do
+      post "/api/v3/admin/customer_groups/#{group.prefixed_id}/tier_setting", headers: headers,
+           params: { rank: 2, member_discount_percentage: 10 }
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body).to include('member_discount_percentage' => '10.0')
+
+      patch "/api/v3/admin/customer_groups/#{group.prefixed_id}/tier_setting", headers: headers,
+            params: { member_discount_percentage: 15 }
+      expect(response).to have_http_status(:ok)
+
+      setting = Spree::MembershipTierSetting.find_by(customer_group: group)
+      expect(setting.reload.member_discount_percentage).to eq(15)
+      expect(setting.catalog.price_list.price_adjustment_percentage).to eq(-15)
+    end
   end
 end

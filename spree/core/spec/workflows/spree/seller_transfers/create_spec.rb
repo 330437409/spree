@@ -126,6 +126,110 @@ RSpec.describe Spree::SellerTransfers::Create do
     end
   end
 
+  # What the platform promised a customer, the seller is paid all the same. A
+  # member price is the case this exists for, and whoever promised it says what
+  # it was worth — the arithmetic behind it is the ledger's.
+  describe 'when the platform funded part of the price' do
+    # The earning is 88 on a 100 order with 12 charged; the shelf price was 10
+    # higher than the customer paid, and the commission rate is the factory's
+    # 10%.
+    def discount_of(amount, order: shipped_order)
+      Spree.hooks.register('seller_transfers.create.funded_discounts') do |workflow|
+        { discounts: { workflow.order.line_items.first.id => amount },
+          metadata: { 'funded_by' => 'member_price' } }
+      end
+
+      described_class.call(order: order)
+    end
+
+    after { Spree.hooks.clear! }
+
+    it 'credits the reduction less the commission it saved the seller' do
+      discount_of(10)
+
+      # 10 off, of which the marketplace charged 10% less than it would have.
+      expect(Spree::SellerTransfer.subsidies.last.amount).to eq(9)
+    end
+
+    it 'pays it beside the earning rather than instead of it' do
+      discount_of(10)
+
+      # 88 earned on the sale, plus the 9 the platform owes for the reduction.
+      expect(seller.balance('USD')).to eq(97)
+    end
+
+    it 'carries the promise and the reduction into the row' do
+      discount_of(10)
+
+      row = Spree::SellerTransfer.subsidies.last
+
+      expect(row.metadata['funded_by']).to eq('member_price')
+      expect(row.metadata['funded_discount'].to_d).to eq(10)
+      expect(row).to be_completed
+    end
+
+    # A flat fee charges the same on a discounted line as on any other, so none
+    # of that reduction costs the seller anything.
+    it 'credits the whole reduction when the fee does not move with the price' do
+      order = shipped_order(commission: 0)
+      create(:commission_line, order: order, seller: seller, line_item: order.line_items.first,
+                               kind: 'fixed', rate: 2.5, amount: 2.5, total: 2.5, currency: order.currency)
+
+      discount_of(10, order: order.reload)
+
+      expect(Spree::SellerTransfer.subsidies.last.amount).to eq(10)
+    end
+
+    it 'credits the whole reduction when no rate matched the line' do
+      discount_of(10, order: shipped_order(commission: 0).reload)
+
+      expect(Spree::SellerTransfer.subsidies.last.amount).to eq(10)
+    end
+
+    it 'writes nothing when the platform funded nothing' do
+      expect { described_class.call(order: shipped_order) }.
+        not_to change { Spree::SellerTransfer.subsidies.count }
+    end
+
+    it 'writes one row however often the event is delivered' do
+      order = shipped_order
+      Spree.hooks.register('seller_transfers.create.funded_discounts') do |workflow|
+        { discounts: { workflow.order.line_items.first.id => 10 } }
+      end
+
+      described_class.call(order: order)
+      described_class.call(order: order.reload)
+
+      expect(Spree::SellerTransfer.subsidies.count).to eq(1)
+    end
+
+    # The earning is money the seller is owed, and no redelivery comes back for
+    # a promise somebody else's handler could not read.
+    it 'keeps the earning when the funding cannot be read' do
+      Spree.hooks.register('seller_transfers.create.funded_discounts') { |_flow| raise 'the promise is unreadable' }
+
+      result = described_class.call(order: shipped_order)
+
+      expect(result).to be_success
+      expect(result.value.amount).to eq(88)
+      expect(Spree::SellerTransfer.subsidies.count).to eq(0)
+    end
+
+    # Nothing is credited on an order that earns nobody anything, whatever was
+    # funded on it.
+    it 'writes nothing on the operator’s own order' do
+      order = create(:order, store: store, status: 'placed', completed_at: Time.current)
+      line_item = create(:line_item, order: order)
+      create(:fulfillment, order: order, cart: nil, status: 'fulfilled')
+      Spree.hooks.register('seller_transfers.create.funded_discounts') do
+        { discounts: { line_item.id => 10 } }
+      end
+
+      expect { described_class.call(order: order.reload) }.
+        not_to change { Spree::SellerTransfer.subsidies.count }
+    end
+  end
+
   describe 'with the record-only provider' do
     it 'confirms the earning immediately, since nothing has to be sent' do
       result = described_class.call(order: shipped_order)
