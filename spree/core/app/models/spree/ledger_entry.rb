@@ -29,6 +29,12 @@ module Spree
     # What caused the movement: an order, a refund, a campaign.
     belongs_to :source, polymorphic: true, optional: true
 
+    # Who the movement belongs to, where that is not the same question as what
+    # caused it: `source` points at reviews and adjustments too, and neither of
+    # those has a seller.
+    belongs_to :seller, class_name: 'Spree::Seller', optional: true
+    belongs_to :order, class_name: 'Spree::Order', optional: true
+
     # What this entry undoes. The pair is the two rows pointing at each other,
     # which is what makes a refunded order legible rather than a kind name to
     # interpret.

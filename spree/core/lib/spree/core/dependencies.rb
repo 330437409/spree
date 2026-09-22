@@ -177,6 +177,11 @@ module Spree
         # installs a verification service points this at it
         # (docs/plans/6.1-phone-verification-and-payment-pin.md).
         customer_phone_verification_service: nil,
+        # Answer `call(order:)` with the multiplier a day's rights give this
+        # order's earn — 生日双倍, 会员日双倍 — or 1. The membership gem points
+        # this at its own service; until it is built, nothing multiplies
+        # (docs/plans/6.1-points-and-growth-value.md).
+        points_multiplier_service: nil,
 
         # products — every server-side write path runs through these, so a
         # :validate handler sees dashboard edits, CSV imports and seeds alike

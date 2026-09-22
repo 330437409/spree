@@ -24,6 +24,8 @@ module Spree
           amount: entry.amount.abs,
           idempotency_key: idempotency_key,
           source: source || entry.source,
+          seller: entry.seller,
+          order: entry.order,
           occurred_at: occurred_at,
           metadata: metadata || entry.metadata,
           reverses: entry,
