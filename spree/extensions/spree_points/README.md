@@ -30,6 +30,8 @@ Spree::Points::Ledger.balance(account) # => 60
 | `Spree::PointAllocation` | Which lots a debit drew from: the audit trail and what a reversal walks back |
 | `Spree::Points::Ledger` | `credit!`, `debit!`, `balance` — the only door into a balance |
 | `Spree::Points::Lot` | The registered grant kind a lot is |
+| `Spree::PointProduct` | A good in the shop: what it costs in points, the money that may sit beside them, its stock, and the one thing a redemption issues |
+| `Spree::PointProducts::{Coupon,VipCard,Good}` | The three kinds that ship — `coupon`, `vip_card`, `good` — each carrying exactly one payload key |
 
 ## Store API
 
@@ -37,6 +39,31 @@ Spree::Points::Ledger.balance(account) # => 60
 | --- | --- |
 | `GET /api/v3/store/customers/me/point_accounts` | Both balances, each with what is about to lapse, the soonest expiry date and the store's two rates — always both, zero where nothing has moved |
 | `GET /api/v3/store/customers/me/point_accounts/:kind/transactions` | One balance's history, newest first, filtered by `filter=income` (收入) or `filter=revenue` (支出) |
+| `GET /api/v3/store/point_products` | The shelf, paged: `category=` narrows to one label, `featured=true` answers the featured strip, and `audience=member` the resolved site's own goods beside the store's. The labels the client's tabs render come back under `meta.categories` |
+| `GET /api/v3/store/point_products/:id` | One good, with the payload of the thing it issues |
+
+## The points shop
+
+A good prices in points — never in money — and may add money on top of them. Its
+price, its stock and its shelf are the row's own facts; what a redemption
+*issues* belongs to whichever plan owns that thing.
+
+**The row declares, another plan issues.** Each kind carries exactly one payload
+key on the same row, with no polymorphic source: a coupon good the campaign it
+issues from, a card good the tier's customer group, a shipped good the variant it
+puts on an order. A kind is a registered class, and its `api_type` is what the
+wire carries, so a deployment adding a fourth registers it beside the three that
+ship rather than reinterpreting a string. The coupon payload the client renders
+is deliberately absent until the wallet plan supplies its shape.
+
+**Store-wide, or one seller's.** A good names the seller whose site offers it,
+or nothing for the store's own shelf. `audience=member` answers the resolved
+site's goods beside the store's, and refuses the request that named no site
+rather than answering a shelf with a seller's goods silently missing from it.
+
+**Categories are a field, not a taxonomy** — the client's are a flat list of
+codes, so the labels its tab strip renders travel with the page of goods, which
+is where its separate category call would have looked.
 
 ## Earning and giving back
 

@@ -12,4 +12,14 @@ require 'spree_points/engine'
 # side table, the allocation audit trail and the service other extensions earn
 # through (docs/plans/6.1-points-and-growth-value.md).
 module SpreePoints
+  # The kinds of good a points shop can offer, each a subclass of
+  # `Spree::PointProduct` that declares what a redemption issues. A registry
+  # rather than a validated string, so a kind is a class a picker can list and
+  # another gem can add one without editing this one.
+  #
+  # Filled by the engine after initialization, because a subclass may not exist
+  # yet when this file loads.
+  def self.point_product_types
+    @point_product_types ||= []
+  end
 end

@@ -2,7 +2,7 @@ require 'rails/generators'
 
 module SpreePoints
   module Generators
-    # Copies this gem's three tables into the host app.
+    # Copies this gem's five tables into the host app.
     #
     # The gem brings its own migrations rather than landing its tables in core:
     # the account, the lot's side table and the allocation trail are the points

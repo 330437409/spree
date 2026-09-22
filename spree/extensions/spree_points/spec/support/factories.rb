@@ -26,4 +26,31 @@ FactoryBot.define do
     amount { 100 }
     remaining { 100 }
   end
+
+  factory :point_product, class: 'Spree::PointProducts::Good' do
+    store
+    sequence(:name) { |n| "Points good #{n}" }
+    points { 100 }
+    money { 0 }
+    stock { 10 }
+    variant
+  end
+
+  # One factory per kind: a kind is a class, so passing `type` as an attribute
+  # would build the wrong one. Each carries only what its own kind uses — the
+  # shippable good's variant is not an attribute of a coupon good.
+  factory :point_coupon_product, class: 'Spree::PointProducts::Coupon' do
+    store
+    sequence(:name) { |n| "Points coupon #{n}" }
+    points { 100 }
+    stock { 10 }
+  end
+
+  factory :point_vip_card_product, class: 'Spree::PointProducts::VipCard' do
+    store
+    sequence(:name) { |n| "Points card #{n}" }
+    points { 100 }
+    stock { 10 }
+    customer_group
+  end
 end

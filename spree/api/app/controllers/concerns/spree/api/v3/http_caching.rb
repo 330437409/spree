@@ -26,9 +26,12 @@ module Spree
         # X-Spree-Channel is included because the resolved channel changes the
         # serialized body (price hiding + channel-scoped visibility), so a shared
         # cache must not serve one channel's guest response to another channel.
+        # X-Spree-Seller-Id is there for the same reason: a read that resolved a
+        # seller is answered for that seller's site, so one site's guest response
+        # is not another's.
         def set_vary_headers
           if guest_user?
-            response.headers['Vary'] = 'Accept, x-spree-currency, x-spree-locale, x-spree-channel'
+            response.headers['Vary'] = 'Accept, x-spree-currency, x-spree-locale, x-spree-channel, x-spree-seller-id'
           else
             response.headers['Cache-Control'] = 'private, no-store'
           end
