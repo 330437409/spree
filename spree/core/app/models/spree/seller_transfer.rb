@@ -17,6 +17,12 @@ module Spree
   # A refund writes a second row against the same order rather than editing
   # this one, so what a seller has earned is always the sum of their transfers
   # and the history stays readable.
+  #
+  # A **subsidy** is the third kind: money the platform owes the seller on top
+  # of their earning, because it — not the seller — funded part of the price
+  # the customer paid. A member price is the case it exists for, and the money
+  # is the seller's shortfall against what the sale would have earned them at
+  # the shelf price (docs/plans/6.1-membership-tiers-and-rights.md).
   class SellerTransfer < Spree.base_class
     has_prefix_id :vtr
 
@@ -28,7 +34,10 @@ module Spree
     # default store is absent or wrong.
     include Spree::SingleStoreResource
 
-    KINDS = %w[earning refund_reversal].freeze
+    KINDS = %w[earning subsidy refund_reversal].freeze
+    # The kinds that credit the seller. What a refund claws back is exactly
+    # this set: a reversal is negative, and reverses one of its members.
+    CREDIT_KINDS = %w[earning subsidy].freeze
 
     #
     # Associations
@@ -79,16 +88,20 @@ module Spree
     # Scopes
     #
     scope :earnings, -> { where(kind: 'earning') }
+    scope :subsidies, -> { where(kind: 'subsidy') }
+    # Money the seller was credited: what they earned, and what the platform
+    # owes on top of it.
+    scope :credits, -> { where(kind: CREDIT_KINDS) }
     scope :reversals_only, -> { where(kind: 'refund_reversal') }
     # Safe to ask the provider about again: never sent, or refused outright.
     # Deliberately excludes `unresolved`, where the provider could not say
     # whether the money moved — asking again is how it moves twice.
     scope :retryable, -> { with_status('pending', 'processing') }
-    # Earnings still owing the provider a call.
+    # Credits still owing the provider a call.
     # Reversals are excluded for the same reason the job excludes them: their
     # amount is negative, and sending one as a transfer pays the seller the
     # money it exists to take back.
-    scope :awaiting_provider, -> { earnings.retryable.where(payout_id: nil) }
+    scope :awaiting_provider, -> { credits.retryable.where(payout_id: nil) }
     # Earned and confirmed, but not yet swept into a settlement — what the next
     # payout will pick up.
     scope :unsettled, -> { completed.where(payout_id: nil) }
@@ -117,15 +130,16 @@ module Spree
     extend Spree::DisplayMoney
     money_methods :amount
 
-    # What is left of this earning to give back.
+    # What is left of this credit to give back.
     #
     # Original less what reversals have already taken, floored at zero — a
     # refund can never claw back more than the seller was credited, however
-    # many times the order is refunded.
+    # many times the order is refunded. A subsidy is reversed like the earning
+    # beside it, so the two answer the same question.
     #
     # @return [BigDecimal]
     def reversible_amount
-      return 0.to_d unless earning?
+      return 0.to_d unless credit?
 
       [amount - reversals.sum(:amount).abs, 0].max
     end
@@ -133,6 +147,11 @@ module Spree
     # @return [Boolean]
     def earning?
       kind == 'earning'
+    end
+
+    # @return [Boolean] whether this row is money the seller was credited
+    def credit?
+      CREDIT_KINDS.include?(kind)
     end
 
     # What the seller's account actually holds for this row, and in what.

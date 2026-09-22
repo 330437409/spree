@@ -1,73 +1,169 @@
 module Spree
   module SellerTransfers
-    # Takes back part of what a seller earned, after a refund.
+    # Takes back part of what a seller was credited, after a refund.
     #
-    # Written as its own negative row rather than by editing the earning, so
-    # what a seller has earned is always the sum of their transfers and the
-    # history stays readable. If the earning was already settled in a closed
-    # payout, the reversal simply lands in the next period — a settlement that
-    # happened is never rewritten.
+    # Written as its own negative row rather than by editing the credit, so what
+    # a seller has earned is always the sum of their transfers and the history
+    # stays readable. If the credit was already settled in a closed payout, the
+    # reversal simply lands in the next period — a settlement that happened is
+    # never rewritten.
     #
-    # The ledger row is written in every tier. Whether money is actually pulled
-    # back is the provider's business, and the built-in one pulls back nothing.
+    # **Every credit the order carries is reversed, not only the earning.** A
+    # subsidy is the platform's own money, added because the platform funded
+    # part of the price, so a refunded sale must not leave it with the seller.
+    # Each credit gets its own reversal row, keyed to the credit it reverses.
+    #
+    # The ledger rows are written in every tier. Whether money is actually
+    # pulled back is the provider's business, and the built-in one pulls back
+    # nothing.
     class Reverse < Spree::Workflow
       hooks :validate, :after_reverse
 
-      attr_reader :reversal
+      attr_reader :reversals
 
       # @param order [Spree::Order] the seller order being refunded
-      # @param amount [BigDecimal, Numeric] how much of the earning to take
-      #   back; capped at what is left of it
-      # @param refund [Spree::Refund, nil] what caused the clawback. The
+      # @param amount [BigDecimal, Numeric] how much of the order was refunded
+      # @param refund [Spree::Refund, nil] what caused the clawback. Part of the
       #   reversal's natural key, so a redelivered event reverses once.
-      # @return [Spree::ServiceModule::Result] value is the reversal, or the
-      #   order when there was nothing to reverse
+      # @return [Spree::ServiceModule::Result] value is the earning's reversal,
+      #   or the order when there was nothing to reverse
       def perform(order:, amount:, refund: nil)
         super
 
-        step :find_earning
+        step :find_credits
         step :replay_existing
         run_hooks :validate
 
-        step :build_reversal
-        external_step :execute_reversal
+        step :build_reversals
+        external_step :execute_reversals
         run_hooks :after_reverse
 
         success(reversal)
       end
 
+      # The one row a caller most often wants: what the refund took back from
+      # the earning. A subsidy only ever reverses alongside an earning, so this
+      # is the answer for the money the refund is about.
+      #
+      # @return [Spree::SellerTransfer, nil]
+      def reversal
+        @reversal
+      end
+
       private
 
-      def find_earning
-        @earning = Spree::SellerTransfer.earnings.find_by(order_id: order.id)
+      # Every credit this order carries, the earning first — the subsidy comes
+      # back at whatever rate the earning does, so it is answered after it.
+      def find_credits
+        @credits = Spree::SellerTransfer.credits.where(order_id: order.id).order(:id).to_a
         # Nothing was ever credited — the order was refunded before it shipped,
         # which is the ordinary case and not an error.
-        halt!(order) if @earning.nil?
+        halt!(order) if @credits.empty?
       end
 
-      # An event can be delivered twice, and a job can retry.
+      # An event can be delivered twice, and a job can retry. What a redelivery
+      # leaves to do is whatever this refund has not already reversed — which
+      # can be one credit out of two, if the first attempt got only that far —
+      # and with nothing left it is answered with the reversal already written.
       def replay_existing
+        @pending = @credits.reject { |credit| reversal_for(credit).present? }
+        return if @pending.any?
+
+        halt!(@credits.filter_map { |credit| reversal_for(credit) }.first)
+      end
+
+      # @return [Spree::SellerTransfer, nil] this refund's reversal of that credit
+      def reversal_for(credit)
         return if refund.nil?
 
-        existing = Spree::SellerTransfer.reversals_only.find_by(refund_id: refund.id)
-        halt!(existing) if existing.present?
+        @reversals_for ||= {}
+        @reversals_for[credit.id] ||= Spree::SellerTransfer.reversals_only.
+                                      find_by(refund_id: refund.id, reversed_from_id: credit.id)
       end
 
-      # Bounded and written under the earning's own lock, so two refunds
-      # landing together cannot each read the same untouched earning and each
-      # take the whole of it. The unique index on `refund_id` covers the other
+      def build_reversals
+        earning = @credits.find(&:earning?)
+        carry = clawback_fraction(earning)
+
+        @reversals = @pending.filter_map { |credit| write_reversal(credit, earning, carry) }
+        halt!(order) if @reversals.empty?
+
+        @reversal = @reversals.find { |row| row.reversed_from.earning? } || @reversals.first
+      end
+
+      # What share of the order's credit this refund takes back, as a fraction
+      # of it.
+      #
+      # The earning answers with the refund's own detail; the subsidy follows
+      # that fraction exactly, so what the seller gives back always carries the
+      # same proportion of what the platform added. With no earning to follow —
+      # a subsidy is never written without one, but an earning can be fully
+      # reversed away before the next refund lands — the order's own ratio
+      # answers.
+      #
+      # @return [BigDecimal]
+      def clawback_fraction(earning)
+        return order_ratio if earning.nil? || earning.amount.zero?
+
+        existing = reversal_for(earning)
+        credited = existing ? existing.amount.abs : seller_share_of(amount, earning)
+
+        [credited / earning.amount, BigDecimal(1)].min
+      end
+
+      # @return [BigDecimal] the refunded share of the order, capped at all of it
+      def order_ratio
+        total = order.total.to_d
+        return BigDecimal(1) if total.zero?
+
+        [refunded.to_d.abs / total, BigDecimal(1)].min
+      end
+
+      # Bounded and written under the credit's own lock, so two refunds landing
+      # together cannot each read the same untouched credit and each take the
+      # whole of it. The unique index on (refund, reversed row) covers the other
       # race — the same refund arriving twice — and resolves to the row that
       # won rather than failing the caller.
-      def build_reversal
-        @reversal = write_reversal
-        halt!(order) if @reversal.nil?
+      #
+      # @return [Spree::SellerTransfer, nil] nil when there is nothing left to take
+      def write_reversal(credit, earning, carry)
+        credit.with_lock do
+          bounded = [share_of(credit, earning, carry), credit.reversible_amount].min
+          next nil if bounded <= 0
+
+          Spree::SellerTransfer.create!(
+            store: credit.store,
+            seller: credit.seller,
+            order: order,
+            reversed_from: credit,
+            refund: refund,
+            # Negative, so what a seller has earned is the plain sum of the rows.
+            amount: -bounded,
+            currency: credit.currency,
+            kind: 'refund_reversal',
+            provider: credit.provider,
+            status: 'pending',
+            **settlement_of(credit, bounded)
+          )
+        end
       rescue ActiveRecord::RecordNotUnique
         # Only a refund-keyed reversal can collide, since that index is what
         # makes it unique. Re-raising anything else keeps the real error
         # visible rather than replacing it with a lookup that cannot succeed.
         raise if refund.nil?
 
-        halt!(Spree::SellerTransfer.reversals_only.find_by!(refund_id: refund.id))
+        reversal_for(credit) || raise
+      end
+
+      # What one credit gives back. The earning is answered from the refund's
+      # own detail; the subsidy at the fraction the earning came back at, which
+      # keeps the two in step however the refund was attributed.
+      #
+      # @return [BigDecimal]
+      def share_of(credit, earning, carry)
+        return seller_share_of(amount, earning) if credit.earning?
+
+        quantize(carry * credit.amount, credit.currency)
       end
 
       # The seller's share of a refunded amount.
@@ -82,8 +178,8 @@ module Spree
       # amount. Anything else — a manual refund, a cancellation — is only an
       # amount against an order, and the order's own ratio is the best available
       # answer.
-      def seller_share_of(refunded)
-        attributed_share(refunded) || blended_share(refunded)
+      def seller_share_of(refunded, earning)
+        attributed_share(refunded, earning) || blended_share(refunded, earning)
       end
 
       # What the named lines actually earned, scaled to what this refund paid.
@@ -95,7 +191,7 @@ module Spree
       # lines are worth — a restocking fee, or goodwill on top.
       #
       # Nil when the refund names nothing, which sends the caller to the blend.
-      def attributed_share(refunded)
+      def attributed_share(refunded, earning)
         amounts = refund&.refunded_line_amounts
         return if amounts.blank?
 
@@ -107,14 +203,14 @@ module Spree
         earnings = amounts.map { |line_item_id, amount| line_earning(line_item_id, amount.to_d) }
         return if earnings.any?(&:nil?)
 
-        quantize(earnings.sum * (refunded.to_d.abs / gross))
+        quantize(earnings.sum * (refunded.to_d.abs / gross), earning.currency)
       end
 
-      def blended_share(refunded)
+      def blended_share(refunded, earning)
         paid = order.total.to_d
         return refunded.to_d.abs if paid.zero?
 
-        quantize(refunded.to_d.abs * (@earning.amount / paid))
+        quantize(refunded.to_d.abs * (earning.amount / paid), earning.currency)
       end
 
       # What one line's refunded value earned the seller: their money less the
@@ -151,78 +247,70 @@ module Spree
                                pluck(:line_item_id, :total).to_h
       end
 
-      def quantize(amount)
-        Spree::Money::Rounding.quantize(amount, Spree::Money::Rounding.precision(@earning.currency))
+      def quantize(amount, currency)
+        Spree::Money::Rounding.quantize(amount, Spree::Money::Rounding.precision(currency))
       end
 
-      # Nil when there is nothing left to take back, which the caller turns
-      # into a halt outside the transaction — `halt!` refuses to run inside one.
-      def write_reversal
-        @earning.with_lock do
-          bounded = [seller_share_of(amount), @earning.reversible_amount].min
-          next nil if bounded <= 0
-
-          Spree::SellerTransfer.create!(
-            {
-              store: @earning.store,
-              seller: @earning.seller,
-              order: order,
-              reversed_from: @earning,
-              refund: refund,
-              # Negative, so what a seller has earned is the plain sum of the rows.
-              amount: -bounded,
-              currency: @earning.currency,
-              kind: 'refund_reversal',
-              provider: @earning.provider,
-              status: 'pending'
-            }.merge(settlement_of(bounded))
-          )
-        end
-      end
-
-      # A clawback has to settle where its earning settled. Payouts are swept by
+      # A clawback has to settle where its credit settled. Payouts are swept by
       # settlement currency, so a reversal left in the sale's currency would
-      # never join the batch that pays the earning it cancels — the seller would
-      # be paid in full for goods that came back, and the row would sit in a
+      # never join the batch that pays the row it cancels — the seller would be
+      # paid in full for goods that came back, and the row would sit in a
       # currency their account cannot pay.
       #
-      # Prorated from the earning's own settled figure rather than converted at
+      # Prorated from the credit's own settled figure rather than converted at
       # today's rate, so the money comes back at the rate it went out at.
-      def settlement_of(bounded)
-        return {} if @earning.settled_amount.blank? || @earning.amount.zero?
+      def settlement_of(credit, bounded)
+        return {} if credit.settled_amount.blank? || credit.amount.zero?
 
-        share = @earning.settled_amount * (bounded / @earning.amount)
+        share = credit.settled_amount * (bounded / credit.amount)
 
         {
           settled_amount: -Spree::Money::Rounding.quantize(
-            share, Spree::Money::Rounding.precision(@earning.settlement_currency)
+            share, Spree::Money::Rounding.precision(credit.settlement_currency)
           ),
-          settled_currency: @earning.settled_currency
+          settled_currency: credit.settled_currency
         }
       end
 
-      def execute_reversal
-        provider.reverse!(reversal)
+      def execute_reversals
+        failures = @reversals.reject { |row| execute_reversal(row) }
+
+        failure(failures.first, @failure_message) if failures.any?
+      end
+
+      def execute_reversal(row)
+        provider_for(row).reverse!(row)
+        true
       rescue Spree::Core::AmbiguousGatewayError => e
         # Whether the clawback happened is the provider's to say. Recorded as
         # such rather than as a refusal, so an operator reconciling knows which
         # rows are questions and which are simply owed.
-        reversal.update!(status: 'unresolved')
-        Rails.error.report(e, handled: true, context: { seller_transfer_id: reversal.id }, source: 'spree.core')
-        failure(reversal, e.message)
+        row.update!(status: 'unresolved')
+        report(row, e)
+        false
       rescue StandardError => e
-        reversal.update!(status: 'processing')
-        Rails.error.report(e, handled: true, context: { seller_transfer_id: reversal.id }, source: 'spree.core')
-        failure(reversal, e.message)
+        row.update!(status: 'processing')
+        report(row, e)
+        false
       end
 
-      # The provider that made the earning, not whichever one the store uses
-      # now. A marketplace that changes provider still has money sitting with
-      # the old one, and asking the new one to reverse a transfer it never
-      # made leaves the original standing — the seller keeps a refunded sale.
-      def provider
-        @provider ||= begin
-          configured = Spree.payout_providers.find { |candidate| candidate.to_s == @earning.provider }
+      def report(row, error)
+        @failure_message = error.message
+        Rails.error.report(error, handled: true, context: { seller_transfer_id: row.id }, source: 'spree.core')
+      end
+
+      # The provider that made the money, not whichever one the store uses now.
+      # A marketplace that changes provider still has money sitting with the
+      # old one, and asking the new one to reverse a transfer it never made
+      # leaves the original standing — the seller keeps a refunded sale.
+      #
+      # Keyed by the provider name, since one refund can reverse rows made by
+      # two — the earning and the subsidy are written when each is, and a store
+      # that changed provider in between made them with different ones.
+      def provider_for(row)
+        @providers ||= {}
+        @providers[row.provider] ||= begin
+          configured = Spree.payout_providers.find { |candidate| candidate.to_s == row.provider }
 
           # No silent fallback to whatever the store uses now. A provider that
           # is no longer installed still holds the transfer this reverses, and
@@ -230,7 +318,7 @@ module Spree
           # while the money stayed where it was. An operator has to know.
           if configured.nil?
             raise Spree::Core::GatewayError,
-                  "Payout provider #{@earning.provider} is not registered, so its transfer cannot be reversed"
+                  "Payout provider #{row.provider} is not registered, so its transfer cannot be reversed"
           end
 
           configured.new

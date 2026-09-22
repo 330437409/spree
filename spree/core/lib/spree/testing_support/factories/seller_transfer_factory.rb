@@ -17,5 +17,11 @@ FactoryBot.define do
       kind { 'refund_reversal' }
       amount { BigDecimal(-5) }
     end
+
+    # What the platform owes the seller on top of their earning, when it funded
+    # part of the price.
+    trait :subsidy do
+      kind { 'subsidy' }
+    end
   end
 end

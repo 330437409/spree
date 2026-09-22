@@ -26,6 +26,50 @@ RSpec.describe Spree::SellerTransfer, type: :model do
     end
   end
 
+  # What the platform owes on top of an earning, when it funded part of the
+  # price — a member price is the case it exists for.
+  describe 'the subsidy' do
+    it 'is a credit, owed to the seller like the earning beside it' do
+      create(:seller_transfer, seller: seller, order: order)
+      create(:seller_transfer, :subsidy, seller: seller, order: order)
+
+      expect(Spree::SellerTransfer.credits.count).to eq(2)
+      expect(Spree::SellerTransfer.awaiting_provider.count).to eq(2)
+    end
+
+    it 'is owed the provider a call, unlike a reversal' do
+      create(:seller_transfer, :subsidy, seller: seller, order: order)
+      create(:seller_transfer, :reversal, seller: seller, order: order)
+
+      expect(Spree::SellerTransfer.awaiting_provider.pluck(:kind)).to eq(%w[subsidy])
+    end
+
+    it 'reverses like the earning does, until it is gone' do
+      subsidy = create(:seller_transfer, :subsidy, amount: 20, seller: seller, order: order)
+      create(:seller_transfer, :reversal, amount: -6, seller: seller, order: order, reversed_from: subsidy)
+
+      expect(subsidy.reload.reversible_amount).to eq(14)
+    end
+
+    # Nothing claws back a clawback.
+    it 'has nothing to give back when it is a reversal itself' do
+      expect(create(:seller_transfer, :reversal, seller: seller, order: order).reversible_amount).to eq(0)
+    end
+
+    it 'sits beside the earning rather than replacing it' do
+      create(:seller_transfer, seller: seller, order: order)
+
+      expect { create(:seller_transfer, :subsidy, seller: seller, order: order) }.not_to raise_error
+    end
+
+    it 'is written once per order' do
+      create(:seller_transfer, :subsidy, seller: seller, order: order)
+
+      expect { create(:seller_transfer, :subsidy, seller: seller, order: order) }.
+        to raise_error(ActiveRecord::RecordNotUnique)
+    end
+  end
+
   # A sale is priced in the customer's currency; the seller's account settles in
   # its own. Both figures are recorded, and the settlement one is what a payout
   # can actually move.
