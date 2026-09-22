@@ -63,6 +63,14 @@ module Spree
             raise ActiveRecord::Rollback
           end
 
+          # No live holding under a key the grant already holds means the
+          # coupon was taken back. The primitive never hands a key over again,
+          # so a retry cannot mint a second one and says so.
+          if granted.value && Spree::CouponHolding.with_deleted.exists?(grant: granted.value)
+            result = failure(nil, :coupon_already_recorded)
+            raise ActiveRecord::Rollback
+          end
+
           if granted.failure?
             result = failure(nil, granted.error)
             raise ActiveRecord::Rollback
@@ -100,7 +108,7 @@ module Spree
         held = Spree::CouponHolding.with_deleted.select(:coupon_code_id)
 
         2.times do
-          code = promotion.coupon_codes.where.not(id: held).order(:id).first
+          code = promotion.coupon_codes.unused.where.not(id: held).order(:id).first
           return code if code
 
           Spree::CouponCodes::BulkGenerate.call(promotion: promotion, quantity: 1)

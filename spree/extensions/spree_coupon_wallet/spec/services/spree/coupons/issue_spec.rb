@@ -35,11 +35,34 @@ RSpec.describe Spree::Coupons::Issue do
     expect(issue(idempotency_key: nil)).to be_failure
   end
 
-  it 'hands over a code nobody holds, never one somebody does' do
-    taken = issue.value.coupon_code
-    taken.update!(state: 'used')
+  it 'hands over a code nobody holds' do
+    held = issue.value.coupon_code
 
-    expect(issue(idempotency_key: 'support:2').value.coupon_code).not_to eq(taken)
+    expect(issue(idempotency_key: 'support:2').value.coupon_code).not_to eq(held)
+  end
+
+  # A code that has been applied is out of the pool whether or not anybody
+  # holds it: handing it over would put a coupon in a wallet that already reads
+  # as spent, and the cart would refuse it at checkout.
+  it 'never hands over a code that has been spent' do
+    spent = promotion.coupon_codes.first
+    spent.update!(state: 'used')
+
+    handed = %w[support:2 support:3 support:4].map { |key| issue(idempotency_key: key).value.coupon_code }
+
+    expect(handed).not_to include(spent)
+  end
+
+  # The primitive never hands a key back, so a coupon the store took away is
+  # not minted again under the same key.
+  it 'refuses a key whose coupon was taken back' do
+    first = issue
+    first.value.destroy
+
+    result = issue
+
+    expect(result).to be_failure
+    expect(result.error.value).to eq(:coupon_already_recorded)
   end
 
   it 'mints a code when the promotion has none left to give' do

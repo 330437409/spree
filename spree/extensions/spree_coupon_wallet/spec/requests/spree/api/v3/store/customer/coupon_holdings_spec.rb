@@ -136,6 +136,19 @@ RSpec.describe 'POST /api/v3/store/customers/me/coupon_holdings', type: :request
     expect(Spree::CouponHolding.count).to eq(1)
   end
 
+  # The state the plan means by "unclaimed": a coupon drawn or gifted before
+  # anybody holds it. Claiming it is the first tap that gives it a holder.
+  it 'claims a coupon that was handed over before anybody held it' do
+    drawn = Spree::Coupons::Issue.call(promotion: promotion, source: 'gift', store: store,
+                                       idempotency_key: 'spec:gift').value
+
+    claim(code: drawn.coupon_code.code)
+
+    expect(response).to have_http_status(:created)
+    expect(response.parsed_body['code']).to eq(drawn.coupon_code.display_code)
+    expect(drawn.reload.customer).to eq(user)
+  end
+
   it 'refuses a code nobody issued, and says so' do
     claim(code: 'nope-0000')
 

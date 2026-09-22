@@ -24,8 +24,10 @@ module Spree
     belongs_to :campaign, class_name: 'Spree::CouponCampaign', optional: true
 
     validates :source, presence: true, inclusion: { in: SOURCES }
-    validates :grant_id, uniqueness: true
-    validates :coupon_code_id, uniqueness: true
+    # Among removed rows too, matching the unique indexes: a holding somebody
+    # removed still holds its code and its grant.
+    validates :grant_id, uniqueness: { conditions: -> { with_deleted } }
+    validates :coupon_code_id, uniqueness: { conditions: -> { with_deleted } }
 
     delegate :customer, :customer_id, :expires_at, :store, to: :grant
 

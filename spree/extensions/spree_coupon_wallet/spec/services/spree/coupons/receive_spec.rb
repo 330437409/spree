@@ -60,7 +60,24 @@ RSpec.describe Spree::Coupons::Receive do
     result = receive(code: drawn.coupon_code.code)
 
     expect(result).to be_success
+    # The answer is the wallet's own shape, not the grant the claim writes.
+    expect(result.value).to eq(drawn)
     expect(drawn.reload.customer).to eq(customer)
     expect(Spree::CouponHolding.count).to eq(1)
+  end
+
+  # Codes are unique across the platform, so an unscoped lookup would let a
+  # shopper here claim a coupon that belongs to another store's promotion.
+  it 'refuses a code that belongs to another store' do
+    elsewhere = create(:coupon_wallet_promotion, store: create(:store))
+
+    expect(receive(code: elsewhere.coupon_codes.first.code)).to be_failure
+  end
+
+  it 'refuses a coupon the store has taken back' do
+    held = receive.value
+    held.destroy
+
+    expect(receive).to be_failure
   end
 end

@@ -37,6 +37,7 @@ module Spree
     validates :name, presence: true
     validate :type_must_be_registered
     validate :promotion_must_hand_out_codes
+    validate :promotion_must_belong_to_the_store
 
     # @return [Array<Class>] the kinds a campaign may be
     def self.available_types
@@ -97,6 +98,15 @@ module Spree
 
       errors.add(:promotion, :coupon_campaign_needs_a_code_pool,
                  message: Spree.t('errors.messages.coupon_campaign_needs_a_code_pool'))
+    end
+
+    # Another store's promotion would hand this store's customers a coupon the
+    # store cannot honour.
+    def promotion_must_belong_to_the_store
+      return if promotion.nil? || store_id.nil? || promotion.store_id == store_id
+
+      errors.add(:promotion, :coupon_campaign_promotion_store_mismatch,
+                 message: Spree.t('errors.messages.coupon_campaign_promotion_store_mismatch'))
     end
   end
 end
