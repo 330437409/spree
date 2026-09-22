@@ -328,7 +328,18 @@ A seller earns on **fulfillment**, not on payment: the marketplace holds the mon
 
 The amount is payment-source-agnostic — store credit and gift cards are how the customer paid, which is the platform's funding concern, not the seller's.
 
-A refund never edits an earning. `refund.created` writes a second row of kind `refund_reversal` against the same order, so what a seller has earned is always the sum of their transfers, and a reversal that lands after a payout closed falls into the next period rather than rewriting a settlement that already happened.
+A refund never edits an earning. `refund.created` writes a second row of kind `refund_reversal` against the same order, so what a seller has earned is always the sum of their transfers, and a reversal that lands after a payout closed falls into the next period rather than rewriting a settlement that already happened. Every credit the order carries is reversed, each with its own row — the earning's and, when there is one, the [subsidy's](#the-subsidy-what-the-platform-funded).
+
+#### The subsidy — what the platform funded
+
+A marketplace can promise a price the seller never agreed to — a member or VIP price is the usual case. The customer pays less, and the seller is still paid as though the discount had not happened, because the platform funded it. That shortfall is a `Spree::SellerTransfer` of kind `subsidy`, written beside the earning: the reduction less the commission the platform did not charge on it, computed from the sale's own commission rows and stored rather than recomputed.
+
+Whoever promised the funding says what it was worth. An extension contributes the reduction through the `funded_discounts` hook on `Spree::SellerTransfers::Create`, and core writes the row, hands it to the payout provider and reverses it on a refund — at exactly the fraction the earning comes back at, so a refunded order returns the same proportion of everything the platform paid. A discount the *seller* gave is contributed by nobody: a promotion, a store-wide price list or a price the seller set already comes out of their own earning.
+
+```ruby
+# An extension that funds part of a price says so here.
+Spree.hooks.register('seller_transfers.create.funded_discounts', 'MyApp::FundedDiscount')
+```
 
 ### Payouts — what was sent
 
