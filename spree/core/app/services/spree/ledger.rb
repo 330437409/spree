@@ -51,6 +51,9 @@ module Spree
     # @param reverses [Spree::LedgerEntry, nil] the entry this one undoes; its
     #   account and unit are taken from it and the amount's sign is forced to
     #   the opposite one
+    # @param seller [Object, nil] the seller the movement belongs to, where the
+    #   movement has one — a purchase placed with a shop, an earning a shop owes
+    # @param order [Object, nil] the order it came from, where it came from one
     # @param metadata [Hash, nil]
     # @param store [Spree::Store, nil] falls back to the account's own, and
     #   then to the current request's, which is why a job passes it

@@ -38,11 +38,32 @@ Spree::Points::Ledger.balance(account) # => 60
 | `GET /api/v3/store/customers/me/point_accounts` | Both balances, each with what is about to lapse, the soonest expiry date and the store's two rates — always both, zero where nothing has moved |
 | `GET /api/v3/store/customers/me/point_accounts/:kind/transactions` | One balance's history, newest first, filtered by `filter=income` (收入) or `filter=revenue` (支出) |
 
+## Earning and giving back
+
+A paid order earns both balances once, on `order.paid`: the amount actually
+paid over the store's rate, plus each good's own 商品积分, held to the store's
+minimum and multiplied by whatever a day's rights name. A cancellation takes the
+whole earn back and a return its share, each as a row pointing at what it
+undoes — 消费退回, never an edit.
+
+商品积分 is two names in the `points` namespace of a product's Custom Fields:
+
+| Name | What it is |
+| --- | --- |
+| `points.extra_per_unit` | the extra points one unit of this good earns |
+| `points.line_cap` | the most its lines may earn between them; empty means no cap |
+
 ## Configuring it
 
-Three store preferences: `points_earn_rate` (currency spent per point),
-`points_redeem_rate` (points needed to take one unit off) and
+Five store preferences: `points_earn_rate` (currency spent per point),
+`points_redeem_rate` (points needed to take one unit off),
+`points_minimum_order_amount` (below it an order earns nothing),
+`points_validity_days` (how long a point lives; zero means it never lapses) and
 `points_expiry_warning_days` (how far ahead the balance warns).
+
+A deployment that wants 生日双倍 or 会员日双倍 points sets
+`Spree::Dependencies.points_multiplier_service` to a class answering
+`call(order:)` with a number; nothing multiplies until it does.
 
 Reasons are a list wherever the operator manages them: a move the list does not
 have still happens — the read shows the key itself until a label is added.

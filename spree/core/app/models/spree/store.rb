@@ -176,6 +176,10 @@ module Spree
     preference :points_earn_rate, :decimal, default: 1
     preference :points_redeem_rate, :decimal, default: 100
     preference :points_expiry_warning_days, :integer, default: 30
+    # Below this paid total an order earns nothing, and how long a point lives
+    # once it is earned. Zero means every order earns.
+    preference :points_minimum_order_amount, :decimal, default: 0
+    preference :points_validity_days, :integer, default: 365
     # digital assets preferences
     preference :limit_digital_download_count, :boolean, default: true
     preference :limit_digital_download_days, :boolean, default: true

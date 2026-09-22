@@ -14,7 +14,7 @@ module Spree
       #   the key is taken by another movement, where it is that row and the
       #   refusal is `:key_reused`
       def call(account:, kind:, amount:, idempotency_key:, source: nil, unit: nil, occurred_at: nil,
-               reverses: nil, metadata: nil, store: nil)
+               reverses: nil, metadata: nil, store: nil, seller: nil, order: nil)
         assert_account!(account)
 
         return failure(nil, :key_missing) if idempotency_key.blank?
@@ -41,6 +41,8 @@ module Spree
           reverses_entry: reverses,
           idempotency_key: idempotency_key,
           source: source,
+          seller: seller,
+          order: order,
           occurred_at: occurred_at || Time.current,
           metadata: metadata || {}
         )

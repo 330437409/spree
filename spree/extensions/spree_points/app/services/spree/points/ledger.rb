@@ -22,10 +22,13 @@ module Spree
       #   adjustment
       # @param expires_at [Time, nil] refused on a balance that never expires
       # @param granted_at [Time, nil]
+      # @param seller [Object, nil] the shop the movement belongs to
+      # @param order [Object, nil] the order it came from
       # @return [Spree::ServiceModule::Result] value is the lot
-      def self.credit!(account:, amount:, reason:, idempotency_key:, source: nil, expires_at: nil, granted_at: nil)
+      def self.credit!(account:, amount:, reason:, idempotency_key:, source: nil, expires_at: nil, granted_at: nil,
+                       seller: nil, order: nil)
         Credit.call(account: account, amount: amount, reason: reason, idempotency_key: idempotency_key,
-                    source: source, expires_at: expires_at, granted_at: granted_at)
+                    source: source, expires_at: expires_at, granted_at: granted_at, seller: seller, order: order)
       end
 
       # Takes from a balance, soonest-expiry-first.
@@ -40,10 +43,26 @@ module Spree
       # @param reason [String, Spree::PointReason]
       # @param source [Object, nil] the order or redemption the points left for
       # @param idempotency_key [String, nil]
+      # @param reverses [Spree::LedgerEntry, nil] the entry this movement gives
+      #   back, which decides its sign and lets it draw on that entry's own lots
+      # @param seller [Object, nil] the shop the movement belongs to
+      # @param order [Object, nil] the order it came from
       # @return [Spree::ServiceModule::Result] value is the ledger entry
-      def self.debit!(account:, amount:, reason:, source: nil, idempotency_key: nil)
+      def self.debit!(account:, amount:, reason:, source: nil, idempotency_key: nil, reverses: nil,
+                      seller: nil, order: nil)
         Debit.call(account: account, amount: amount, reason: reason, source: source,
-                   idempotency_key: idempotency_key)
+                   idempotency_key: idempotency_key, reverses: reverses, seller: seller, order: order)
+      end
+
+      # The key an order's earn is written under, one per balance: the producer
+      # writes it and the reversal looks it up, so the two read the same rule
+      # from one place rather than spelling it twice.
+      #
+      # @param order [Spree::Order]
+      # @param kind [String]
+      # @return [String]
+      def self.earn_key(order, kind)
+        "order:#{order.id}:#{kind}"
       end
 
       # The sum of the usable lots' `remaining` — the balance, which nothing

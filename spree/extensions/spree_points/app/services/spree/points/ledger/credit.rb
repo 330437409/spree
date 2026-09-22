@@ -14,7 +14,8 @@ module Spree
         #   key is the entry's kind, and a key the operator's list does not hold
         #   still moves the balance — the read then shows the key itself
         # @return [Spree::ServiceModule::Result] value is the lot
-        def call(account:, amount:, reason:, idempotency_key:, source: nil, expires_at: nil, granted_at: nil)
+        def call(account:, amount:, reason:, idempotency_key:, source: nil, expires_at: nil, granted_at: nil,
+                 seller: nil, order: nil)
           whole = BigDecimal(amount.to_s)
           return failure(nil, :amount_must_be_whole) unless whole.frac.zero?
           return failure(nil, :amount_must_be_positive) unless whole.positive?
@@ -45,7 +46,8 @@ module Spree
             end
 
             recorded = Spree::Ledger.record!(account: account, kind: reason_key, amount: amount,
-                                             idempotency_key: idempotency_key, source: source)
+                                             idempotency_key: idempotency_key, source: source,
+                                             seller: seller, order: order)
 
             if recorded.failure?
               refused = recorded.error
