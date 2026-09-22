@@ -1,0 +1,86 @@
+require 'spec_helper'
+
+RSpec.describe 'the membership operator reads', type: :request do
+  include_context 'API v3 Admin'
+
+  let(:headers) { bearer_headers }
+
+  let(:group) { create(:customer_group, store: store) }
+
+
+  describe 'GET /api/v3/admin/membership_rights/types' do
+    it 'answers the registry, each kind with the settings it declares' do
+      get '/api/v3/admin/membership_rights/types', headers: headers
+
+      expect(response).to have_http_status(:ok)
+      types = response.parsed_body['data']
+      expect(types.map { |type| type['type'] }).to include('birthday_double_integral', 'member_price')
+
+      birthday = types.find { |type| type['type'] == 'birthday_double_integral' }
+      expect(birthday['preference_schema'].map { |field| field['key'] }).to include('multiplier')
+    end
+  end
+
+  describe 'the rights a tier carries' do
+    it 'creates one of a kind, with the settings that kind declares' do
+      post "/api/v3/admin/customer_groups/#{group.prefixed_id}/membership_rights", headers: headers,
+           params: { type: 'birthday_double_integral', name: '生日双倍', published: true,
+                     preferences: { multiplier: 3 } }
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body).to include('type' => 'birthday_double_integral', 'name' => '生日双倍')
+      right = Spree::MembershipRight.last
+      expect(right.preferred_multiplier).to eq(3)
+    end
+
+    it 'refuses a kind nothing registered' do
+      post "/api/v3/admin/customer_groups/#{group.prefixed_id}/membership_rights", headers: headers,
+           params: { type: 'free_shipping' }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body['error']['code']).to eq('unknown_membership_right_type')
+    end
+
+    it 'lists and updates what the tier carries' do
+      right = create(:membership_right, customer_group: group)
+
+      get "/api/v3/admin/customer_groups/#{group.prefixed_id}/membership_rights", headers: headers
+      expect(response.parsed_body['data'].map { |row| row['id'] }).to eq([right.prefixed_id])
+
+      patch "/api/v3/admin/customer_groups/#{group.prefixed_id}/membership_rights/#{right.prefixed_id}",
+            headers: headers, params: { name: '改过的名字' }
+      expect(response).to have_http_status(:ok)
+      expect(right.reload.name).to eq('改过的名字')
+    end
+  end
+
+  describe 'what makes a group a tier' do
+    it 'answers 404 while the group is not one' do
+      get "/api/v3/admin/customer_groups/#{group.prefixed_id}/tier_setting", headers: headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'creates and updates it once the group is a tier' do
+      post "/api/v3/admin/customer_groups/#{group.prefixed_id}/tier_setting", headers: headers,
+           params: { rank: 2, threshold: 500, validity_days: 365 }
+
+            expect(response).to have_http_status(:created)
+      expect(response.parsed_body).to include('rank' => 2, 'threshold' => '500.0', 'validity_days' => 365)
+
+      patch "/api/v3/admin/customer_groups/#{group.prefixed_id}/tier_setting", headers: headers,
+            params: { threshold: 800 }
+      expect(response).to have_http_status(:ok)
+      expect(Spree::MembershipTierSetting.find_by(customer_group: group).threshold).to eq(800)
+    end
+
+    it 'refuses a second one for the same group' do
+      create(:membership_tier_setting, customer_group: group)
+
+      post "/api/v3/admin/customer_groups/#{group.prefixed_id}/tier_setting", headers: headers,
+           params: { rank: 3 }
+
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+  end
+end

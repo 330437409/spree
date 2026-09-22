@@ -1,0 +1,36 @@
+en:
+  spree:
+    errors:
+      messages:
+        not_a_registered_membership_right: is not a kind of right this deployment has
+    membership_right_types:
+      member_price:
+        name: Member price
+        description: The price this tier's catalogue gives its members
+      exclusive_coupon:
+        name: Exclusive coupon
+        description: A coupon only this tier holds
+      coupon:
+        name: Coupon
+        description: A coupon the tier carries
+      large_coupon:
+        name: Large coupon
+        description: A big-face coupon, exchanged upwards
+      add_bag:
+        name: Member pack
+        description: This tier may buy the member add-on pack
+      priority_distribution:
+        name: Priority distribution
+        description: Priority when orders are distributed
+      birthday_double_integral:
+        name: Birthday points
+        description: Points are multiplied on the customer's birthday
+      give_gift:
+        name: Annual gift
+        description: The gift this tier receives each year
+      surprise_red_envelope:
+        name: Surprise red envelope
+        description: A red packet, for the member and for a friend
+      svip_date:
+        name: Member day
+        description: A day the tier's members buy on better terms
