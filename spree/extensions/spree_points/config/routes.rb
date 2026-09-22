@@ -8,6 +8,12 @@ Spree::Core::Engine.add_routes do
   namespace :api, defaults: { format: 'json' } do
     namespace :v3 do
       namespace :store do
+        # The points shop: one collection answers the client's page, its
+        # category tabs, the featured shelf and the member shelf between them —
+        # they differ in filter rather than in shape — and one member. The
+        # category labels the tabs read come back in the collection's own meta.
+        resources :point_products, only: [:index, :show]
+
         # The customer's own balances and their history, under the same
         # `customers/me` namespace the rest of the customer's own reads use.
         namespace :customer, path: 'customers/me' do

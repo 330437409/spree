@@ -3,4 +3,5 @@ en:
   spree:
     errors:
       messages:
+        not_a_registered_point_product: is not a kind of points shop good this store has
         point_lot_overdrawn: cannot leave more in a lot than it was granted with
