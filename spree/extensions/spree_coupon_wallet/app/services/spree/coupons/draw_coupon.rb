@@ -1,12 +1,8 @@
 module Spree
   module Coupons
     # One draw against a campaign: the customer asks, the campaign answers, and
-    # a coupon arrives in their wallet.
-    #
-    # Distinct from `Spree::CouponCampaigns::Draw`, which is the campaign
-    # *type* that hands coupons out to anyone inside the window — this is the
-    # action, whatever kind the campaign is.
-    class Draw
+    # a coupon arrives in their wallet. Named after the client's own call.
+    class DrawCoupon
       prepend Spree::ServiceModule::Base
 
       # @return [Spree::ServiceModule::Result] value is the holding

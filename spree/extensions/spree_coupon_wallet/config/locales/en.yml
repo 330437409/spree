@@ -18,6 +18,7 @@ en:
     coupon_not_eligible: You are not eligible for this coupon
     coupon_limit_reached: You have already taken this coupon
     coupon_none_left: This campaign has no coupons left
+    coupon_just_taken: That coupon was taken a moment ago — try again
     coupon_code_not_found: We could not find that coupon code
     coupon_code_in_use: That coupon is already in use
     coupon_already_held: That coupon already belongs to somebody else

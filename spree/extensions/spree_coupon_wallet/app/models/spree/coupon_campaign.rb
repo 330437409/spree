@@ -38,13 +38,6 @@ module Spree
     validate :type_must_be_registered
     validate :promotion_must_hand_out_codes
 
-    # What a draw may be taken from: an active campaign inside its window.
-    scope :running, lambda {
-      with_status(:active).
-        where(arel_table[:starts_at].eq(nil).or(arel_table[:starts_at].lteq(Time.current))).
-        where(arel_table[:expires_at].eq(nil).or(arel_table[:expires_at].gt(Time.current)))
-    }
-
     # @return [Array<Class>] the kinds a campaign may be
     def self.available_types
       SpreeCouponWallet.coupon_campaign_types

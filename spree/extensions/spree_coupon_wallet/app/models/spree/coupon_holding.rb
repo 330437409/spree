@@ -27,7 +27,7 @@ module Spree
     validates :grant_id, uniqueness: true
     validates :coupon_code_id, uniqueness: true
 
-    delegate :customer, :customer_id, :status, :expires_at, :granted_at, :store, :store_id, to: :grant
+    delegate :customer, :customer_id, :expires_at, :store, to: :grant
 
     # The grant's own conditions are spelled with its table name rather than
     # the association's, because that is how the primitive's scopes spell them

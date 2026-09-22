@@ -10,7 +10,8 @@ module Spree
       prepend Spree::ServiceModule::Base
 
       # @return [Spree::ServiceModule::Result] value is the holding
-      def call(code:, customer:, store: nil, source: 'sms')
+      def call(code:, customer:, store: nil, source: nil)
+        source ||= 'sms'
         coupon_code = Spree::CouponCode.find_by(code: normalized(code))
 
         return failure(nil, :coupon_code_not_found) if coupon_code.nil?

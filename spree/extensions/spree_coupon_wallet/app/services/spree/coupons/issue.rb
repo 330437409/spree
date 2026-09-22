@@ -16,13 +16,36 @@ module Spree
         store ||= Spree::Current.store
         return failure(nil, :key_missing) if idempotency_key.blank?
 
+        attempts = 0
+
+        begin
+          record(promotion: promotion, source: source, customer: customer, campaign: campaign,
+                 store: store, expires_at: expires_at, idempotency_key: idempotency_key,
+                 metadata: metadata)
+        rescue ActiveRecord::RecordNotUnique
+          # Two callers chose the same free code at the same moment and the
+          # unique index refused the second. The savepoint went with the failed
+          # insert, so the whole issue runs once more — by then the other holder
+          # is visible and the next code is the one chosen.
+          attempts += 1
+          retry if attempts < 2
+
+          failure(nil, :coupon_just_taken)
+        end
+      end
+
+      private
+
+      # @return [Spree::ServiceModule::Result] value is the holding
+      def record(promotion:, source:, customer:, campaign:, store:, expires_at:,
+                 idempotency_key:, metadata:)
         result = nil
 
         Spree::CouponHolding.transaction(requires_new: true) do
           granted = Spree::Grants.grant!(
             kind: Spree::Coupons::Holding,
             customer: customer,
-            source: campaign || granted_by(source),
+            source: campaign,
             idempotency_key: idempotency_key,
             expires_at: expires_at,
             store: store,
@@ -65,25 +88,11 @@ module Spree
         result
       end
 
-      private
-
-      # What caused the grant when no campaign did: the source is the wallet's
-      # own vocabulary and the primitive wants the record behind it, so a
-      # purchase points at its order and an operator's hand at nothing.
-      #
-      # @return [Object, nil]
-      def granted_by(source)
-        source if source.respond_to?(:id)
-      end
-
       # A code of the promotion's pool that nobody holds yet, minted if the pool
       # has run dry. `Spree::CouponCodes::BulkGenerate` is core's own generator;
       # what this adds is the "and nobody holds it" half.
       #
-      # The second pass is for the one race a check-then-insert cannot close:
-      # two draws choosing the same free code at the same moment, where the
-      # unique index refuses the second and the code it wants is gone by then.
-      # `with_deleted` matches that index, which is not partial: a holding
+      # `with_deleted` matches the unique index, which is not partial: a holding
       # somebody removed still holds its code.
       #
       # @return [Spree::CouponCode, nil]
@@ -97,12 +106,6 @@ module Spree
           Spree::CouponCodes::BulkGenerate.call(promotion: promotion, quantity: 1)
         end
 
-        nil
-      rescue ActiveRecord::RecordNotUnique
-        # The code was taken between choosing it and writing the holding, and
-        # `create!` raised out of the transaction. The savepoint is gone with
-        # it, so this answers the refusal rather than retrying inside a
-        # transaction PostgreSQL has already aborted.
         nil
       end
     end

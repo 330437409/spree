@@ -26,7 +26,7 @@ module Spree
             # customer may take a coupon, the service writes the grant and the
             # holding, and the base class keeps the rendering.
             def create_workflow
-              Spree::Coupons::Draw
+              Spree::Coupons::DrawCoupon
             end
 
             def create_workflow_arguments

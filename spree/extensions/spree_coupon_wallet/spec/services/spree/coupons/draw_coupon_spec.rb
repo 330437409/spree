@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Spree::Coupons::Draw do
+RSpec.describe Spree::Coupons::DrawCoupon do
   let(:store) { @default_store }
   let(:campaign) { create(:coupon_campaign, store: store) }
   let(:customer) { create(:customer) }

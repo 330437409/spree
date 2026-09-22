@@ -4,31 +4,10 @@ module Spree
       module Store
         module Customer
           # The customer's own wallet: the coupons they hold, one of them, and
-          # the way a code they already have enters it.
-          #
-          # `create` is not a row the client fills in — it is a code the
-          # platform texted them or the operator published, claimed into the
-          # wallet, so the service runs and its result is the answer.
+          # the way a code they already have enters it — claiming a code the
+          # platform texted them or the operator published.
           class CouponHoldingsController < ResourceController
             prepend_before_action :require_authentication!
-
-            # The wallet's create is not a record the client fills in — it is a
-            # code the customer already has, claimed into the wallet — so the
-            # service runs and its result is the answer. Public, because Rails
-            # dispatches to public methods only: a protected one is not an
-            # action at all.
-            def create
-              result = Spree::Coupons::Receive.call(
-                code: params[:code],
-                customer: current_user,
-                store: current_store,
-                source: params[:source].presence || 'sms'
-              )
-
-              return render_result_error(result) unless result.success?
-
-              render json: serialize_resource(result.value), status: :created
-            end
 
             protected
 
@@ -54,9 +33,32 @@ module Spree
               end
             end
 
-            # Newest first: a wallet is read from what just arrived.
+            # The claim is the workflow: a code the customer already holds
+            # enters the wallet, and the base class keeps the rendering.
+            def create_workflow
+              Spree::Coupons::Receive
+            end
+
+            def create_workflow_arguments
+              { code: params[:code], customer: current_user, store: current_store,
+                source: params[:source].presence }
+            end
+
+            # Both of these are read for every row, so they are loaded with the
+            # page rather than per row.
+            def collection_includes
+              [{ coupon_code: :promotion }, :campaign]
+            end
+
+            def scope_includes
+              collection_includes
+            end
+
+            # Newest first, and a client's own `sort` still leads: the base
+            # applies it before this, so this is the tiebreaker rather than the
+            # whole order.
             def apply_collection_sort(collection)
-              collection.reorder(created_at: :desc, id: :desc)
+              collection.order(created_at: :desc, id: :desc)
             end
 
             private
