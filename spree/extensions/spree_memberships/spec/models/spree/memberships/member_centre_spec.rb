@@ -25,6 +25,18 @@ RSpec.describe Spree::Memberships::MemberCentre, type: :model do
 
   # The flat list is the model and the sections are a projection of it: a kind
   # declares its panel, so nothing here enumerates one.
+  # One writer keeps anybody on one tier; two is a setup error, and the honest
+  # reading of it is the better tier rather than the one priced by accident.
+  it 'answers the highest rung a customer holds' do
+    tier
+    higher_group = create(:customer_group, store: store)
+    higher = create(:membership_tier_setting, customer_group: higher_group, rank: 9)
+    group.add_customers([customer.id])
+    higher_group.add_customers([customer.id])
+
+    expect(centre.tier).to eq(higher)
+  end
+
   it 'groups the store\'s rights by the panel their kind declares' do
     tier
     coupon = create(:coupon_right, customer_group: group)

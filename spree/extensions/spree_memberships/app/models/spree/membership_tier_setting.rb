@@ -19,7 +19,9 @@ module Spree
     delegate :name, :customers, to: :customer_group, allow_nil: true
 
     validates :rank, presence: true, numericality: { only_integer: true }
-    validates :customer_group_id, uniqueness: true
+    # Among live rows only, matching the index: a retired settings row is
+    # history, and a fresh one for the same group is saved after it is retired.
+    validates :customer_group_id, uniqueness: { conditions: -> { where(deleted_at: nil) } }
     validates :validity_days, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
     validates :threshold, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 

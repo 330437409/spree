@@ -9,7 +9,7 @@ module Spree
           # Everything else the base provides still applies: the authorization,
           # the error shape and the renderer.
           class TierSettingsController < ResourceController
-            scoped_resource :customers
+            scoped_resource :memberships
 
             # The route names no id — a group has one of these — so the base's
             # loader has nothing to resolve and each action authorizes what it

@@ -8,7 +8,7 @@ module Spree
         # Read-only discovery, and the reason a kind a gem adds appears in the
         # dashboard's picker without either of them being edited.
         class MembershipRightsController < ResourceController
-          scoped_resource :customers
+          scoped_resource :memberships
 
           def types
             authorize! :read, Spree::MembershipRight

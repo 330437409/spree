@@ -19,7 +19,7 @@ class CreateSpreeMembershipTables < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :spree_membership_tier_settings, :customer_group_id, unique: true
+    add_tier_setting_uniqueness_index
 
     # What a tier grants. STI on `type`, exactly as commission rules and
     # promotion actions are: a kind carries its own settings as preferences, so
@@ -57,6 +57,33 @@ class CreateSpreeMembershipTables < ActiveRecord::Migration[8.1]
   # Written the way `spree_commission_rules` writes the same rule: MySQL has no
   # partial indexes, so it gets a generated key column and everyone else gets the
   # predicate.
+  # One settings row per group, among live rows — written the same way as the
+  # rights index below, for the same reason: MySQL has no partial indexes.
+  def add_tier_setting_uniqueness_index
+    if Spree.mysql?
+      reversible do |dir|
+        dir.up do
+          execute <<~SQL.squish
+            ALTER TABLE spree_membership_tier_settings
+            ADD COLUMN customer_group_key INT
+            AS (IF(deleted_at IS NULL, customer_group_id, NULL)) STORED
+          SQL
+          add_index :spree_membership_tier_settings, :customer_group_key,
+                    unique: true, name: 'index_membership_tier_settings_on_group'
+        end
+
+        dir.down do
+          remove_index :spree_membership_tier_settings, name: 'index_membership_tier_settings_on_group'
+          remove_column :spree_membership_tier_settings, :customer_group_key
+        end
+      end
+    else
+      add_index :spree_membership_tier_settings, :customer_group_id,
+                unique: true, where: 'deleted_at IS NULL',
+                name: 'index_membership_tier_settings_on_group'
+    end
+  end
+
   def add_right_uniqueness_index
     if Spree.mysql?
       reversible do |dir|

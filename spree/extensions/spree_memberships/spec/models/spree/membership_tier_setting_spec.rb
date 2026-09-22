@@ -17,6 +17,14 @@ RSpec.describe Spree::MembershipTierSetting, type: :model do
     expect(build(:membership_tier_setting, customer_group: group)).not_to be_valid
   end
 
+  # Among live rows only: a retired settings row is history, and a fresh one for
+  # the same group is saved after it is retired.
+  it 'lets a group become a tier again once the old row is retired' do
+    tier.destroy
+
+    expect(build(:membership_tier_setting, customer_group: group)).to be_valid
+  end
+
   it 'needs a rank, and a term of positive days when it has one' do
     expect(build(:membership_tier_setting, customer_group: group, rank: nil)).not_to be_valid
 

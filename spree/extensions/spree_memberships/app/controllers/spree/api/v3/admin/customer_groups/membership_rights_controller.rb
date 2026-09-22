@@ -9,7 +9,7 @@ module Spree
           class MembershipRightsController < ResourceController
             include Spree::Api::V3::Admin::SubclassedResource
 
-            scoped_resource :customers
+            scoped_resource :memberships
 
             subclassed_via -> { SpreeMemberships.membership_rights },
                            unknown_type_error: 'unknown_membership_right_type'
