@@ -10,16 +10,20 @@ module Spree
         # payload — the client reads the row and branches on `type`.
         class PointProductSerializer < BaseSerializer
           typelize type: :string, name: :string, image: 'string | null',
-                   category: 'string | null', points: :number, money: :string,
+                   category: 'string | null', points: :number, money: 'string | null',
                    stock: :number, in_stock: :boolean, featured: :boolean,
                    variant_id: 'string | null', vip_card: 'Record<string, unknown> | null'
 
-          attributes :name, :image, :category, :points, :featured
+          attributes :name, :image, :category, :points, :featured, :stock
 
-          attribute(:type) { |product| product.class.api_type }
+          # From the column rather than the loaded class, which reports the
+          # subclass either way — `Spree::Api::V3::ImportSerializer` reads it
+          # the same way.
+          attribute(:type) { |product| Spree::PointProduct.api_type_for(product.type) }
 
-          attribute(:money) { |product| decimal_string(product.money) }
-          attribute(:stock) { |product| product.stock }
+          # 加钱购: what the customer pays beside the points. Gated with every
+          # other money figure, through the flag the price helpers read.
+          attribute(:money) { |product| decimal_string(product.money) unless params[:hide_prices] }
           attribute(:in_stock) { |product| product.in_stock? }
           attribute(:variant_id) do |product|
             product.is_a?(Spree::PointProducts::Good) ? product.variant&.prefixed_id : nil

@@ -6,7 +6,7 @@ module Spree
     class VipCard < Spree::PointProduct
       belongs_to :customer_group, class_name: 'Spree::CustomerGroup', optional: true
 
-      validates :customer_group_id, presence: true
+      issues :customer_group_id
     end
   end
 end

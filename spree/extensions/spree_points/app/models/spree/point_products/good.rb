@@ -5,7 +5,7 @@ module Spree
     class Good < Spree::PointProduct
       belongs_to :variant, class_name: 'Spree::Variant', optional: true
 
-      validates :variant_id, presence: true
+      issues :variant_id
     end
   end
 end

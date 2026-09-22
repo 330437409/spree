@@ -26,6 +26,14 @@ RSpec.describe 'GET /api/v3/store/point_products', type: :request do
     expect(response.parsed_body['data'].map { |row| row['name'] }).to eq(['A teapot'])
   end
 
+  # The labels are what the client switches pages with, so a page narrowed to
+  # one of them still carries all of them.
+  it 'answers the labels of the whole shelf while the page is one label' do
+    shelf(category: 'pots')
+
+    expect(response.parsed_body['meta']['categories']).to eq(%w[cups pots])
+  end
+
   it 'answers the featured shelf alone' do
     shelf(featured: true)
 
@@ -40,6 +48,23 @@ RSpec.describe 'GET /api/v3/store/point_products', type: :request do
     expect(response.parsed_body['data'].last['in_stock']).to be(false)
   end
 
+  # 加钱购 is a price like any other, so a channel that hides prices hides it.
+  it 'hides the money figure on a channel that hides prices' do
+    create(:channel, store: store, code: 'gated', preferred_storefront_access: 'prices_hidden')
+
+    get '/api/v3/store/point_products', headers: api_key_headers.merge('X-Spree-Channel' => 'gated')
+
+    expect(response.parsed_body['data'].first['money']).to be_nil
+  end
+
+  it 'answers this store’s goods alone' do
+    create(:point_product, store: create(:store), name: 'Another shop’s cup', category: 'toys')
+    shelf
+
+    expect(response.parsed_body['data'].map { |row| row['name'] }).not_to include('Another shop’s cup')
+    expect(response.parsed_body['meta']['categories']).to eq(%w[cups pots])
+  end
+
   # The seller is resolved from the header the mini program maps its `siteId`
   # onto, so the shelf follows the request rather than a global.
   it 'answers the member shelf, which is the seller’s own goods beside the store’s' do
@@ -52,6 +77,15 @@ RSpec.describe 'GET /api/v3/store/point_products', type: :request do
     names = response.parsed_body['data'].map { |row| row['name'] }
     expect(names).to include('My cup', 'A cup')
     expect(names).not_to include('Their cup')
+  end
+
+  # A shelf silently missing a seller's goods reads as a shelf with nothing in
+  # it, so a member shelf that names no site is refused rather than narrowed.
+  it 'refuses the member shelf when the request named no site' do
+    shelf(audience: 'member')
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.parsed_body['error']['code']).to eq('parameter_invalid')
   end
 end
 

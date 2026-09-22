@@ -15,10 +15,15 @@ module Spree
 
     has_prefix_id :ptgood
 
-    # Who a good may be offered to. `vip_user` is a member — a condition the
-    # membership plan answers for — and `we_chat_user` a customer the platform
-    # can subscribe to.
+    # Who a good may be offered to: the plan's own fixed pair, not a registry —
+    # `vip_user` is a member, which the membership plan answers for, and
+    # `we_chat_user` a customer the platform can subscribe to.
     LIMIT_USER_TYPES = %w[vip_user we_chat_user].freeze
+
+    # The payload column a kind declares, and the ones it must leave blank.
+    # `Spree::CommissionLine` states the shape: concrete keys, exactly one.
+    class_attribute :payload_column, instance_writer: false
+    self.payload_column = nil
 
     belongs_to :seller, class_name: 'Spree::Seller', optional: true
 
@@ -31,26 +36,65 @@ module Spree
     validates :limit_user_type, inclusion: { in: LIMIT_USER_TYPES }, allow_nil: true
     validate :type_must_be_registered
 
-    scope :ordered, -> { order(:position, :id) }
     scope :featured, -> { where(featured: true) }
     scope :for_category, ->(category) { where(category: category) }
-    # A store-wide good and one a seller offers on its own shelf.
-    scope :for_seller, ->(seller) { where(seller_id: [nil, seller&.id]) }
+    # `for_seller` means one seller's own rows everywhere in this repository,
+    # so this family uses the same words for the same things: `first_party` is
+    # the store's own, and the union is what a shelf shows.
+    scope :first_party, -> { where(seller_id: nil) }
+    scope :for_seller, ->(seller) { where(seller_id: seller&.id) }
+    scope :available_to_seller, ->(seller) { first_party.or(for_seller(seller)) }
+
+    # The kinds a payload may name, and their classes.
+    #
+    # @return [Array<Class>]
+    def self.available_types
+      SpreePoints.point_product_types
+    end
+
+    # @return [Array<Symbol>] every concrete key a kind may carry
+    def self.payload_columns
+      %i[coupon_campaign_id customer_group_id variant_id]
+    end
 
     # @return [Boolean] whether a redemption can issue one right now
     def in_stock?
       stock.positive?
     end
 
+    # Sets the one payload column this kind carries, and requires it.
+    #
+    # @param column [Symbol]
+    # @return [void]
+    def self.issues(column)
+      self.payload_column = column
+      validates column, presence: true
+      validate :only_its_own_payload
+    end
+
     private
 
-    # A subclass is registered by being one; a row written with a class name no
-    # registry holds is the case this catches.
+    # The column holds a class name, and the registry is what says whether it
+    # is one of ours — the loaded class is the subclass either way, so only the
+    # column can catch a row naming a kind no registry holds
+    # (`Spree::CommissionRule` reads it the same way).
     def type_must_be_registered
-      return if self.class.find_by_api_type(self.class.api_type).present?
+      return if self.class.available_types.any? { |kind| kind.to_s == type }
 
       errors.add(:type, :not_a_registered_point_product,
                  message: Spree.t('errors.messages.not_a_registered_point_product'))
     end
+
+    def only_its_own_payload
+      mine = self.class.payload_column
+      return if mine.nil?
+
+      others = self.class.payload_columns.excluding(mine).select { |key| self[key].present? }
+      return if others.empty?
+
+      errors.add(:base, :exactly_one_point_product_payload,
+                 message: Spree.t('errors.messages.exactly_one_point_product_payload'))
+    end
+
   end
 end

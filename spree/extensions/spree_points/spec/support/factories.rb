@@ -26,9 +26,7 @@ FactoryBot.define do
     amount { 100 }
     remaining { 100 }
   end
-end
 
-FactoryBot.define do
   factory :point_product, class: 'Spree::PointProducts::Good' do
     store
     sequence(:name) { |n| "Points good #{n}" }
