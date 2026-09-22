@@ -52,8 +52,8 @@ module Spree
 
       private
 
-      # Every credit this order carries, the earning first — the subsidy comes
-      # back at whatever rate the earning does, so it is answered after it.
+      # Every credit this order carries, the earning first: it is the row a
+      # caller reads, and both halt paths answer with the first of them.
       def find_credits
         @credits = Spree::SellerTransfer.credits.where(order_id: order.id).order(:id).to_a
         # Nothing was ever credited — the order was refunded before it shipped,
@@ -116,7 +116,7 @@ module Spree
         total = order.total.to_d
         return BigDecimal(1) if total.zero?
 
-        [refunded.to_d.abs / total, BigDecimal(1)].min
+        [amount.to_d.abs / total, BigDecimal(1)].min
       end
 
       # Bounded and written under the credit's own lock, so two refunds landing
@@ -163,7 +163,7 @@ module Spree
       def share_of(credit, earning, carry)
         return seller_share_of(amount, earning) if credit.earning?
 
-        quantize(carry * credit.amount, credit.currency)
+        Spree::Money::Rounding.to_currency(carry * credit.amount, credit.currency)
       end
 
       # The seller's share of a refunded amount.
@@ -178,8 +178,10 @@ module Spree
       # amount. Anything else — a manual refund, a cancellation — is only an
       # amount against an order, and the order's own ratio is the best available
       # answer.
+      # Memoised: the fraction the subsidy follows and the earning's own
+      # reversal ask the same question of the same refund.
       def seller_share_of(refunded, earning)
-        attributed_share(refunded, earning) || blended_share(refunded, earning)
+        @seller_share ||= attributed_share(refunded, earning) || blended_share(refunded, earning)
       end
 
       # What the named lines actually earned, scaled to what this refund paid.
@@ -203,14 +205,14 @@ module Spree
         earnings = amounts.map { |line_item_id, amount| line_earning(line_item_id, amount.to_d) }
         return if earnings.any?(&:nil?)
 
-        quantize(earnings.sum * (refunded.to_d.abs / gross), earning.currency)
+        Spree::Money::Rounding.to_currency(earnings.sum * (refunded.to_d.abs / gross), earning.currency)
       end
 
       def blended_share(refunded, earning)
         paid = order.total.to_d
         return refunded.to_d.abs if paid.zero?
 
-        quantize(refunded.to_d.abs * (earning.amount / paid), earning.currency)
+        Spree::Money::Rounding.to_currency(refunded.to_d.abs * (earning.amount / paid), earning.currency)
       end
 
       # What one line's refunded value earned the seller: their money less the
@@ -247,10 +249,6 @@ module Spree
                                pluck(:line_item_id, :total).to_h
       end
 
-      def quantize(amount, currency)
-        Spree::Money::Rounding.quantize(amount, Spree::Money::Rounding.precision(currency))
-      end
-
       # A clawback has to settle where its credit settled. Payouts are swept by
       # settlement currency, so a reversal left in the sale's currency would
       # never join the batch that pays the row it cancels — the seller would be
@@ -265,38 +263,41 @@ module Spree
         share = credit.settled_amount * (bounded / credit.amount)
 
         {
-          settled_amount: -Spree::Money::Rounding.quantize(
-            share, Spree::Money::Rounding.precision(credit.settlement_currency)
-          ),
+          settled_amount: -Spree::Money::Rounding.to_currency(share, credit.settlement_currency),
           settled_currency: credit.settled_currency
         }
       end
 
+      # Every row gets its attempt, and the first refusal is the answer — with
+      # its own row and its own message, so an operator reconciling reads a
+      # pair that belongs together.
       def execute_reversals
-        failures = @reversals.reject { |row| execute_reversal(row) }
+        failed = @reversals.filter_map { |row| execute_reversal(row) }.first
 
-        failure(failures.first, @failure_message) if failures.any?
+        failure(failed[:row], failed[:message]) if failed
       end
 
+      # @return [Hash, nil] nil when the provider took it back, else the row and
+      #   what the provider said
       def execute_reversal(row)
         provider_for(row).reverse!(row)
-        true
+        nil
       rescue Spree::Core::AmbiguousGatewayError => e
         # Whether the clawback happened is the provider's to say. Recorded as
         # such rather than as a refusal, so an operator reconciling knows which
         # rows are questions and which are simply owed.
         row.update!(status: 'unresolved')
         report(row, e)
-        false
       rescue StandardError => e
         row.update!(status: 'processing')
         report(row, e)
-        false
       end
 
+      # @return [Hash] the row and the provider's own words
       def report(row, error)
-        @failure_message = error.message
         Rails.error.report(error, handled: true, context: { seller_transfer_id: row.id }, source: 'spree.core')
+
+        { row: row, message: error.message }
       end
 
       # The provider that made the money, not whichever one the store uses now.

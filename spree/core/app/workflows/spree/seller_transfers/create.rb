@@ -10,9 +10,11 @@ module Spree
     # A second row goes beside the earning when the platform — not the seller —
     # funded part of the price: a **subsidy**, the seller's shortfall against
     # what the sale would have earned at the shelf price. Whoever promised that
-    # funding contributes it through the `funded_discounts` hook; this workflow
-    # owns the arithmetic, the ledger row and the hand-off, so a seller is
-    # never credited for a discount the seller gave.
+    # funding contributes it through the `funded_discounts` hook, answering
+    # `{ discounts: { line_item_id => reduction }, metadata: { … } }` — the
+    # reduction gross and per line, the metadata what an operator needs to see
+    # why. This workflow owns the arithmetic, the ledger row and the hand-off,
+    # so a seller is never credited for a discount the seller gave.
     #
     # Idempotent by the unique index on `(order_id) WHERE kind = 'earning'` —
     # the fulfillment event can fire more than once (it is dual-emitted under a
@@ -36,10 +38,7 @@ module Spree
         run_hooks :validate
 
         step :build_transfer
-        # What whoever promised the platform's money contributed: the reduction
-        # they funded, per line. Read once the earning exists, so an extension
-        # that raises cannot cost the seller the money they are owed.
-        @funding = run_hooks :funded_discounts
+        @funding = collect_funding
         step :build_subsidy
         external_step :execute_transfer
         external_step :execute_subsidy
@@ -49,6 +48,21 @@ module Spree
       end
 
       private
+
+      # What whoever promised the platform's money contributed: the reduction
+      # they funded, per line. Read once the earning exists, and read as an
+      # enrichment rather than a gate — a promise that cannot be read is
+      # reported instead of unwinding a run whose earning is already written,
+      # which no redelivery would come back for.
+      #
+      # @return [Hash] the merged contributions, empty when nothing was claimed
+      def collect_funding
+        run_hooks :funded_discounts
+      rescue StandardError => e
+        Rails.error.report(e, handled: true, context: { order_id: order.id, order_number: order.number },
+                              source: 'spree.core')
+        {}
+      end
 
       # A first-party order earns nobody anything — the money is already the
       # operator's. Nor does an order whose goods have not all gone out, or one
@@ -66,16 +80,21 @@ module Spree
       end
 
       def build_transfer
-        @seller_transfer = Spree::SellerTransfer.create!(
-          store: order.seller.store,
-          seller: order.seller,
-          order: order,
-          amount: earned_amount,
-          currency: order.currency,
-          kind: 'earning',
-          provider: provider_name,
-          status: 'pending'
-        )
+        # Its own savepoint: on PostgreSQL a failed insert poisons the caller's
+        # transaction, and the read below would raise instead of answering with
+        # the row that won.
+        @seller_transfer = ApplicationRecord.transaction(requires_new: true) do
+          Spree::SellerTransfer.create!(
+            store: order.seller.store,
+            seller: order.seller,
+            order: order,
+            amount: earned_amount,
+            currency: order.currency,
+            kind: 'earning',
+            provider: provider_name,
+            status: 'pending'
+          )
+        end
       rescue ActiveRecord::RecordNotUnique
         # Another delivery of the same event got there first; the unique index
         # is what makes that safe, and its winner is the answer.
@@ -89,17 +108,19 @@ module Spree
         @subsidy = nil
         return if funding_amount <= 0
 
-        @subsidy = Spree::SellerTransfer.create!(
-          store: order.seller.store,
-          seller: order.seller,
-          order: order,
-          amount: funding_amount,
-          currency: order.currency,
-          kind: 'subsidy',
-          provider: provider_name,
-          status: 'pending',
-          metadata: funding_metadata
-        )
+        @subsidy = ApplicationRecord.transaction(requires_new: true) do
+          Spree::SellerTransfer.create!(
+            store: order.seller.store,
+            seller: order.seller,
+            order: order,
+            amount: funding_amount,
+            currency: order.currency,
+            kind: 'subsidy',
+            provider: provider_name,
+            status: 'pending',
+            metadata: funding_metadata
+          )
+        end
       rescue ActiveRecord::RecordNotUnique
         # Another delivery got there first, exactly as with the earning. Its row
         # is left to that delivery to hand over; this one has nothing to send.
@@ -108,6 +129,10 @@ module Spree
 
       # Outside any transaction: a provider that moves money makes a network
       # call here, and a row lock must not be held across it.
+      #
+      # A refused hand-off stops the flow, so the subsidy waits for
+      # `SellerTransfers::ExecutePendingJob` rather than being sent by this run
+      # — the retry job takes every pending credit, this one included.
       def execute_transfer
         hand_to_provider(seller_transfer)
       end
@@ -161,38 +186,49 @@ module Spree
       # against can move after the sale.
       def funding_amount
         @funding_amount ||= begin
-          rates = percentage_rates
-          total = funded_discounts.sum do |line_item_id, discount|
-            discount.to_d * (1 - rates[line_item_id.to_i].to_d)
-          end
+          discounts = contributed_discounts
 
-          Spree::Money::Rounding.quantize(total, Spree::Money::Rounding.precision(order.currency))
+          if discounts.empty?
+            0.to_d
+          else
+            rates = percentage_rates(discounts)
+            total = discounts.sum do |line_item_id, discount|
+              discount.to_d * (1 - rates[line_item_id].to_d)
+            end
+
+            Spree::Money::Rounding.to_currency(total, order.currency)
+          end
         end
       end
 
-      # @return [Hash{Integer => BigDecimal}] what each line was reduced by
-      def funded_discounts
-        @funded_discounts ||= contributed(:discounts).to_h.transform_keys(&:to_i)
+      # @return [Hash{String => BigDecimal}] what each line was reduced by,
+      #   keyed as a string because an id is a string here — a store on UUID
+      #   keys would collapse every integer-cast key onto zero
+      def contributed_discounts
+        @contributed_discounts ||= contributed(:discounts).transform_keys(&:to_s)
       end
 
       def funding_metadata
-        contributed(:metadata).merge('funded_discount' => funded_discounts.values.sum.to_d.to_s)
+        contributed(:metadata).merge('funded_discount' => contributed_discounts.values.sum.to_d.to_s)
       end
 
+      # A handler's contribution, or nothing. The two keys read here are the
+      # whole contract: `discounts` is what each of the order's lines was
+      # reduced by, gross and by line item id, and `metadata` is the promise
+      # behind it, for an operator reading the ledger.
       def contributed(key)
-        return {} unless @funding.is_a?(Hash)
-
-        (@funding[key] || @funding[key.to_s] || {}).to_h
+        value = @funding[key] || @funding[key.to_s]
+        value.is_a?(Hash) ? value : {}
       end
 
       # The percentage rate charged on each discounted line, as a fraction. A
       # line with no commission row — no rate matched it — answers nothing, so
       # the whole of its discount is the seller's shortfall.
-      def percentage_rates
+      def percentage_rates(discounts)
         Spree::CommissionLine.for_line_items.
-          where(order_id: order.id, line_item_id: funded_discounts.keys).
+          where(order_id: order.id, line_item_id: discounts.keys).
           each_with_object({}) do |line, rates|
-            rates[line.line_item_id] = line.rate.to_d / 100 if line.kind == 'percentage'
+            rates[line.line_item_id.to_s] = line.rate.to_d / 100 if line.percentage?
           end
       end
 

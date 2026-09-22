@@ -28,10 +28,11 @@ module Spree
 
         provider = seller.store.payout_provider_instance
 
-        # Earnings only — see the scope. A reversal is retryable the same way
-        # when its own provider call is refused, but sending one through
-        # `transfer!` would pay the seller the amount it exists to take back:
-        # the row is negative and the amount sent is its absolute value.
+        # Credits only — see the scope: an earning, and the subsidy the platform
+        # owes beside it. A reversal is retryable the same way when its own
+        # provider call is refused, but sending one through `transfer!` would
+        # pay the seller the amount it exists to take back: the row is negative
+        # and the amount sent is its absolute value.
         seller.seller_transfers.awaiting_provider.find_each do |transfer|
           provider.transfer!(transfer)
         rescue Spree::Core::AmbiguousGatewayError => e

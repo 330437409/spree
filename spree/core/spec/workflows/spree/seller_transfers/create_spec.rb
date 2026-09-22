@@ -203,6 +203,18 @@ RSpec.describe Spree::SellerTransfers::Create do
       expect(Spree::SellerTransfer.subsidies.count).to eq(1)
     end
 
+    # The earning is money the seller is owed, and no redelivery comes back for
+    # a promise somebody else's handler could not read.
+    it 'keeps the earning when the funding cannot be read' do
+      Spree.hooks.register('seller_transfers.create.funded_discounts') { |_flow| raise 'the promise is unreadable' }
+
+      result = described_class.call(order: shipped_order)
+
+      expect(result).to be_success
+      expect(result.value.amount).to eq(88)
+      expect(Spree::SellerTransfer.subsidies.count).to eq(0)
+    end
+
     # Nothing is credited on an order that earns nobody anything, whatever was
     # funded on it.
     it 'writes nothing on the operator’s own order' do
