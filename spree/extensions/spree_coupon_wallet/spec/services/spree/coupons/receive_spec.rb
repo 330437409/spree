@@ -71,13 +71,38 @@ RSpec.describe Spree::Coupons::Receive do
   it 'refuses a code that belongs to another store' do
     elsewhere = create(:coupon_wallet_promotion, store: create(:store))
 
-    expect(receive(code: elsewhere.coupon_codes.first.code)).to be_failure
+    result = receive(code: elsewhere.coupon_codes.first.code)
+
+    expect(result).to be_failure
+    expect(result.error.value).to eq(:coupon_code_not_found)
   end
 
-  it 'refuses a coupon the store has taken back' do
+  # The store is the request's own when a caller names none, as it is for the
+  # service that hands coupons out.
+  it 'claims a code without being told the store' do
+    result = described_class.call(code: code, customer: customer)
+
+    expect(result).to be_success
+    expect(result.value).to be_a(Spree::CouponHolding)
+  end
+
+  it 'refuses a coupon the store has taken back, in its own words' do
     held = receive.value
     held.destroy
 
-    expect(receive).to be_failure
+    result = receive
+
+    expect(result).to be_failure
+    expect(result.error.value).to eq(:coupon_no_longer_available)
+  end
+
+  it 'refuses a coupon that lapsed before anybody claimed it, in its own words' do
+    drawn = Spree::Coupons::Issue.call(promotion: promotion, source: 'gift', store: store,
+                                       idempotency_key: 'spec:lapsed', expires_at: 1.day.ago).value
+
+    result = receive(code: drawn.coupon_code.code)
+
+    expect(result).to be_failure
+    expect(result.error.value).to eq(:coupon_no_longer_available)
   end
 end

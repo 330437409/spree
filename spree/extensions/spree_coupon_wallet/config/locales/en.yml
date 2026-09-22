@@ -20,6 +20,7 @@ en:
     coupon_limit_reached: You have already taken this coupon
     coupon_none_left: This campaign has no coupons left
     coupon_just_taken: That coupon was taken a moment ago — try again
+    coupon_no_longer_available: That coupon is no longer available
     coupon_already_recorded: That coupon has already been given out
     coupon_code_not_found: We could not find that coupon code
     coupon_code_in_use: That coupon is already in use

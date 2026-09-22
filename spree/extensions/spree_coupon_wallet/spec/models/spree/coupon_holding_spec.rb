@@ -20,6 +20,16 @@ RSpec.describe Spree::CouponHolding, type: :model do
     expect(same_grant).not_to be_valid
   end
 
+  # The uniqueness stands where the indexes do, removed rows included: a code
+  # somebody gave back is still reserved to the holding it was given under.
+  it 'keeps a removed holding’s code reserved to it' do
+    removed = create(:coupon_holding, store: store)
+    removed.destroy
+
+    expect(build(:coupon_holding, store: store, coupon_code: removed.coupon_code)).not_to be_valid
+    expect(build(:coupon_holding, store: store, grant: removed.grant)).not_to be_valid
+  end
+
   it 'refuses a way in that is not one of the wallet’s own' do
     expect(build(:coupon_holding, store: store, source: 'telepathy')).not_to be_valid
   end

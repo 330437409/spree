@@ -27,6 +27,17 @@ RSpec.describe Spree::CouponCampaign, type: :model do
     expect(campaign.errors[:promotion]).to be_present
   end
 
+  # Another store's promotion would hand this store's customers a coupon the
+  # store cannot honour.
+  it 'refuses a promotion that belongs to another store' do
+    elsewhere = create(:coupon_wallet_promotion, store: create(:store))
+
+    campaign = build(:coupon_campaign, store: store, promotion: elsewhere)
+
+    expect(campaign).not_to be_valid
+    expect(campaign.errors[:promotion]).to be_present
+  end
+
   it 'needs a name' do
     expect(build(:coupon_campaign, store: store, promotion: promotion, name: nil)).not_to be_valid
   end

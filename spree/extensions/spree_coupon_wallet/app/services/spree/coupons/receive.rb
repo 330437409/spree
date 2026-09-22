@@ -12,6 +12,7 @@ module Spree
       # @return [Spree::ServiceModule::Result] value is the holding
       def call(code:, customer:, store: nil, source: nil)
         source ||= 'sms'
+        store ||= Spree::Current.store
         coupon_code = find_code(normalized(code), store)
 
         return failure(nil, :coupon_code_not_found) if coupon_code.nil?
@@ -43,12 +44,12 @@ module Spree
         if held
           # A coupon somebody removed is in nobody's wallet, and its code stays
           # reserved to it.
-          return failure(nil, :coupon_already_held) if held.deleted_at.present?
+          return failure(nil, :coupon_no_longer_available) if held.deleted_at.present?
           return failure(nil, :coupon_already_held) if held.customer_id.present? && held.customer_id != customer.id
           return success(held) if held.customer_id.present?
 
           claimed = Spree::Grants.claim!(held.grant, customer: customer)
-          return failure(nil, claimed.error) if claimed.failure?
+          return failure(nil, refusal_for(claimed.error)) if claimed.failure?
 
           return success(held.reload)
         end
@@ -65,6 +66,19 @@ module Spree
 
       def normalized(code)
         code.to_s.strip.downcase
+      end
+
+      # The primitive answers with its own reasons, and only this gem's have
+      # words a customer reads: a coupon that lapsed or was taken back is no
+      # longer available, and one somebody claimed first belongs to them.
+      #
+      # @return [Symbol]
+      def refusal_for(error)
+        case error.respond_to?(:value) ? error.value : error
+        when :not_usable then :coupon_no_longer_available
+        when :already_claimed then :coupon_already_held
+        else error
+        end
       end
     end
   end

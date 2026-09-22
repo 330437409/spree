@@ -16,7 +16,7 @@ Spree::Coupons::Issue.call(
   idempotency_key: "support:#{ticket.id}"
 )
 
-Spree::Coupons::Draw.call(campaign: campaign, customer: customer)
+Spree::Coupons::DrawCoupon.call(campaign: campaign, customer: customer)
 Spree::Coupons::Receive.call(code: 'ABCD1234', customer: customer)
 ```
 
