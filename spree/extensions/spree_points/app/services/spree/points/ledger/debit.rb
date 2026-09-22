@@ -105,7 +105,16 @@ module Spree
           ordered = account.usable_lots.soonest_first.to_a
           return ordered if reverses.nil?
 
+          # What the reversed entry touched: a spend leaves its allocations,
+          # and an earn leaves none — a lot is created beside it instead — so
+          # the second look finds the lot written under the same key.
           own_ids = Spree::PointAllocation.where(ledger_entry: reverses).pluck(:point_grant_id)
+          if own_ids.empty?
+            own_ids = Spree::PointGrant.joins(:grant)
+                                       .where(spree_grants: { idempotency_key: reverses.idempotency_key })
+                                       .pluck(:id)
+          end
+
           own, rest = ordered.partition { |lot| own_ids.include?(lot.id) }
 
           own + rest

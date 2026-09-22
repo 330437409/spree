@@ -80,18 +80,18 @@ RSpec.describe Spree::Points::OrderEarnReversalSubscriber do
   # The allocation trail is what explains the customer's history, so a clawback
   # gives back the earn's own lot before it touches the rest of the balance.
   it 'gives back the earn’s own lot before another one' do
-    other_lot = Spree::PointGrant.joins(:grant).where(account: points_account)
-                                 .where.not(grant_id: Spree::LedgerEntry.where(kind: 'consume')
-                                                                        .joins('INNER JOIN spree_grants ON spree_grants.id = 0').select(:id))
+    own = Spree::PointGrant.where(account: points_account).first
+    # A lot that lapses sooner than the earn's own: soonest-expiry-first would
+    # drain this one first, which would misattribute the clawback.
     Spree::Points::Ledger.credit!(account: points_account, amount: 50, reason: 'manual',
-                                  idempotency_key: 'later:lot', granted_at: nil)
-    own = Spree::PointGrant.where(account: points_account).order(:id).first
+                                  idempotency_key: 'later:lot', expires_at: 1.day.from_now)
     later = Spree::PointGrant.where(account: points_account).order(:id).last
 
     cancelled
 
     expect(own.reload.remaining).to eq(0)
     expect(later.reload.remaining).to eq(50)
+    expect(points_account.reload.balance).to eq(50)
   end
 
   it 'never takes back more than the earn' do
