@@ -6,6 +6,11 @@ module Spree
 
     include Spree::HasCustomFields
 
+    include Spree::HasPaymentOwner
+    # A cart mid-checkout, the order it becomes — and, registered by the
+    # scenario purchase frame, a purchase that is neither.
+    self.owner_associations = %i[order cart]
+
     self.event_prefix = 'payment_session'
 
     publishes_lifecycle_events
@@ -20,7 +25,6 @@ module Spree
             primary_key: :external_id
 
     validates :external_id, :status, :currency, presence: true
-    validate :exactly_one_owner
     validates :external_id, uniqueness: { scope: [:order_id, :payment_method_id] }
     validates :amount, presence: true, numericality: { greater_than: 0 }
 
@@ -155,11 +159,6 @@ module Spree
       end
     end
 
-    # @return [Spree::Cart, Spree::Order, nil]
-    def owner
-      order || cart
-    end
-
     # Bridge for legacy callers assigning +current_order+ (now a Spree::Cart)
     # to the order association — routes carts to the cart FK instead.
     def order=(record)
@@ -171,20 +170,6 @@ module Spree
       end
     end
 
-    # Assigns the owning record to the matching association (cart or order),
-    # clearing the other one. Lets gateways stay owner-agnostic.
-    #
-    # @param record [Spree::Cart, Spree::Order]
-    def owner=(record)
-      if record.is_a?(Spree::Cart)
-        self.cart = record
-        self.order = nil
-      else
-        self.order = record
-        self.cart = nil
-      end
-    end
-
     private
 
     # Only for payments with no Spree-side source — a gateway that does record
@@ -192,10 +177,6 @@ module Spree
     def skip_source_requirement(payment_record)
       payment_record.skip_source_requirement = true if payment_record&.source.blank?
       payment_record
-    end
-
-    def exactly_one_owner
-      errors.add(:base, :exactly_one_of_cart_or_order, message: Spree.t('errors.messages.exactly_one_of_cart_or_order')) unless [order, cart].compact.one?
     end
 
     def publish_processing_event

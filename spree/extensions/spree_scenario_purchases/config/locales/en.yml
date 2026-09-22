@@ -1,0 +1,13 @@
+en:
+  spree:
+    errors:
+      messages:
+        not_a_registered_scenario_order: is not a kind of purchase this store sells
+    # What the frame says when a purchase cannot be made. A kind's own refusals
+    # are the kind's words.
+    unknown_kind: This store does not sell that
+    not_eligible: You cannot buy this yet
+    not_for_sale: This is not for sale right now
+    channel_unavailable: That payment method is not available
+    already_settled: This purchase has already been paid for
+    already_canceled: This purchase has already been called off

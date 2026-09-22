@@ -45,6 +45,28 @@ describe Spree::Payment, type: :model do
 
   it_behaves_like 'metadata'
 
+  describe '#owner' do
+    let(:cart) { create(:cart, store: @default_store) }
+
+    it 'answers the order before the cart it was built from' do
+      payment = described_class.new(order: order, cart: cart)
+
+      expect(payment.owner).to eq(order)
+    end
+
+    it 'clears the shapes the assigned owner is not' do
+      payment = described_class.new(order: order)
+      payment.owner = cart
+
+      expect(payment.owner).to eq(cart)
+      expect(payment.order).to be_nil
+    end
+
+    it 'refuses a record that does not own a payment' do
+      expect { described_class.new.owner = @default_store }.to raise_error(ArgumentError)
+    end
+  end
+
   describe 'Constants' do
     it { expect(Spree::Payment::INVALID_STATES).to eq(%w(failed invalid void)) }
   end

@@ -17,6 +17,12 @@ module Spree
     include Spree::Payment::Processing
     include Spree::Payment::CustomEvents
 
+    include Spree::HasPaymentOwner
+    # A cart mid-checkout, the order it becomes, a grouped checkout's group —
+    # and, registered by the scenario purchase frame, a purchase that is none
+    # of those.
+    self.owner_associations = %i[order cart order_group]
+
     publishes_lifecycle_events
 
     NON_RISKY_AVS_CODES = ['B', 'D', 'H', 'J', 'M', 'Q', 'T', 'V', 'X', 'Y'].freeze
@@ -37,7 +43,6 @@ module Spree
     has_many :payment_splits, class_name: 'Spree::PaymentSplit', dependent: :destroy, inverse_of: :payment
     belongs_to :source, polymorphic: true, optional: true
 
-    validate :exactly_one_owner
 
     has_many :offsets, -> { offset_payment }, class_name: 'Spree::Payment', foreign_key: :source_id
     has_many :capture_events, class_name: 'Spree::PaymentCaptureEvent'
@@ -439,16 +444,6 @@ module Spree
       has_invalid_status?
     end
 
-    # What this payment was made against — a cart mid-checkout, a single order,
-    # or the group a split checkout produced. Everything reading totals,
-    # currency or gateway options goes through here rather than through #order,
-    # which is nil on a grouped payment.
-    #
-    # @return [Spree::Cart, Spree::Order, Spree::OrderGroup, nil]
-    def owner
-      order || cart || order_group
-    end
-
     # @return [Boolean] whether this payment covers several orders placed in one
     #   checkout, in which case its per-order shares are {#payment_splits}
     def grouped?
@@ -505,10 +500,6 @@ module Spree
       self.cvv_response_code ||= codes[:cvv_response_code]
     end
 
-    def exactly_one_owner
-      errors.add(:base, :exactly_one_of_cart_or_order, message: Spree.t('errors.messages.exactly_one_of_cart_or_order')) unless [order, cart, order_group].compact.one?
-    end
-
     def set_amount
       self.amount = owner.total - owner.payment_total
     end
@@ -546,7 +537,9 @@ module Spree
     def recalculate_owner_totals
       return if owner.blank?
 
-      owner.refresh_payment_total!
+      # Optional like every other owner method core asks for: an owner that
+      # computes its totals from its payment rows has nothing to refresh.
+      owner.refresh_payment_total! if owner.respond_to?(:refresh_payment_total!)
       owner.update_statuses! if owner.is_a?(Spree::Order) && owner.completed?
     end
 
