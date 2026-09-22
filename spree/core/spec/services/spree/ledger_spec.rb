@@ -59,8 +59,11 @@ RSpec.describe Spree::Ledger do
       expect(Spree::LedgerEntry.count).to eq(1)
     end
 
-    it 'takes the account’s own store' do
-      expect(record!.value.store).to eq(store)
+    it 'takes the account’s own store over the request’s' do
+      other_store = create(:store)
+      allow(account).to receive(:store).and_return(other_store)
+
+      expect(record!.value.store).to eq(other_store)
     end
 
     it 'refuses an account that answers neither contract method, and names what is missing' do
@@ -82,6 +85,41 @@ RSpec.describe Spree::Ledger do
     it 'refuses a movement with no key' do
       expect(record!(idempotency_key: nil)).to be_failure
     end
+
+    it 'refuses a movement with no amount rather than raising' do
+      result = record!(amount: nil)
+
+      expect(result).to be_failure
+      expect(result.error.to_s).to match(/Amount/)
+    end
+
+    # A key too coarse to tell two movements apart would otherwise drop the
+    # second one with no row and no error.
+    it 'refuses a key already used for another movement' do
+      record!
+
+      result = described_class.record!(account: account, kind: 'expire', amount: -10,
+                                       idempotency_key: 'order:1:earn')
+
+      expect(result).to be_failure
+      expect(result.error.value).to eq(:key_reused)
+      expect(Spree::LedgerEntry.count).to eq(1)
+    end
+
+    it 'names a movement’s unit when it is not the account’s own' do
+      result = described_class.record!(account: account, kind: 'earn', amount: 5, unit: 'USD',
+                                       idempotency_key: 'order:9:earn')
+
+      expect(result.value.unit).to eq('USD')
+      expect(Spree::LedgerEntry.balance_for(account, unit: 'USD')).to eq(5)
+      expect(Spree::LedgerEntry.balance_for(account, unit: 'points')).to eq(0)
+    end
+
+    it 'falls back to the request’s store when the account carries none' do
+      result = record!
+
+      expect(result.value.store).to eq(store)
+    end
   end
 
   describe '.reverse!' do
@@ -100,6 +138,29 @@ RSpec.describe Spree::Ledger do
       described_class.reverse!(earned, idempotency_key: 'refund:1:earn')
 
       expect(Spree::LedgerEntry.balance_for(account, unit: 'points')).to eq(0)
+    end
+
+    # The sharper half of the key rule: a caller reusing the original entry's
+    # key must not be told the reversal happened.
+    it 'refuses to reverse under a key the original already holds' do
+      result = described_class.reverse!(earned, idempotency_key: 'order:1:earn')
+
+      expect(result).to be_failure
+      expect(result.error.value).to eq(:key_reused)
+      expect(result.value).to eq(earned)
+      expect(Spree::LedgerEntry.reversals.count).to eq(0)
+    end
+
+    it 'carries the entry’s metadata, and a source the caller names' do
+      refund = create(:order, store: store)
+      entry = described_class.record!(account: account, kind: 'earn', amount: 50,
+                                      idempotency_key: 'order:3:earn',
+                                      metadata: { 'reason' => 'signup bonus' }).value
+
+      result = described_class.reverse!(entry, idempotency_key: 'refund:3:earn', source: refund)
+
+      expect(result.value.metadata['reason']).to eq('signup bonus')
+      expect(result.value.source).to eq(refund)
     end
 
     it 'reversing twice with one key writes one row' do
