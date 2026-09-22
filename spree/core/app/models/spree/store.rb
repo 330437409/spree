@@ -168,6 +168,14 @@ module Spree
     # (docs/plans/6.1-phone-verification-and-payment-pin.md).
     preference :verification_code_ttl_minutes, :integer, default: 5
     preference :verification_code_max_attempts, :integer, default: 5
+    # The two rates of the points programme, and how far ahead a balance warns
+    # about an expiry. Two rates rather than one because the client shows two
+    # figures — 每消费N元得1积分 and 每N个可抵扣1元 — and a single preference
+    # would conflate them; both are store-wide, ruled 2026-09-22
+    # (docs/plans/6.1-points-and-growth-value.md).
+    preference :points_earn_rate, :decimal, default: 1
+    preference :points_redeem_rate, :decimal, default: 100
+    preference :points_expiry_warning_days, :integer, default: 30
     # digital assets preferences
     preference :limit_digital_download_count, :boolean, default: true
     preference :limit_digital_download_days, :boolean, default: true
