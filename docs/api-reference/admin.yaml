@@ -47511,6 +47511,7 @@ components:
           type: string
           enum:
           - earning
+          - subsidy
           - refund_reversal
         status:
           anyOf:
