@@ -54,6 +54,34 @@ RSpec.describe Spree::Grants do
       expect(result.error.value).to eq(:key_belongs_to_another_customer)
     end
 
+    # The retry this key exists for can arrive while a caller already holds a
+    # transaction — a refund workflow, a spend taking its own lock. PostgreSQL
+    # aborts the whole transaction when an insert violates an index, so without
+    # the service's savepoint the lookup that answers the winner raises
+    # `PG::InFailedSqlTransaction` instead. SQLite, the default spec database,
+    # tolerates the same insert; the PostgreSQL lane is what proves this one.
+    it 'answers the winner when the key is taken inside a caller’s transaction' do
+      described_class.grant!(store: store, customer: customer, kind: 'spec_gift', context: '2026-09')
+
+      # The service's lookup *and* the model's uniqueness check are made to
+      # miss, so the insert is what meets the row — the real race, with the
+      # winner committing between the two.
+      lookups = 0
+      allow(Spree::Grant).to receive(:with_deleted).and_wrap_original do |original, *args|
+        lookups += 1
+        lookups <= 2 ? Spree::Grant.none : original.call(*args)
+      end
+
+      result = nil
+      Spree::Grant.transaction do
+        result = described_class.grant!(store: store, customer: customer, kind: 'spec_gift', context: '2026-09')
+      end
+
+      expect(result).to be_success
+      expect(result.value).to be_persisted
+      expect(Spree::Grant.with_deleted.count).to eq(1)
+    end
+
     it 'lets a caller that built the key itself pass it in' do
       result = described_class.grant!(store: store, customer: customer, kind: 'spec_gift', idempotency_key: 'built:by:caller')
 

@@ -38,8 +38,14 @@ module Spree
           metadata: metadata || {}
         )
 
+        # The insert runs in its own savepoint, so a key taken between the
+        # lookup and the insert cannot leave a caller's surrounding transaction
+        # aborted on PostgreSQL — the retry this key exists for arrives while a
+        # workflow holds its own transaction often enough to matter, and an
+        # aborted transaction refuses every statement after it, the lookup
+        # below included.
         saved = begin
-          record.save
+          Spree::Grant.transaction(requires_new: true) { record.save }
         rescue ActiveRecord::RecordNotUnique
           # The key was taken between the lookup and the insert — another job
           # on the same debt, or a request somebody submitted twice. The answer
