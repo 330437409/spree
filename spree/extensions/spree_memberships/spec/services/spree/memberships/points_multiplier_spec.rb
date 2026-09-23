@@ -66,6 +66,22 @@ RSpec.describe Spree::Memberships::PointsMultiplier do
     end
   end
 
+  # A 29 February birthday in a year that has none is celebrated on the 28th —
+  # which is the day the member centre counts down to as well.
+  it 'celebrates a leap-day birthday on the month’s last day' do
+    customer.update!(birthday: Date.new(1992, 2, 29))
+    in_tier!
+    with_birthday_right(2)
+
+    Timecop.freeze(Time.zone.local(2026, 2, 28, 10)) do
+      expect(multiplier).to eq(2)
+    end
+
+    Timecop.freeze(Time.zone.local(2026, 3, 1, 10)) do
+      expect(multiplier).to eq(1)
+    end
+  end
+
   it 'multiplies nothing for a customer with no birthday' do
     customer.update!(birthday: nil)
     in_tier!
