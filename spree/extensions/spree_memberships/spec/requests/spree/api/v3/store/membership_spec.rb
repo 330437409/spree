@@ -102,12 +102,183 @@ RSpec.describe 'the membership reads', type: :request do
       expect(response).to have_http_status(:not_found)
     end
 
+    # 自己激活 while a window is open would strand it: the recipient's claim
+    # would then be refused by a card that already has a term.
+    # A window whose date has passed blocks nothing: the claim against it refuses
+    # on its own, and the holder may activate their own card.
+    it 'activates a card whose window has lapsed' do
+      window = create(:transfer, from_customer: user, transferable: card, to_phone: '13800000000')
+      window.update_columns(expires_at: 1.hour.ago)
+
+      post "/api/v3/store/customers/me/membership_cards/#{card.prefixed_id}/activations", headers: headers
+
+      expect(response).to have_http_status(:created)
+      expect(card.reload).to be_active
+    end
+
+    it 'refuses to activate a card that is on its way to somebody' do
+      create(:transfer, from_customer: user, transferable: card, to_phone: '13800000000')
+
+      post "/api/v3/store/customers/me/membership_cards/#{card.prefixed_id}/activations", headers: headers
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(card.reload).to be_dormant
+    end
+
     it 'refuses a card whose deadline to activate passed' do
       card.update!(activates_before: 1.day.ago)
 
       post "/api/v3/store/customers/me/membership_cards/#{card.prefixed_id}/activations", headers: headers
 
       expect(response).to have_http_status(:unprocessable_content)
+    end
+  end
+  describe 'giving a card away' do
+    let(:card) { create(:membership_card, customer: user, customer_group: group) }
+
+    it 'opens a window and answers the token the client shares' do
+      post "/api/v3/store/customers/me/membership_cards/#{card.prefixed_id}/transfers", headers: headers,
+           params: { to_phone: '13800000000', message: '生日快乐', expires_at: 7.days.from_now.iso8601 }
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body).to include('status' => 'pending', 'message' => '生日快乐')
+      expect(response.parsed_body['token']).to be_present
+      expect(card.reload).to be_dormant
+    end
+
+    it 'shows the window on the wallet, which is what 赠送中 reads' do
+      create(:transfer, from_customer: user, transferable: card, to_phone: '13800000000')
+
+      get '/api/v3/store/customers/me/membership_cards', headers: headers
+
+      expect(response.parsed_body['data'].first['transfer']).to include('status' => 'pending')
+    end
+
+    it 'shows a window whose date has passed as expired' do
+      window = create(:transfer, from_customer: user, transferable: card, to_phone: '13800000000')
+      window.update_columns(expires_at: 1.hour.ago)
+
+      get '/api/v3/store/customers/me/membership_cards', headers: headers
+
+      expect(response.parsed_body['data'].first['transfer']).to include('status' => 'expired')
+    end
+
+    it 'refuses a card the customer may not give away' do
+      card.update!(giftable: false)
+
+      post "/api/v3/store/customers/me/membership_cards/#{card.prefixed_id}/transfers", headers: headers,
+           params: { to_phone: '13800000000', expires_at: 7.days.from_now.iso8601 }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(Spree::Transfer.count).to eq(0)
+    end
+
+    it 'takes the window back when the giver cancels it' do
+      window = create(:transfer, from_customer: user, transferable: card, to_phone: '13800000000')
+
+      delete "/api/v3/store/customers/me/membership_cards/#{card.prefixed_id}/transfers/#{window.prefixed_id}",
+             headers: headers
+
+      expect(response).to have_http_status(:ok)
+      expect(window.reload).to be_canceled
+    end
+
+    # The gift nobody opened: the card is 待激活 again in the client, and the only
+    # way back to that is closing a window whose date has passed — which needs
+    # the id this read carries.
+    it 'lists a window whose date has passed, and closes it' do
+      window = create(:transfer, from_customer: user, transferable: card, to_phone: '13800000000')
+      window.update_columns(expires_at: 1.hour.ago)
+
+      get "/api/v3/store/customers/me/membership_cards/#{card.prefixed_id}/transfers", headers: headers
+
+      expect(response.parsed_body['data'].first).to include('status' => 'expired')
+      expect(card.reload.pending_transfer).to eq(window)
+
+      delete "/api/v3/store/customers/me/membership_cards/#{card.prefixed_id}/transfers/#{window.prefixed_id}",
+             headers: headers
+
+      expect(response).to have_http_status(:ok)
+      expect(window.reload).to be_canceled
+      expect(card.reload.pending_transfer).to be_nil
+    end
+  end
+
+  describe 'receiving one' do
+    let(:card) { create(:membership_card, customer: create(:customer), customer_group: group) }
+    let(:window) { create(:transfer, from_customer: card.customer, transferable: card, to_phone: '13800000000') }
+
+    # The recipient reads it before signing in: the token is the address, and
+    # nobody's identity comes with it.
+    it 'answers the card a token points at, without a signed-in customer' do
+      get "/api/v3/store/membership_card_transfers/#{window.token}", headers: api_key_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to include('status' => 'pending')
+      expect(response.parsed_body['card']).to include('status' => 'dormant')
+      expect(response.parsed_body.to_s).not_to include(card.customer.prefixed_id)
+    end
+
+    # The one read that has to happen before there is anybody to be signed in
+    # as: a share link opened on a storefront that otherwise gates guests.
+    it 'stays readable on a storefront that requires a sign-in' do
+      store.default_channel.update!(preferred_storefront_access: 'login_required')
+
+      get "/api/v3/store/membership_card_transfers/#{window.token}", headers: api_key_headers
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it 'claims it, activating the card for whoever claimed it' do
+      post "/api/v3/store/membership_card_transfers/#{window.token}/claims", headers: headers
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body).to include('status' => 'accepted')
+      expect(card.reload).to be_active
+      expect(card.membership.customer).to eq(user)
+      expect(user.reload.customer_groups).to include(group)
+    end
+
+    it 'answers 404 for a token nobody holds' do
+      get '/api/v3/store/membership_card_transfers/nothing-here', headers: api_key_headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    # The primitive is shared, so a token belonging to another domain's transfer
+    # in this same store is not this route's to read or claim.
+    it 'answers 404 for a token of another domain' do
+      stub_const('ForeignGiftCard', Class.new(Spree::GiftCard) do
+        def self.polymorphic_name = name
+
+        def on_transfer_given(_transfer); end
+        def on_transfer_accepted(_transfer); end
+        def on_transfer_canceled(_transfer); end
+      end)
+
+      elsewhere = create(:transfer, from_customer: create(:customer),
+                                    transferable: ForeignGiftCard.create!(store: store, amount: 10),
+                                    to_phone: '13800000000')
+
+      get "/api/v3/store/membership_card_transfers/#{elsewhere.token}", headers: api_key_headers
+      expect(response).to have_http_status(:not_found)
+
+      post "/api/v3/store/membership_card_transfers/#{elsewhere.token}/claims", headers: headers
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'refuses a window that has closed, and says so rather than 404' do
+      window.update_columns(expires_at: 1.hour.ago)
+
+      get "/api/v3/store/membership_card_transfers/#{window.token}", headers: api_key_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to include('status' => 'expired')
+
+      post "/api/v3/store/membership_card_transfers/#{window.token}/claims", headers: headers
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(card.reload).to be_dormant
     end
   end
 end

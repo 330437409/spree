@@ -220,6 +220,30 @@ RSpec.describe Spree::Customers::DataExport do
       expect(exported[:po_document]).to eq('acme-po.pdf')
     end
 
+    # Both directions, and the recipient's number withheld: it is somebody
+    # else's data held on this customer's behalf, which is why the erasure
+    # clears it either way.
+    it 'discloses the gifts sent and received, without the number they went to' do
+      stub_const('TransferableGiftCard', Class.new(Spree::GiftCard) do
+        def self.polymorphic_name = name
+
+        def on_transfer_given(_transfer); end
+        def on_transfer_accepted(_transfer); end
+        def on_transfer_canceled(_transfer); end
+      end)
+      thing = -> { TransferableGiftCard.create!(store: store, amount: 10) }
+
+      create(:transfer, from_customer: customer, transferable: thing.call,
+                        to_phone: '13800000000', message: '生日快乐')
+      create(:transfer, from_customer: create(:customer), to_customer: customer, transferable: thing.call,
+                        to_phone: '13900000000')
+
+      rows = payload[:transfers].index_by { |row| row[:direction] }
+
+      expect(rows['sent']).to include(phone: nil, message: '生日快乐')
+      expect(rows['received']).to include(phone: '13900000000')
+    end
+
     it 'discloses the note staff kept on the account' do
       customer.update_columns(internal_note: 'asked twice about the refund')
 

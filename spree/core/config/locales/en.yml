@@ -2354,6 +2354,14 @@ en:
     tracking_url: Tracking URL
     transaction_id: Transaction ID
     transfer_to_location: Transfer To
+    transfers:
+      errors:
+        already_claimed: somebody else already claimed this gift
+        already_transferring: is already on its way to somebody
+        expires_at_in_the_past: must be in the future
+        not_open: this gift is no longer on its way to anybody
+        not_transferable: "%{type} cannot be given away"
+        transferable_gone: what this gift carried no longer exists
     translations: Translations
     tree: Tree
     twitter: Twitter

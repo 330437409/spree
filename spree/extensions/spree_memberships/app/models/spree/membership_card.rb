@@ -46,6 +46,48 @@ module Spree
     # Cards whose deadline to activate has passed. Read by the sweep.
     scope :overdue, -> { with_status(:dormant).where(activates_before: ..Time.current) }
 
+    # The window this card is inside, if any: what the client reads as 赠送中 —
+    # and as 已过期 once its date has passed — and what 作废 closes. An association
+    # rather than a query so a wallet can preload it.
+    #
+    # Deliberately the raw status, like the index the primitive holds: a lapsed
+    # window is still the card's window, and hiding it would take the id 作废 needs
+    # away from the client. Whether anybody may still act on it is
+    # `Spree::Transfers.open?`'s answer, not this one's.
+    has_one :pending_transfer, -> { with_status(:pending) }, class_name: 'Spree::Transfer',
+            as: :transferable, inverse_of: :transferable
+
+    #
+    # The transfer contract (docs/plans/6.1-transfer-primitive.md). The card
+    # answers all three, which is what makes it transferable at all.
+    #
+
+    # Nothing to reserve: a dormant card is not spendable, so handing one over
+    # only opens a window — the card stays exactly where it is until somebody
+    # claims it, and 赠送中 comes from the transfer rather than from this row.
+    #
+    # Refused by the wallet's own definition, which is what the client's 相赠
+    # acts on: a card that is not dormant and giftable is not on offer.
+    #
+    # @raise [Spree::Transfers::Refused] when the card may not be given away
+    def on_transfer_given(_transfer)
+      return if dormant? && giftable?
+
+      raise Spree::Transfers::Refused, Spree.t('memberships.errors.card_not_giftable')
+    end
+
+    # The claim *is* the activation: the card leaves `dormant` for whoever claimed
+    # it, and the term it starts is theirs. A refusal — a card past its deadline —
+    # travels back and takes the claim with it.
+    def on_transfer_accepted(transfer)
+      result = Spree::MembershipCards::Activate.call(card: self, customer: transfer.to_customer)
+      raise Spree::Transfers::Refused, result.error if result.failure?
+    end
+
+    # Back to 待激活 for the giver. Nothing was reserved, so there is nothing to
+    # release: the card is theirs again the moment the transfer is not.
+    def on_transfer_canceled(_transfer); end
+
     # @return [Boolean] whether the deadline to activate it has passed
     def overdue?
       dormant? && activates_before.present? && activates_before <= Time.current

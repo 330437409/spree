@@ -22,7 +22,18 @@ Spree::Core::Engine.add_routes do
           # card, not an edit to the card.
           resources :membership_cards, only: [:index] do
             resources :activations, only: [:create], controller: 'membership_cards/activations'
+            # 相赠 and 作废: the window a card is inside. Cancelling one is its
+            # removal, which is what the client's cancel does.
+            resources :transfers, only: [:index, :create, :destroy], controller: 'membership_cards/transfers'
           end
+        end
+
+        # The recipient's side, addressed by the token rather than by the card:
+        # the card is read before signing in, and the claim is where they sign
+        # in. Deliberately not under customers/me — a gift is not the giver's.
+        resources :membership_card_transfers, only: [:show], param: :token,
+                  controller: 'membership_card_transfers' do
+          resources :claims, only: [:create], controller: 'membership_card_transfers/claims'
         end
       end
 

@@ -12,7 +12,8 @@ module Spree
         class MembershipCardSerializer < BaseSerializer
           typelize tier: 'Record<string, unknown> | null', status: :string, source: :string,
                    giftable: :boolean, activates_before: 'string | null',
-                   activated_at: 'string | null', membership: 'Record<string, unknown> | null'
+                   activated_at: 'string | null', membership: 'Record<string, unknown> | null',
+                   transfer: 'Record<string, unknown> | null'
 
           attribute(:tier) do |card|
             tier = card.tier_setting
@@ -30,6 +31,15 @@ module Spree
             next if card.membership.nil?
 
             Spree::Api::V3::Store::MembershipSerializer.new(card.membership, params: params).to_h
+          end
+
+          # The window the card is inside: what the client reads as 赠送中, and
+          # what carries the token it shares.
+          attribute(:transfer) do |card|
+            window = card.pending_transfer
+            next if window.nil?
+
+            Spree::Api::V3::Store::MembershipCardTransferSerializer.new(window, params: params).to_h
           end
         end
       end

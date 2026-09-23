@@ -14,10 +14,33 @@ module Spree
 
               # POST /api/v3/store/customers/me/membership_cards/:membership_card_id/activations
               def create
+                return render_card_transferring if Spree::Transfers.open?(@card.pending_transfer)
+
                 result = Spree::MembershipCards::Activate.call(card: @card, customer: current_user)
                 return render_result_error(result) if result.failure?
 
                 render json: serialize_resource(result.value), status: :created
+              end
+
+              private
+
+              # A card on its way to somebody may not be activated here, or the
+              # window it is inside would strand: the recipient's claim would be
+              # refused by the card already having a term. 作废 first, then this.
+              #
+              # A *live* window only — `Spree::Transfers.open?` is the one reader
+              # of that rule. A window whose date has passed blocks nothing, and
+              # the claim against it refuses on its own.
+              #
+              # The claim itself is the one door where a window and an activation
+              # belong together, so the check sits at this door rather than in the
+              # workflow both doors end at.
+              def render_card_transferring
+                render_error(
+                  code: Spree::Api::V3::ErrorHandler::ERROR_CODES[:validation_error],
+                  message: Spree.t('memberships.errors.card_transferring'),
+                  status: :unprocessable_content
+                )
               end
 
               protected

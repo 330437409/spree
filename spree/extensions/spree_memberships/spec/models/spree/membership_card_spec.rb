@@ -59,6 +59,58 @@ RSpec.describe Spree::MembershipCard, type: :model do
     end
   end
 
+  describe 'the transfer contract' do
+    let(:card) { create(:membership_card, customer: customer, customer_group: group) }
+
+    it 'answers all three, which is what makes it transferable at all' do
+      expect(Spree::Transfer::CONTRACT.map { |method| card.respond_to?(method) }).to all(be(true))
+    end
+
+    it 'refuses to be given away when it may not be' do
+      card.update!(giftable: false)
+
+      expect {
+        Spree::Transfers.give!(from: customer, transferable: card, to_phone: '13800000000',
+                               expires_at: 7.days.from_now)
+      }.not_to change { Spree::Transfer.count }
+    end
+
+    # The claim is the activation, and a card past its deadline refuses: the
+    # claim travels back with it rather than leaving an accepted gift that
+    # granted nothing.
+    it 'refuses a claim on a card whose deadline passed' do
+      card.update!(activates_before: 1.hour.ago)
+      window = create(:transfer, from_customer: customer, transferable: card, to_phone: '13800000000')
+
+      result = Spree::Transfers.accept!(window, customer: create(:customer))
+
+      expect(result).to be_failure
+      expect(window.reload).to be_pending
+      # Nothing moved, the deadline included: the activation's own expiry was
+      # inside the claim's transaction, and the sweep applies it on its next pass.
+      expect(card.reload).to be_dormant
+    end
+
+    it 'finds the window it is inside' do
+      window = create(:transfer, from_customer: customer, transferable: card, to_phone: '13800000000')
+
+      expect(card.pending_transfer).to eq(window)
+
+      Spree::Transfers.cancel!(window)
+      expect(card.reload.pending_transfer).to be_nil
+    end
+
+    # Lapsed, but still the card's window: the client renders 已过期 from it and
+    # 作废 is what closes it, which takes its id.
+    it 'still finds the window once its date has passed' do
+      window = create(:transfer, from_customer: customer, transferable: card, to_phone: '13800000000')
+      window.update_columns(expires_at: 1.hour.ago)
+
+      expect(card.reload.pending_transfer).to eq(window)
+      expect(card.pending_transfer.display_status).to eq('expired')
+    end
+  end
+
   it 'counts only the dormant, giftable cards as a wallet to give from' do
     dormant = create(:membership_card, customer: customer, customer_group: group)
     create(:membership_card, customer: customer, customer_group: group, giftable: false)
