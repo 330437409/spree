@@ -26,13 +26,20 @@ module Spree
               super.for_customer(current_user)
             end
 
+            # Nothing here joins, so the base's SELECT DISTINCT buys nothing —
+            # and it would refuse the sort below on PostgreSQL, which is the one
+            # adapter that rejects an ORDER BY the select list does not carry.
+            def collection_distinct?
+              false
+            end
+
             # Dormant first, because what the wallet is for is activating one.
             def apply_collection_sort(collection)
               collection.order(Arel.sql("status = 'dormant' DESC"), :id)
             end
 
             def collection_includes
-              %i[customer_group membership]
+              %i[tier_setting membership]
             end
 
             def scope_includes

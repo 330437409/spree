@@ -41,6 +41,24 @@ RSpec.describe Spree::Memberships::AdvanceDueJob do
     expect(card.reload).to be_dormant
   end
 
+  # One row nobody can advance must not stop the sweep for everything behind it:
+  # the next run would start at the same row again.
+  it 'keeps walking when one term cannot be advanced' do
+    other = create(:membership_tier_setting, customer_group: create(:customer_group, store: store), rank: 2)
+    create(:membership, customer: customer, customer_group: other.customer_group, ends_at: 5.days.from_now)
+    Spree::Memberships::AssignTier.call(customer: customer, customer_group: other.customer_group)
+    broken = create(:membership, customer: customer, customer_group: group, status: 'pending',
+                                 starts_at: 1.minute.ago, ends_at: 30.days.from_now)
+    customer.delete
+    later = create(:membership, customer: create(:customer), customer_group: group,
+                                starts_at: 60.days.ago, ends_at: 1.minute.ago)
+
+    described_class.perform_now
+
+    expect(broken.reload).to be_pending
+    expect(later.reload).to be_expired
+  end
+
   # An upgrade lands through the sweep: the term that ended is what lets the
   # customer's next one start.
   it 'starts the term waiting for the tier it replaces' do

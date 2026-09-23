@@ -23,9 +23,14 @@ module Spree
       private
 
       # @return [ActiveRecord::Relation] every tier group this customer is on
+      #
+      # Retired tiers count: a group is a tier's group while a term for it is
+      # being ended, and the tier settings row is soft-deleted exactly when the
+      # catalogue that prices it was switched off — which is the member this is
+      # here to remove.
       def tier_groups(customer)
         Spree::CustomerGroup.where(id: customer.customer_groups.select(:id)).
-          where(id: Spree::MembershipTierSetting.select(:customer_group_id))
+          where(id: Spree::MembershipTierSetting.with_deleted.select(:customer_group_id))
       end
     end
   end

@@ -31,6 +31,7 @@ module Spree
 
         step :ensure_activatable
         step :ensure_within_deadline
+        step :ensure_tier_is_sold
         run_hooks :validate
 
         ApplicationRecord.transaction do
@@ -55,42 +56,73 @@ module Spree
       end
 
       # The deadline the client shows as the last day to activate or give a card
-      # away. Missing it is not a refusal but a fact: the card is expired.
+      # away. Missing it is not a refusal but a fact, and the transition that
+      # writes it is the same one the sweep runs.
       def ensure_within_deadline
         return unless card.overdue?
 
-        card.update!(status: 'expired')
+        Spree::MembershipCards::Expire.call(card: card)
         failure(card, Spree.t('memberships.errors.card_expired'))
       end
 
-      # The term this card grants. The same tier's own running term is extended
-      # by this card's length; another tier's is waited out; with nothing
-      # running the term starts now.
-      def issue_term
-        running = Spree::Membership.running.for_customer(entitled_customer)
-        same_tier = running.on(card.customer_group_id).first
+      # A card for a tier nobody sells any more has nothing to grant, and a term
+      # written for it could never hold the tier: the tier is checked before
+      # anything is written rather than at the assign step, which a waiting term
+      # never reaches.
+      def ensure_tier_is_sold
+        return if Spree::MembershipTierSetting.exists?(customer_group_id: card.customer_group_id)
 
-        @membership = same_tier ? extend_term(same_tier) : write_term(running)
+        failure(card, Spree.t('memberships.errors.tier_unknown'))
+      end
+
+      # The term this card grants. The same tier's own live term is extended —
+      # a running one and a waiting one alike, because the ladder's uniqueness
+      # is over live terms, not over running ones; another tier's is waited out;
+      # with nothing live the term starts now.
+      def issue_term
+        # Locked and re-read: a double tap sends two activations, and the second
+        # has to find the term the first wrote rather than write another one for
+        # the same customer and tier.
+        card.lock!
+        return @membership = card.membership if card.membership.present?
+
+        held = Spree::Membership.live.for_customer(entitled_customer)
+        same_tier = held.on(card.customer_group_id).first
+
+        @membership = same_tier ? extend_term(same_tier) : write_term(held)
       end
 
       # @return [Spree::Membership]
       def extend_term(term)
         added = card.tier_setting&.term_length
-        term.update!(ends_at: term.ends_at + added) if added && term.ends_at
+        return term if added.nil?
+
+        # From the instant the customer still holds, not from a lapsed end:
+        # grace days are the tier's, and a term inside its grace window is
+        # holding a tier that the customer has just paid to keep.
+        from = [term.ends_at, Time.current].compact.max
+        term.update!(status: 'active', ends_at: from + added)
+
         term
       end
 
-      # A card that starts now, or the one that waits.
+      # A term that starts now, or one that waits.
       #
-      # With nothing running the term starts and holds the tier; with another
-      # tier still running it waits for that one to end, and a running term with
-      # no end waits for a person rather than being taken out from under.
+      # With nothing live the term starts and holds the tier; with another tier
+      # already holding or waiting for the customer this one waits for that one
+      # to end, and a live term with no end waits for a person rather than being
+      # taken out from under.
       #
       # @return [Spree::Membership]
-      def write_term(running)
-        return start_now if running.empty?
+      def write_term(held)
+        return start_now if held.empty?
 
-        starts_at = running.where.not(ends_at: nil).order(:ends_at).last&.ends_at
+        starts_at = held.where.not(ends_at: nil).order(:ends_at).last&.ends_at
+        # A live term with no end is a tier held for good. A card bought under
+        # one waits for a person rather than for a clock — but a term that can
+        # never start is not a wait, and the card stays dormant with the
+        # customer's money unspent.
+        return failure(card, Spree.t('memberships.errors.tier_open_ended')) if starts_at.nil?
 
         Spree::Membership.create!(
           store: card.store,
@@ -104,13 +136,15 @@ module Spree
 
       # @return [Spree::Membership]
       def start_now
+        starts_at = Time.current
+
         Spree::Membership.create!(
           store: card.store,
           customer: entitled_customer,
           customer_group: card.customer_group,
           status: 'active',
-          starts_at: Time.current,
-          ends_at: term_ends_at(Time.current)
+          starts_at: starts_at,
+          ends_at: term_ends_at(starts_at)
         )
       end
 
@@ -137,7 +171,10 @@ module Spree
           status: 'active',
           activated_at: Time.current,
           activated_by_customer: entitled_customer,
-          membership: membership
+          membership: membership,
+          # What this card added, so voiding it takes back exactly that much
+          # rather than whatever the tier's length is by then.
+          metadata: card.metadata.merge('granted_days' => card.tier_setting&.validity_days)
         )
       end
     end

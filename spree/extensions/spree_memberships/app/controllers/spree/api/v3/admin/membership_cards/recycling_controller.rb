@@ -17,7 +17,7 @@ module Spree
                       find_by_prefix_id!(params[:membership_card_id])
               authorize_resource!(@card, :update)
 
-              result = Spree::MembershipCards::Recycle.call(card: @card, reason: params[:reason])
+              result = Spree::MembershipCards::Recycle.call(card: @card, reason: permitted_params[:reason])
               return render_result_error(result) if result.failure?
 
               render json: serialize_resource(result.value)
@@ -31,6 +31,10 @@ module Spree
 
             def serializer_class
               Spree::Api::V3::Admin::MembershipCardSerializer
+            end
+
+            def permitted_params
+              params.permit(:reason)
             end
           end
         end

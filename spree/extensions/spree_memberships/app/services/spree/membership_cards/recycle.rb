@@ -23,7 +23,7 @@ module Spree
         run_hooks :validate
 
         ApplicationRecord.transaction do
-          step :end_term
+          step :release_term
           step :mark_recycled
           run_hooks :after_recycle
         end
@@ -39,12 +39,37 @@ module Spree
         failure(card, Spree.t('memberships.errors.card_not_activatable')) if card.expired?
       end
 
-      # The entitlement goes with the card. A term that already ended, or one
-      # that was never started, has nothing to give up.
-      def end_term
-        return if card.membership.nil? || !card.membership.live?
+      # The entitlement goes with the card — its own share of it.
+      #
+      # Two cards of one tier share a single term by design: the second extends
+      # the first's. So a term another card still points at is *shortened* by
+      # what this card added, and only a term nobody else holds is ended, group
+      # and all. Ending a shared one would take away what the other card paid
+      # for, and an active card cannot be activated again to get it back.
+      def release_term
+        membership = card.membership
+        return if membership.nil?
 
-        Spree::Memberships::EndTerm.call(membership: card.membership, status: 'cancelled')
+        return shorten(membership) if shared?(membership)
+
+        result = Spree::Memberships::EndTerm.call(membership: membership, status: 'cancelled')
+        failure(card, result.error) if result.failure?
+      end
+
+      # @return [Boolean] whether another card still points at this term
+      def shared?(membership)
+        Spree::MembershipCard.where(membership_id: membership.id).where.not(id: card.id).exists?
+      end
+
+      # What this card added, taken back: the card's own record of what it
+      # granted, so a tier whose length changed since still comes back exactly.
+      # Never below now — the customer keeps the window they have run through.
+      def shorten(membership)
+        added = card.metadata['granted_days'].to_i.days
+        return if added.zero? || membership.ends_at.nil?
+
+        ends_at = [membership.ends_at - added, Time.current].max
+        membership.update!(ends_at: ends_at) if ends_at < membership.ends_at
       end
 
       def mark_recycled

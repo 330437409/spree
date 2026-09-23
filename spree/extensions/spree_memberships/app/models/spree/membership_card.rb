@@ -23,6 +23,10 @@ module Spree
 
     belongs_to :customer, class_name: "::#{Spree.customer_class}"
     belongs_to :customer_group, class_name: 'Spree::CustomerGroup'
+    # The tier it grants: one row keyed to the group, and a read rather than a
+    # method so a collection can preload it.
+    belongs_to :tier_setting, class_name: 'Spree::MembershipTierSetting',
+               primary_key: :customer_group_id, foreign_key: :customer_group_id, inverse_of: nil, optional: true
     # The purchase that produced it; nil for a card an operator granted.
     belongs_to :scenario_order, class_name: 'Spree::ScenarioOrder', optional: true
     # The term it started, once it is activated. The card carries the link —
@@ -41,11 +45,6 @@ module Spree
     scope :giftable, -> { with_status(:dormant).where(giftable: true) }
     # Cards whose deadline to activate has passed. Read by the sweep.
     scope :overdue, -> { with_status(:dormant).where(activates_before: ..Time.current) }
-
-    # @return [Spree::MembershipTierSetting, nil] the tier this card grants
-    def tier_setting
-      Spree::MembershipTierSetting.find_by(customer_group_id: customer_group_id)
-    end
 
     # @return [Boolean] whether the deadline to activate it has passed
     def overdue?

@@ -19,7 +19,21 @@ RSpec.describe Spree::Membership, type: :model do
     create(:membership, customer: customer, customer_group: group)
 
     expect { create(:membership, customer: customer, customer_group: group) }.
-      to raise_error(ActiveRecord::RecordNotUnique)
+      to raise_error(ActiveRecord::RecordInvalid)
+  end
+
+  # The validation is the readable half of the rule; the index is the half that
+  # holds when a bulk writer never asks.
+  it 'refuses it in the database too' do
+    first = create(:membership, customer: customer, customer_group: group)
+
+    expect {
+      # `insert_all!`: the plain one is an upsert that skips a conflict, which
+      # is how a bulk writer would quietly not write this row.
+      Spree::Membership.insert_all!([{ store_id: first.store_id, customer_id: customer.id,
+                                      customer_group_id: group.id, status: 'active',
+                                      created_at: Time.current, updated_at: Time.current }])
+    }.to raise_error(ActiveRecord::RecordNotUnique)
   end
 
   it 'lets a customer hold a new term once the old one ended' do
@@ -44,14 +58,19 @@ RSpec.describe Spree::Membership, type: :model do
       expect(described_class.running).not_to include(waiting)
     end
 
+    # What the sweep has something to say about: a term whose window closed and
+    # one whose window opened — and not a term still inside its window, which is
+    # what keeps an hourly pass off every live term a store has.
     it 'finds the terms whose window closed, and the ones that opened' do
       closed = create(:membership, customer: customer, customer_group: group,
                                    starts_at: 1.hour.ago, ends_at: 1.minute.ago)
-      waiting = create(:membership, customer: create(:customer), customer_group: group, status: 'pending',
+      opening = create(:membership, customer: create(:customer), customer_group: group, status: 'pending',
                                     starts_at: 1.minute.ago, ends_at: 30.days.from_now)
+      open_now = create(:membership, customer: create(:customer), customer_group: group,
+                                     starts_at: 1.hour.ago, ends_at: 30.days.from_now)
 
-      expect(described_class.due).to include(closed)
-      expect(described_class.awaiting_start).to include(waiting)
+      expect(described_class.due).to include(closed, opening)
+      expect(described_class.due).not_to include(open_now)
     end
   end
 end

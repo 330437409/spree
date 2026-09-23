@@ -6,13 +6,16 @@ class CreateSpreeMembershipCards < ActiveRecord::Migration[8.1]
     # several dormant cards at once, which one term per customer per tier
     # forbids (docs/plans/6.1-membership-tiers-and-rights.md).
     create_table :spree_membership_cards do |t|
-      t.references :store, null: false
+      # Indexed by the composites below, not one by one: a wallet reads by
+      # customer and status, and a store's cards by store and status.
+      t.references :store, null: false, index: false
       # The buyer, and it does not move when the card is claimed: a card given
       # away stays in the giver's record as 已赠送.
-      t.references :customer, null: false
+      t.references :customer, null: false, index: false
       t.references :customer_group, null: false
-      # The purchase that produced it, nil for a card an operator granted.
-      t.references :scenario_order
+      # The purchase that produced it, nil for a card an operator granted. Its
+      # own index is the unique one below.
+      t.references :scenario_order, index: false
       # The term it started, once it is activated.
       t.references :membership
       t.string :source, null: false
@@ -54,8 +57,8 @@ class CreateSpreeMembershipCards < ActiveRecord::Migration[8.1]
     # pointer — the card carries the link, and a column pointing back at it is
     # a cycle in which the two ends can disagree.
     create_table :spree_memberships do |t|
-      t.references :store, null: false
-      t.references :customer, null: false
+      t.references :store, null: false, index: false
+      t.references :customer, null: false, index: false
       t.references :customer_group, null: false
       t.string :status, null: false
       t.datetime :starts_at
@@ -74,7 +77,10 @@ class CreateSpreeMembershipCards < ActiveRecord::Migration[8.1]
 
     add_index :spree_memberships, [:store_id, :status]
     add_index :spree_memberships, [:customer_id, :status]
+    # The sweep's two halves: a term whose window closed, and one whose window
+    # opened.
     add_index :spree_memberships, [:status, :ends_at]
+    add_index :spree_memberships, [:status, :starts_at]
 
     # One live term per customer per tier: a customer on two tiers is priced by
     # whichever catalogue sits lower, silently. Ended terms are history and stay.

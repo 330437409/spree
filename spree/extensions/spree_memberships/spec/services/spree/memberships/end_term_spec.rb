@@ -41,6 +41,17 @@ RSpec.describe Spree::Memberships::EndTerm do
     expect(customer.reload.customer_groups).to contain_exactly(other.customer_group)
   end
 
+  # A retired tier is still a tier: its group is what the term being ended holds,
+  # and the catalogue that priced it was switched off when the tier was.
+  it 'leaves a retired tier’s group too' do
+    membership = create(:membership, customer: customer, customer_group: group)
+
+    tier.destroy
+    described_class.call(membership: membership)
+
+    expect(customer.reload.customer_groups).not_to include(group)
+  end
+
   # The sweep runs again on its next pass, and a term it already ended is its
   # own work rather than a mistake.
   it 'answers a term that already ended' do

@@ -35,12 +35,21 @@ module Spree
         return membership unless closed?
         return enter_grace if within_grace?
 
-        Spree::Memberships::EndTerm.call(membership: membership, status: 'expired').value
+        result = Spree::Memberships::EndTerm.call(membership: membership, status: 'expired')
+        failure(membership, result.error) if result.failure?
+
+        membership
       end
 
       # The window opened: from here the customer holds this term, and the tier's
       # group moves with it in the same step.
       def start_pending
+        # A term can outlive its customer — Spree adds no foreign keys — and
+        # there is nobody for it to hold a tier for. Left as it is rather than
+        # raising, so one orphan does not stop the sweep for every term behind
+        # it.
+        return membership if membership.customer.nil?
+
         membership.update!(status: 'active')
         result = Spree::Memberships::AssignTier.call(customer: membership.customer,
                                                      customer_group: membership.customer_group)
@@ -54,11 +63,11 @@ module Spree
       # rather than restarting.
       def extend_term
         length = tier&.term_length
-        membership.update!(
-          status: 'active',
-          starts_at: membership.ends_at,
-          ends_at: length ? membership.ends_at + length : nil
-        )
+        # From the instant the customer still holds, not from a lapsed end: the
+        # grace window is the tier's, and a renewal measured from behind it
+        # would spend the days the customer just paid for.
+        from = [membership.ends_at, now].compact.max
+        membership.update!(status: 'active', starts_at: from, ends_at: length ? from + length : nil)
 
         membership
       end
@@ -76,7 +85,19 @@ module Spree
       end
 
       def renews_itself?
-        membership.active? && closed? && tier&.auto_renew?
+        return false unless membership.active? && closed? && tier&.auto_renew?
+        # A term already waiting for this instant is what replaces this one:
+        # renewing beside a successor leaves a phantom tier that keeps renewing
+        # for a customer who has moved on.
+        return false if waiting_successor?
+
+        true
+      end
+
+      # @return [Boolean] whether another term is waiting to take this one's place
+      def waiting_successor?
+        Spree::Membership.with_status(:pending).for_customer(membership.customer).
+          where.not(id: membership.id).exists?
       end
 
       def within_grace?
@@ -92,9 +113,7 @@ module Spree
 
       # @return [Spree::MembershipTierSetting, nil]
       def tier
-        return @tier if defined?(@tier)
-
-        @tier = membership.tier_setting
+        @tier ||= membership.tier_setting
       end
     end
   end

@@ -18,7 +18,7 @@ module Spree
             tier = card.tier_setting
             next if tier.nil?
 
-            Spree::Api::V3::Store::MembershipTierSerializer.new(tier, params: params).to_h
+            Spree::Api::V3::Store::MembershipCardTierSerializer.new(tier, params: params).to_h
           end
 
           attributes :status, :source

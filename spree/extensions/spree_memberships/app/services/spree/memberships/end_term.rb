@@ -42,8 +42,10 @@ module Spree
 
       def mark_ended
         attributes = { status: status }
-        # A cancellation cuts the window short; an expiry already went by.
-        attributes[:ends_at] = Time.current if status == 'cancelled'
+        # A cancellation cuts the window short — but never before it began: a
+        # term that has not started yet is one the customer never held, and
+        # writing an end before its start is not a window at all.
+        attributes[:ends_at] = [Time.current, membership.starts_at].compact.max if status == 'cancelled'
 
         failure(membership) unless membership.update(attributes)
       end
