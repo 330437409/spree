@@ -61,6 +61,59 @@ module Spree
         rights.count { |right| right.customer_group_id == tier.customer_group_id }
       end
 
+      # The birthday, as the client's `getVipBirthday` reads it: whether it is
+      # set, how many days away it is, and the multiplier this customer's tier
+      # grants for it — nil when the tier carries no birthday right, which is the
+      # client's 去点单 / 设置生日 branch.
+      #
+      # @return [Hash, nil] nil when no birthday is set
+      def birthday
+        on = customer&.birthday
+        return nil if on.nil?
+
+        occurrence = next_occurrence(on)
+        today = SpreeMemberships.today_in(store)
+
+        { 'on' => on.iso8601, 'days_away' => (occurrence - today).to_i, 'multiplier' => multiplier_on(occurrence) }
+      end
+
+      # The day this year's birthday falls on: 0 days away when it is today.
+      #
+      # @return [Date]
+      def next_occurrence(on)
+        today = SpreeMemberships.today_in(store)
+        occurrence = clamp_on(on, today.year)
+        return occurrence if occurrence >= today
+
+        # The year after may be a leap year, in which case a 29 February birthday
+        # is celebrated on the 29th rather than on the clamp this year needed.
+        clamp_on(on, today.year + 1)
+      end
+
+      # The date a birthday is celebrated on in a given year: its own month and
+      # day, or the last day of that month when the year has no such day.
+      #
+      # @return [Date]
+      def clamp_on(on, year)
+        Date.new(year, on.month, on.day)
+      rescue Date::Error
+        Date.new(year, on.month, -1)
+      end
+
+      # What the customer's own tier grants on that day, asked of the kinds
+      # themselves — read off the rights this response already loaded.
+      #
+      # @return [Integer, nil]
+      def multiplier_on(occurrence)
+        return nil if tier.nil?
+
+        right = rights.detect do |candidate|
+          candidate.customer_group_id == tier.customer_group_id &&
+            candidate.order_multiplier(customer: customer, on: occurrence) > 1
+        end
+        right&.multiplier
+      end
+
       # @return [Boolean] whether the customer holds the tier this right hangs on
       def holds?(right)
         tier.present? && right.customer_group_id == tier.customer_group_id

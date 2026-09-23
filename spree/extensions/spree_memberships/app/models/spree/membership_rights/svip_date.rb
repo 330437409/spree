@@ -8,6 +8,12 @@ module Spree
       def self.presents_as
         'userVipDayPageVo'
       end
+
+      # No multiplier yet, deliberately: the days are the occasion's own period,
+      # and nothing names one — so this kind inherits the base's 1 rather than
+      # guessing at a calendar. When the period exists, this is where it applies.
+      #
+      # @see Spree::MembershipRight#order_multiplier
     end
   end
 end

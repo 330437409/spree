@@ -20,4 +20,15 @@ module SpreeMemberships
   def self.membership_rights
     @membership_rights ||= []
   end
+
+    # Today in a store's own calendar. A birthday, a deadline and a member day are
+    # all facts of the merchant's day rather than the server's, and more than one
+    # reader needs the same answer.
+    #
+    # @param store [Spree::Store, nil]
+    # @return [Date]
+    def self.today_in(store, now: Time.current)
+      now.in_time_zone(Time.find_zone(store&.preferred_timezone) || Time.zone).to_date
+    end
 end
+

@@ -84,4 +84,30 @@ RSpec.describe Spree::Memberships::MemberCentre, type: :model do
 
     expect(centre.rights.map(&:customer_group_id)).to all(eq(group.id))
   end
+
+  describe 'the birthday it reports' do
+    let(:customer) { create(:customer, birthday: Date.new(1990, 5, 20)) }
+
+    it 'answers nothing when no birthday is set' do
+      customer.update!(birthday: nil)
+
+      expect(centre.birthday).to be_nil
+    end
+
+    # The client's 距离您生日还有 N 天, and the multiplier its 去点单 branch leads to.
+    it 'answers how far away it is, and what the tier grants for it' do
+      tier
+      Spree::Memberships::AssignTier.call(customer: customer, customer_group: group)
+      create(:birthday_right, customer_group: group, published: true, preferences: { multiplier: 3 })
+
+      Timecop.freeze(Time.zone.local(2026, 5, 17, 10)) do
+        expect(centre.birthday).to eq('on' => '1990-05-20', 'days_away' => 3, 'multiplier' => 3)
+      end
+
+      Timecop.freeze(Time.zone.local(2026, 5, 20, 10)) do
+        expect(centre.birthday).to include('days_away' => 0)
+      end
+    end
+  end
+
 end
