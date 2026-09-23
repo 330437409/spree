@@ -17,7 +17,7 @@ module Spree
 
     # How the customer came by it. The wallet filters on this, which is why it
     # is a column rather than a kind's own setting.
-    SOURCES = %w[draw exchange purchase gift admin sms].freeze
+    SOURCES = %w[draw exchange purchase gift admin sms membership].freeze
 
     belongs_to :grant, class_name: 'Spree::Grant'
     belongs_to :coupon_code, class_name: 'Spree::CouponCode'

@@ -9,7 +9,7 @@ RSpec.describe Spree::MembershipRight, type: :model do
     expect(SpreeMemberships.membership_rights.map(&:api_type)).to contain_exactly(
       'member_price', 'exclusive_coupon', 'coupon', 'large_coupon', 'add_bag',
       'priority_distribution', 'birthday_double_integral', 'give_gift',
-      'surprise_red_envelope', 'svip_date'
+      'surprise_red_envelope', 'svip_date', 'entry_integral'
     )
     expect(described_class.find_by_api_type('birthday_double_integral')).
       to eq(Spree::MembershipRights::BirthdayDoubleIntegral)

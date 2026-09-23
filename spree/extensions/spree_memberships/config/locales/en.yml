@@ -18,6 +18,9 @@ en:
         card_transferring: this card is on its way to somebody else
         tier_open_ended: this customer holds a tier with no end, so a new one cannot wait for it
     membership_right_types:
+      entry_integral:
+        name: Entry points
+        description: Points credited when the member enters this tier
       member_price:
         name: Member price
         description: The price this tier's catalogue gives its members

@@ -2,5 +2,8 @@ eval_gemfile('../../common_spree_dependencies.rb')
 
 gem 'spree', path: '../../'
 gem 'spree_scenario_purchases', path: '../spree_scenario_purchases'
+gem 'spree_grants', path: '../spree_grants'
+gem 'spree_points', path: '../spree_points'
+gem 'spree_coupon_wallet', path: '../spree_coupon_wallet'
 
 gemspec

@@ -42,6 +42,17 @@ module Spree
       conditions: -> { where(deleted_at: nil) }
     }
     validate :type_must_be_registered
+    # Checked where the operator writes it rather than where the member activates:
+    # a promotion that is gone must not fail somebody's activation after they have
+    # been told they are a member.
+    validate :promotion_must_exist, if: -> { preferred_promotion_id.present? }
+
+    # The promotion a coupon kind draws from when a member enters. On the base
+    # rather than in the concern that reads it: `preference` is a macro of
+    # `Spree::PreferenceSchema`, which this class includes, and a concern's
+    # `included do` runs the macro against the kind — where it registers nothing.
+    # A kind that hands over no coupon leaves it nil.
+    preference :promotion_id, :string, nullable: true
 
     scope :published, -> { where(published: true) }
 
@@ -70,6 +81,23 @@ module Spree
       nil
     end
 
+    # What entering the tier hands over, read once when the card is activated:
+    # the two sides of the client's 恭喜升级 bag. A kind that hands over nothing
+    # answers nil to both and the bag skips it.
+    #
+    # Two readers rather than one hash, because the ledger and the coupon wallet
+    # take different arguments and neither is the other's shape.
+    #
+    # @return [Integer, nil] points credited on entry
+    def entry_points
+      nil
+    end
+
+    # @return [String, nil] the promotion a coupon is drawn from, by its prefixed id
+    def entry_coupon
+      nil
+    end
+
     # The display name a customer reads. The row's own copy wins, so an operator
     # can call the same right something else at another tier without a release.
     #
@@ -79,6 +107,12 @@ module Spree
     end
 
     private
+
+    def promotion_must_exist
+      return if Spree::Promotion.find_by_prefix_id(preferred_promotion_id).present?
+
+      errors.add(:preferred_promotion_id, :invalid)
+    end
 
     def type_must_be_registered
       return if self.class.available_types.any? { |kind| kind.to_s == type }

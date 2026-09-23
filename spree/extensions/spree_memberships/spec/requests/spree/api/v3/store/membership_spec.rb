@@ -93,6 +93,17 @@ RSpec.describe 'the membership reads', type: :request do
       expect(user.reload.customer_groups).to include(group)
     end
 
+    # What the client opens its 恭喜升级 modal on: the tier's bag, read from the
+    # rights the card's tier carries.
+    it 'answers the bag entering the tier handed over' do
+      create(:entry_integral_right, customer_group: group, published: true, preferences: { amount: 250 })
+
+      post "/api/v3/store/customers/me/membership_cards/#{card.prefixed_id}/activations", headers: headers
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body['entry_bag']).to eq('points' => 250, 'coupons' => 0)
+    end
+
     # Read through the customer's own cards, so somebody else's is not found.
     it 'answers 404 for a card that is not theirs' do
       other = create(:membership_card, customer: create(:customer), customer_group: group)

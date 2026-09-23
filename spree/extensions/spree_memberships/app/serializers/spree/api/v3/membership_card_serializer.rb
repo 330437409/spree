@@ -10,6 +10,7 @@ module Spree
       # renders verbatim.
       class MembershipCardSerializer < BaseSerializer
         typelize tier: 'Record<string, unknown> | null', status: :string, source: :string,
+                 entry_bag: 'Record<string, unknown> | null',
                  giftable: :boolean, activates_before: 'string | null',
                  activated_at: 'string | null', membership: 'Record<string, unknown> | null',
                  transfer: 'Record<string, unknown> | null'
@@ -22,6 +23,21 @@ module Spree
         end
 
         attributes :status, :source
+
+        # What entering the tier hands over — the client's 恭喜升级 bag — read
+        # from the tier's rights rather than from the ledger: the customer has it
+        # the moment the card is active, and the read is the same shape whether it
+        # was issued a second ago or a year ago.
+        attribute(:entry_bag) do |card|
+          next unless card.active?
+
+          rights = Spree::MembershipRight.published.where(customer_group_id: card.customer_group_id)
+          points = rights.sum { |right| right.entry_points.to_i }
+          coupons = rights.count { |right| right.entry_coupon.present? }
+          next if points.zero? && coupons.zero?
+
+          { 'points' => points, 'coupons' => coupons }
+        end
         attribute(:giftable) { |card| card.giftable? }
         attribute(:activates_before) { |card| card.activates_before&.iso8601 }
         attribute(:activated_at) { |card| card.activated_at&.iso8601 }
