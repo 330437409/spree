@@ -24,6 +24,6 @@ module Spree
           code.expires_at.iso8601
         end
       end
+    end
   end
-end
 end

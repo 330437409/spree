@@ -13,6 +13,6 @@ module Spree
         attribute(:starts_at) { |membership| membership.starts_at&.iso8601 }
         attribute(:ends_at) { |membership| membership.ends_at&.iso8601 }
       end
+    end
   end
-end
 end

@@ -20,6 +20,6 @@ module Spree
           ticket.flash_sale_slot&.prefixed_id
         end
       end
+    end
   end
-end
 end

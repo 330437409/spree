@@ -41,6 +41,6 @@ module Spree
           Spree::Api::V3::MembershipCardTransferSerializer.new(window, params: params).to_h
         end
       end
+    end
   end
-end
 end

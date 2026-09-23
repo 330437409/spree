@@ -5,11 +5,12 @@
 # It has to run in an application that loads *every* fork gem, because Typelizer
 # prunes the directories it writes: a run from spree/api alone would delete the
 # extension gems' types rather than leave them. That application is the starter,
-# so this runs there — inside the Docker service when that is how the stack is
-# running, directly when it is not.
+# so this runs there — in the dev stack's container when it is up, directly when
+# it is not. It writes the generated trees and stages nothing; the pre-commit
+# hook (lefthook.yml) is what stages them, and a hand run leaves the diff to read.
 set -euo pipefail
 
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+root="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
 cd "$root"
 
 if [ ! -d server ]; then
@@ -18,16 +19,23 @@ if [ ! -d server ]; then
   exit 1
 fi
 
+# Whichever stack is up: the dev one (a checkout, mounted) or the quick-start one
+# (a prebuilt image, mounted too in this fork's own setup). Nothing running, and it
+# runs natively — which needs a `bundle install` in server/.
+compose=()
+if [ -n "$(docker compose -f server/docker-compose.dev.yml -f scripts/docker-compose.edge.yml ps -q web 2>/dev/null)" ]; then
+  compose=(-f server/docker-compose.dev.yml -f scripts/docker-compose.edge.yml)
+elif [ -n "$(docker compose -f server/docker-compose.yml ps -q web 2>/dev/null)" ]; then
+  compose=(-f server/docker-compose.yml)
+fi
+
 echo "Generating types from the serializers (this needs every gem loaded)…"
-if docker compose -f server/docker-compose.yml ps --status running --services 2>/dev/null | grep -qx web; then
-  docker compose -f server/docker-compose.yml exec -T web bin/rails typelizer:generate
+if [ ${#compose[@]} -gt 0 ]; then
+  SPREE_PATH="$PWD" docker compose "${compose[@]}" exec -T web bin/rails typelizer:generate
 else
   (cd server && bundle exec rake typelizer:generate)
 fi
 
 # The Zod schemas follow the TS types, and pnpm is a host tool either way.
 (cd packages/sdk && pnpm generate:zod)
-
-git add packages/sdk/src/types/generated packages/sdk/src/zod/generated \
-        packages/admin-sdk/src/types/generated packages/seller-sdk/src/types/generated
-echo "Types regenerated and staged."
+echo "Types regenerated — review the diff under packages/*/src/types/generated."

@@ -59,6 +59,6 @@ module Spree
           Spree.api.seller_stock_location_serializer.new(decision.stock_location, params: params).to_h
         end
       end
+    end
   end
-end
 end

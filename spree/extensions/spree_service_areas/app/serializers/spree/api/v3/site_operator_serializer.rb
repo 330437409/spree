@@ -25,6 +25,6 @@ module Spree
           seller.business_model
         end
       end
+    end
   end
-end
 end

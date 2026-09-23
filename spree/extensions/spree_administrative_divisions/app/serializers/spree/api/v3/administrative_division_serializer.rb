@@ -17,6 +17,6 @@ module Spree
           params[:parents_with_children]&.include?(division.id) || false
         end
       end
+    end
   end
-end
 end

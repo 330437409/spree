@@ -25,6 +25,6 @@ module Spree
           Spree::Api::V3::ScenarioPaymentSessionSerializer.new(session, params: params).to_h
         end
       end
+    end
   end
-end
 end

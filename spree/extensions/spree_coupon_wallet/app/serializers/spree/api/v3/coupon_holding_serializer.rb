@@ -24,6 +24,6 @@ module Spree
           ).to_h
         end
       end
+    end
   end
-end
 end

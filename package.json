@@ -34,6 +34,7 @@
     "wt:seller": "scripts/worktree/dev-seller.sh",
     "wt:storefront": "scripts/worktree/dev-storefront.sh",
     "wt:e2e": "scripts/worktree/e2e.sh",
+    "types:generate": "scripts/types/generate",
     "test:changed": "scripts/test/changed",
     "test:rspec": "scripts/test/rspec",
     "test:slots": "scripts/test/with-slot --status",

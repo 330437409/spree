@@ -21,6 +21,6 @@ module Spree
           SiteOperatorSerializer.new(seller, params: params).to_h
         end
       end
+    end
   end
-end
 end

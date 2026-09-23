@@ -26,6 +26,6 @@ module Spree
           item.flash_sale.progress(item: item).fetch(:remaining)
         end
       end
+    end
   end
-end
 end

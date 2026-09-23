@@ -12,6 +12,6 @@ module Spree
         attribute(:name) { |tier| tier.name }
         attribute(:rank) { |tier| tier.rank }
       end
+    end
   end
-end
 end

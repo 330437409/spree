@@ -24,6 +24,6 @@ module Spree
           pin.present? ? pin.required? : false
         end
       end
+    end
   end
-end
 end

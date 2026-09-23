@@ -11,6 +11,6 @@ module Spree
 
         attributes :code, :name, :level
       end
+    end
   end
-end
 end
