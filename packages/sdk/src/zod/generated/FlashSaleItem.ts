@@ -3,11 +3,11 @@ import { z } from 'zod';
 
 export const FlashSaleItemSchema = z.object({
   id: z.string(),
-  variant_id: z.string().nullable(),
-  product_id: z.string().nullable(),
+  variant_id: z.any(),
+  product_id: z.any(),
   price: z.number().nullable(),
   sale_price: z.number(),
-  remaining: z.number(),
+  remaining: z.any(),
 });
 
 export type FlashSaleItem = z.infer<typeof FlashSaleItemSchema>;

@@ -8,8 +8,8 @@ module Spree
       # signing in — that is the point of a token-addressed read — so the giver
       # is not theirs to learn, and the claimer is not known until they claim.
       class MembershipCardTransferSerializer < BaseSerializer
-        typelize token: :string, status: :string, message: 'string | null', expires_at: 'string | null',
-                 card: 'MembershipCardSummary | null'
+        typelize status: :string, message: 'string | null', expires_at: 'string | null',
+                 card: 'Record<string, unknown> | null'
 
         attributes :token
         attribute(:status) { |transfer| transfer.display_status }

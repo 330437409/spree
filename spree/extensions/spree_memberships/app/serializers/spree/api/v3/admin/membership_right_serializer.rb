@@ -6,8 +6,6 @@ module Spree
         # the settings that kind declares.
         class MembershipRightSerializer < BaseSerializer
           typelize type: :string, position: :number, published: :boolean,
-                   name: :string, description: 'string | null', badge: 'string | null',
-                   image_url: 'string | null', deleted_at: 'string | null',
                    preferences: 'Record<string, unknown> | null'
 
           attribute(:type) { |right| Spree::MembershipRight.api_type_for(right.type) }

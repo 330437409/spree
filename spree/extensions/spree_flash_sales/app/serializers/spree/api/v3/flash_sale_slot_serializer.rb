@@ -4,9 +4,7 @@ module Spree
       # One stretch of an activity — what the client's 开售提醒 is keyed to and
       # what a claim names.
       class FlashSaleSlotSerializer < BaseSerializer
-        typelize window_status: :string, remaining: :number,
-                 starts_at: [:string, nullable: true], ends_at: [:string, nullable: true],
-                 purchase_cap: [:number, nullable: true]
+        typelize window_status: :string, remaining: :number
 
         attributes :id, :starts_at, :ends_at
 

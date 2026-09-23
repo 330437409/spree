@@ -1,7 +1,6 @@
 // This file is auto-generated. Do not edit directly.
 import { z } from 'zod';
 import { PolicySchema } from './Policy';
-import { SiteOperatorSchema } from './SiteOperator';
 
 export const SiteSchema = z.object({
   id: z.string(),
@@ -14,7 +13,7 @@ export const SiteSchema = z.object({
   cover_photo_url: z.string().nullable(),
   policies: z.array(PolicySchema).optional(),
   site_svip: z.boolean(),
-  operator: SiteOperatorSchema.nullable(),
+  operator: z.any(),
 });
 
 export type Site = z.infer<typeof SiteSchema>;

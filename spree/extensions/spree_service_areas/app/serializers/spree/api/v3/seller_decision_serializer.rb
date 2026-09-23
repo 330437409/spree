@@ -15,8 +15,6 @@ module Spree
         include Typelizer::DSL
 
         typelize matched: :boolean, match_type: [:string, nullable: true],
-                 seller: 'Seller | null', administrative_division: 'AdministrativeDivision | null',
-                 warehouse: 'Site | null',
                  polygon_result: [:string, nullable: true], stale: :boolean,
                  distance_km: [:number, nullable: true]
 

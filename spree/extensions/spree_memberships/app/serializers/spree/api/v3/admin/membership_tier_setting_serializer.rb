@@ -6,8 +6,7 @@ module Spree
         class MembershipTierSettingSerializer < BaseSerializer
           typelize rank: :number, threshold: 'string | null', validity_days: 'number | null',
                    rights_total: :number, member_discount_percentage: 'string | null',
-                   auto_renew: :boolean, grace_days: :number, sku: 'string | null',
-                   deleted_at: 'string | null'
+                   auto_renew: :boolean, grace_days: :number, sku: 'string | null'
 
           attributes :rank
           attribute(:threshold) { |setting| decimal_string(setting.threshold) }

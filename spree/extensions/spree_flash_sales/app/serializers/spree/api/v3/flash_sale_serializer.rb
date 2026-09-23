@@ -10,9 +10,6 @@ module Spree
       # instant, so an activity the client may not buy from yet says so.
       class FlashSaleSerializer < BaseSerializer
         typelize window_status: :string,
-                 title: [:string, nullable: true], code: [:string, nullable: true],
-                 starts_at: [:string, nullable: true], ends_at: [:string, nullable: true],
-                 server_now: :string, items: 'FlashSaleItem[]', slots: 'FlashSaleSlot[]',
                  remaining: :number, percentage: :number, standby_tickets: :number
 
         attributes :title, :code
