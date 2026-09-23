@@ -37,7 +37,7 @@ module Spree
             end
 
             def serializer_class
-              Spree::Api::V3::Store::MembershipCardTransferSerializer
+              Spree::Api::V3::MembershipCardTransferSerializer
             end
           end
         end

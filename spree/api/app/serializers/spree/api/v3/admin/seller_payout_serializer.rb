@@ -18,7 +18,8 @@ module Spree
                    period_start: 'string | null',
                    period_end: 'string | null',
                    transfers_count: :number,
-                   display_amount: :string
+                   display_amount: :string,
+                   metadata: 'Record<string, unknown> | null'
 
           attributes :status, :currency, :provider, :reference, :metadata,
                      period_start: :iso8601, period_end: :iso8601,

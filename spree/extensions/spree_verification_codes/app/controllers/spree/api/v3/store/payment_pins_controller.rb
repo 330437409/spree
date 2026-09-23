@@ -107,7 +107,7 @@ module Spree
           end
 
           def serializer_class
-            Spree::Api::V3::Store::PaymentPinSerializer
+            Spree::Api::V3::PaymentPinSerializer
           end
         end
       end

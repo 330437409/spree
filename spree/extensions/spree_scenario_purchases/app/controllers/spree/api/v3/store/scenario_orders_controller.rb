@@ -34,7 +34,7 @@ module Spree
           end
 
           def serializer_class
-            Spree::Api::V3::Store::ScenarioOrderSerializer
+            Spree::Api::V3::ScenarioOrderSerializer
           end
 
           # A customer reads and removes their own purchases; another customer's

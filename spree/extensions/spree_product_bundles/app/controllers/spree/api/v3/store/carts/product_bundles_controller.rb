@@ -32,7 +32,7 @@ module Spree
             end
 
             def serialize_group(bundle, line_items)
-              Spree::Api::V3::Store::CartProductBundleSerializer.new(
+              Spree::Api::V3::CartProductBundleSerializer.new(
                 Spree::ProductBundles::CartGroup.new(bundle: bundle, line_items: line_items),
                 params: serializer_params
               ).to_h

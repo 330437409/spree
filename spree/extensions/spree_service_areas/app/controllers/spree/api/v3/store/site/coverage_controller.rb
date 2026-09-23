@@ -36,7 +36,7 @@ module Spree
             end
 
             def serialize(division)
-              Spree::Api::V3::Store::RoutedDivisionSerializer.new(division, params: serializer_params).to_h
+              Spree::Api::V3::RoutedDivisionSerializer.new(division, params: serializer_params).to_h
             end
           end
         end
