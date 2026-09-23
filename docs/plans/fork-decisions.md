@@ -1210,3 +1210,10 @@ Plan: `6.1-type-generation-for-fork-gems.md`, built. This **supersedes the "exte
 ## 2026-09-23 (spree_crm's remaining half) — The approach is undecided; do not build on it
 
 `.custom-extensions/spree_crm`'s membership half is retired, and the environment proves it: `Spree::CrmMembership`, `Spree::CrmMembershipPlan` and `CrmMemberships::ExpireLapsedJob` no longer resolve, `server/config/recurring.yml` carries no CRM sweep, and the rows were migrated onto `spree_memberships` by the convergence rake task. What the gem still owns — relationships, relationship types, company roles and membership roles, the B2B surface — **has no settled approach**: the user's ruling of 2026-09-23 is 方案未定，不执行. Nothing is to be built on it, extended through it, or read from it as a foundation until a plan of its own settles the design; the gem stays loaded and untouched meanwhile.
+
+## 2026-09-23 (a preference's keys are symbols) — And the column type does not matter
+
+**Corrected after review**, because the first version of this entry was wrong and two fix-up migrations were written on it. A `preferences` column works as **JSON or `text`**: `Spree::Preferences::Preferable` serializes it as YAML through the column either way, and core itself has both (`spree_delivery_method_rules` is `jsonb` and reads its `BigDecimal` preferences back fine). The JSON-as-write-only claim does not reproduce for any write path — setter, `update!`, `update_columns`, factory — on any of the three column types. The two migrations that "fixed" the type were reverted before merging, and the plans that were edited to prescribe `text` say this instead.
+
+**What is true, and what actually bit:** the reader is `preferences[:name]` — a **symbol** key — so a preferences hash written with **string** keys (`{ 'amount' => 100 }`) is stored and never read, silently falling back to the kind's default, and it behaves that way on every column type. That is the whole trap, and it is a caller's mistake rather than a schema one: specs and operators' writes carry symbol keys.
+

@@ -16,6 +16,6 @@ RSpec.describe 'the membership permission scope', type: :model do
     names = SpreeMemberships.membership_rights.map(&:name)
 
     expect(names).to eq(names.uniq)
-    expect(names.size).to eq(10)
+    expect(names.size).to eq(SpreeMemberships.membership_rights.size)
   end
 end

@@ -31,4 +31,9 @@ Gem::Specification.new do |s|
   # A card is bought through a scenario order — nothing ships, so the purchase is
   # the frame that has no cart — and the card records which purchase issued it.
   s.add_dependency 'spree_scenario_purchases', ">= #{s.version}"
+  # Entering a tier hands over what its rights carry — points through the
+  # ledger, coupons through the wallet — so both gems are dependencies of the
+  # bag and not only of the plans that own them.
+  s.add_dependency 'spree_points', ">= #{s.version}"
+  s.add_dependency 'spree_coupon_wallet', ">= #{s.version}"
 end

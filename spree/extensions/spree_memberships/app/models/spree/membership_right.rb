@@ -42,6 +42,16 @@ module Spree
       conditions: -> { where(deleted_at: nil) }
     }
     validate :type_must_be_registered
+    # Checked where the operator writes it rather than where the member activates:
+    # a promotion that is gone must not fail somebody's activation after they have
+    # been told they are a member. Read only while the preference is being
+    # written, so a right whose promotion has since gone can still be retired.
+    validate :promotion_must_belong_to_the_store, if: -> { preferred_promotion_id.present? && will_save_change_to_preferences? }
+
+    # The promotion a coupon kind draws from when a member enters — the one
+    # preference every kind carries, because the reader below is the base's. A
+    # kind that hands over no coupon leaves it unset.
+    preference :promotion_id, :string, nullable: true
 
     scope :published, -> { where(published: true) }
 
@@ -70,6 +80,25 @@ module Spree
       nil
     end
 
+    # What entering the tier hands over, read once when the card is activated:
+    # the two sides of the client's 恭喜升级 bag. A kind that hands over nothing
+    # answers nil to both and the bag skips it.
+    #
+    # Two readers rather than one hash, because the ledger and the coupon wallet
+    # take different arguments and neither is the other's shape.
+    #
+    # @return [Integer, nil] points credited on entry
+    def entry_points
+      nil
+    end
+
+    # @return [String, nil] the promotion a coupon is drawn from, by its prefixed
+    #   id. Read from the preference every kind carries; a kind that hands over no
+    #   coupon leaves it unset, which is nil here.
+    def entry_coupon
+      preferred_promotion_id.presence
+    end
+
     # The display name a customer reads. The row's own copy wins, so an operator
     # can call the same right something else at another tier without a release.
     #
@@ -79,6 +108,17 @@ module Spree
     end
 
     private
+
+    # Keyed on `preferences`, which is the field an operator's form writes — and
+    # scoped to the store, because a pool in another store's promotion is a code
+    # this tier must not draw.
+    def promotion_must_belong_to_the_store
+      promotion = Spree::Promotion.find_by_prefix_id(preferred_promotion_id)
+      return errors.add(:preferences, :invalid) if promotion.nil?
+      return if store.nil? || promotion.store_id == store.id
+
+      errors.add(:preferences, :invalid)
+    end
 
     def type_must_be_registered
       return if self.class.available_types.any? { |kind| kind.to_s == type }

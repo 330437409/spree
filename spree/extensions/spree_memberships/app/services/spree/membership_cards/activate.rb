@@ -38,6 +38,7 @@ module Spree
           step :issue_term
           step :assign_tier
           step :mark_card
+          step :grant_entry_bag
           run_hooks :after_activate
         end
 
@@ -45,6 +46,24 @@ module Spree
       end
 
       private
+
+      # Entering a tier hands over what its rights carry: the points and the
+      # coupons of the client's 恭喜升级 bag. Inside this transaction, because
+      # both issuers write where this one does, and idempotent by the card and
+      # the right, so a retried activation hands over nothing twice.
+      def grant_entry_bag
+        rights = card.tier_setting&.published_rights.to_a
+        return if rights.blank?
+
+        result = Spree::Memberships::GrantEntryBag.call(source: card, customer: entitled_customer, rights: rights)
+        return failure(card, result.error) if result.failure?
+
+        # Carried on the record for this response only: the bag is a fact about
+        # what the activation handed over, not about the tier it read — an
+        # operator editing the rights afterwards must not change what the member
+        # was told they received.
+        card.entry_bag = result.value
+      end
 
       # A card activated twice — a retry, a double tap — is answered with the
       # card it already activated rather than refused.

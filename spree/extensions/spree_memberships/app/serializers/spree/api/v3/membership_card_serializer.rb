@@ -10,6 +10,7 @@ module Spree
       # renders verbatim.
       class MembershipCardSerializer < BaseSerializer
         typelize tier: 'Record<string, unknown> | null', status: :string, source: :string,
+                 entry_bag: 'Record<string, unknown> | null',
                  giftable: :boolean, activates_before: 'string | null',
                  activated_at: 'string | null', membership: 'Record<string, unknown> | null',
                  transfer: 'Record<string, unknown> | null'
@@ -22,6 +23,16 @@ module Spree
         end
 
         attributes :status, :source
+
+        # What this card's activation handed over — the client's 恭喜升级 bag.
+        # Only ever populated by that activation, which is why the wallet's cards
+        # answer nil: what a tier carries today is not what a member was given.
+        attribute(:entry_bag) do |card|
+          bag = card.entry_bag
+          next if bag.blank?
+
+          { 'points' => bag[:points].to_i, 'coupons' => bag[:coupons].to_a.size }
+        end
         attribute(:giftable) { |card| card.giftable? }
         attribute(:activates_before) { |card| card.activates_before&.iso8601 }
         attribute(:activated_at) { |card| card.activated_at&.iso8601 }

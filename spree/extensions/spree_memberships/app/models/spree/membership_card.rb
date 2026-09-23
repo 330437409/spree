@@ -37,6 +37,12 @@ module Spree
     # gift is the case this exists for.
     belongs_to :activated_by_customer, class_name: "::#{Spree.customer_class}", optional: true
 
+    # What this card's activation handed over: points and the coupons it drew.
+    # Set by `MembershipCards::Activate` for the response it answers with, nil on
+    # every other read — the tier's rights are what a card *will* hand over, and
+    # this is what it did.
+    attr_accessor :entry_bag
+
     validates :source, presence: true, inclusion: { in: SOURCES }
     validate :group_in_same_store
 

@@ -37,7 +37,8 @@ module SpreeMemberships
         Spree::MembershipRights::BirthdayDoubleIntegral,
         Spree::MembershipRights::GiveGift,
         Spree::MembershipRights::SurpriseRedEnvelope,
-        Spree::MembershipRights::SvipDate
+        Spree::MembershipRights::SvipDate,
+        Spree::MembershipRights::EntryIntegral
       ])
 
       # The one way to buy a term: the purchase's kind, registered with the
