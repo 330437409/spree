@@ -4,9 +4,20 @@ module SpreeMemberships
   class Engine < Rails::Engine
     engine_name 'spree_memberships'
 
-    # `to_prepare` rather than `after_initialize`: the registry is a plain array
-    # and would survive a reload, but a reload redefines the right classes
-    # themselves, and re-registering keeps the two in step.
+    # Registers kinds of a gem's registries by class *name* rather than by
+    # identity: a reload redefines those constants, and an identity check would
+    # register each reloaded kind beside its stale twin until the picker lists
+    # every kind once per edit.
+    def self.register_kinds(registry, kinds)
+      kinds.each do |kind|
+        registry.reject! { |registered| registered.name == kind.name }
+        registry << kind
+      end
+    end
+
+    # `to_prepare` rather than `after_initialize`: the registries are plain arrays
+    # that survive a reload while the classes in them do not, so re-registering
+    # keeps the two in step.
     config.to_prepare do
       # A scope of the gem's own, in the loyalty group beside gift cards and
       # store credits: CanCanCan has a rule for exactly the models a declared
@@ -16,7 +27,7 @@ module SpreeMemberships
         [Spree::MembershipTierSetting, Spree::MembershipRight, Spree::MembershipCard, Spree::Membership]
       })
 
-      [
+      SpreeMemberships::Engine.register_kinds(SpreeMemberships.membership_rights, [
         Spree::MembershipRights::MemberPrice,
         Spree::MembershipRights::ExclusiveCoupon,
         Spree::MembershipRights::Coupon,
@@ -27,13 +38,12 @@ module SpreeMemberships
         Spree::MembershipRights::GiveGift,
         Spree::MembershipRights::SurpriseRedEnvelope,
         Spree::MembershipRights::SvipDate
-      ].each do |kind|
-        # By name rather than by identity: a reload redefines these constants,
-        # and an identity check would register each reloaded kind beside its
-        # stale twin until the picker lists every kind once per edit.
-        SpreeMemberships.membership_rights.reject! { |registered| registered.name == kind.name }
-        SpreeMemberships.membership_rights << kind
-      end
+      ])
+
+      # The one way to buy a term: the purchase's kind, registered with the
+      # scenario-purchase frame the same way the rights are registered here.
+      SpreeMemberships::Engine.register_kinds(SpreeScenarioPurchases.scenario_order_kinds,
+                                              [Spree::MembershipKinds::Vip])
 
       # The member price is the platform's promise, so the platform funds it:
       # the earning carries the seller's shortfall against the shelf price as a

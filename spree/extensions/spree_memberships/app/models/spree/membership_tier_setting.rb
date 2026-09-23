@@ -7,6 +7,8 @@ module Spree
   # also how a loyalty tier is told from the wholesale-buyer group that shares
   # the same table (docs/plans/6.1-membership-tiers-and-rights.md).
   class MembershipTierSetting < Spree.base_class
+    has_prefix_id :mtier
+
     include Spree::Metadata
 
     acts_as_paranoid
