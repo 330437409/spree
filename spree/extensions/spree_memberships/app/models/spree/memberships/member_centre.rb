@@ -71,12 +71,17 @@ module Spree
         on = customer&.birthday
         return nil if on.nil?
 
-        { 'on' => on.iso8601, 'days_away' => days_away(on), 'multiplier' => birthday_multiplier }
+        occurrence = next_occurrence(on)
+        today = SpreeMemberships.today_in(store)
+
+        { 'on' => on.iso8601, 'days_away' => (occurrence - today).to_i, 'multiplier' => multiplier_on(occurrence) }
       end
 
-      # @return [Integer] 0 on the day itself
-      def days_away(on)
-        today = Time.current.in_time_zone(Time.find_zone(store&.preferred_timezone) || Time.zone).to_date
+      # The day this year's birthday falls on: 0 days away when it is today.
+      #
+      # @return [Date]
+      def next_occurrence(on)
+        today = SpreeMemberships.today_in(store)
         occurrence = begin
           Date.new(today.year, on.month, on.day)
         rescue Date::Error
@@ -84,15 +89,19 @@ module Spree
           # day of its month rather than skipped.
           Date.new(today.year, on.month, -1)
         end
-        occurrence = occurrence.next_year if occurrence < today
-
-        (occurrence - today).to_i
+        occurrence < today ? occurrence.next_year : occurrence
       end
 
-      # @return [Integer, nil] what this customer's tier grants on the birthday
-      def birthday_multiplier
-        right = tier&.published_rights&.detect do |candidate|
-          candidate.is_a?(Spree::MembershipRights::BirthdayDoubleIntegral)
+      # What the customer's own tier grants on that day, asked of the kinds
+      # themselves — read off the rights this response already loaded.
+      #
+      # @return [Integer, nil]
+      def multiplier_on(occurrence)
+        return nil if tier.nil?
+
+        right = rights.detect do |candidate|
+          candidate.customer_group_id == tier.customer_group_id &&
+            candidate.order_multiplier(customer: customer, on: occurrence) > 1
         end
         right&.multiplier
       end

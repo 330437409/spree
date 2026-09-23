@@ -49,6 +49,23 @@ RSpec.describe Spree::Memberships::PointsMultiplier do
     end
   end
 
+  # The day belongs to the store's calendar: a merchant in Shanghai is already on
+  # the 20th at 17:00 UTC on the 19th, and the member's birthday must pay there.
+  it 'reads the birthday in the store’s own timezone' do
+    store.update!(preferred_timezone: 'Asia/Shanghai')
+    customer.update!(birthday: Date.new(1990, 5, 20))
+    in_tier!
+    with_birthday_right(2)
+
+    Timecop.freeze(Time.utc(2026, 5, 19, 17, 0)) do
+      expect(multiplier).to eq(2)
+    end
+
+    Timecop.freeze(Time.utc(2026, 5, 19, 15, 0)) do
+      expect(multiplier).to eq(1)
+    end
+  end
+
   it 'multiplies nothing for a customer with no birthday' do
     customer.update!(birthday: nil)
     in_tier!

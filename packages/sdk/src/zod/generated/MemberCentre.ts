@@ -5,6 +5,7 @@ export const MemberCentreSchema = z.object({
   id: z.string(),
   tier: z.record(z.string(), z.unknown()).nullable(),
   rights_total: z.number(),
+  birthday: z.record(z.string(), z.unknown()).nullable(),
   sections: z.any(),
 });
 

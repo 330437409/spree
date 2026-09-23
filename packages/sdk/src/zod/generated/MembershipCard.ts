@@ -6,6 +6,7 @@ export const MembershipCardSchema = z.object({
   tier: z.record(z.string(), z.unknown()).nullable(),
   status: z.string(),
   source: z.string(),
+  entry_bag: z.record(z.string(), z.unknown()).nullable(),
   giftable: z.boolean(),
   activates_before: z.string().nullable(),
   activated_at: z.string().nullable(),

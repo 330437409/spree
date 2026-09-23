@@ -12,44 +12,32 @@ module Spree
       prepend Spree::ServiceModule::Base
 
       # @param order [Spree::Order]
-      # @return [Spree::ServiceModule::Result] value is the multiplier: what the
-      #   birthday right says, or 1 when nothing applies
-      def call(order:)
-        success(multiplier_for(order))
+      # @param now [Time] injectable, so a caller that already knows the store's
+      #   day — a sweep, a batch — does not read the clock again
+      # @return [Spree::ServiceModule::Result] value is the multiplier: the
+      #   highest a right asks for today, or 1 when none applies
+      def call(order:, now: Time.current)
+        success(multiplier_for(order, now))
       end
 
       private
 
-      def multiplier_for(order)
+      # The day is the store's, not the server's: what a merchant in Shanghai calls
+      # the 5th must not wait for UTC.
+      def multiplier_for(order, now)
         customer = order.customer
-        return 1 if customer.nil? || customer.birthday.nil?
-        return 1 unless today?(order.store, customer.birthday)
+        return 1 if customer.nil?
 
-        right = birthday_right(order.store, customer)
-        right.nil? ? 1 : right.multiplier
+        on = SpreeMemberships.today_in(order.store, now: now)
+
+        rights_for(order.store, customer).map { |right| right.order_multiplier(customer: customer, on: on) }.max || 1
       end
 
-      # A birthday is the customer's own date in the store's calendar, not the
-      # server's: what a merchant in Shanghai calls the 5th must not wait for UTC.
-      def today?(store, birthday)
-        today = Time.current.in_time_zone(zone_for(store)).to_date
-
-        birthday.month == today.month && birthday.day == today.day
-      end
-
-      def zone_for(store)
-        Time.find_zone(store&.preferred_timezone) || Time.zone
-      end
-
-      # @return [Spree::MembershipRights::BirthdayDoubleIntegral, nil] nil when
-      #   the customer is in no tier, or their tier does not carry the right
-      def birthday_right(store, customer)
+      # @return [Array<Spree::MembershipRight>] empty when the customer is in no
+      #   tier
+      def rights_for(store, customer)
         tier = Spree::MembershipTierSetting.for_store(store).for_customer(customer)
-        return nil if tier.nil?
-
-        tier.published_rights.detect do |right|
-          right.is_a?(Spree::MembershipRights::BirthdayDoubleIntegral)
-        end
+        tier.nil? ? [] : tier.published_rights.to_a
       end
     end
   end
