@@ -16,7 +16,7 @@ module Spree
             end
 
             def serializer_class
-              Spree::Api::V3::CouponHoldingSerializer
+              Spree::Api::V3::Store::CouponHoldingSerializer
             end
 
             # The wallet is the customer's own, so every read is scoped to them

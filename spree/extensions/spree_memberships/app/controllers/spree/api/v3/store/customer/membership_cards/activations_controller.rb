@@ -50,7 +50,7 @@ module Spree
               end
 
               def serializer_class
-                Spree::Api::V3::MembershipCardSerializer
+                Spree::Api::V3::Store::MembershipCardSerializer
               end
 
               # Through the customer's own cards, which is the whole

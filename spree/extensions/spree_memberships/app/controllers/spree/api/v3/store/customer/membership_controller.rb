@@ -14,7 +14,7 @@ module Spree
             def show
               centre = Spree::Memberships::MemberCentre.new(store: current_store, customer: current_user)
 
-              render json: Spree::Api::V3::MemberCentreSerializer.new(
+              render json: Spree::Api::V3::Store::MemberCentreSerializer.new(
                 centre, params: serializer_params
               ).to_h
             end

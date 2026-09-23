@@ -4,7 +4,7 @@ module Spree
       module Admin
         # A term as the back office reads it: who holds which tier, and until
         # when.
-        class MembershipSerializer < V3::MembershipSerializer
+        class MembershipSerializer < V3::Store::MembershipSerializer
           typelize customer_id: :string, customer_email: 'string | null',
                    customer_group_id: :string, metadata: 'Record<string, unknown> | null'
 

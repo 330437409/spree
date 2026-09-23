@@ -5,18 +5,13 @@ module Spree
         # A bundle as a merchant's own panel reads it: what the storefront sees,
         # plus the operator's own fields — the status they move, the position
         # they order by, and the timestamps.
-        class ProductBundleSerializer < Spree::Api::V3::ProductBundleSerializer
+        class ProductBundleSerializer < Spree::Api::V3::Store::ProductBundleSerializer
           typelize status: :string, position: :number,
                    currency: :string,
                    saving_kind: :string, saving_value: :number,
                    created_at: :string, updated_at: :string, deleted_at: [:string, nullable: true]
 
           attributes :status, :position, :created_at, :updated_at, :deleted_at
-
-          # Nested through the admin twin, not the storefront's serializer it
-          # inherits: the admin writer names a nested type by its own class, so a
-          # reference to the store one would come out as a name no package has.
-          many :components, resource: proc { Spree::Api::V3::Admin::BundleComponentSerializer }
 
           # The rule itself, which is what a merchant edits: the panel shows the
           # three computed figures beside it, and it needs the rule to fill the

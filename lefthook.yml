@@ -5,13 +5,13 @@ pre-commit:
       stage_fixed: true
       run: pnpm exec biome check --write --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
     typelizer-and-zod:
-      # Core's serializers and the extension gems' alike: a gem serializer
-      # changes the same client-facing types, and the generator has to see
-      # every gem to write any of them (it prunes what it does not see).
-      glob: "{spree/api/app/serializers/**/*.rb,spree/extensions/*/app/serializers/**/*.rb}"
+      glob: "spree/api/app/serializers/**/*.rb"
       run: |
         echo "Serializer changes detected — regenerating TypeScript types and Zod schemas..."
-        scripts/types/generate
+        cd spree/api && bundle exec rake typelizer:generate && cd ../..
+        cd packages/sdk && pnpm generate:zod && cd ../..
+        git add packages/sdk/src/types/generated/ packages/sdk/src/zod/generated/
+        git add packages/admin-sdk/src/types/generated/
 
 pre-push:
   commands:

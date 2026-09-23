@@ -21,7 +21,7 @@ module Spree
           end
 
           def serializer_class
-            Spree::Api::V3::MembershipCardTransferSerializer
+            Spree::Api::V3::Store::MembershipCardTransferSerializer
           end
 
           # The address is the token, not an id; the scope is the base's, so it
