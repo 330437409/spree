@@ -35,6 +35,12 @@ module SpreeMemberships
         SpreeMemberships.membership_rights << kind
       end
 
+      # The purchase kind, registered by name for the same reason the rights are:
+      # a reload redefines the class, and the registry is a plain array that
+      # outlives it.
+      SpreeScenarioPurchases.scenario_order_kinds.reject! { |registered| registered.name == Spree::MembershipKinds::Vip.name }
+      SpreeScenarioPurchases.scenario_order_kinds << Spree::MembershipKinds::Vip
+
       # The member price is the platform's promise, so the platform funds it:
       # the earning carries the seller's shortfall against the shelf price as a
       # subsidy beside it. Registered by class name, which is what makes this
