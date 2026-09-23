@@ -9,6 +9,12 @@ en:
       errors:
         store_missing: the tier's store cannot be reached
         catalog_unavailable: the member price catalogue could not be set up
+        card_not_activatable: this card cannot be activated
+        card_expired: this card expired before it was activated
+        ends_before_start: must be on or after the start
+        live_term_exists: this customer already holds a live term for that tier
+        tier_unknown: this tier is not one this store sells
+        tier_open_ended: this customer holds a tier with no end, so a new one cannot wait for it
     membership_right_types:
       member_price:
         name: Member price

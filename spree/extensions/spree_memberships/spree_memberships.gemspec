@@ -28,4 +28,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'spree_core', ">= #{s.version}"
   # Its surface is the Store API's, inheriting the same base controllers.
   s.add_dependency 'spree_api', ">= #{s.version}"
+  # A card is bought through a scenario order — nothing ships, so the purchase is
+  # the frame that has no cart — and the card records which purchase issued it.
+  s.add_dependency 'spree_scenario_purchases', ">= #{s.version}"
 end

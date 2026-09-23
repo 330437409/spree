@@ -1,0 +1,86 @@
+module Spree
+  # A period a named customer holds a tier for — the entitlement, once a card
+  # has been activated.
+  #
+  # `pending` is a term whose window has not opened yet: a customer who buys a
+  # new tier while their current one still runs holds both, and their benefits
+  # change when the old term ends (docs/plans/6.1-membership-tiers-and-rights.md).
+  # `past_due` is the grace window behind it, ported from `spree_crm`.
+  #
+  # A live term and the tier's group are the same fact seen twice: the status
+  # that ends a term leaves the group in the same transaction, because member
+  # pricing reads the group.
+  class Membership < Spree.base_class
+    has_prefix_id :memb
+
+    include Spree::Metadata
+    include Spree::SingleStoreResource
+    include Spree::HasStatus
+
+    has_status :pending, :active, :past_due, :cancelled, :expired, default: :pending
+
+    # The statuses a term still holds its tier for. Anything else is history.
+    LIVE_STATUSES = %w[pending active past_due].freeze
+
+    belongs_to :customer, class_name: "::#{Spree.customer_class}"
+    belongs_to :customer_group, class_name: 'Spree::CustomerGroup'
+    # The tier this term holds: one row keyed to the group, and a read rather
+    # than a method so a collection can preload it.
+    belongs_to :tier_setting, class_name: 'Spree::MembershipTierSetting',
+               primary_key: :customer_group_id, foreign_key: :customer_group_id, inverse_of: nil, optional: true
+    # The instrument it started from. The card carries the key, so this is a
+    # read, not a second place the link can be set.
+    has_one :card, class_name: 'Spree::MembershipCard', inverse_of: :membership, dependent: nil
+
+    validates :customer_group_id, presence: true
+    validate :ends_after_starts
+    validate :one_live_term_per_tier, on: :create
+
+    scope :live, -> { where(status: LIVE_STATUSES) }
+    scope :for_customer, ->(customer) { where(customer_id: customer&.id) }
+    scope :on, ->(customer_group_id) { where(customer_group_id: customer_group_id) }
+    # Holding a tier right now: started, and not yet ended. The same question
+    # #running? asks in Ruby.
+    scope :running, -> { with_status(:active, :past_due).where(starts_at: ..Time.current) }
+    # What the sweep has something to say about: a term whose window opened, and
+    # one whose window closed. A term still inside its window is neither, which
+    # is what keeps an hourly pass off every live term a store has.
+    scope :due, ->(now = Time.current) {
+      with_status(:pending).where(starts_at: ..now).
+        or(with_status(:active, :past_due).where(ends_at: ..now))
+    }
+
+    # Whether this term is holding its tier right now — started, and not ended.
+    # The same question the `running` scope asks, in Ruby.
+    #
+    # @return [Boolean]
+    def running?
+      status.in?(%w[active past_due]) && starts_at.present? && starts_at <= Time.current
+    end
+
+    # @return [Boolean] whether this term still exists as far as the ladder is
+    #   concerned: a pending one is live without holding anything yet
+    def live?
+      LIVE_STATUSES.include?(status)
+    end
+
+    private
+
+    def ends_after_starts
+      return if starts_at.blank? || ends_at.blank? || ends_at >= starts_at
+
+      errors.add(:ends_at, :before_start, message: Spree.t('memberships.errors.ends_before_start'))
+    end
+
+    # The index is the last word; this is the same rule said where a caller can
+    # read it, so a second live term is a validation failure rather than a raw
+    # RecordNotUnique out of whatever service wrote it.
+    def one_live_term_per_tier
+      return if customer_id.blank? || customer_group_id.blank?
+      return unless status.in?(LIVE_STATUSES)
+      return unless self.class.live.where(customer_id: customer_id).on(customer_group_id).exists?
+
+      errors.add(:base, :live_term_exists, message: Spree.t('memberships.errors.live_term_exists'))
+    end
+  end
+end

@@ -61,7 +61,7 @@ module Spree
 
             def permitted_params
               params.permit(*model_additional_permitted_attributes, :rank, :threshold, :validity_days,
-                            :member_discount_percentage)
+                            :member_discount_percentage, :auto_renew, :grace_days, :sku)
             end
 
             def set_customer_group

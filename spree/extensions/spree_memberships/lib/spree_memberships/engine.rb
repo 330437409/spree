@@ -13,7 +13,7 @@ module SpreeMemberships
       # scope names, so without this a staff role holding the customer keys is
       # refused every tier and rights write — and the picker too.
       Spree.permissions.register_scope(:memberships, group: :loyalty, resources: -> {
-        [Spree::MembershipTierSetting, Spree::MembershipRight]
+        [Spree::MembershipTierSetting, Spree::MembershipRight, Spree::MembershipCard, Spree::Membership]
       })
 
       [

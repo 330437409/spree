@@ -70,4 +70,44 @@ RSpec.describe 'the membership reads', type: :request do
         to include('type' => 'exclusive_coupon', 'is_have' => true)
     end
   end
+  describe 'the card wallet' do
+    let(:card) { create(:membership_card, customer: user, customer_group: group) }
+
+    it 'answers the customer’s own cards, with what each one is waiting for' do
+      card
+
+      get '/api/v3/store/customers/me/membership_cards', headers: headers
+
+      expect(response).to have_http_status(:ok)
+      row = response.parsed_body['data'].first
+      expect(row).to include('status' => 'dormant', 'giftable' => true)
+      expect(row['tier']).to include('rank' => 1)
+    end
+
+    it 'activates a card and answers the term it started' do
+      post "/api/v3/store/customers/me/membership_cards/#{card.prefixed_id}/activations", headers: headers
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body).to include('status' => 'active')
+      expect(response.parsed_body['membership']).to include('status' => 'active')
+      expect(user.reload.customer_groups).to include(group)
+    end
+
+    # Read through the customer's own cards, so somebody else's is not found.
+    it 'answers 404 for a card that is not theirs' do
+      other = create(:membership_card, customer: create(:customer), customer_group: group)
+
+      post "/api/v3/store/customers/me/membership_cards/#{other.prefixed_id}/activations", headers: headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'refuses a card whose deadline to activate passed' do
+      card.update!(activates_before: 1.day.ago)
+
+      post "/api/v3/store/customers/me/membership_cards/#{card.prefixed_id}/activations", headers: headers
+
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+  end
 end

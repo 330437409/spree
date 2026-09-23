@@ -10,8 +10,8 @@ module Spree
     #
     # So the ladder has one writer. A tier change takes the customer off
     # whatever tier holds them and puts them on this one in one transaction, and
-    # the card's own transitions call this rather than writing the group
-    # themselves (docs/plans/6.1-membership-tiers-and-rights.md).
+    # a card's activation, the term it starts and the sweep that ends one all
+    # come through here (docs/plans/6.1-membership-tiers-and-rights.md).
     class AssignTier
       prepend Spree::ServiceModule::Base
 
@@ -20,7 +20,7 @@ module Spree
         return failure(customer, :tier_unknown) unless tier?(customer_group)
 
         Spree::CustomerGroup.transaction(requires_new: true) do
-          other_tiers(customer).find_each { |group| group.remove_customers([customer.id]) }
+          Spree::Memberships::UnassignTier.call(customer: customer)
           customer_group.add_customers([customer.id])
         end
 
@@ -32,12 +32,6 @@ module Spree
       # @return [Boolean] whether this group is a tier rather than any audience
       def tier?(customer_group)
         Spree::MembershipTierSetting.exists?(customer_group_id: customer_group&.id)
-      end
-
-      # @return [ActiveRecord::Relation] the other tiers this customer is on
-      def other_tiers(customer)
-        Spree::CustomerGroup.where(id: customer.customer_groups.select(:id)).
-          where(id: Spree::MembershipTierSetting.select(:customer_group_id))
       end
     end
   end

@@ -23,7 +23,15 @@ module Spree
     delegate :store, to: :customer_group, allow_nil: true
     delegate :name, :customers, to: :customer_group, allow_nil: true
 
+    # The three pieces ported from spree_crm's membership plan rather than
+    # re-invented: the SKU the purchase is priced by, whether a term extends
+    # itself when it ends, and how long it may sit lapsed before it leaves the
+    # tier's group.
+    normalizes :sku, with: ->(value) { value.to_s.strip.presence }
+
     validates :rank, presence: true, numericality: { only_integer: true }
+    validates :grace_days, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+    validate :sku_unique_per_store, if: -> { sku.present? }
     # Among live rows only, matching the index: a retired settings row is
     # history, and a fresh one for the same group is saved after it is retired.
     validates :customer_group_id, uniqueness: { conditions: -> { where(deleted_at: nil) } }
@@ -53,6 +61,22 @@ module Spree
     # @return [BigDecimal, nil]
     def qualifies?(amount)
       threshold.present? && amount.to_d >= threshold
+    end
+
+    # How long one card of this tier lasts, or nil when a term it starts is
+    # open-ended.
+    #
+    # @return [ActiveSupport::Duration, nil]
+    def term_length
+      validity_days.to_i.positive? ? validity_days.to_i.days : nil
+    end
+
+    # How long a term may sit past its end before it leaves the group, or nil
+    # when it leaves the moment it ends.
+    #
+    # @return [ActiveSupport::Duration, nil]
+    def grace_period
+      grace_days.to_i.positive? ? grace_days.to_i.days : nil
     end
 
     # The list this tier prices through: the catalogue's own, when the
@@ -134,6 +158,14 @@ module Spree
       return if catalog.nil?
 
       Spree::Catalogs::Deactivate.call(catalog: catalog)
+    end
+
+    # A SKU identifies a tier within one store's catalog, and the row reaches
+    # its store through its group — so the check runs over the join rather than
+    # against an index, exactly as a variant's does between sellers.
+    def sku_unique_per_store
+      taken = self.class.for_store(store).where(sku: sku).where.not(id: id).exists?
+      errors.add(:sku, :taken) if taken
     end
   end
 end

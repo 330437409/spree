@@ -101,4 +101,45 @@ RSpec.describe 'the membership operator reads', type: :request do
       expect(setting.catalog.price_list.price_adjustment_percentage).to eq(-15)
     end
   end
+  describe 'the cards and the terms' do
+    let(:customer) { create(:customer) }
+    let!(:card) { create(:membership_card, customer: customer, customer_group: group) }
+
+    it 'lists the cards, each with whose it is' do
+      get '/api/v3/admin/membership_cards', headers: headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['data'].first).
+        to include('status' => 'dormant', 'customer_id' => customer.prefixed_id)
+    end
+
+    it 'lists the terms' do
+      create(:membership, customer: customer, customer_group: group)
+
+      get '/api/v3/admin/memberships', headers: headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['data'].first).to include('status' => 'active', 'customer_id' => customer.prefixed_id)
+    end
+
+    # The one write this surface has: a card the client cannot void.
+    it 'voids a card' do
+      post "/api/v3/admin/membership_cards/#{card.prefixed_id}/recycling", headers: headers,
+           params: { reason: 'reported lost' }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to include('status' => 'recycled')
+      expect(card.reload).to be_recycled
+    end
+
+    it 'answers 404 for a card of another store' do
+      other_store = create(:store)
+      other = create(:membership_card, store: other_store, customer: create(:customer),
+                                       customer_group: create(:customer_group, store: other_store))
+
+      post "/api/v3/admin/membership_cards/#{other.prefixed_id}/recycling", headers: headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
 end
