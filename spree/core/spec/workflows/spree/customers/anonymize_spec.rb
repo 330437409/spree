@@ -672,6 +672,45 @@ RSpec.describe Spree::Customers::Anonymize do
     end
   end
 
+  describe 'a gift they sent or were sent' do
+    before do
+      # A real model rather than a double: a polymorphic column stores the
+      # class's name, so the stand-in has to be a class the column can hold and
+      # the contract can be read back from (see transfer_spec.rb).
+      stub_const('TransferableGiftCard', Class.new(Spree::GiftCard) do
+        def self.polymorphic_name = name
+
+        def on_transfer_given(_transfer); end
+        def on_transfer_accepted(_transfer); end
+        def on_transfer_canceled(_transfer); end
+      end)
+    end
+
+    # One thing each: two live windows on one thing is what the primitive
+    # refuses.
+    def gift_card = TransferableGiftCard.create!(store: store, amount: 10)
+
+    let!(:sent) do
+      create(:transfer, from_customer: customer, transferable: gift_card,
+                        to_phone: '13800000000', message: '生日快乐')
+    end
+    let!(:received) do
+      create(:transfer, from_customer: create(:customer), to_customer: customer, transferable: gift_card,
+                        to_phone: '13800000001')
+    end
+
+    # The row is the record of a journey, not an account: it stays, and the
+    # number it went to does not.
+    it 'keeps the gift and forgets the address on it' do
+      result
+
+      expect(sent.reload).to be_present
+      expect(sent.to_phone).to be_nil
+      expect(sent.message).to be_nil
+      expect(received.reload.to_phone).to be_nil
+    end
+  end
+
   describe 'a tax registration on the account' do
     let!(:identifier) { create(:tax_identifier, owner: customer) }
 

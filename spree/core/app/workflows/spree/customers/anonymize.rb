@@ -74,6 +74,7 @@ module Spree
           step :forget_gateway_profiles
           step :anonymize_identities
           step :anonymize_sessions
+          step :anonymize_transfers
           step :anonymize_merchant_annotations
           step :remove_tax_identifiers
           step :anonymize_consent_records
@@ -346,6 +347,19 @@ module Spree
 
       def anonymize_identities
         customer.identities.destroy_all
+      end
+
+      # The address a gift was sent to, and the words it was sent with. The row
+      # survives as the record of the gift — it is a journey, not an account —
+      # while the number and the note do not.
+      #
+      # Both sides, because either one may be the person being erased: the phone
+      # on a gift they *sent* is somebody else's, but it is held on this
+      # customer's behalf and nothing needs it once they are gone.
+      def anonymize_transfers
+        Spree::Transfer.where(from_customer_id: customer.id).
+          or(Spree::Transfer.where(to_customer_id: customer.id)).
+          update_all(to_phone: nil, message: nil)
       end
 
       # Refresh tokens carry an IP and a user agent, and an anonymized account

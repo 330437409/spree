@@ -41,6 +41,7 @@ module Spree
           connected_logins: connected_logins,
           store_credits: store_credits,
           gift_cards: gift_cards,
+          transfers: transfers,
           wishlists: wishlists,
           custom_fields: custom_fields,
           companies: companies,
@@ -285,6 +286,32 @@ module Spree
             status: gift_card.status,
             expires_at: gift_card.expires_at&.iso8601,
             created_at: gift_card.created_at&.iso8601
+          }
+        end
+      end
+
+      # The gifts this customer sent and the ones sent to them: the journey
+      # itself, which is what the erasure leaves behind.
+      #
+      # The number a gift went to is disclosed only when it is *theirs* — a
+      # recipient's number on a gift somebody else sent is that person's data,
+      # held on this customer's behalf, and a sent gift names nobody.
+      def transfers
+        relation = Spree::Transfer.where(from_customer_id: customer.id).
+                   or(Spree::Transfer.where(to_customer_id: customer.id)).
+                   order(:created_at)
+
+        relation.map do |transfer|
+          received = transfer.to_customer_id == customer.id
+
+          {
+            direction: received ? 'received' : 'sent',
+            status: transfer.display_status,
+            sent_at: transfer.created_at&.iso8601,
+            accepted_at: transfer.accepted_at&.iso8601,
+            expires_at: transfer.expires_at&.iso8601,
+            phone: received ? transfer.to_phone : nil,
+            message: transfer.message
           }
         end
       end
