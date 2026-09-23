@@ -23,7 +23,7 @@ module Spree
               end
 
               def serializer_class
-                Spree::Api::V3::Store::PointTransactionSerializer
+                Spree::Api::V3::PointTransactionSerializer
               end
 
               def scope

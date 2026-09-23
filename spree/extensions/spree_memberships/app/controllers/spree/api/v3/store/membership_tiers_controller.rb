@@ -18,7 +18,7 @@ module Spree
           end
 
           def serializer_class
-            Spree::Api::V3::Store::MembershipTierSerializer
+            Spree::Api::V3::MembershipTierSerializer
           end
 
           def apply_collection_sort(collection)

@@ -48,7 +48,7 @@ module Spree
           end
 
           def serializer_class
-            Spree::Api::V3::Store::FlashSaleSerializer
+            Spree::Api::V3::FlashSaleSerializer
           end
 
           def read_actions

@@ -40,7 +40,7 @@ module Spree
           private
 
           def serializer_class
-            Spree::Api::V3::Store::SiteSerializer
+            Spree::Api::V3::SiteSerializer
           end
         end
       end

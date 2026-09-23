@@ -48,7 +48,7 @@ module Spree
           private
 
           def serializer_class
-            Spree::Api::V3::Store::VerificationCheckSerializer
+            Spree::Api::V3::VerificationCheckSerializer
           end
 
           # Two answers the client shows differently: there is nothing left to

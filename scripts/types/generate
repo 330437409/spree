@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Regenerates the SDK types and Zod schemas from the serializers, wherever they
+# live — core's and the extension gems'.
+#
+# It has to run in an application that loads *every* fork gem, because Typelizer
+# prunes the directories it writes: a run from spree/api alone would delete the
+# extension gems' types rather than leave them. That application is the starter,
+# so this runs there — in the dev stack's container when it is up, directly when
+# it is not. It writes the generated trees and stages nothing; the pre-commit
+# hook (lefthook.yml) is what stages them, and a hand run leaves the diff to read.
+set -euo pipefail
+
+root="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
+cd "$root"
+
+if [ ! -d server ]; then
+  echo "scripts/types/generate: no server/ checkout — the types are generated in the" >&2
+  echo "starter application, which must have every extension gem installed." >&2
+  exit 1
+fi
+
+# Whichever stack is up: the dev one (a checkout, mounted) or the quick-start one
+# (a prebuilt image, mounted too in this fork's own setup). Nothing running, and it
+# runs natively — which needs a `bundle install` in server/.
+compose=()
+if [ -n "$(docker compose -f server/docker-compose.dev.yml -f scripts/docker-compose.edge.yml ps -q web 2>/dev/null)" ]; then
+  compose=(-f server/docker-compose.dev.yml -f scripts/docker-compose.edge.yml)
+elif [ -n "$(docker compose -f server/docker-compose.yml ps -q web 2>/dev/null)" ]; then
+  compose=(-f server/docker-compose.yml)
+fi
+
+echo "Generating types from the serializers (this needs every gem loaded)…"
+if [ ${#compose[@]} -gt 0 ]; then
+  SPREE_PATH="$PWD" docker compose "${compose[@]}" exec -T web bin/rails typelizer:generate
+else
+  (cd server && bundle exec rake typelizer:generate)
+fi
+
+# The Zod schemas follow the TS types, and pnpm is a host tool either way.
+(cd packages/sdk && pnpm generate:zod)
+echo "Types regenerated — review the diff under packages/*/src/types/generated."
