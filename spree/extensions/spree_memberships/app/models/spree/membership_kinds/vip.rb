@@ -34,17 +34,18 @@ module Spree
       #
       # @return [Array<Hash>]
       def self.offers(_context = {})
-        tiers = Spree::MembershipTierSetting.for_store(Spree::Current.store).order(:rank)
+        store = Spree::Current.store
+        tiers = Spree::MembershipTierSetting.for_store(store).includes(:customer_group).order(:rank)
 
         tiers.filter_map do |tier|
-          amount = amount_for(tier)
+          amount = amount_for(tier, store: store)
           next if amount.nil?
 
           {
             'tier_id' => tier.prefixed_id,
             'name' => tier.name,
             'amount' => amount.to_s,
-            'currency' => currency,
+            'currency' => Spree::Current.currency,
             'validity_days' => tier.validity_days,
             'auto_renew' => tier.auto_renew
           }
@@ -67,15 +68,23 @@ module Spree
         tier = tier_for(scenario_order.payload, store: scenario_order.store)
         return refuse(scenario_order, :tier_unknown) if tier.nil?
 
-        accept(card_for(scenario_order, tier))
+        card = card_for(scenario_order, tier)
+        return refuse(scenario_order, :card_invalid) if card.nil?
+
+        accept(card)
       end
 
       # A refund, which is the only thing that takes an issued entitlement back:
       # the card is voided and the term it started ends, by the same workflow the
       # operator's own void runs.
+      #
+      # A card the sweep already expired has nothing to take back — nobody
+      # activated it, so the deadline passing *was* its reversal — and refusing
+      # the refund would leave a paid purchase with no way to answer it.
       def self.reverse!(scenario_order)
         card = Spree::MembershipCard.find_by(scenario_order: scenario_order)
         return refuse(scenario_order, :nothing_issued) if card.nil?
+        return accept(card) if card.expired?
 
         Spree::MembershipCards::Recycle.call(card: card)
       end
@@ -103,37 +112,37 @@ module Spree
         # buys rather than on the membership itself.
         #
         # @return [BigDecimal, nil] nil when there is nothing to sell at
-        def amount_for(tier)
+        def amount_for(tier, store: Spree::Current.store)
           return if tier.nil? || tier.sku.blank?
 
-          amount = Spree::Variant.joins(:product).merge(Spree::Product.for_store(tier.store)).
-                   find_by(sku: tier.sku)&.amount_in(currency)
+          amount = Spree::Variant.joins(:product).merge(Spree::Product.for_store(store)).
+                   find_by(sku: tier.sku)&.amount_in(Spree::Current.currency)
 
           amount if amount.present? && amount.positive?
         end
 
-        # The window to activate or give the card away in: a term's length from
-        # the day it was bought. Nothing else says when a card goes stale, and the
-        # tier already carries the length — an open-ended tier has none, and its
-        # cards have no deadline either.
+        # `find_or_create_by!` rather than its quieter twin: that one saves
+        # through `create_or_find_by`, which *returns an unpersisted card* when the
+        # model refuses it — the settlement would record a success for a purchase
+        # that issued nothing and no operator would see a reason. This way the
+        # refusal lands in the row they reconcile. A concurrent insert is still a
+        # non-event: `create_or_find_by` retries the find by itself.
+        #
+        # @return [Spree::MembershipCard, nil]
         def card_for(scenario_order, tier)
-          Spree::MembershipCard.find_or_create_by(scenario_order: scenario_order) do |card|
+          Spree::MembershipCard.find_or_create_by!(scenario_order: scenario_order) do |card|
             card.store = scenario_order.store
             card.customer = scenario_order.customer
             card.customer_group = tier.customer_group
             card.source = 'purchase'
+            # The window to activate or give it away in: a term's length from the
+            # day it was bought. Nothing else says when a card goes stale, and the
+            # tier already carries the length — an open-ended tier has none, and
+            # its cards have no deadline either.
             card.activates_before = tier.term_length&.from_now
           end
-        rescue ActiveRecord::RecordNotUnique
-          # Two settlements that raced past the frame's compare-and-set: the index
-          # refused the second card, and the first is the answer.
-          Spree::MembershipCard.find_by!(scenario_order: scenario_order)
-        end
-
-        # The currency a purchase is priced in falls back to the store's own,
-        # which is the rule the frame sets for the row it writes.
-        def currency
-          Spree::Current.currency.presence || Spree::Current.store&.default_currency
+        rescue ActiveRecord::RecordInvalid
+          nil
         end
       end
     end

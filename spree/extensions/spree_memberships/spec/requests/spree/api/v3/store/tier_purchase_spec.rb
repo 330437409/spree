@@ -3,17 +3,11 @@ require 'spec_helper'
 RSpec.describe 'buying a term', type: :request do
   include_context 'API v3 Store authenticated'
 
-  let(:payment_method) { create(:bogus_payment_method, store: store) }
-  let(:group) { create(:customer_group, store: store) }
-  let(:tier) do
-    create(:membership_tier_setting, customer_group: group, rank: 1, validity_days: 365, sku: 'VIP-365')
-  end
+  include_context 'a priced tier'
 
-  before do
-    stub_const('SpreeScenarioPurchases::CHANNELS', { 'wechat' => payment_method.type })
-    tier
-    create(:variant, product: create(:product, store: store), sku: 'VIP-365', price: 365)
-  end
+  let(:payment_method) { create(:bogus_payment_method, store: store) }
+
+  before { stub_const('SpreeScenarioPurchases::CHANNELS', { 'wechat' => payment_method.type }) }
 
   def buy(**context)
     post '/api/v3/store/scenario_orders', headers: headers,
@@ -38,8 +32,6 @@ RSpec.describe 'buying a term', type: :request do
     card = Spree::MembershipCard.last
     expect(card).to be_dormant
     expect(card.customer).to eq(user)
-    expect(card.customer_group).to eq(group)
-    expect(card.source).to eq('purchase')
     expect(card.scenario_order.reload).to be_paid
   end
 

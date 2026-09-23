@@ -1,25 +1,19 @@
 require 'spec_helper'
 
 RSpec.describe Spree::MembershipKinds::Vip do
+  include_context 'a priced tier'
+
   let(:store) { @default_store }
   let(:buyer) { create(:customer) }
-  let(:group) { create(:customer_group, store: store) }
-  let(:tier) do
-    create(:membership_tier_setting, customer_group: group, rank: 1, validity_days: 365, sku: 'VIP-365')
-  end
 
-  before do
-    Spree::Current.store = store
-    tier
-    create(:variant, product: create(:product, store: store), sku: 'VIP-365', price: 365)
-  end
+  before { Spree::Current.store = store }
 
-  # The kind's own vocabulary: a package, and which tier it is.
-  def context(**overrides)
+  # The kind's own vocabulary: which package, and nothing else it needs.
+  def purchase_context(**overrides)
     { 'tier_id' => tier.prefixed_id }.merge(overrides)
   end
 
-  def order(**overrides)
+  def purchase(**overrides)
     create(:scenario_order, store: store, customer: buyer, kind: 'vip', **overrides)
   end
 
@@ -30,28 +24,29 @@ RSpec.describe Spree::MembershipKinds::Vip do
 
   describe 'what it costs' do
     it 'prices the tier by the variant its SKU names' do
-      expect(described_class.price(context)).to eq(365)
+      expect(described_class.price(purchase_context)).to eq(365)
     end
 
     it 'has nothing to sell when the tier names no variant' do
       tier.update!(sku: nil)
 
-      expect(described_class.price(context)).to be_nil
+      expect(described_class.price(purchase_context)).to be_nil
     end
 
     it 'has nothing to sell when the variant carries no price' do
       Spree::Variant.find_by(sku: 'VIP-365').prices.delete_all
 
-      expect(described_class.price(context)).to be_nil
+      expect(described_class.price(purchase_context)).to be_nil
     end
 
+    # Deliberately the SKU *this* store's variant carries: were the tier looked up
+    # outside the store, it would be priced by a variant that is not its own.
     it 'has nothing to sell for a tier of another store' do
-      other = create(:membership_tier_setting, rank: 2, sku: 'VIP-365',
+      other = create(:membership_tier_setting, rank: 2, sku: tier_sku,
                                                customer_group: create(:customer_group, store: create(:store)))
 
       expect(described_class.price('tier_id' => other.prefixed_id)).to be_nil
     end
-
   end
 
   describe 'the packages on sale' do
@@ -77,7 +72,7 @@ RSpec.describe Spree::MembershipKinds::Vip do
 
   describe 'what settling it issues' do
     it 'issues one dormant card, owned by the buyer, with the window to activate it' do
-      result = described_class.issue!(order(payload: context))
+      result = described_class.issue!(purchase(payload: purchase_context))
 
       expect(result).to be_success
       card = result.value
@@ -91,7 +86,7 @@ RSpec.describe Spree::MembershipKinds::Vip do
 
     # The settlement retries, and the webhook arrives more than once.
     it 'answers a retry with the card it already issued' do
-      scenario_order = order(payload: context)
+      scenario_order = purchase(payload: purchase_context)
       first = described_class.issue!(scenario_order).value
 
       expect(described_class.issue!(scenario_order).value.id).to eq(first.id)
@@ -101,20 +96,20 @@ RSpec.describe Spree::MembershipKinds::Vip do
     it 'leaves a card for an open-ended tier with no deadline' do
       tier.update!(validity_days: nil)
 
-      expect(described_class.issue!(order(payload: context)).value.activates_before).to be_nil
+      expect(described_class.issue!(purchase(payload: purchase_context)).value.activates_before).to be_nil
     end
 
     it 'refuses a tier that is no longer sold' do
       tier.destroy
 
-      expect(described_class.issue!(order(payload: context))).to be_failure
+      expect(described_class.issue!(purchase(payload: purchase_context))).to be_failure
       expect(Spree::MembershipCard.count).to eq(0)
     end
   end
 
   describe 'a refund' do
     it 'voids the card and ends the term it started' do
-      scenario_order = order(payload: context)
+      scenario_order = purchase(payload: purchase_context)
       card = described_class.issue!(scenario_order).value
       Spree::MembershipCards::Activate.call(card: card, customer: buyer)
 
@@ -124,13 +119,25 @@ RSpec.describe Spree::MembershipKinds::Vip do
     end
 
     it 'refuses a purchase that issued nothing' do
-      expect(described_class.reverse!(order(payload: context))).to be_failure
+      expect(described_class.reverse!(purchase(payload: purchase_context))).to be_failure
+    end
+
+    # The purchase nobody activated: the sweep has already taken the card, and
+    # the refund still has to be answerable rather than refused.
+    it 'answers a refund for a card the sweep expired' do
+      scenario_order = purchase(payload: purchase_context)
+      card = described_class.issue!(scenario_order).value
+      card.update!(activates_before: 1.hour.ago)
+      Spree::MembershipCards::Expire.call(card: card)
+
+      expect(card.reload).to be_expired
+      expect(described_class.reverse!(scenario_order)).to be_success
     end
 
     # A refund can be retried the way a settlement can, and taking the card back
     # twice must not take its term back twice.
     it 'answers a repeated refund with the card it already voided' do
-      scenario_order = order(payload: context)
+      scenario_order = purchase(payload: purchase_context)
       card = described_class.issue!(scenario_order).value
       described_class.reverse!(scenario_order)
 
