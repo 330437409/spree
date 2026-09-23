@@ -14,6 +14,7 @@ en:
         ends_before_start: must be on or after the start
         live_term_exists: this customer already holds a live term for that tier
         tier_unknown: this tier is not one this store sells
+        card_not_giftable: this card cannot be given away
         tier_open_ended: this customer holds a tier with no end, so a new one cannot wait for it
     membership_right_types:
       member_price:
