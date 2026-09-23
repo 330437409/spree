@@ -99,6 +99,22 @@ module Spree
       preferred_promotion_id.presence
     end
 
+    # What this right multiplies an order's earn by on a given day. The day is the
+    # kind's own business — a birthday today, a member day once its period exists —
+    # so the trigger lives with the kind rather than in the readers that ask, and a
+    # kind added later multiplies by declaring itself instead of by being named in
+    # two places (`Spree::Dependencies.points_multiplier_service`).
+    #
+    # Every kind answers this: the readers fold it over a tier's rights, so a kind
+    # that does not override it is a right that multiplies nothing.
+    #
+    # @param customer [Object] whose occasion it is
+    # @param on [Date] the day to answer for, in the store's calendar
+    # @return [Integer] 1 when this right does not apply that day
+    def order_multiplier(customer:, on:)
+      1
+    end
+
     # The display name a customer reads. The row's own copy wins, so an operator
     # can call the same right something else at another tier without a release.
     #

@@ -82,6 +82,23 @@ RSpec.describe Spree::Memberships::PointsMultiplier do
     end
   end
 
+  # The fold runs over every right the tier carries, so a kind that is not the
+  # birthday must answer for itself rather than raise.
+  it 'walks past the rights that are not the birthday' do
+    tier
+    Spree::Memberships::AssignTier.call(customer: customer, customer_group: group)
+    create(:member_price_right, customer_group: group, published: true)
+    with_birthday_right(2)
+
+    Timecop.freeze(Time.zone.local(2026, 5, 20, 10)) do
+      expect(multiplier).to eq(2)
+    end
+
+    Timecop.freeze(Time.zone.local(2026, 5, 21, 10)) do
+      expect(multiplier).to eq(1)
+    end
+  end
+
   it 'multiplies nothing for a customer with no birthday' do
     customer.update!(birthday: nil)
     in_tier!

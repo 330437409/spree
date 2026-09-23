@@ -82,14 +82,22 @@ module Spree
       # @return [Date]
       def next_occurrence(on)
         today = SpreeMemberships.today_in(store)
-        occurrence = begin
-          Date.new(today.year, on.month, on.day)
-        rescue Date::Error
-          # A 29 February birthday in a year that has none is kept on the last
-          # day of its month rather than skipped.
-          Date.new(today.year, on.month, -1)
-        end
-        occurrence < today ? occurrence.next_year : occurrence
+        occurrence = clamp_on(on, today.year)
+        return occurrence if occurrence >= today
+
+        # The year after may be a leap year, in which case a 29 February birthday
+        # is celebrated on the 29th rather than on the clamp this year needed.
+        clamp_on(on, today.year + 1)
+      end
+
+      # The date a birthday is celebrated on in a given year: its own month and
+      # day, or the last day of that month when the year has no such day.
+      #
+      # @return [Date]
+      def clamp_on(on, year)
+        Date.new(year, on.month, on.day)
+      rescue Date::Error
+        Date.new(year, on.month, -1)
       end
 
       # What the customer's own tier grants on that day, asked of the kinds

@@ -49,7 +49,10 @@ module SpreeMemberships
       # The points plan's earn takes a multiplier from whatever a day's rights
       # say, and left the seam nil for this gem to fill: the birthday, and the
       # member day once its own dates are a thing something can name.
-      Spree::Dependencies.points_multiplier_service = 'Spree::Memberships::PointsMultiplier'
+      # Only when the deployment has not set one: `to_prepare` runs after the
+      # app's own initializers, so assigning outright would overwrite the
+      # documented `Spree.dependencies` setting with no way to put it back.
+      Spree::Dependencies.points_multiplier_service ||= 'Spree::Memberships::PointsMultiplier'
 
       # The member price is the platform's promise, so the platform funds it:
       # the earning carries the seller's shortfall against the shelf price as a
