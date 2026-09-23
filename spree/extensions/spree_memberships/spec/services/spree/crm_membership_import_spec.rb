@@ -13,9 +13,14 @@ RSpec.describe Spree::CrmMembershipImport do
   # The CRM's tables are not in this gem's dummy — it must run in an application
   # that never installed that engine — so the spec brings its own, in the shape
   # its migrations left them.
-  before do
+  #
+  # Built once, outside the examples, and never dropped: DDL commits the
+  # surrounding transaction implicitly on MySQL and MariaDB, which would end the
+  # example's transaction and take every later example's savepoint with it. The
+  # rows are cleaned per example; two empty tables left behind cost nothing.
+  before(:all) do
     connection = ActiveRecord::Base.connection
-    connection.create_table(:spree_crm_membership_plans, force: true) do |t|
+    connection.create_table(:spree_crm_membership_plans, if_not_exists: true) do |t|
       t.references :store
       t.references :customer_group
       t.string :name
@@ -25,7 +30,7 @@ RSpec.describe Spree::CrmMembershipImport do
       t.integer :grace_days, default: 0
       t.timestamps
     end
-    connection.create_table(:spree_crm_memberships, force: true) do |t|
+    connection.create_table(:spree_crm_memberships, if_not_exists: true) do |t|
       t.references :store
       t.references :customer
       t.references :plan
@@ -36,9 +41,9 @@ RSpec.describe Spree::CrmMembershipImport do
     end
   end
 
-  after do
-    ActiveRecord::Base.connection.drop_table(:spree_crm_memberships, if_exists: true)
-    ActiveRecord::Base.connection.drop_table(:spree_crm_membership_plans, if_exists: true)
+  before do
+    crm_memberships.delete_all
+    crm_plans.delete_all
   end
 
   def plan(attributes = {})
@@ -115,10 +120,15 @@ RSpec.describe Spree::CrmMembershipImport do
     expect { described_class.new.call }.not_to change { Spree::Membership.count }
   end
 
+  # The guard is about a database that never had those tables, and the spec's own
+  # are there: stubbed rather than dropped, because DDL inside an example ends
+  # the example's transaction on MySQL.
   it 'does nothing when the engine was never installed' do
-    ActiveRecord::Base.connection.drop_table(:spree_crm_memberships, if_exists: true)
-    ActiveRecord::Base.connection.drop_table(:spree_crm_membership_plans, if_exists: true)
+    allow(ActiveRecord::Base.connection).to receive(:table_exists?).and_call_original
+    allow(ActiveRecord::Base.connection).to receive(:table_exists?).with('spree_crm_memberships').
+      and_return(false)
 
     expect { described_class.new.call }.not_to raise_error
+    expect(Spree::Membership.count).to eq(0)
   end
 end
