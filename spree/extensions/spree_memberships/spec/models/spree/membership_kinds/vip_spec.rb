@@ -126,5 +126,16 @@ RSpec.describe Spree::MembershipKinds::Vip do
     it 'refuses a purchase that issued nothing' do
       expect(described_class.reverse!(order(payload: context))).to be_failure
     end
+
+    # A refund can be retried the way a settlement can, and taking the card back
+    # twice must not take its term back twice.
+    it 'answers a repeated refund with the card it already voided' do
+      scenario_order = order(payload: context)
+      card = described_class.issue!(scenario_order).value
+      described_class.reverse!(scenario_order)
+
+      expect(described_class.reverse!(scenario_order)).to be_success
+      expect(card.reload).to be_recycled
+    end
   end
 end

@@ -24,8 +24,7 @@ module Spree
       # @return [BigDecimal, nil] nil when there is nothing to sell, which the
       #   frame renders as "not for sale" rather than as a free term
       def self.price(context)
-        amount = amount_for(tier_for(context))
-        amount if amount.present? && amount.positive?
+        amount_for(tier_for(context))
       end
 
       # The packages on sale: every tier this store sells a term of, at the price
@@ -39,7 +38,7 @@ module Spree
 
         tiers.filter_map do |tier|
           amount = amount_for(tier)
-          next if amount.blank? || !amount.positive?
+          next if amount.nil?
 
           {
             'tier_id' => tier.prefixed_id,
@@ -87,7 +86,7 @@ module Spree
         # @param context [Hash] the purchase's payload, whose keys arrive as
         #   strings: it is stored as JSON
         # @return [Spree::MembershipTierSetting, nil]
-        def tier_for(context, store: store())
+        def tier_for(context, store: Spree::Current.store)
           id = (context || {}).with_indifferent_access[:tier_id]
           return if id.blank?
 
@@ -99,12 +98,18 @@ module Spree
         # globally today, so nothing else can hold this one — the scope is what
         # keeps it that way rather than something to rely on.
         #
-        # @return [BigDecimal, nil]
+        # The base price, deliberately: what a term costs is what the operator
+        # listed it at, and a member price is a discount on the products a tier
+        # buys rather than on the membership itself.
+        #
+        # @return [BigDecimal, nil] nil when there is nothing to sell at
         def amount_for(tier)
           return if tier.nil? || tier.sku.blank?
 
-          Spree::Variant.joins(:product).merge(Spree::Product.for_store(tier.store)).
-            find_by(sku: tier.sku)&.amount_in(currency)
+          amount = Spree::Variant.joins(:product).merge(Spree::Product.for_store(tier.store)).
+                   find_by(sku: tier.sku)&.amount_in(currency)
+
+          amount if amount.present? && amount.positive?
         end
 
         # The window to activate or give the card away in: a term's length from
@@ -128,11 +133,7 @@ module Spree
         # The currency a purchase is priced in falls back to the store's own,
         # which is the rule the frame sets for the row it writes.
         def currency
-          Spree::Current.currency.presence || store()&.default_currency
-        end
-
-        def store
-          Spree::Current.store
+          Spree::Current.currency.presence || Spree::Current.store&.default_currency
         end
       end
     end
