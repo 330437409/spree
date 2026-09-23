@@ -35,7 +35,12 @@ RSpec.describe Spree::Membership, type: :model do
 
     expect(index).to be_present
     expect(index.unique).to be(true)
-    expect(index.columns).to contain_exactly('customer_id', 'customer_group_id')
+    # Partial where the adapter has partial indexes — the two columns — and over
+    # the stored key where it does not (MySQL and MariaDB), exactly as the
+    # migration writes it. The uniqueness is the same fact either way.
+    expect(index.columns).to(
+      include('customer_id', 'customer_group_id').or contain_exactly('live_key')
+    )
   end
 
   it 'lets a customer hold a new term once the old one ended' do
