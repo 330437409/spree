@@ -24,17 +24,14 @@ module Spree
 
         attributes :status, :source
 
-        # What entering the tier hands over — the client's 恭喜升级 bag — read
-        # from the tier's rights rather than from the ledger: the customer has it
-        # the moment the card is active, and the read is the same shape whether it
-        # was issued a second ago or a year ago.
+        # What this card's activation handed over — the client's 恭喜升级 bag.
+        # Only ever populated by that activation, which is why the wallet's cards
+        # answer nil: what a tier carries today is not what a member was given.
         attribute(:entry_bag) do |card|
-          next unless card.active?
+          bag = card.entry_bag
+          next if bag.blank?
 
-          bag = Spree::Memberships::GrantEntryBag.summary_for(card.tier_setting&.published_rights.to_a)
-          next if bag[:points].zero? && bag[:coupons].zero?
-
-          { 'points' => bag[:points], 'coupons' => bag[:coupons] }
+          { 'points' => bag[:points].to_i, 'coupons' => bag[:coupons].to_a.size }
         end
         attribute(:giftable) { |card| card.giftable? }
         attribute(:activates_before) { |card| card.activates_before&.iso8601 }

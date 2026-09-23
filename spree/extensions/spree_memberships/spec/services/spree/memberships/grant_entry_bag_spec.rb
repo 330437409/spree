@@ -78,4 +78,21 @@ RSpec.describe Spree::Memberships::GrantEntryBag do
     expect(build(:coupon_right, customer_group: group,
                                 preferences: { promotion_id: 'prom_nonexistent' })).not_to be_valid
   end
+
+  # A pool in another store is a code this tier must not draw.
+  it 'refuses a coupon right naming another store’s promotion' do
+    elsewhere = create(:promotion, store: create(:store))
+
+    expect(build(:coupon_right, customer_group: group,
+                                preferences: { promotion_id: elsewhere.prefixed_id })).not_to be_valid
+  end
+
+  # And it does not stop an operator retiring a right whose promotion has since
+  # gone — the check reads the preference only while it is being written.
+  it 'lets a right be retired after its promotion is gone' do
+    right = coupon_right(promotion.prefixed_id)
+    promotion.destroy
+
+    expect(right.update(published: false)).to be(true)
+  end
 end

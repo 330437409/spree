@@ -104,6 +104,20 @@ RSpec.describe 'the membership reads', type: :request do
       expect(response.parsed_body['entry_bag']).to eq('points' => 250, 'coupons' => 0)
     end
 
+    # What the tier carries *now* is not what the member was given: an operator
+    # raising the amount must not change what the wallet says was handed over.
+    it 'does not re-report the bag on a later read' do
+      right = create(:entry_integral_right, customer_group: group, published: true, preferences: { amount: 250 })
+      post "/api/v3/store/customers/me/membership_cards/#{card.prefixed_id}/activations", headers: headers
+      expect(response.parsed_body['entry_bag']).to eq('points' => 250, 'coupons' => 0)
+
+      right.update!(preferences: { amount: 5000 })
+
+      get '/api/v3/store/customers/me/membership_cards', headers: headers
+
+      expect(response.parsed_body['data'].first['entry_bag']).to be_nil
+    end
+
     # Read through the customer's own cards, so somebody else's is not found.
     it 'answers 404 for a card that is not theirs' do
       other = create(:membership_card, customer: create(:customer), customer_group: group)

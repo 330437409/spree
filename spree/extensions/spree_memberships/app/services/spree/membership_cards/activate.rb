@@ -56,7 +56,13 @@ module Spree
         return if rights.blank?
 
         result = Spree::Memberships::GrantEntryBag.call(source: card, customer: entitled_customer, rights: rights)
-        failure(card, result.error) if result.failure?
+        return failure(card, result.error) if result.failure?
+
+        # Carried on the record for this response only: the bag is a fact about
+        # what the activation handed over, not about the tier it read — an
+        # operator editing the rights afterwards must not change what the member
+        # was told they received.
+        card.entry_bag = result.value
       end
 
       # A card activated twice — a retry, a double tap — is answered with the

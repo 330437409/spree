@@ -44,14 +44,13 @@ module Spree
     validate :type_must_be_registered
     # Checked where the operator writes it rather than where the member activates:
     # a promotion that is gone must not fail somebody's activation after they have
-    # been told they are a member.
-    validate :promotion_must_exist, if: -> { preferred_promotion_id.present? }
+    # been told they are a member. Read only while the preference is being
+    # written, so a right whose promotion has since gone can still be retired.
+    validate :promotion_must_belong_to_the_store, if: -> { preferred_promotion_id.present? && will_save_change_to_preferences? }
 
-    # The promotion a coupon kind draws from when a member enters. On the base
-    # rather than in the concern that reads it: `preference` is a macro of
-    # `Spree::PreferenceSchema`, which this class includes, and a concern's
-    # `included do` runs the macro against the kind — where it registers nothing.
-    # A kind that hands over no coupon leaves it nil.
+    # The promotion a coupon kind draws from when a member enters — the one
+    # preference every kind carries, because the reader below is the base's. A
+    # kind that hands over no coupon leaves it unset.
     preference :promotion_id, :string, nullable: true
 
     scope :published, -> { where(published: true) }
@@ -110,10 +109,15 @@ module Spree
 
     private
 
-    def promotion_must_exist
-      return if Spree::Promotion.find_by_prefix_id(preferred_promotion_id).present?
+    # Keyed on `preferences`, which is the field an operator's form writes — and
+    # scoped to the store, because a pool in another store's promotion is a code
+    # this tier must not draw.
+    def promotion_must_belong_to_the_store
+      promotion = Spree::Promotion.find_by_prefix_id(preferred_promotion_id)
+      return errors.add(:preferences, :invalid) if promotion.nil?
+      return if store.nil? || promotion.store_id == store.id
 
-      errors.add(:preferred_promotion_id, :invalid)
+      errors.add(:preferences, :invalid)
     end
 
     def type_must_be_registered
