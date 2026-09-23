@@ -23,7 +23,8 @@ module Spree
                    settled_currency: 'string | null',
                    converted: :boolean,
                    reference: 'string | null',
-                   display_amount: :string
+                   display_amount: :string,
+                   metadata: 'Record<string, unknown> | null'
 
           attributes :kind, :status, :currency, :provider, :reference, :metadata,
                      created_at: :iso8601, updated_at: :iso8601

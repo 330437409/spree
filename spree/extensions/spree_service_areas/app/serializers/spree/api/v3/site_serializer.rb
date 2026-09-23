@@ -8,7 +8,7 @@ module Spree
       # adds what the client holds on its global site object: who operates the
       # shop, and whether it sells memberships.
       class SiteSerializer < V3::SellerSerializer
-        typelize site_svip: :boolean
+        typelize site_svip: :boolean, operator: 'SiteOperator | null'
 
         # The site's own switch, not the customer's entitlement: a membership
         # belongs to the customer, and this says whether this site sells one.

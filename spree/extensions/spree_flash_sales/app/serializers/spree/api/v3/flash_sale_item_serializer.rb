@@ -4,7 +4,9 @@ module Spree
       # Which offer an activity sells, and both prices: the activity's own,
       # and the goods' list price beside it for the client to strike through.
       class FlashSaleItemSerializer < BaseSerializer
-        typelize sale_price: :number, price: [:number, nullable: true]
+        typelize sale_price: :number, price: [:number, nullable: true],
+                 variant_id: [:string, nullable: true], product_id: [:string, nullable: true],
+                 remaining: :number
 
         attribute :variant_id do |item|
           item.variant&.prefixed_id

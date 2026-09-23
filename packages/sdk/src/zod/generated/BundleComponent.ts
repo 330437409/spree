@@ -3,8 +3,8 @@ import { z } from 'zod';
 
 export const BundleComponentSchema = z.object({
   id: z.string(),
-  variant_id: z.any(),
-  product_id: z.any(),
+  variant_id: z.string().nullable(),
+  product_id: z.string().nullable(),
   name: z.string().nullable(),
   quantity: z.number(),
   price: z.number().nullable(),

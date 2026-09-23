@@ -9,7 +9,8 @@ module Spree
       # a component's price and stock are the offer's — which is why a
       # storefront dims a sold-out component instead of hiding the bundle.
       class BundleComponentSerializer < BaseSerializer
-        typelize name: [:string, nullable: true], quantity: :number,
+        typelize variant_id: [:string, nullable: true], product_id: [:string, nullable: true],
+                 name: [:string, nullable: true], quantity: :number,
                  price: [:number, nullable: true], goods_amount: [:number, nullable: true],
                  available: :number, in_stock: :boolean,
                  image_url: [:string, nullable: true]

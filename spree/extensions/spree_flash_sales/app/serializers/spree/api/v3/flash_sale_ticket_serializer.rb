@@ -4,7 +4,9 @@ module Spree
       # What a customer holds: the units, the deadline the client counts down
       # to, and which activity and stretch they are for.
       class FlashSaleTicketSerializer < BaseSerializer
-        typelize quantity: :number, expires_at: :string
+        typelize quantity: :number, expires_at: :string, status: :string,
+                 variant_id: [:string, nullable: true],
+                 flash_sale_id: [:string, nullable: true], flash_sale_slot_id: [:string, nullable: true]
 
         attributes :status, :quantity, :expires_at
 
