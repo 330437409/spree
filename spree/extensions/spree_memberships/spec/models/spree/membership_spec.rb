@@ -25,21 +25,17 @@ RSpec.describe Spree::Membership, type: :model do
   # The validation is the readable half of the rule; the index is the half that
   # holds when a bulk writer never asks.
   #
-  # Its own savepoint: on PostgreSQL a refused insert poisons the surrounding
-  # transaction, so the cleanup that follows the example would fail rather than
-  # the assertion failing here.
-  it 'refuses it in the database too' do
-    first = create(:membership, customer: customer, customer_group: group)
+  # Asserted from the schema rather than by provoking it: a refused insert
+  # poisons the surrounding transaction on PostgreSQL — the cleanup then fails
+  # rather than the assertion — and a savepoint around it leaves MySQL with a
+  # dangling one. The index is the fact worth checking either way.
+  it 'is enforced by the database too' do
+    index = Spree::Membership.connection.indexes(:spree_memberships).
+            find { |candidate| candidate.name == 'index_memberships_on_customer_group_live' }
 
-    expect {
-      # `insert_all!`: the plain one is an upsert that skips a conflict, which
-      # is how a bulk writer would quietly not write this row.
-      ApplicationRecord.transaction(requires_new: true) do
-        Spree::Membership.insert_all!([{ store_id: first.store_id, customer_id: customer.id,
-                                         customer_group_id: group.id, status: 'active',
-                                         created_at: Time.current, updated_at: Time.current }])
-      end
-    }.to raise_error(ActiveRecord::RecordNotUnique)
+    expect(index).to be_present
+    expect(index.unique).to be(true)
+    expect(index.columns).to contain_exactly('customer_id', 'customer_group_id')
   end
 
   it 'lets a customer hold a new term once the old one ended' do
