@@ -9,7 +9,8 @@ module Spree
       # says which tier carries it and whether that tier is the customer's.
       class MemberCentreSerializer < BaseSerializer
         typelize tier: 'Record<string, unknown> | null', rights_total: :number,
-                 sections: 'Record<string, Array<Record<string, unknown>>>'
+                 sections: 'Record<string, Array<Record<string, unknown>>>',
+                 birthday: 'Record<string, unknown> | null'
 
         attribute(:tier) do |centre|
           next if centre.tier.nil?
@@ -18,6 +19,8 @@ module Spree
         end
 
         attribute(:rights_total) { |centre| centre.rights_total }
+
+        attribute(:birthday) { |centre| centre.birthday }
 
         attribute(:sections) do |centre|
           centre.sections.transform_values do |rights|

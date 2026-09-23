@@ -61,6 +61,42 @@ module Spree
         rights.count { |right| right.customer_group_id == tier.customer_group_id }
       end
 
+      # The birthday, as the client's `getVipBirthday` reads it: whether it is
+      # set, how many days away it is, and the multiplier this customer's tier
+      # grants for it — nil when the tier carries no birthday right, which is the
+      # client's 去点单 / 设置生日 branch.
+      #
+      # @return [Hash, nil] nil when no birthday is set
+      def birthday
+        on = customer&.birthday
+        return nil if on.nil?
+
+        { 'on' => on.iso8601, 'days_away' => days_away(on), 'multiplier' => birthday_multiplier }
+      end
+
+      # @return [Integer] 0 on the day itself
+      def days_away(on)
+        today = Time.current.in_time_zone(Time.find_zone(store&.preferred_timezone) || Time.zone).to_date
+        occurrence = begin
+          Date.new(today.year, on.month, on.day)
+        rescue Date::Error
+          # A 29 February birthday in a year that has none is kept on the last
+          # day of its month rather than skipped.
+          Date.new(today.year, on.month, -1)
+        end
+        occurrence = occurrence.next_year if occurrence < today
+
+        (occurrence - today).to_i
+      end
+
+      # @return [Integer, nil] what this customer's tier grants on the birthday
+      def birthday_multiplier
+        right = tier&.published_rights&.detect do |candidate|
+          candidate.is_a?(Spree::MembershipRights::BirthdayDoubleIntegral)
+        end
+        right&.multiplier
+      end
+
       # @return [Boolean] whether the customer holds the tier this right hangs on
       def holds?(right)
         tier.present? && right.customer_group_id == tier.customer_group_id
