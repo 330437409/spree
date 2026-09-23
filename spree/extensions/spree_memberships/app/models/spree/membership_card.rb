@@ -47,12 +47,10 @@ module Spree
     scope :overdue, -> { with_status(:dormant).where(activates_before: ..Time.current) }
 
     # The window this card is inside, if any: what the client reads as 赠送中,
-    # and what 作废 closes.
-    #
-    # @return [Spree::Transfer, nil]
-    def pending_transfer
-      Spree::Transfer.pending.find_by(transferable: self)
-    end
+    # and what 作废 closes. An association rather than a query so a wallet can
+    # preload it.
+    has_one :pending_transfer, -> { pending }, class_name: 'Spree::Transfer',
+            as: :transferable, inverse_of: :transferable
 
     #
     # The transfer contract (docs/plans/6.1-transfer-primitive.md). The card
@@ -63,9 +61,12 @@ module Spree
     # only opens a window — the card stays exactly where it is until somebody
     # claims it, and 赠送中 comes from the transfer rather than from this row.
     #
+    # Refused by the wallet's own definition, which is what the client's 相赠
+    # acts on: a card that is not dormant and giftable is not on offer.
+    #
     # @raise [Spree::Transfers::Refused] when the card may not be given away
     def on_transfer_given(_transfer)
-      return if giftable?
+      return if dormant? && giftable?
 
       raise Spree::Transfers::Refused, Spree.t('memberships.errors.card_not_giftable')
     end

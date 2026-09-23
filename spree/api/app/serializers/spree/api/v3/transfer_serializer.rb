@@ -9,7 +9,8 @@ module Spree
       # The token is deliberately absent: a public read would be a bearer
       # capability, and an event payload is not where one belongs.
       class TransferSerializer < BaseSerializer
-        typelize status: :string, transferable_type: :string, transferable_id: 'string | null',
+        typelize status: [:string, enum: Spree::Transfer::DISPLAY_STATUSES],
+                 transferable_type: :string, transferable_id: 'string | null',
                  from_customer_id: 'string | null', to_customer_id: 'string | null',
                  expires_at: 'string | null', accepted_at: 'string | null',
                  canceled_at: 'string | null'

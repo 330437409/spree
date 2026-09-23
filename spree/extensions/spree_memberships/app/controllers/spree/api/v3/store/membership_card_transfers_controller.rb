@@ -8,21 +8,11 @@ module Spree
         # that opening a share link is not a way to walk somebody's wallet.
         # Deliberately not under `customers/me`: the transfer is the giver's, the
         # read is the recipient's.
-        class MembershipCardTransfersController < Store::ResourceController
-          # The address is the token, not an id: the base's loader has nothing to
-          # resolve and would 404 on a param this route never sends.
-          skip_before_action :set_resource, raise: false
-
-          # GET /api/v3/store/membership_card_transfers/:token
-          def show
-            # Any status: a window that lapsed or was taken back is still what the
-            # link points at, and its own status is the answer. Only a token
-            # nobody holds is a 404.
-            window = Spree::Transfer.find_by(token: params[:token])
-            raise ActiveRecord::RecordNotFound if window.nil?
-
-            render json: serialize_resource(window)
-          end
+        #
+        # Guest-reachable even on a login-gated store: this is the one screen a
+        # gift shows before there is anybody to be signed in as.
+        class MembershipCardTransfersController < ResourceController
+          allow_guest_storefront_access!
 
           protected
 
@@ -32,6 +22,15 @@ module Spree
 
           def serializer_class
             Spree::Api::V3::Store::MembershipCardTransferSerializer
+          end
+
+          # The address is the token, not an id; the scope is the base's, so it
+          # is the store that gave the gift, and a token from another storefront
+          # is not found here. Any status: a window that lapsed or was taken back
+          # is still what the link points at, and its own status is the answer —
+          # only a token nobody holds is a 404.
+          def find_resource
+            scope.find_by!(token: params[:token])
           end
         end
       end

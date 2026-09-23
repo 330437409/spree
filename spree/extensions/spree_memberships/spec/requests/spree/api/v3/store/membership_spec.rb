@@ -167,6 +167,16 @@ RSpec.describe 'the membership reads', type: :request do
       expect(response.parsed_body.to_s).not_to include(card.customer.prefixed_id)
     end
 
+    # The one read that has to happen before there is anybody to be signed in
+    # as: a share link opened on a storefront that otherwise gates guests.
+    it 'stays readable on a storefront that requires a sign-in' do
+      store.default_channel.update!(preferred_storefront_access: 'login_required')
+
+      get "/api/v3/store/membership_card_transfers/#{window.token}", headers: api_key_headers
+
+      expect(response).to have_http_status(:ok)
+    end
+
     it 'claims it, activating the card for whoever claimed it' do
       post "/api/v3/store/membership_card_transfers/#{window.token}/claims", headers: headers
 

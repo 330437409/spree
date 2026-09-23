@@ -9,7 +9,7 @@ class CreateSpreeTransfers < ActiveRecord::Migration[8.1]
       t.references :transferable, polymorphic: true, null: false, index: false
       # Who gave it, and who received it — nil until somebody claims it.
       t.references :from_customer, null: false, index: false
-      t.references :to_customer
+      t.references :to_customer, index: false
       # Where the gift was sent: the address, not an account.
       t.string :to_phone
       t.string :status, null: false # pending / accepted / canceled — never expired

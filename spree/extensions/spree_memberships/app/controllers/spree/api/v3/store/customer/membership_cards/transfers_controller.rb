@@ -16,8 +16,11 @@ module Spree
               before_action :set_card
 
               # GET /api/v3/store/customers/me/membership_cards/:membership_card_id/transfers
+              #
+              # One card has at most one open window, and with the row for the
+              # record: 赠送中 is this read, and anything else is what 待激活 means.
               def index
-                windows = Spree::Transfer.for_giver(current_user).where(transferable: @card)
+                windows = Spree::Transfer.for_giver(current_user).where(transferable: @card).pending
 
                 render json: { data: windows.map { |window| serialize_resource(window) } }
               end

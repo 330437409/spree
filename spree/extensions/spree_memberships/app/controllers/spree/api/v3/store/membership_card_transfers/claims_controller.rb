@@ -10,13 +10,15 @@ module Spree
           # through the transfer contract.
           class ClaimsController < ResourceController
             prepend_before_action :require_authentication!
+            # A custom action, so the base's loader — which wants the token in
+            # `params[:id]` — never runs.
+            skip_before_action :set_resource, raise: false
 
             # POST /api/v3/store/membership_card_transfers/:membership_card_transfer_token/claims
             def create
               # Found whatever its state, so a lapsed window is answered as one
               # rather than as a token that means nothing.
-              window = Spree::Transfer.find_by(token: params[:membership_card_transfer_token])
-              raise ActiveRecord::RecordNotFound if window.nil?
+              window = Spree::Transfer.for_store(current_store).find_by!(token: params[:membership_card_transfer_token])
 
               result = Spree::Transfers.accept!(window, customer: current_user)
               return render_result_error(result) if result.failure?

@@ -62,7 +62,6 @@ RSpec.describe Spree::Transfer, type: :model do
 
       expect(described_class.pending).to include(open_window)
       expect(described_class.pending).not_to include(closed)
-      expect(described_class.open_windows).not_to include(closed)
     end
 
     it 'finds what is about to lapse' do

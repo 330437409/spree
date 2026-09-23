@@ -50,8 +50,7 @@ module Spree
     # client reads as 赠送中 comes through here, and a pending row past its date
     # is not one anybody may act on. The stored status is still `pending`; the
     # date is what says whether it still means anything.
-    scope :open_windows, -> { where(status: 'pending').where(expires_at: Time.current..) }
-    scope :pending, -> { open_windows }
+    scope :pending, -> { where(status: 'pending').where(expires_at: Time.current..) }
     scope :for_recipient, ->(customer) { where(to_customer_id: customer&.id) }
     scope :for_giver, ->(customer) { where(from_customer_id: customer&.id) }
     scope :expiring_before, ->(time) { where(status: 'pending').where(expires_at: ..time) }
@@ -65,11 +64,6 @@ module Spree
     #   when the window has closed
     def display_status
       (expired? ? :expired : status).to_s
-    end
-
-    # @return [Object] the holding, the card or the membership card
-    def thing
-      transferable
     end
 
     private
