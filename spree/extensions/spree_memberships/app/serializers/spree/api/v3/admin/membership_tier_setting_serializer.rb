@@ -5,11 +5,16 @@ module Spree
         # What makes a customer group a tier, as the operator edits it.
         class MembershipTierSettingSerializer < BaseSerializer
           typelize rank: :number, threshold: 'string | null', validity_days: 'number | null',
-                   rights_total: :number, member_discount_percentage: 'string | null'
+                   rights_total: :number, member_discount_percentage: 'string | null',
+                   auto_renew: :boolean, grace_days: :number, sku: 'string | null'
 
           attributes :rank
           attribute(:threshold) { |setting| decimal_string(setting.threshold) }
           attributes :validity_days
+          # Ported from spree_crm's membership plan: whether a term extends
+          # itself, how long it may sit lapsed, and the SKU the purchase is
+          # priced by.
+          attributes :auto_renew, :grace_days, :sku
           attribute(:rights_total) { |setting| Spree::MembershipRight.where(customer_group_id: setting.customer_group_id).count }
           # The member price this tier grants, as a percentage off the shelf
           # price. The operator sets it and the platform funds it.

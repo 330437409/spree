@@ -21,9 +21,14 @@ SpreeMemberships.membership_rights << MyGem::Rights::FreeShipping
 | `Spree::MembershipRights::*` | The ten built-in kinds — `member_price`, `exclusive_coupon`, `coupon`, `large_coupon`, `add_bag`, `priority_distribution`, `birthday_double_integral`, `give_gift`, `surprise_red_envelope`, `svip_date` |
 | `SpreeMemberships.membership_rights` | The registry a gem adds a kind to |
 | `Spree::Memberships::MemberCentre` | The projection the member centre reads: every right of the store's ladder, grouped by the panel its kind declares |
+| `Spree::MembershipCard` | What a membership is bought, granted, held or given away as, before anybody is entitled to anything |
+| `Spree::Membership` | The term itself: a period a named customer holds a tier for |
 | `Spree::Memberships::SetMemberDiscount` | The tier's member price: a catalogue of its own, an owned automatic list and the assignment that shows it to the tier's group |
 | `Spree::Memberships::MemberDiscount` | What the member price took off one order, per line — what the platform, not the seller, funded |
 | `Spree::Memberships::FundMemberDiscount` | The `funded_discounts` handler that hands that figure to the seller ledger |
+| `Spree::MembershipCards::Activate`, `::Recycle`, `::Expire` | The card's transitions: 激活 from either door, 作废, and the deadline |
+| `Spree::Memberships::EndTerm`, `::Advance` | Ending a term (with its tier's group), and the sweep that decides each term's next state |
+| `Spree::Memberships::AdvanceDueJob` | The hourly sweep. The host application registers it |
 
 ## Store API
 
@@ -32,6 +37,8 @@ SpreeMemberships.membership_rights << MyGem::Rights::FreeShipping
 | `GET /api/v3/store/membership_rights` | The rights catalogue: every right this store's tiers carry, published or not, each with the tier it belongs to |
 | `GET /api/v3/store/membership_tiers` | The ladder, in rank order |
 | `GET /api/v3/store/customers/me/membership` | The customer's own rung, its sections and how many rights it carries. A customer in no tier is answered a null tier rather than refused |
+| `GET /api/v3/store/customers/me/membership_cards` | The wallet: the cards this customer bought or was granted, and what each is waiting for |
+| `POST /api/v3/store/customers/me/membership_cards/:id/activations` | 激活 — the card leaves `dormant` and a term starts for the customer who activated it |
 
 ## Admin API
 
@@ -40,6 +47,8 @@ SpreeMemberships.membership_rights << MyGem::Rights::FreeShipping
 | `GET /api/v3/admin/membership_rights/types` | The registry picker: every installed kind with the settings it declares, so an admin form renders whatever is installed |
 | `GET`/`POST`/`PATCH`/`DELETE /api/v3/admin/customer_groups/:id/membership_rights` | What a tier carries. The kind is chosen per request; its settings are its own preferences |
 | `GET`/`POST`/`PATCH /api/v3/admin/customer_groups/:id/tier_setting` | What makes the group a tier. 404 while it is not one |
+| `GET /api/v3/admin/membership_cards`, `GET /api/v3/admin/memberships` | Read-only: which cards a store issued and what became of them, and who holds which tier until when |
+| `POST /api/v3/admin/membership_cards/:id/recycling` | The one write: a support desk voiding a card the client cannot (a lost phone, a fraud report) |
 
 ## A right is a kind, and the panels are a projection
 
@@ -85,6 +94,58 @@ What counts is the line's own record of the list that priced it: a promotion, a
 store-wide price list or a price the seller set is the seller's concession and is
 contributed by nobody.
 
+## The card is the instrument, the term is the entitlement
+
+A membership is **two rows**, because a card and a term answer different
+questions. A card is bought, held, given away, claimed and voided before anybody
+is entitled to anything; a term is a period a named customer holds a tier for. A
+customer can hold several dormant cards at once, and a card given away stays in
+the giver's record while the entitlement goes to whoever claimed it — which is
+why the buyer does not move when a card is claimed.
+
+Activating a card is one transition from two doors (自己激活 and 领取 are the same
+work), and it writes the term with the tier's own length:
+
+```ruby
+Spree::MembershipCards::Activate.call(card: card, customer: claimer)
+```
+
+**A term and the tier's group move together, or not at all.** Member pricing
+reads the group, so a term that runs now assigns it in the same transaction, a
+term that ends leaves it, and a term that expires hands the customer to their
+next one. A card bought while another tier still runs does not take it out from
+under them: the term is written and waits for the tier it replaces — the client's
+own 自{lowEndTime}起 promise — so a customer is never on two tiers.
+
+**The sweep advances every window.** `Spree::Memberships::AdvanceDueJob` starts
+the terms whose window opened (moving the group), renews the ones a tier renews
+by itself (`auto_renew`), puts a lapsed one into its grace window (`grace_days`)
+and ends the ones that ran out — and expires the dormant cards whose deadline to
+be activated passed. The host application registers it as a recurring task:
+
+```yaml
+# config/recurring.yml
+advance_memberships:
+  class: Spree::Memberships::AdvanceDueJob
+  queue: default
+  schedule: every hour at minute 5
+```
+
+## Coming from spree_crm's membership engine
+
+`.custom-extensions/spree_crm` ran a membership engine of its own until this gem
+replaced it (ruled 2026-09-18): two engines adding customers to one tier's group
+is two writers of the price. Its three useful pieces were ported rather than
+re-invented — `auto_renew`, `grace_days` and the purchasable SKU onto the tier
+settings row — and its plan's group becomes a tier, its memberships become terms:
+
+```bash
+bin/rails spree_memberships:migrate_crm_memberships
+```
+
+The task is idempotent and leaves the CRM tables where they are: they are the
+record of what that engine said.
+
 ## What this gem does not do
 
 - **No tier table and no level table.** A tier is the group plus its settings row.
@@ -93,9 +154,15 @@ contributed by nobody.
 - **No member prices of the tier's own beyond the percentage** — the tier's
   catalogue prices nothing itself; it carries one automatic list, so a merchant
   who wants per-product member prices edits that list rather than a new field.
-- **No card and no term yet.** A customer is in a tier because an operator put
-  them there; the card's four transitions write the same membership later, and
-  they are one writer rather than two.
+- **No gift transfer yet.** 相赠 and 领取 arrive with the shared `Spree::Transfer`
+  primitive, which the coupon wallet and the gift cards use too
+  (`6.1-transfer-primitive.md`); the card's activation already takes the customer
+  the claim will name.
+- **No purchase yet.** Buying a term is the `vip` kind of a scenario order, and
+  it arrives with the plan that owns what a purchase costs and issues
+  (`6.1-scenario-purchases.md`); a card today is granted, not sold.
+- **No grants yet.** The activation gift bag, the annual gift and the member day
+  are the rights' own claims and the next step of the plan.
 - **No per-period tally and no grant history.** The six `rights/*` endpoints the
   client never calls are not built, so those two reads are not invented here.
 

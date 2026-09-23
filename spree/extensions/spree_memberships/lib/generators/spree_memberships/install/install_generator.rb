@@ -11,8 +11,10 @@ module SpreeMemberships
     class InstallGenerator < Rails::Generators::Base
       class_option :auto_run_migrations, type: :boolean, default: false
 
+      # The scenario order's table comes along: a card records which purchase
+      # issued it, and the purchase frame is a gem this one depends on.
       def copy_migrations
-        run 'bundle exec rake railties:install:migrations FROM=spree_memberships'
+        run 'bundle exec rake railties:install:migrations FROM=spree_memberships,spree_scenario_purchases'
       end
 
       def run_migrations
