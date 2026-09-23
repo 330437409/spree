@@ -20,6 +20,6 @@ module Spree
           slot.purchase_cap
         end
       end
-    end
   end
+end
 end

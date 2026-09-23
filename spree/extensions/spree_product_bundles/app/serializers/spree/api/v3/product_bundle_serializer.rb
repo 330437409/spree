@@ -47,6 +47,6 @@ module Spree
           params[:currency] || Spree::Current.currency
         end
       end
-    end
   end
+end
 end

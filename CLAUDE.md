@@ -673,23 +673,18 @@ Private package providing `createRequestFn()`, `SpreeError`, retry logic, and Ra
 When changing Alba serializers, run the full pipeline:
 
 ```bash
-scripts/types/generate                                   # 1. TS types from serializers, then the Zod schemas
-cd spree/api && bundle exec rspec spec/integration/     # 2. Integration tests
-bundle exec rake rswag:specs:swaggerize                 # 3. OpenAPI spec
-cd packages/sdk && pnpm test                             # 4. SDK tests
+cd spree/api && bundle exec rake typelizer:generate    # 1. TS types from serializers
+cd packages/sdk && pnpm generate:zod                     # 2. Zod schemas from TS types
+cd spree/api && bundle exec rspec spec/integration/     # 3. Integration tests
+bundle exec rake rswag:specs:swaggerize                 # 4. OpenAPI spec
+cd packages/sdk && pnpm test                             # 5. SDK tests
 ```
 
 - TypeScript types → `packages/sdk/src/types/generated/` (Store) and `packages/admin-sdk/src/types/generated/` (Admin)
 - Zod schemas → `packages/sdk/src/zod/generated/`
 - Store types: `StoreProduct`, `StoreOrder`, etc. Admin types: `AdminProduct`, `AdminOrder`, etc.
 
-**The generator runs in the starter, not in `spree/api`** — it prunes the directories it writes, so
-a run from an application that does not load the extension gems would *delete* their types rather
-than leave them. `scripts/types/generate` handles that (it runs the rake task in the dev stack's
-container when it is up, natively otherwise); the fork gems' serializers register themselves with
-`spree/api/config/initializers/typelizer_fork_gems.rb`, which scans the loaded engines.
-
-A **Lefthook pre-commit hook** (`lefthook.yml`) regenerates types and Zod schemas automatically whenever a serializer is committed, then re-stages the generated output. You don't need to run step 1 manually if you're committing serializer changes — the hook handles it. Steps 2–4 (integration tests, OpenAPI regen, SDK tests) still need to run locally before pushing — run step 2 as `pnpm test:rspec api spec/integration/` so it queues with the other sessions.
+A **Lefthook pre-commit hook** (`lefthook.yml`) regenerates types and Zod schemas automatically whenever `spree/api/app/serializers/**/*.rb` files are committed, then re-stages the generated output. You don't need to run steps 1 and 2 manually if you're committing serializer changes — the hook handles it. Steps 3–5 (integration tests, OpenAPI regen, SDK tests) still need to run locally before pushing — run step 3 as `pnpm test:rspec api spec/integration/` so it queues with the other sessions.
 
 ### Changesets & Versioning
 

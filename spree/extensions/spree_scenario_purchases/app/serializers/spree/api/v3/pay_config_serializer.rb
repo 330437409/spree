@@ -15,6 +15,6 @@ module Spree
         attribute(:kinds) { |config| config.kinds }
         attribute(:payment_pin) { |config| config.payment_pin? }
       end
-    end
   end
+end
 end

@@ -22,6 +22,6 @@ module Spree
         attribute(:expires_at) { |session| session.expires_at&.iso8601 }
         attribute(:external_data) { |session| session.external_data }
       end
-    end
   end
+end
 end

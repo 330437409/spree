@@ -22,6 +22,6 @@ module Spree
         attributes :status
         attribute(:activates_before) { |card| card.activates_before&.iso8601 }
       end
-    end
   end
+end
 end

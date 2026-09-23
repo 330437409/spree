@@ -8,15 +8,10 @@ pre-commit:
       # Core's serializers and the extension gems' alike: a gem serializer
       # changes the same client-facing types, and the generator has to see
       # every gem to write any of them (it prunes what it does not see).
-      # Anything a generator sees: the initializer registers every loaded engine's
-      # serializer directory, so the trigger is the whole tree rather than the two
-      # places serializers live today.
-      glob: "spree/**/app/serializers/**/*.rb"
+      glob: "{spree/api/app/serializers/**/*.rb,spree/extensions/*/app/serializers/**/*.rb}"
       run: |
         echo "Serializer changes detected — regenerating TypeScript types and Zod schemas..."
         scripts/types/generate
-        git add packages/sdk/src/types/generated packages/sdk/src/zod/generated \
-                packages/admin-sdk/src/types/generated packages/seller-sdk/src/types/generated
 
 pre-push:
   commands:

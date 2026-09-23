@@ -67,6 +67,6 @@ module Spree
                                     where(flash_sale_slot: open_slot_for(flash_sale))
         end
       end
-    end
   end
+end
 end

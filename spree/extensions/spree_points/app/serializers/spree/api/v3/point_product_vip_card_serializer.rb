@@ -14,6 +14,6 @@ module Spree
 
         attributes :name
       end
-    end
   end
+end
 end

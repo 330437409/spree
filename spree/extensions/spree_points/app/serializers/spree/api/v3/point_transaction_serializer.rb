@@ -20,6 +20,6 @@ module Spree
         attribute(:balance_after) { |entry| decimal_string(entry.balance_after) }
         attribute(:occurred_at) { |entry| entry.occurred_at&.iso8601 }
       end
-    end
   end
+end
 end

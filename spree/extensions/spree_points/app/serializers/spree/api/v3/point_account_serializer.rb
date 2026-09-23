@@ -24,6 +24,6 @@ module Spree
         attribute(:earn_rate) { |_account| decimal_string(current_store&.preferred_points_earn_rate) }
         attribute(:redeem_rate) { |_account| decimal_string(current_store&.preferred_points_redeem_rate) }
       end
-    end
   end
+end
 end

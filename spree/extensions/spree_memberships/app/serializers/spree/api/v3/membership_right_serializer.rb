@@ -21,6 +21,6 @@ module Spree
           Spree::Api::V3::MembershipTierSerializer.new(right.tier_setting, params: params).to_h
         end
       end
-    end
   end
+end
 end

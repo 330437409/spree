@@ -17,6 +17,6 @@ module Spree
         attribute(:validity_days) { |tier| tier.validity_days }
         attribute(:rights_total) { |tier| Spree::MembershipRight.where(customer_group_id: tier.customer_group_id).count }
       end
-    end
   end
+end
 end
