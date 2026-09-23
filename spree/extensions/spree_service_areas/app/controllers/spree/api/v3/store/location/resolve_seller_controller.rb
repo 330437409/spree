@@ -84,7 +84,7 @@ module Spree
             end
 
             def serializer_class
-              Spree::Api::V3::Store::SellerDecisionSerializer
+              Spree::Api::V3::SellerDecisionSerializer
             end
           end
         end

@@ -31,7 +31,7 @@ module Spree
           end
 
           def serializer_class
-            Spree::Api::V3::Store::ProductBundleSerializer
+            Spree::Api::V3::ProductBundleSerializer
           end
 
           # Only what a shopper can buy today: an archived bundle is not

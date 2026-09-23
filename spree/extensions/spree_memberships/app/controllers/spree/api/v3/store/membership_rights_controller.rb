@@ -16,7 +16,7 @@ module Spree
           end
 
           def serializer_class
-            Spree::Api::V3::Store::MembershipRightSerializer
+            Spree::Api::V3::MembershipRightSerializer
           end
 
           # Through the ladder, which is where the store is: a right carries no

@@ -15,7 +15,7 @@ module Spree
             end
 
             def serializer_class
-              Spree::Api::V3::Store::FlashSaleTicketSerializer
+              Spree::Api::V3::FlashSaleTicketSerializer
             end
 
             def scope

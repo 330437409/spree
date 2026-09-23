@@ -5,7 +5,7 @@ module Spree
         # A card as the back office reads it: whose it is, where it came from,
         # what it started and when — everything a support desk needs to answer
         # "where did this card go".
-        class MembershipCardSerializer < V3::Store::MembershipCardSerializer
+        class MembershipCardSerializer < V3::MembershipCardSerializer
           typelize customer_id: :string, customer_email: 'string | null',
                    membership_id: 'string | null', scenario_order_id: 'string | null',
                    activated_by_customer_id: 'string | null',

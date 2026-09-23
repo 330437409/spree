@@ -12,7 +12,7 @@ module Spree
           def show
             config = Spree::ScenarioOrders::PayConfig.new(store: current_store, customer: try_spree_current_user)
 
-            render json: Spree::Api::V3::Store::PayConfigSerializer.new(config, params: serializer_params).to_h
+            render json: Spree::Api::V3::PayConfigSerializer.new(config, params: serializer_params).to_h
           end
         end
       end

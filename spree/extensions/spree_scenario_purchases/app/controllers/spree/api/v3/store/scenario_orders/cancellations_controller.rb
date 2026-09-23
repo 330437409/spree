@@ -25,7 +25,7 @@ module Spree
             end
 
             def serializer_class
-              Spree::Api::V3::Store::ScenarioOrderSerializer
+              Spree::Api::V3::ScenarioOrderSerializer
             end
 
             private

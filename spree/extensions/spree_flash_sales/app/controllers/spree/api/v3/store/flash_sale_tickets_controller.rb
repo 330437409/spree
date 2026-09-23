@@ -33,7 +33,7 @@ module Spree
           protected
 
           def serializer_class
-            Spree::Api::V3::Store::FlashSaleTicketSerializer
+            Spree::Api::V3::FlashSaleTicketSerializer
           end
 
           def model_class

@@ -19,7 +19,7 @@ module Spree
             end
 
             def serializer_class
-              Spree::Api::V3::Store::CouponHoldingSerializer
+              Spree::Api::V3::CouponHoldingSerializer
             end
 
             # The draw is the workflow: the campaign decides whether this
