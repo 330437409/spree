@@ -3,8 +3,6 @@ module Spree
     # An ordinary coupon the tier carries. Shares the exclusive coupons' panel,
     # because the client does not tell them apart.
     class Coupon < Spree::MembershipRight
-      include Spree::MembershipRights::HandsOverCoupon
-
       def self.presents_as
         'vipCouponInfoVo'
       end

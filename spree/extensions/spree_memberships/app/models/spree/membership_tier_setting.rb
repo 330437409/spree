@@ -20,6 +20,13 @@ module Spree
     # not land on that catalogue's list.
     belongs_to :catalog, class_name: 'Spree::Catalog', optional: true, inverse_of: nil
 
+    # The rights this tier carries, published ones only — the mirror of
+    # `MembershipRight#tier_setting`, and the one place the pair is spelled. The
+    # scope lives on the association so a preloaded tier answers it without a
+    # query of its own.
+    has_many :published_rights, -> { published }, class_name: 'Spree::MembershipRight',
+                                primary_key: :customer_group_id, foreign_key: :customer_group_id, inverse_of: nil
+
     # The tier reaches the store through its group: a second tenancy column
     # would be a second thing to keep in step.
     delegate :store, to: :customer_group, allow_nil: true

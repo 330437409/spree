@@ -39,7 +39,7 @@ module Spree
             end
 
             def collection_includes
-              %i[tier_setting membership pending_transfer]
+              [{ tier_setting: :published_rights }, :membership, :pending_transfer]
             end
 
             def scope_includes

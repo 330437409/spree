@@ -52,8 +52,8 @@ module Spree
       # both issuers write where this one does, and idempotent by the card and
       # the right, so a retried activation hands over nothing twice.
       def grant_entry_bag
-        rights = Spree::MembershipRight.published.where(customer_group_id: card.customer_group_id)
-        return if rights.empty?
+        rights = card.tier_setting&.published_rights.to_a
+        return if rights.blank?
 
         result = Spree::Memberships::GrantEntryBag.call(source: card, customer: entitled_customer, rights: rights)
         failure(card, result.error) if result.failure?

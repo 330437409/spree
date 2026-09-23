@@ -93,9 +93,11 @@ module Spree
       nil
     end
 
-    # @return [String, nil] the promotion a coupon is drawn from, by its prefixed id
+    # @return [String, nil] the promotion a coupon is drawn from, by its prefixed
+    #   id. Read from the preference every kind carries; a kind that hands over no
+    #   coupon leaves it unset, which is nil here.
     def entry_coupon
-      nil
+      preferred_promotion_id.presence
     end
 
     # The display name a customer reads. The row's own copy wins, so an operator

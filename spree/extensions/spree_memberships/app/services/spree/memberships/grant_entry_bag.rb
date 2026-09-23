@@ -12,13 +12,24 @@ module Spree
     class GrantEntryBag
       prepend Spree::ServiceModule::Base
 
+      # What these rights hand over, without handing it over: the same reading the
+      # service pays out from, so a read and the payout cannot disagree about what
+      # a tier carries.
+      #
+      # @param rights [Enumerable<Spree::MembershipRight>]
+      # @return [Hash] { points: Integer, coupons: Integer }
+      def self.summary_for(rights)
+        { points: rights.sum { |right| right.entry_points.to_i },
+          coupons: rights.count { |right| right.entry_coupon.present? } }
+      end
+
       # @param source [Object] what caused the bag — the card that was activated
       # @param customer [Object] who receives it
       # @param rights [Enumerable<Spree::MembershipRight>] the tier's rights
       # @return [Spree::ServiceModule::Result] value is what was handed over, as
       #   { points: Integer, coupons: Array<Spree::CouponHolding> }
       def call(source:, customer:, rights:)
-        store = source.try(:store) || customer.try(:store) || Spree::Current.store
+        store = source.store
         bag = { points: 0, coupons: [] }
 
         rights.each do |right|
@@ -34,7 +45,7 @@ module Spree
           next if promotion_id.blank?
 
           issued = issue_coupon(right, promotion_id, source: source, customer: customer, store: store)
-          return issued if issued.failure?
+          return failure(source, issued.error) if issued.failure?
 
           bag[:coupons] << issued.value
         end
@@ -58,7 +69,7 @@ module Spree
         promotion = Spree::Promotion.find_by_prefix_id(promotion_id)
         return failure(source, :promotion_unknown) if promotion.nil?
 
-        Spree::Coupons::Issue.call(promotion: promotion, source: SOURCE, customer: customer,
+        Spree::Coupons::Issue.call(promotion: promotion, source: 'membership', customer: customer,
                                    store: store, metadata: { 'membership_card_id' => source.id },
                                    idempotency_key: key(source, right, 'coupon'))
       end
@@ -68,9 +79,6 @@ module Spree
       def key(source, right, part)
         "membership_entry:#{source.class.name}:#{source.id}:right:#{right.id}:#{part}"
       end
-
-      # What the wallet calls this issuer, in the vocabulary its holdings carry.
-      SOURCE = 'membership'.freeze
 
       # A key the operator's reason list does not hold still moves the balance —
       # the read shows the key itself (Spree::Points::Ledger::Credit).

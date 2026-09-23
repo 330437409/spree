@@ -31,12 +31,10 @@ module Spree
         attribute(:entry_bag) do |card|
           next unless card.active?
 
-          rights = Spree::MembershipRight.published.where(customer_group_id: card.customer_group_id)
-          points = rights.sum { |right| right.entry_points.to_i }
-          coupons = rights.count { |right| right.entry_coupon.present? }
-          next if points.zero? && coupons.zero?
+          bag = Spree::Memberships::GrantEntryBag.summary_for(card.tier_setting&.published_rights.to_a)
+          next if bag[:points].zero? && bag[:coupons].zero?
 
-          { 'points' => points, 'coupons' => coupons }
+          { 'points' => bag[:points], 'coupons' => bag[:coupons] }
         end
         attribute(:giftable) { |card| card.giftable? }
         attribute(:activates_before) { |card| card.activates_before&.iso8601 }

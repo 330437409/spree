@@ -9,11 +9,8 @@ module Spree
     class EntryIntegral < Spree::MembershipRight
       preference :amount, :integer, default: 0
 
-      # The upgrade modal is the panel the client reads the bag from.
-      def self.presents_as
-        'levelRelationVo'
-      end
-
+      # No member-centre panel: the client reads the bag from the card's own
+      # `entry_bag`, and the six panel keys it branches on do not include this.
       # @return [Integer, nil] nil when there is nothing to hand over
       def entry_points
         amount = preferred_amount.to_i
