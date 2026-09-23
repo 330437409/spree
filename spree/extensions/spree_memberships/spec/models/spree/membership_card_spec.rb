@@ -99,6 +99,16 @@ RSpec.describe Spree::MembershipCard, type: :model do
       Spree::Transfers.cancel!(window)
       expect(card.reload.pending_transfer).to be_nil
     end
+
+    # Lapsed, but still the card's window: the client renders 已过期 from it and
+    # 作废 is what closes it, which takes its id.
+    it 'still finds the window once its date has passed' do
+      window = create(:transfer, from_customer: customer, transferable: card, to_phone: '13800000000')
+      window.update_columns(expires_at: 1.hour.ago)
+
+      expect(card.reload.pending_transfer).to eq(window)
+      expect(card.pending_transfer.display_status).to eq('expired')
+    end
   end
 
   it 'counts only the dormant, giftable cards as a wallet to give from' do

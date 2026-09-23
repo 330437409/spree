@@ -27,7 +27,7 @@ module Spree
         return failure(transfer, Spree.t('transfers.errors.already_claimed')) if transfer.accepted?
         return failure(transfer, Spree.t('transfers.errors.not_open')) unless movable?(transfer, status)
 
-        lost = false
+        lost = nil
         refusal = nil
 
         # A savepoint, not the enclosing transaction — see Give: a caller already
@@ -41,13 +41,16 @@ module Spree
             transfer.update!({ status: status, timestamp => Time.current }.merge(claimed_by(customer)))
             refusal = Contract.call(contract, transfer.transferable, transfer)
           else
-            lost = true
+            # The row as it is now, which may be neither of the two states the
+            # caller's own read suggested: somebody else claimed it, or it was
+            # released while they held it.
+            lost = transfer.accepted? ? 'transfers.errors.already_claimed' : 'transfers.errors.not_open'
           end
 
           raise ActiveRecord::Rollback if refusal || lost
         end
 
-        return failure(transfer.reload, Spree.t('transfers.errors.not_open')) if lost
+        return failure(transfer.reload, Spree.t(lost)) if lost
         return failure(transfer.reload, refusal) if refusal
 
         success(transfer)
@@ -58,7 +61,11 @@ module Spree
       # Whether this call is the same hand doing the same thing again: the row is
       # where the call would put it, and for a claim it is the same customer who
       # holds it. A token forwarded to a second customer is not their success.
+      #
+      # A released row answers nothing: `lock!` reads past the soft-delete, so a
+      # window the next give cleared would otherwise be moved from a stale object.
       def answered?(transfer, status, customer)
+        return false if transfer.deleted?
         return false unless transfer.status == status
         return true unless status == 'accepted'
 
@@ -67,8 +74,10 @@ module Spree
 
       # Accepting needs a live window. Cancelling also closes one whose date has
       # passed — 作废 of a gift nobody will ever claim, and the only way a lapsed
-      # window stops holding the thing it carries.
+      # window stops holding the thing it carries. A released one is closed for
+      # good and only `deleted?` says so.
       def movable?(transfer, status)
+        return false if transfer.deleted?
         return false unless transfer.pending?
 
         status == 'canceled' || !transfer.expired?

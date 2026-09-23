@@ -104,6 +104,18 @@ RSpec.describe 'the membership reads', type: :request do
 
     # 自己激活 while a window is open would strand it: the recipient's claim
     # would then be refused by a card that already has a term.
+    # A window whose date has passed blocks nothing: the claim against it refuses
+    # on its own, and the holder may activate their own card.
+    it 'activates a card whose window has lapsed' do
+      window = create(:transfer, from_customer: user, transferable: card, to_phone: '13800000000')
+      window.update_columns(expires_at: 1.hour.ago)
+
+      post "/api/v3/store/customers/me/membership_cards/#{card.prefixed_id}/activations", headers: headers
+
+      expect(response).to have_http_status(:created)
+      expect(card.reload).to be_active
+    end
+
     it 'refuses to activate a card that is on its way to somebody' do
       create(:transfer, from_customer: user, transferable: card, to_phone: '13800000000')
 
@@ -142,6 +154,15 @@ RSpec.describe 'the membership reads', type: :request do
       expect(response.parsed_body['data'].first['transfer']).to include('status' => 'pending')
     end
 
+    it 'shows a window whose date has passed as expired' do
+      window = create(:transfer, from_customer: user, transferable: card, to_phone: '13800000000')
+      window.update_columns(expires_at: 1.hour.ago)
+
+      get '/api/v3/store/customers/me/membership_cards', headers: headers
+
+      expect(response.parsed_body['data'].first['transfer']).to include('status' => 'expired')
+    end
+
     it 'refuses a card the customer may not give away' do
       card.update!(giftable: false)
 
@@ -160,6 +181,26 @@ RSpec.describe 'the membership reads', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(window.reload).to be_canceled
+    end
+
+    # The gift nobody opened: the card is 待激活 again in the client, and the only
+    # way back to that is closing a window whose date has passed — which needs
+    # the id this read carries.
+    it 'lists a window whose date has passed, and closes it' do
+      window = create(:transfer, from_customer: user, transferable: card, to_phone: '13800000000')
+      window.update_columns(expires_at: 1.hour.ago)
+
+      get "/api/v3/store/customers/me/membership_cards/#{card.prefixed_id}/transfers", headers: headers
+
+      expect(response.parsed_body['data'].first).to include('status' => 'expired')
+      expect(card.reload.pending_transfer).to eq(window)
+
+      delete "/api/v3/store/customers/me/membership_cards/#{card.prefixed_id}/transfers/#{window.prefixed_id}",
+             headers: headers
+
+      expect(response).to have_http_status(:ok)
+      expect(window.reload).to be_canceled
+      expect(card.reload.pending_transfer).to be_nil
     end
   end
 

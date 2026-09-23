@@ -43,6 +43,16 @@ RSpec.describe Spree::Transfers do
       def on_transfer_canceled(_transfer); end
     end)
 
+    # A paranoid thing, for the released case: the primitive reads `deleted?` on
+    # what it is handed, and a model that cannot be released never answers it.
+    stub_const('ParanoidThing', Class.new(Spree::PriceList) do
+      def self.polymorphic_name = name
+
+      def on_transfer_given(_transfer); end
+      def on_transfer_accepted(_transfer); end
+      def on_transfer_canceled(_transfer); end
+    end)
+
     TransferableGiftCard.reset!
   end
 
@@ -90,6 +100,17 @@ RSpec.describe Spree::Transfers do
     # giftable — and the row must not survive the refusal.
     it 'writes nothing when the thing refuses' do
       expect(give!(ungiftable)).to be_failure
+      expect(Spree::Transfer.count).to eq(0)
+    end
+
+    # The window would open over nothing, and every claim against it would
+    # refuse. The paranoid consumers — a coupon holding, the gift-card ledger —
+    # are the ones this is for, so the stand-in is one too.
+    it 'refuses a thing that has been released' do
+      released = ParanoidThing.create!(store: store, name: 'Smoke', match_policy: 'all')
+      released.destroy
+
+      expect(give!(released)).to be_failure
       expect(Spree::Transfer.count).to eq(0)
     end
 
@@ -161,6 +182,20 @@ RSpec.describe Spree::Transfers do
 
       expect(result).to be_failure
       expect(transfer.reload).to be_pending
+    end
+
+    # A window the next give cleared, moved from an object that still remembers
+    # it as open: `lock!` reads past the soft-delete, so this is the only guard.
+    it 'refuses to move a window that has been released' do
+      transfer = give!(thing).value
+      stale = Spree::Transfer.find(transfer.id)
+      transfer.destroy
+
+      result = described_class.accept!(stale, customer: recipient)
+
+      expect(result).to be_failure
+      expect(transfer.reload).to be_deleted
+      expect(transfer.status).to eq('pending')
     end
 
     it 'refuses a window that has closed' do

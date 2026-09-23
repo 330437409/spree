@@ -96,15 +96,18 @@ module Spree
 
     # The index is the last word; this is the same rule said where a caller can
     # read it, so a second window is a validation failure rather than a raw
-    # RecordNotUnique out of the service.
+    # RecordNotUnique out of the service. Deliberately the raw status, lapsed rows
+    # included, because that is what the index counts: a writer that does not go
+    # through `give!` cannot save over a lapsed window either, and this is the
+    # error it should hear rather than the database's.
+    #
+    # The service is what makes a lapsed window not stand in the way — it clears
+    # them before writing a new one.
     def one_pending_window
       return if transferable.nil? || !pending?
 
-      # Live windows only, which is the same rule the Give service enforces by
-      # clearing lapsed rows: a window whose date has passed does not hold the
-      # thing for the purpose of this validation.
       waiting = self.class.where(transferable_type: transferable_type, transferable_id: transferable_id,
-                                 status: 'pending').where(expires_at: Time.current..).where.not(id: id)
+                                 status: 'pending').where.not(id: id)
       return unless waiting.exists?
 
       errors.add(:transferable, :already_transferring,

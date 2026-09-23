@@ -46,10 +46,15 @@ module Spree
     # Cards whose deadline to activate has passed. Read by the sweep.
     scope :overdue, -> { with_status(:dormant).where(activates_before: ..Time.current) }
 
-    # The window this card is inside, if any: what the client reads as 赠送中,
-    # and what 作废 closes. An association rather than a query so a wallet can
-    # preload it.
-    has_one :pending_transfer, -> { pending }, class_name: 'Spree::Transfer',
+    # The window this card is inside, if any: what the client reads as 赠送中 —
+    # and as 已过期 once its date has passed — and what 作废 closes. An association
+    # rather than a query so a wallet can preload it.
+    #
+    # Deliberately the raw status, like the index the primitive holds: a lapsed
+    # window is still the card's window, and hiding it would take the id 作废 needs
+    # away from the client. Whether anybody may still act on it is
+    # `Spree::Transfers.open?`'s answer, not this one's.
+    has_one :pending_transfer, -> { with_status(:pending) }, class_name: 'Spree::Transfer',
             as: :transferable, inverse_of: :transferable
 
     #

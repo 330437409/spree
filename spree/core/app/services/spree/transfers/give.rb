@@ -15,6 +15,8 @@ module Spree
 
       # @return [Spree::ServiceModule::Result] value is the transfer
       def call(from:, transferable:, to_phone:, expires_at:, message: nil)
+        return failure(nil, Spree.t('transfers.errors.transferable_gone')) if released?(transferable)
+
         transfer = nil
         refusal = nil
         invalid = false
@@ -55,6 +57,14 @@ module Spree
       end
 
       private
+
+      # A thing already released is not one to put a window over: the window would
+      # open over nothing, and every claim against it would refuse. Paranoid
+      # models are the ones this is for — a coupon holding, a gift card — and a
+      # plain model never answers it.
+      def released?(transferable)
+        transferable.nil? || (transferable.respond_to?(:deleted?) && transferable.deleted?)
+      end
 
       # A window whose date has passed is dead but still holds the thing: the
       # unique index counts rows, and a partial index cannot be filtered by the
