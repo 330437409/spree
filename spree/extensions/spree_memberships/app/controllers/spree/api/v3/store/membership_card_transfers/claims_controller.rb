@@ -17,8 +17,12 @@ module Spree
             # POST /api/v3/store/membership_card_transfers/:membership_card_transfer_token/claims
             def create
               # Found whatever its state, so a lapsed window is answered as one
-              # rather than as a token that means nothing.
-              window = Spree::Transfer.for_store(current_store).find_by!(token: params[:membership_card_transfer_token])
+              # rather than as a token that means nothing. Scoped to this
+              # domain's own rows: once a second consumer of the primitive ships,
+              # its tokens are not ours to claim.
+              window = Spree::Transfer.for_store(current_store).
+                       where(transferable_type: 'Spree::MembershipCard').
+                       find_by!(token: params[:membership_card_transfer_token])
 
               result = Spree::Transfers.accept!(window, customer: current_user)
               return render_result_error(result) if result.failure?

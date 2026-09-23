@@ -102,6 +102,17 @@ RSpec.describe 'the membership reads', type: :request do
       expect(response).to have_http_status(:not_found)
     end
 
+    # 自己激活 while a window is open would strand it: the recipient's claim
+    # would then be refused by a card that already has a term.
+    it 'refuses to activate a card that is on its way to somebody' do
+      create(:transfer, from_customer: user, transferable: card, to_phone: '13800000000')
+
+      post "/api/v3/store/customers/me/membership_cards/#{card.prefixed_id}/activations", headers: headers
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(card.reload).to be_dormant
+    end
+
     it 'refuses a card whose deadline to activate passed' do
       card.update!(activates_before: 1.day.ago)
 
@@ -190,6 +201,28 @@ RSpec.describe 'the membership reads', type: :request do
     it 'answers 404 for a token nobody holds' do
       get '/api/v3/store/membership_card_transfers/nothing-here', headers: api_key_headers
 
+      expect(response).to have_http_status(:not_found)
+    end
+
+    # The primitive is shared, so a token belonging to another domain's transfer
+    # in this same store is not this route's to read or claim.
+    it 'answers 404 for a token of another domain' do
+      stub_const('ForeignGiftCard', Class.new(Spree::GiftCard) do
+        def self.polymorphic_name = name
+
+        def on_transfer_given(_transfer); end
+        def on_transfer_accepted(_transfer); end
+        def on_transfer_canceled(_transfer); end
+      end)
+
+      elsewhere = create(:transfer, from_customer: create(:customer),
+                                    transferable: ForeignGiftCard.create!(store: store, amount: 10),
+                                    to_phone: '13800000000')
+
+      get "/api/v3/store/membership_card_transfers/#{elsewhere.token}", headers: api_key_headers
+      expect(response).to have_http_status(:not_found)
+
+      post "/api/v3/store/membership_card_transfers/#{elsewhere.token}/claims", headers: headers
       expect(response).to have_http_status(:not_found)
     end
 

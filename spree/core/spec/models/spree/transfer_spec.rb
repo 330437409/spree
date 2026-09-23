@@ -24,6 +24,14 @@ RSpec.describe Spree::Transfer, type: :model do
     build(:transfer, from_customer: giver, transferable: thing, **attributes)
   end
 
+  # A window that lapsed: written with a live date, then moved past it — which is
+  # what happens to a real one, and the only way to write one, since a window that
+  # opens already closed is refused.
+  def lapsed_window(**attributes)
+    create(:transfer, from_customer: giver, transferable: thing, expires_at: 1.day.from_now, **attributes).
+      tap { |row| row.update_columns(expires_at: 1.hour.ago) }
+  end
+
   describe 'the journey' do
     it 'is born pending, with a token nobody could guess' do
       row = build_transfer
@@ -45,7 +53,7 @@ RSpec.describe Spree::Transfer, type: :model do
     # Expiry is a date fact, never a stored status — the same rule a gift card
     # follows — so a reader is told `expired` while the column still says pending.
     it 'reads a closed window as expired' do
-      row = create(:transfer, from_customer: giver, transferable: thing, expires_at: 1.hour.ago)
+      row = lapsed_window
 
       expect(row).to be_expired
       expect(row.display_status).to eq('expired')
@@ -58,10 +66,11 @@ RSpec.describe Spree::Transfer, type: :model do
     # not pending, which is what every 赠送中 read comes through.
     it 'leaves a closed window out of the pending scope' do
       open_window = create(:transfer, from_customer: giver, transferable: thing, expires_at: 1.day.from_now)
-      closed = create(:transfer, from_customer: giver, transferable: thing, expires_at: 1.hour.ago)
+      closed = lapsed_window
 
       expect(described_class.pending).to include(open_window)
       expect(described_class.pending).not_to include(closed)
+      expect(described_class.pending_but_lapsed(closed.transferable)).to contain_exactly(closed)
     end
 
     it 'finds what is about to lapse' do

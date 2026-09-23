@@ -30,7 +30,7 @@ module Spree
           # is still what the link points at, and its own status is the answer —
           # only a token nobody holds is a 404.
           def find_resource
-            scope.find_by!(token: params[:token])
+            scope.where(transferable_type: 'Spree::MembershipCard').find_by!(token: params[:token])
           end
         end
       end

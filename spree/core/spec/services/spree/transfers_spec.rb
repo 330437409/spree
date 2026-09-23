@@ -92,6 +92,27 @@ RSpec.describe Spree::Transfers do
       expect(give!(ungiftable)).to be_failure
       expect(Spree::Transfer.count).to eq(0)
     end
+
+    it 'refuses a window that would open already closed' do
+      expect(give!(thing, expires_in: -1.hour)).to be_failure
+      expect(Spree::Transfer.count).to eq(0)
+    end
+
+    # A window nobody claimed does not hold the thing forever: the row stays as
+    # the record of the gift, softly deleted, and the next give is free to open
+    # another.
+    it 'clears a lapsed window and gives the thing again' do
+      given = thing
+      first = give!(given, expires_in: 1.minute).value
+      first.update_columns(expires_at: 1.hour.ago)
+
+      result = give!(given)
+
+      expect(result).to be_success
+      expect(result.value).to be_pending
+      expect(first.reload).to be_deleted
+      expect(Spree::Transfer.with_deleted.count).to eq(2)
+    end
   end
 
   describe 'claiming it' do
@@ -116,6 +137,32 @@ RSpec.describe Spree::Transfers do
       expect(described_class.accept!(first, customer: recipient).value).to eq(first)
     end
 
+    # The link is a bearer capability and a bearer hands it on: the second
+    # customer is told somebody got there first rather than being answered with a
+    # success for a card they do not hold.
+    it 'refuses a claim by somebody who is not the one who claimed it' do
+      transfer = give!(thing).value
+      described_class.accept!(transfer, customer: recipient)
+
+      result = described_class.accept!(transfer.reload, customer: create(:customer))
+
+      expect(result).to be_failure
+      expect(transfer.reload.to_customer).to eq(recipient)
+    end
+
+    # The thing can be gone by the time somebody claims — an admin cleanup, a
+    # deletion request — and the claim must not report a success for it.
+    it 'refuses when the thing being claimed no longer exists' do
+      given = thing
+      transfer = give!(given).value
+      given.destroy
+
+      result = described_class.accept!(transfer.reload, customer: recipient)
+
+      expect(result).to be_failure
+      expect(transfer.reload).to be_pending
+    end
+
     it 'refuses a window that has closed' do
       transfer = give!(thing, expires_in: 1.minute).value
       transfer.update_columns(expires_at: 1.hour.ago)
@@ -130,6 +177,22 @@ RSpec.describe Spree::Transfers do
       transfer = give!(refusing).value
 
       result = described_class.accept!(transfer, customer: recipient)
+
+      expect(result).to be_failure
+      expect(transfer.reload).to be_pending
+      expect(transfer.to_customer).to be_nil
+    end
+
+    # And it holds when a caller is already inside a transaction of its own — a
+    # workflow, another domain's service. The claim runs in a savepoint for
+    # exactly this, since a plain nested transaction would join the caller's and
+    # swallow the rollback.
+    it 'moves nothing when the caller wrapped the claim in its own transaction' do
+      transfer = give!(refusing).value
+
+      result = ActiveRecord::Base.transaction do
+        described_class.accept!(transfer, customer: recipient)
+      end
 
       expect(result).to be_failure
       expect(transfer.reload).to be_pending
@@ -162,6 +225,19 @@ RSpec.describe Spree::Transfers do
       described_class.accept!(transfer, customer: recipient)
 
       expect(described_class.cancel!(transfer.reload)).to be_failure
+    end
+
+    # The gift nobody opened: past its date but still `pending`, which is the
+    # only state from which it can be taken back at all — and taking it back is
+    # what stops it holding the thing.
+    it 'takes back a window whose date has passed' do
+      transfer = give!(thing, expires_in: 1.minute).value
+      transfer.update_columns(expires_at: 1.hour.ago)
+
+      result = described_class.cancel!(transfer.reload)
+
+      expect(result).to be_success
+      expect(result.value).to be_canceled
     end
   end
 end

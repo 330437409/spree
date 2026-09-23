@@ -43,6 +43,7 @@ module Spree
 
     validates :to_phone, presence: true
     validates :expires_at, presence: true
+    validate :expires_at_lies_ahead, on: :create
     validate :transferable_answers_the_contract
     validate :one_pending_window
 
@@ -51,6 +52,11 @@ module Spree
     # is not one anybody may act on. The stored status is still `pending`; the
     # date is what says whether it still means anything.
     scope :pending, -> { where(status: 'pending').where(expires_at: Time.current..) }
+    # Still `pending` and past its date: dead, but still holding the thing it
+    # carries, because the unique index counts rows and cannot be filtered by the
+    # clock (`now()` is not immutable, so PostgreSQL refuses it in a predicate).
+    # What a new give clears, and what a giver may close by hand.
+    scope :pending_but_lapsed, ->(transferable) { where(transferable: transferable, status: 'pending').where(expires_at: ..Time.current) }
     scope :for_recipient, ->(customer) { where(to_customer_id: customer&.id) }
     scope :for_giver, ->(customer) { where(from_customer_id: customer&.id) }
     scope :expiring_before, ->(time) { where(status: 'pending').where(expires_at: ..time) }
@@ -68,6 +74,16 @@ module Spree
 
     private
 
+    # A window that opens already closed is a gift nobody can ever claim, and it
+    # would hold the thing until somebody cleared it by hand. Read when it opens,
+    # not afterwards: a window is expected to outlive its own date, and closing
+    # one that has is exactly what 作废 does.
+    def expires_at_lies_ahead
+      return if expires_at.nil? || expires_at > Time.current
+
+      errors.add(:expires_at, :in_the_past, message: Spree.t('transfers.errors.expires_at_in_the_past'))
+    end
+
     def transferable_answers_the_contract
       return if transferable.nil?
 
@@ -84,8 +100,11 @@ module Spree
     def one_pending_window
       return if transferable.nil? || !pending?
 
+      # Live windows only, which is the same rule the Give service enforces by
+      # clearing lapsed rows: a window whose date has passed does not hold the
+      # thing for the purpose of this validation.
       waiting = self.class.where(transferable_type: transferable_type, transferable_id: transferable_id,
-                                 status: 'pending').where.not(id: id)
+                                 status: 'pending').where(expires_at: Time.current..).where.not(id: id)
       return unless waiting.exists?
 
       errors.add(:transferable, :already_transferring,

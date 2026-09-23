@@ -19,7 +19,13 @@ module Spree
         refusal = nil
         invalid = false
 
-        Spree::Transfer.transaction do
+        # A savepoint rather than the enclosing transaction: a caller — a workflow,
+        # another domain's service — may already be inside one, and a plain
+        # `transaction` would join it and swallow the rollback below, leaving the
+        # row behind after the thing refused it.
+        Spree::Transfer.transaction(requires_new: true) do
+          release_lapsed_windows(transferable)
+
           transfer = Spree::Transfer.new(
             store: transferable.try(:store),
             transferable: transferable,
@@ -46,6 +52,19 @@ module Spree
         # Two taps that raced past the validation: the index refused the second,
         # and the answer is the same one the validation would have given.
         failure(transfer, Spree.t('transfers.errors.already_transferring'))
+      end
+
+      private
+
+      # A window whose date has passed is dead but still holds the thing: the
+      # unique index counts rows, and a partial index cannot be filtered by the
+      # clock — `now()` is not immutable, so PostgreSQL refuses it. So the next
+      # give clears the lapsed ones, softly, which leaves the record of the gift
+      # nobody claimed where it was.
+      def release_lapsed_windows(transferable)
+        return if transferable.nil?
+
+        Spree::Transfer.pending_but_lapsed(transferable).find_each(&:destroy)
       end
     end
   end

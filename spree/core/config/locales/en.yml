@@ -681,6 +681,9 @@ en:
         not_transferable: "%{type} cannot be given away"
         already_transferring: is already on its way to somebody
         not_open: this gift is no longer on its way to anybody
+        already_claimed: somebody else already claimed this gift
+        transferable_gone: what this gift carried no longer exists
+        expires_at_in_the_past: must be in the future
     abbreviation: Abbreviation
     accept: Accept
     acceptance_status: Acceptance status
