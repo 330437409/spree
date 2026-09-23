@@ -1133,6 +1133,20 @@ Plan: `6.1-membership-tiers-and-rights.md`, step 3's tail and the core change st
 
 **Corrected after review (2026-09-22).** Three of these were wrong in the first cut and the plan now carries each as a constraint. **The hook is an enrichment, not a gate:** a handler that raises is reported and contributes nothing, because the earning is money the seller is owed and no redelivery comes back for a run that unwound after writing it — the accepted gap above is joined by its mirror image, a promise nobody could read leaving no subsidy. **The refund path asked for a figure it did not have** on an order whose earning is worth nothing — a state the earning's own spec covers — so a funded order's subsidy stayed with the seller while the job failed on every retry; the order's own ratio answers there, as it does for a refund that names nothing. **Line item ids are strings on both sides**, never cast to integers: a store keyed by anything else collapses every key onto zero and credits the whole reduction, including the commission the platform did not charge. Two incidents of the same lesson: a key that is *almost* always an integer is a string.
 
+## 2026-09-23 (the card and the term, corrected) — What a review of the first cut found
+
+The card/term work below landed, then a correctness pass over it found six things the first cut got wrong. Each is now a rule in the plan's constraints, because every one of them is the kind of mistake a later reader would make again.
+
+**A void took away what another card paid for.** Two cards of one tier share a single term — the second extends the first's, by design — and the first cut ended that shared term on a void, leaving the other card active with nothing to activate. A void now gives back exactly what its own card granted (`granted_days`, recorded when the card activated) and ends the term only when no other card holds it. **A card whose term had not started could not be voided at all**: the cancellation wrote an end before the start, the validation refused it, and the whole void rolled back — leaving the card active and its waiting term to start after the operator had voided it. The cut is now clamped at the window's start.
+
+**A card bought under a tier held with no end was consumed for nothing.** The waiting term was written with no start and no end, invisible to the sweep and blocking the tier forever. It is refused now, and the card stays dormant with the customer's money unspent — the accepted consequence recorded below ("waits for an operator") was not a wait at all.
+
+**A renewal could run from a lapsed end, and could fight a successor.** Renewing from the end date spent the tier's grace days out of what the customer had just paid for and left the term `past_due`, where the tier's own auto-renew never fires again; and a term with a successor already waiting to replace it renewed anyway, leaving a phantom tier that kept extending itself for a customer who had moved on. Renewals now run from now, and a waiting successor stops them.
+
+**One orphaned term could stall the whole sweep.** Spree adds no foreign keys, so a term outlives a deleted customer, and dereferencing one raised — aborting the hourly walk at that row, every hour, for every term behind it. The sweep leaves such a row alone and carries on past any row it cannot advance.
+
+**And a retired tier's group stopped counting as a tier's group**, because the settings row is soft-deleted while the group it hung from is not — so ending a member's term left them in a group the catalogue no longer prices. The read now includes retired tiers: the group a term is ending is a tier's group whether or not the tier is still sold.
+
 ## 2026-09-23 (the card and the term) — Two rows for one membership, and the sweep that keeps them and the tier's group in step
 
 Plan: `6.1-membership-tiers-and-rights.md`, steps 4 and 5 — the card, the term, and the convergence with `spree_crm`.
