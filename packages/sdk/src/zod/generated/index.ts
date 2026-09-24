@@ -117,6 +117,8 @@ export { StoreOrderCancellationReasonSchema, type StoreOrderCancellationReason }
 export { StorePricePreviewSchema, type StorePricePreview } from './StorePricePreview';
 export { StorePricePreviewItemSchema, type StorePricePreviewItem } from './StorePricePreviewItem';
 export { StoreShareSchema, type StoreShare } from './StoreShare';
+export { SurprisePacketSchema, type SurprisePacket } from './SurprisePacket';
+export { SurprisePacketCouponSchema, type SurprisePacketCoupon } from './SurprisePacketCoupon';
 export { TaxIdentifierSchema, type TaxIdentifier } from './TaxIdentifier';
 export { TaxLineSchema, type TaxLine } from './TaxLine';
 export { TransferSchema, type Transfer } from './Transfer';

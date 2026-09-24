@@ -24,6 +24,10 @@ Spree::Core::Engine.add_routes do
         # anything out.
         resources :membership_savings, only: [:index]
 
+        # The coupons a tier hands over, asked about a package the customer does
+        # not hold yet — the settlement page shows them before the purchase.
+        resource :membership_surprise_packet, only: [:show], controller: 'membership_surprise_packet'
+
         # What a settled purchase released, read back off the purchase: the
         # purchase is the scenario plan's row and the card is this gem's, so only
         # this nested read is drawn here

@@ -57,4 +57,5 @@ FactoryBot.define do
   factory :member_price_right, parent: :membership_right, class: 'Spree::MembershipRights::MemberPrice'
   factory :birthday_right, parent: :membership_right, class: 'Spree::MembershipRights::BirthdayDoubleIntegral'
   factory :give_gift_right, parent: :membership_right, class: 'Spree::MembershipRights::GiveGift'
+  factory :surprise_right, parent: :membership_right, class: 'Spree::MembershipRights::SurpriseRedEnvelope'
 end
