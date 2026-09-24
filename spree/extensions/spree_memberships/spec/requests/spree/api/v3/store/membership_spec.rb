@@ -73,6 +73,17 @@ RSpec.describe 'the membership reads', type: :request do
       )
     end
 
+    # The card is refused at activation, and the money is already gone by then.
+    it 'warns that a term held with no end refuses the purchase' do
+      held = create(:membership, customer: user, customer_group: another_tier.customer_group, ends_at: nil)
+
+      get_checks
+
+      expect(response.parsed_body['checks']).to contain_exactly(
+        'kind' => 'open_ended', 'tier_name' => held.customer_group.name, 'held_until' => nil
+      )
+    end
+
     it 'requires a signed-in customer' do
       get '/api/v3/store/membership_purchase_checks', headers: api_key_headers,
                                                       params: { tier_id: tier.prefixed_id }
@@ -90,8 +101,13 @@ RSpec.describe 'the membership reads', type: :request do
       expect(response).to have_http_status(:not_found)
     end
 
-    it 'answers 404 for a tier nobody sells' do
-      get '/api/v3/store/membership_purchase_checks', headers: headers, params: { tier_id: 'vip_nonsense' }
+    # A well-formed id of a tier this store no longer sells, so that what is
+    # under test is the scoping rather than the prefix the id was minted with.
+    it 'answers 404 for a tier nobody sells any more' do
+      retired = create(:membership_tier_setting, customer_group: create(:customer_group, store: store))
+      retired.destroy
+
+      get_checks(retired)
 
       expect(response).to have_http_status(:not_found)
     end

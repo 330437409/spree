@@ -26,7 +26,8 @@ module Spree
           end
 
           def serialized_checks
-            checks = Spree::MembershipKinds::Vip.purchase_checks(tier: tier, customer: current_user)
+            checks = Spree::MembershipKinds::Vip.purchase_checks(tier: tier, customer: current_user,
+                                                                 store: current_store)
 
             checks.map do |check|
               Spree::Api::V3::MembershipPurchaseCheckSerializer.new(check, params: serializer_params).to_h

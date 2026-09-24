@@ -61,6 +61,10 @@ module Spree
     #
     # @param customer [Object]
     # @param customer_group_id [String] the tier the incoming term is for
+    # @param store [Spree::Store] the store the incoming term belongs to. A
+    #   customer is installation-wide and a term is not, so a term they hold
+    #   against another store's tier is that store's business: it must not
+    #   decide what this store's purchase does, nor be named to its buyer
     # @return [Hash] `:same_tier` — the live term of this tier the incoming one
     #   extends instead of waiting; `:waits_behind` — the live term it queues
     #   behind, which is the last of them to end, because a customer who bought
@@ -68,11 +72,13 @@ module Spree
     #   end, which is a person's decision rather than a clock's and refuses the
     #   incoming one outright. The last two are mutually exclusive, and both are
     #   nil when nothing is in the way.
-    def self.arrival_for(customer:, customer_group_id:)
+    def self.arrival_for(customer:, customer_group_id:, store:)
       # Loaded once and answered in Ruby: all three questions are asked of the
       # same handful of rows — one live term per tier at most — and asking the
-      # database for each would be three round trips for one answer.
-      held = live.for_customer(customer).to_a
+      # database for each would be three round trips for one answer. Ordered,
+      # because which of several no-end terms is named should not depend on
+      # what the adapter happened to return first.
+      held = live.for_store(store).for_customer(customer).order(:id).to_a
       waits_behind = held.select(&:ends_at).max_by(&:ends_at)
 
       {

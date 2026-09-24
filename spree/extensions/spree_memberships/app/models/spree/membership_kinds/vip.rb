@@ -77,10 +77,13 @@ module Spree
       #
       # @param tier [Spree::MembershipTierSetting] the package being bought
       # @param customer [Object] the buyer
+      # @param store [Spree::Store] the store selling it, whose terms are the
+      #   ones this warning is about
       # @return [Array<Hash>] empty when there is nothing to warn about
-      def self.purchase_checks(tier:, customer:)
+      def self.purchase_checks(tier:, customer:, store:)
         arrival = Spree::Membership.arrival_for(customer: customer,
-                                                customer_group_id: tier.customer_group_id)
+                                                customer_group_id: tier.customer_group_id,
+                                                store: store)
 
         # The same tier's own live term is extended rather than waited out: the
         # buyer keeps what they hold and no right of theirs changes.
@@ -134,9 +137,13 @@ module Spree
         # set is their data, so the client renders the name rather than mapping
         # a key of its own.
         #
+        # Read from the term's group rather than through the settings row, which
+        # is soft-deleted when the operator retires a tier: a member holding a
+        # term of one would otherwise be warned about a nameless tier.
+        #
         # @return [String, nil]
         def tier_name_of(term)
-          term.tier_setting&.name
+          term.customer_group&.name
         end
 
         # @param context [Hash] the purchase's payload, whose keys arrive as

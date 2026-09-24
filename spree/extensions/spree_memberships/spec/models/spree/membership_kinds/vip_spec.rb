@@ -74,7 +74,7 @@ RSpec.describe Spree::MembershipKinds::Vip do
   # the terms a customer already holds do to the one they are about to buy.
   describe 'the pre-purchase warning' do
     def checks(for_tier = tier)
-      described_class.purchase_checks(tier: for_tier, customer: buyer)
+      described_class.purchase_checks(tier: for_tier, customer: buyer, store: store)
     end
 
     it 'warns about nothing when the customer holds nothing' do
@@ -128,6 +128,28 @@ RSpec.describe Spree::MembershipKinds::Vip do
                           status: 'expired', starts_at: 2.days.ago, ends_at: 1.day.ago)
 
       expect(checks).to eq([])
+    end
+
+    # A customer is installation-wide and a term is not. What they hold in
+    # another store is that store's business: it must not decide what this
+    # store's purchase does, nor be named to this store's buyer.
+    it 'ignores a term the customer holds against another store’s tier' do
+      elsewhere = create(:membership_tier_setting, customer_group: create(:customer_group, store: create(:store)))
+      create(:membership, store: elsewhere.store, customer: buyer,
+                          customer_group: elsewhere.customer_group, ends_at: 3.months.from_now)
+
+      expect(checks).to eq([])
+    end
+
+    # A retired tier soft-deletes its settings row and leaves its group — so the
+    # group is what a name is read from, or the client would render its warning
+    # around a nameless tier.
+    it 'names a tier the operator has retired since the term was granted' do
+      held = create(:membership, customer: buyer, customer_group: another_tier.customer_group,
+                                 ends_at: 3.months.from_now)
+      held.tier_setting.destroy
+
+      expect(checks).to contain_exactly(include('tier_name' => held.customer_group.name))
     end
   end
 

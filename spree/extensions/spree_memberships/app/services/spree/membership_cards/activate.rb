@@ -109,7 +109,8 @@ module Spree
         return @membership = card.membership if card.membership.present?
 
         arrival = Spree::Membership.arrival_for(customer: entitled_customer,
-                                                customer_group_id: card.customer_group_id)
+                                                customer_group_id: card.customer_group_id,
+                                                store: card.store)
 
         if arrival[:same_tier].present?
           @membership = extend_term(arrival[:same_tier])
