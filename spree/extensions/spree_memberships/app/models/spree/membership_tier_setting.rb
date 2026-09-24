@@ -53,6 +53,7 @@ module Spree
     validates :customer_group_id, uniqueness: { conditions: -> { where(deleted_at: nil) } }
     validates :validity_days, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
     validates :threshold, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+    validate :preferences_must_fit_their_declared_types
 
     # The rows the buy page's savings popup renders, in the order the client
     # lays its icons out: what a member saves on the order, the coupons the tier
@@ -131,10 +132,14 @@ module Spree
     # its own renders 0.06 as "0.6e-1", which is not a number to print beside a
     # currency sign.
     #
+    # A value that is not a number is answered nil rather than raised over: the
+    # validation below refuses one where it is written, and a row written before
+    # it existed is still not a reason to fail the whole popup.
+    #
     # @return [String, nil]
     def saving_month_amount
       amount = preferred_saving_month_amount
-      return if amount.blank?
+      return unless number_like?(amount)
 
       BigDecimal(amount.to_s).to_s('F')
     end
@@ -175,6 +180,41 @@ module Spree
 
     before_save :apply_member_discount
     after_destroy :switch_off_member_price
+
+    # A wholesale `preferences` write — which is how the admin API delivers them
+    # — goes past the typecast a preference's own writer does, so a value of the
+    # wrong shape reaches the column and the read that renders it then answers
+    # something its own contract forbids: a title that is an object, or a figure
+    # that cannot be turned into a number at all. Refused where an operator
+    # writes it rather than where a member meets it.
+    def preferences_must_fit_their_declared_types
+      self.class.preference_schema.each do |field|
+        value = preferences[field[:key]]
+        next if value.blank? || fits_declared_type?(field[:type], value)
+
+        errors.add(:preferences, :invalid)
+        return
+      end
+    end
+
+    # @param type [Symbol] a declared preference type
+    # @param value [Object]
+    # @return [Boolean] whether the read that renders it can make sense of the
+    #   value. Only the types these preferences declare are answered for, and one
+    #   that arrives as text is still a decimal if it reads as a number — that is
+    #   what a JSON or form client sends.
+    def fits_declared_type?(type, value)
+      case type
+      when :string then value.is_a?(String)
+      when :decimal then number_like?(value)
+      else true
+      end
+    end
+
+    # @return [Boolean] whether a value written into a decimal preference is one
+    def number_like?(value)
+      value.is_a?(Numeric) || (value.is_a?(String) && value.strip.match?(/\A-?\d+(\.\d+)?\z/))
+    end
 
     # The member price lives on a catalogue and its owned list, so writing it is
     # a service rather than a column (Design Details, "Member pricing is the
