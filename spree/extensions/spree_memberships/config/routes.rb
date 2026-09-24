@@ -26,6 +26,9 @@ Spree::Core::Engine.add_routes do
           # The customer's own rung and what it carries.
           resource :membership, only: [:show], controller: 'membership'
 
+          # The banner their member centre opens with, resolved from their tier.
+          resource :membership_banner, only: [:show], controller: 'membership_banner'
+
           # What a member claims of a right — the right is the tier's, and the
           # claim is theirs — and 立即领取 is the only one so far.
           resources :membership_rights, only: [] do
@@ -63,6 +66,8 @@ Spree::Core::Engine.add_routes do
         # the group the operator already manages.
         resources :customer_groups, only: [] do
           resource :tier_setting, only: [:show, :create, :update], controller: 'customer_groups/tier_settings'
+          # The banner that tier's members see: a group has at most one.
+          resource :banner, only: [:show, :create, :update], controller: 'customer_groups/banners'
           resources :membership_rights, only: [:index, :show, :create, :update, :destroy],
                     controller: 'customer_groups/membership_rights'
         end

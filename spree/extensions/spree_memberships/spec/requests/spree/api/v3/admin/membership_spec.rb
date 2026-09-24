@@ -8,6 +8,39 @@ RSpec.describe 'the membership operator reads', type: :request do
   let(:group) { create(:customer_group, store: store) }
 
 
+  # The banner a tier's members see: a group has at most one, so it is written
+  # and read the way the group's settings row is.
+  describe 'the tier banner' do
+    it 'writes it and answers what it wrote' do
+      post "/api/v3/admin/customer_groups/#{group.prefixed_id}/banner", headers: headers,
+           params: { name: '会员中心', pic: 'https://cdn.example.com/banner.png',
+                     areas: [{ area_rem: 'left: 1rem;top: 2rem;', link: '/pages/member/index' }] }
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body).to include('name' => '会员中心', 'pic' => 'https://cdn.example.com/banner.png')
+      expect(response.parsed_body['areas'].first).to include(
+        'area_rem' => 'left: 1rem;top: 2rem;', 'link' => '/pages/member/index'
+      )
+    end
+
+    it 'answers 404 while a tier has no banner' do
+      get "/api/v3/admin/customer_groups/#{group.prefixed_id}/banner", headers: headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    # An operator changes the picture or a target without touching the rest.
+    it 'updates the one it already has' do
+      create(:membership_banner, customer_group: group)
+
+      patch "/api/v3/admin/customer_groups/#{group.prefixed_id}/banner", headers: headers,
+            params: { name: '新名字' }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['name']).to eq('新名字')
+    end
+  end
+
   describe 'GET /api/v3/admin/membership_rights/types' do
     it 'answers the registry, each kind with the settings it declares' do
       get '/api/v3/admin/membership_rights/types', headers: headers

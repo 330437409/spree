@@ -7,6 +7,7 @@ RSpec.describe 'the membership permission scope', type: :model do
   it 'declares the gem\'s models under the loyalty group' do
     expect(Spree.permissions.scope_for_resource(Spree::MembershipRight)&.name).to eq(:memberships)
     expect(Spree.permissions.scope_for_resource(Spree::MembershipTierSetting)&.name).to eq(:memberships)
+    expect(Spree.permissions.scope_for_resource(Spree::MembershipBanner)&.name).to eq(:memberships)
 
     scope = Spree.permissions.scopes.find { |candidate| candidate.name == :memberships }
     expect(scope.group).to eq(:loyalty)
