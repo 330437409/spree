@@ -136,6 +136,18 @@ RSpec.describe Spree::Memberships::MemberCentre, type: :model do
         expect(centre.birthday).to include('multiplier' => nil)
       end
     end
+
+    # A draft grants nothing yet, so its rate is nobody's promise: the multiplier
+    # the ledger pays by is folded over published rights alone.
+    it 'answers no rate for a birthday right an operator has not published' do
+      tier
+      Spree::Memberships::AssignTier.call(customer: customer, customer_group: group)
+      create(:birthday_right, customer_group: group, published: false, preferences: { multiplier: 4 })
+
+      Timecop.freeze(Time.zone.local(2026, 5, 20, 10)) do
+        expect(centre.birthday).to include('multiplier' => nil)
+      end
+    end
   end
 
 end

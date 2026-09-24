@@ -26,14 +26,17 @@ module Spree
 
       # The day in the customer's own words, **rendered from the weekday rather
       # than typed**: an operator who moves the day to Thursday must not leave the
-      # page saying 每周三. A weekday nobody declares — a row written past the model
-      # — is no day to print, so it renders nothing rather than the missing-copy
-      # markup a translation library would hand a customer.
+      # page saying 每周三. Two things have no words, and it answers nothing for
+      # both — a weekday nobody declares, which is a row written past the model, and
+      # a language nobody has written, where a translation library would otherwise
+      # hand a customer its own missing-copy notice.
       #
       # @return [String, nil]
       def line
         weekday = right.weekday
-        Spree.t("memberships.weekdays.#{weekday}") if weekday
+        return if weekday.nil?
+
+        Spree.t("memberships.weekdays.#{weekday}", default: '').presence
       end
 
       # @return [String, nil] the operator's own name for the day

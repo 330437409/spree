@@ -92,7 +92,7 @@ module Spree
       #   nobody declares: a row written past the model is not a day that comes
       #   round, and nothing renders it as one
       def weekday
-        value = preferred_weekday.to_s.downcase
+        value = preferred_weekday.to_s.strip.downcase
         value if WEEKDAYS.include?(value)
       end
 
@@ -139,7 +139,7 @@ module Spree
       # waiting and the page keeps saying a day that the calendar never reaches.
       # Refused where it is written.
       def weekday_must_be_a_day_of_the_week
-        return if WEEKDAYS.include?(preferred_weekday.to_s.downcase)
+        return unless weekday.nil?
 
         errors.add(:preferences, :invalid)
       end
@@ -157,9 +157,15 @@ module Spree
       end
 
       # @return [BigDecimal, nil] a money preference, or nil when nobody set one:
-      #   zero and below are not prices, and an unset preference is no constraint
+      #   zero and below are not prices, and a value nobody can read is answered
+      #   as no constraint rather than raised over — the check above refuses one
+      #   where it is written, and a row written past that is still not a reason
+      #   to fail a member's page
       def money_preference(key)
-        amount = public_send(:"preferred_#{key}").to_d
+        value = public_send(:"preferred_#{key}")
+        return unless number_like?(value)
+
+        amount = value.to_d
         amount if amount.positive?
       end
     end

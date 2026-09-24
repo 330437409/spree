@@ -146,10 +146,14 @@ module Spree
       # about the birthday: a kind is what a right *is*, and a reader answering a
       # kind's own question asks that kind rather than whatever applies today.
       #
+      # Published only, like every other read of a right: a draft grants nothing
+      # yet, and reporting its rate would promise a rate the ledger does not pay.
+      #
       # @return [Spree::MembershipRight, nil]
       def birthday_right
         rights.detect do |candidate|
           candidate.customer_group_id == tier.customer_group_id &&
+            candidate.published? &&
             candidate.is_a?(Spree::MembershipRights::BirthdayDoubleIntegral)
         end
       end

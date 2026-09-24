@@ -180,9 +180,15 @@ module Spree
     # non-positive multiplier, and a client shown 0倍 or -2倍 would be reading a
     # number that never applied.
     #
+    # A rate nobody can read is the ordinary one rather than an exception: the
+    # setting is refused where it is written, and a row written past that — a
+    # console, an import — is still not a reason to fail a member's page.
+    #
     # @param value [Object] whatever the kind's own preference holds
     # @return [Integer]
     def floored_multiplier(value)
+      return 1 unless number_like?(value)
+
       amount = value.to_i
       amount > 1 ? amount : 1
     end

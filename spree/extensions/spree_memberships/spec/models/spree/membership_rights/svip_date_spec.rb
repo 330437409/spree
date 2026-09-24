@@ -56,6 +56,26 @@ RSpec.describe Spree::MembershipRights::SvipDate, type: :model do
     expect(day(rights_red_money: 0)).not_to be_valid
   end
 
+  # A row written past the model — a console, an import — holds a value nobody can
+  # read, and the reader answers for the day it can rather than raising over it.
+  it 'answers the ordinary rate and no money for settings nobody can read' do
+    right = create(:svip_date_right, customer_group: group, preferences: {})
+    right.update_columns(preferences: { weekday: 'wednesday', multiplier: { 'a' => 1 },
+                                        minimum_amount: %w[1 2], rights_red_money: true })
+
+    expect(right.reload.multiplier).to eq(1)
+    expect(right.minimum_amount).to be_nil
+    expect(right.red_money).to be_nil
+  end
+
+  # The check refuses the same values where they are written, and refusing them is
+  # an answer rather than an exception.
+  it 'refuses settings nobody can read without raising' do
+    expect(day(minimum_amount: { 'a' => 1 })).not_to be_valid
+    expect(day(multiplier: { 'a' => 1 })).not_to be_valid
+    expect(day(weekday: '')).not_to be_valid
+  end
+
   it 'answers no threshold and no red packet for one that was left unset' do
     right = day({})
 
