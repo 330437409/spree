@@ -10,6 +10,7 @@ module Spree
     has_prefix_id :mtier
 
     include Spree::Metadata
+    include Spree::PreferenceSchema
 
     acts_as_paranoid
 
@@ -38,6 +39,11 @@ module Spree
     # itself when it ends, and how long it may sit lapsed before it leaves the
     # tier's group.
     normalizes :sku, with: ->(value) { value.to_s.strip.presence }
+    # The declared preferences are read by their own key, and that key is a
+    # symbol: a write arriving from the API carries strings, and a string-keyed
+    # row is one every reader answers with the default — silently. The model owns
+    # the bridge, so both spellings land on the one the readers use.
+    normalizes :preferences, with: ->(value) { value.to_h.deep_symbolize_keys }
 
     validates :rank, presence: true, numericality: { only_integer: true }
     validates :grace_days, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
@@ -47,6 +53,22 @@ module Spree
     validates :customer_group_id, uniqueness: { conditions: -> { where(deleted_at: nil) } }
     validates :validity_days, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
     validates :threshold, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+
+    # The rows the buy page's savings popup renders, in the order the client
+    # lays its icons out: what a member saves on the order, the coupons the tier
+    # carries, the days it adds and the gift it hands over. Anything else the
+    # popup shows is one figure and one paragraph of rules.
+    SAVING_SLOTS = %w[order coupon days gift].freeze
+
+    SAVING_SLOTS.each do |slot|
+      preference :"saving_#{slot}_title", :string, default: ''
+      preference :"saving_#{slot}_content", :string, default: ''
+    end
+    preference :saving_rules, :string, default: ''
+    # What the operator says a member saves in a month. Nothing computes it: what
+    # a member saves is their basket times this tier's member price, and neither
+    # is known before they spend.
+    preference :saving_month_amount, :decimal, default: 0
 
     scope :ordered, -> { order(:rank, :id) }
     scope :for_store, ->(store) { joins(:customer_group).where(spree_customer_groups: { store_id: store&.id }) }
@@ -87,6 +109,20 @@ module Spree
     # @return [ActiveSupport::Duration, nil]
     def grace_period
       grace_days.to_i.positive? ? grace_days.to_i.days : nil
+    end
+
+    # The savings popup's rows, in `SAVING_SLOTS` order. A row nobody has
+    # written is answered blank rather than left out: the client places its icons
+    # by position, so a shorter list would shift them.
+    #
+    # @return [Array<Hash{String => String}>]
+    def saving_rows
+      SAVING_SLOTS.map do |slot|
+        {
+          'title' => public_send(:"preferred_saving_#{slot}_title"),
+          'content' => public_send(:"preferred_saving_#{slot}_content")
+        }
+      end
     end
 
     # The list this tier prices through: the catalogue's own, when the
