@@ -29,6 +29,22 @@ RSpec.describe Spree::MembershipBanner, type: :model do
     expect(banner(areas: [{ 'area_rem' => 'left: 1rem;', 'link' => '/a' }])).to be_valid
   end
 
+  # The client scales the style by replacing in it, so a coordinate that is not
+  # a string is a target it cannot place.
+  it 'refuses a coordinate that is not written as a style' do
+    expect(banner(areas: [{ 'area_rem' => 1, 'link' => '/a' }])).not_to be_valid
+    expect(banner(areas: [{ 'area_rem' => 'left: 1rem;', 'link' => 2 }])).not_to be_valid
+  end
+
+  # An explicit nil is an empty list rather than a column the model calls valid
+  # and the database then refuses.
+  it 'reads a nil as no targets at all' do
+    row = banner(areas: nil)
+    row.save!
+
+    expect(row.areas).to eq([])
+  end
+
   it 'resolves the banner of the customer’s own tier' do
     row = banner(name: '会员中心')
     row.save!

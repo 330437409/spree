@@ -93,8 +93,8 @@ RSpec.describe 'the membership reads', type: :request do
       )
     end
 
-    # Nothing to show is not an error: the page has no banner, and the client
-    # reads a falsy answer as one.
+    # Nothing to show is not an error: the page has no banner, and a body that
+    # is not an object is how a client reads that.
     it 'answers nothing for a customer in no tier' do
       banner
 
@@ -110,6 +110,27 @@ RSpec.describe 'the membership reads', type: :request do
       get '/api/v3/store/customers/me/membership_banner', headers: headers
 
       expect(response.parsed_body).to be_nil
+    end
+
+    # The banner of another tier in this same store is not the customer's.
+    it 'answers nothing for a banner of a tier they are not in' do
+      banner
+
+      get '/api/v3/store/customers/me/membership_banner', headers: headers
+
+      expect(response.parsed_body).to be_nil
+    end
+
+    # A row written past the model — a console, an import — is left out of the
+    # answer rather than rendered as a target nobody can place.
+    it 'leaves out a target that is not a target at all' do
+      banner
+      group.add_customers([user.id])
+      banner.update_column(:areas, '{"area_rem":"left: 1rem;"}')
+
+      get '/api/v3/store/customers/me/membership_banner', headers: headers
+
+      expect(response.parsed_body['areas']).to eq([])
     end
   end
 

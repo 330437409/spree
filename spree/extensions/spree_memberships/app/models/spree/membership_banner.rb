@@ -26,7 +26,10 @@ module Spree
     # `ActionController::Parameters`, and a JSON column must hold plain data.
     attribute :areas, default: []
 
-    normalizes :areas, with: ->(areas) {
+    # `apply_to_nil` because an explicit nil would otherwise skip the
+    # normalizer, defeat the default, and be caught by the column's NOT NULL
+    # after the model had already called the record valid.
+    normalizes :areas, apply_to_nil: true, with: ->(areas) {
       Array.wrap(areas).map { |area| area.respond_to?(:to_h) ? area.to_h : area }
     }
 
@@ -68,7 +71,9 @@ module Spree
 
       area = area.with_indifferent_access
 
-      area[:area_rem].present? && area[:link].present? && (area.keys.map(&:to_s) - AREA_KEYS).empty?
+      area[:area_rem].is_a?(String) && area[:area_rem].present? &&
+        area[:link].is_a?(String) && area[:link].present? &&
+        (area.keys.map(&:to_s) - AREA_KEYS).empty?
     end
   end
 end

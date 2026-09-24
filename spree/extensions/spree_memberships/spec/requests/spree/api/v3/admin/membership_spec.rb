@@ -23,6 +23,35 @@ RSpec.describe 'the membership operator reads', type: :request do
       )
     end
 
+    # Permitted parameters drop an `areas` they cannot permit, so a payload that
+    # named targets and sent something else would be saved as a banner with
+    # none: refused rather than answered 201.
+    it 'refuses targets that are not a list' do
+      post "/api/v3/admin/customer_groups/#{group.prefixed_id}/banner", headers: headers,
+           params: { pic: 'https://cdn.example.com/banner.png', areas: 'oops' }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(Spree::MembershipBanner.count).to eq(0)
+
+      post "/api/v3/admin/customer_groups/#{group.prefixed_id}/banner", headers: headers,
+           params: { pic: 'https://cdn.example.com/banner.png', areas: %w[a b] }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(Spree::MembershipBanner.count).to eq(0)
+    end
+
+    # A group of another store is not this store's to write, and its own banner
+    # is not touched.
+    it 'answers 404 for a group of another store' do
+      elsewhere = create(:customer_group, store: create(:store))
+
+      post "/api/v3/admin/customer_groups/#{elsewhere.prefixed_id}/banner", headers: headers,
+           params: { pic: 'https://cdn.example.com/banner.png' }
+
+      expect(response).to have_http_status(:not_found)
+      expect(Spree::MembershipBanner.count).to eq(0)
+    end
+
     it 'answers 404 while a tier has no banner' do
       get "/api/v3/admin/customer_groups/#{group.prefixed_id}/banner", headers: headers
 

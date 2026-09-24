@@ -7,8 +7,9 @@ module Spree
           # customer is in, and the tap targets over it.
           #
           # A customer in no tier, or in a tier with no banner, is answered
-          # `null` rather than refused — the page has nothing to show, which is
-          # not an error — and the client reads a falsy answer as no banner.
+          # `null` rather than refused: the page has nothing to show, which is
+          # not an error, and a body that is not an object is how a client reads
+          # "no banner".
           class MembershipBannerController < Store::BaseController
             prepend_before_action :require_authentication!
 
