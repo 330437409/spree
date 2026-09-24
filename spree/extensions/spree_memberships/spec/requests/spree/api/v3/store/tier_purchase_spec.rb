@@ -16,9 +16,10 @@ RSpec.describe 'buying a term', type: :request do
 
   # The purchase the last `buy` made, paid for — which is when the card exists.
   # The frame's session-completed subscriber does this in production, called here
-  # because the suite disables events.
-  def settle
-    buy
+  # because the suite disables events. It makes no request of its own, so the
+  # create's response is still the one to read afterwards.
+  def settle(**context)
+    buy(**context)
     purchase = Spree::ScenarioOrder.find_by_prefix_id(response.parsed_body['id'])
     Spree::PaymentSessions::Complete.call(payment_session: purchase.payment_session)
     Spree::ScenarioOrders::Settle.call(scenario_order: purchase)
@@ -28,15 +29,11 @@ RSpec.describe 'buying a term', type: :request do
   # One call buys it — no cart, no line item, no address — and settling it issues
   # the card, which is the whole of what this kind hands over.
   it 'issues a dormant card once the purchase is paid' do
-    buy(purpose: 'gift')
+    purchase = settle(purpose: 'gift')
 
     expect(response).to have_http_status(:created)
     expect(response.parsed_body).to include('kind' => 'vip', 'status' => 'paying', 'amount' => '365.0')
     expect(response.parsed_body['payload']).to include('purpose' => 'gift')
-
-    purchase = Spree::ScenarioOrder.find_by_prefix_id(response.parsed_body['id'])
-    Spree::PaymentSessions::Complete.call(payment_session: purchase.payment_session)
-    Spree::ScenarioOrders::Settle.call(scenario_order: purchase)
 
     card = Spree::MembershipCard.find_by(scenario_order: purchase)
     expect(card).to be_dormant

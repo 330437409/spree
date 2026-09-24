@@ -13,9 +13,11 @@ Spree::Core::Engine.add_routes do
         resources :membership_rights, only: [:index]
         resources :membership_tiers, only: [:index]
 
-        # What a settled purchase released, read back off the purchase. The
-        # purchase itself is the scenario plan's row, so only this nested read is
-        # drawn here (docs/plans/6.1-scenario-purchases.md).
+        # What a settled purchase released, read back off the purchase: the
+        # purchase is the scenario plan's row and the card is this gem's, so only
+        # this nested read is drawn here
+        # (docs/plans/6.1-membership-tiers-and-rights.md, and the ruling in
+        # fork-decisions.md).
         resources :scenario_orders, only: [] do
           resource :membership_card, only: [:show], controller: 'scenario_orders/membership_cards'
         end

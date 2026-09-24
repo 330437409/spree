@@ -18,12 +18,19 @@ module Spree
             def show
               purchase = Spree::ScenarioOrder.for_store(current_store).for_customer(current_user).
                          find_by_prefix_id!(params[:scenario_order_id])
+              # What the serializer reads is loaded with the row, as the wallet
+              # loads it: a post-payment read should not pay a query per tier.
               card = Spree::MembershipCard.for_store(current_store).for_customer(current_user).
+                     includes(:pending_transfer, tier_setting: :customer_group).
                      find_by!(scenario_order: purchase)
 
-              render json: Spree::Api::V3::MembershipCardSerializer.new(
-                card, params: serializer_params
-              ).to_h
+              render json: serialize_resource(card)
+            end
+
+            protected
+
+            def serializer_class
+              Spree::Api::V3::MembershipCardSerializer
             end
           end
         end

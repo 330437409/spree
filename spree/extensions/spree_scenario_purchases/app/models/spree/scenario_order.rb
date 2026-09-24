@@ -69,6 +69,10 @@ module Spree
     # What the unpaid screens ask for: bought, not settled, and not past its
     # window — so what a customer is shown never depends on a job having run.
     scope :open_now, -> { unsettled.where.not(id: lapsed.select(:id)) }
+
+    # One kind's own history, which is how a plan that sells something here
+    # reads back what it sold.
+    scope :for_kind, ->(kind) { where(kind: kind) }
     scope :for_customer, lambda { |customer|
       # A purchase with no customer is one made before there was an account, and
       # it belongs to whoever later claims it rather than to every guest.
