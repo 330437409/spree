@@ -70,15 +70,17 @@ RSpec.describe Spree::Memberships::SurprisePacket do
     end
 
     # A calculator's amount is in a currency of its own, and the store prints its
-    # own: a figure in another one is not a figure this card can state.
+    # own: a figure in another one is not a figure this card can state. The
+    # comparison ignores case, the way the calculator's own `compute` does.
     it 'claims no figure for a coupon priced in another currency' do
-      promotion = create(:promotion, store: store, name: '外币')
-      Spree::Promotion::Actions::CreateAdjustment.create!(
-        promotion: promotion,
-        calculator: Spree::Calculator::FlatRate.new(preferred_currency: 'CNY', preferred_amount: 30)
-      )
+      coupon = coupon_for(money_off_promotion(30, currency: 'cny'))
 
-      expect(coupon_for(promotion).discount_type).to be_nil
+      expect(coupon.discount_type).to be_nil
+      expect(coupon.money_value).to eq(0)
+    end
+
+    it 'states the figure of one priced in the currency being shopped in' do
+      expect(coupon_for(money_off_promotion(30, currency: 'usd')).discount_minus).to eq(30)
     end
 
     it 'claims no type for free shipping, whose action carries no calculator' do

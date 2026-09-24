@@ -120,7 +120,7 @@ RSpec.describe Spree::MembershipKinds::Vip do
     it 'warns that a term held with no end refuses the purchase' do
       held = create(:membership, customer: buyer, customer_group: another_tier.customer_group, ends_at: nil)
 
-      expect(checks).to contain_exactly('kind' => 'open_ended', 'tier_name' => held.customer_group.name)
+      expect(checks).to contain_exactly('kind' => 'open_ended', 'tier_name' => held.customer_group.name, 'held_until' => nil)
     end
 
     # A tier sold without a length is held for good, so buying it again extends a
@@ -130,7 +130,7 @@ RSpec.describe Spree::MembershipKinds::Vip do
       tier.update!(validity_days: nil)
       held = create(:membership, customer: buyer, customer_group: group, ends_at: nil)
 
-      expect(checks).to contain_exactly('kind' => 'adds_no_time', 'tier_name' => held.customer_group.name)
+      expect(checks).to contain_exactly('kind' => 'adds_no_time', 'tier_name' => held.customer_group.name, 'held_until' => nil)
     end
 
     # The instant is clamped to now: a term whose end has gone by — one the hourly

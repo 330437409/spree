@@ -151,13 +151,16 @@ module Spree
         percent if percent&.positive? && percent < 100
       end
 
-      # @return [Boolean] whether the amount is in the currency the customer is
-      #   shopping in — a calculator that names none is read as this store's
+      # Whether the amount is in the currency the customer is shopping in, read
+      # the way the calculator's own `compute` reads it: the comparison ignores
+      # case, and a calculator naming no currency takes nothing off at all rather
+      # than applying to every one.
+      #
+      # @return [Boolean]
       def priced_here?(calculator)
         return true unless calculator.respond_to?(:preferred_currency)
 
-        currency = calculator.preferred_currency
-        currency.blank? || currency.to_s == Spree::Current.currency.to_s
+        calculator.preferred_currency.to_s.casecmp(Spree::Current.currency.to_s.upcase).zero?
       end
 
       # @return [BigDecimal, nil]

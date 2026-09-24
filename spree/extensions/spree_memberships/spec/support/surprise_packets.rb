@@ -3,10 +3,11 @@
 # the entry's shape is the thing a model spec and a request spec must agree about.
 module SurprisePacketHelpers
   # @return [Spree::Promotion] the shape the client prints as 满199减30
-  def money_off_promotion(amount, minimum: nil)
+  def money_off_promotion(amount, minimum: nil, currency: nil)
     promotion = create(:promotion, store: store, name: "减#{amount}")
     calculator = Spree::Calculator::FlatRate.new
     calculator.preferred_amount = amount
+    calculator.preferred_currency = currency if currency
     Spree::Promotion::Actions::CreateAdjustment.create!(promotion: promotion, calculator: calculator)
     if minimum
       Spree::Promotion::Rules::ItemTotal.create!(promotion: promotion, preferred_amount_min: minimum)
