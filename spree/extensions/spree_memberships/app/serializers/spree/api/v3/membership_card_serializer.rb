@@ -13,7 +13,7 @@ module Spree
                  entry_bag: 'Record<string, unknown> | null',
                  giftable: :boolean, activates_before: 'string | null',
                  activated_at: 'string | null', membership: 'Record<string, unknown> | null',
-                 transfer: 'MembershipCardTransfer | null'
+                 transfer: 'Record<string, unknown> | null'
 
         attribute(:tier) do |card|
           tier = card.tier_setting
