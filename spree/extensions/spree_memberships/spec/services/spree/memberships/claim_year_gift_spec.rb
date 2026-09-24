@@ -34,14 +34,33 @@ RSpec.describe Spree::Memberships::ClaimYearGift do
     expect(result.value.code).to be_present
   end
 
+  # The claim names the tier rather than the right row, so an operator replacing
+  # the gift does not hand the year's allowance back.
   it 'records the claim as a consumed grant that names the coupon it released' do
     result = claim
 
     row = Spree::Grant.find_by(kind: 'year_gift_claim', customer_id: customer.id)
     expect(row).to be_consumed
-    expect(row.source).to eq(right)
+    expect(row.source).to eq(group)
     expect(row.metadata['promotion_id']).to eq(first_coupon.id.to_s)
     expect(row.issued).to eq(result.value)
+  end
+
+  # The documented way to change a gift: retire the right, write its replacement.
+  # The year is the tier's, so the replacement starts with the allowance already
+  # spent.
+  it 'keeps the year spent when the gift is replaced' do
+    claim
+    right.destroy
+    replacement = create(:give_gift_right, customer_group: group, preferences: {
+      gift_promotion_ids: [second_coupon.prefixed_id]
+    })
+
+    result = described_class.call(right: replacement, customer: customer, store: store)
+
+    expect(result).to be_failure
+    expect(result.error.to_s).to eq(Spree.t('memberships.errors.gift_allowance_spent'))
+    expect(holdings.count).to eq(1)
   end
 
   # An allowance is spent one claim at a time, and the coupons come in the order

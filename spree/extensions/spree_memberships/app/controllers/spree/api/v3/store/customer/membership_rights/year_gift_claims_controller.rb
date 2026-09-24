@@ -27,11 +27,7 @@ module Spree
                 )
                 return render_result_error(result) if result.failure?
 
-                # The coupon the claim handed over, as the wallet renders it:
-                # what the member goes on to show or type at checkout.
-                render json: Spree::Api::V3::CouponHoldingSerializer.new(
-                  result.value, params: serializer_params
-                ).to_h, status: :created
+                render json: serialize_resource(result.value), status: :created
               end
 
               protected
@@ -40,8 +36,11 @@ module Spree
                 Spree::MembershipRight
               end
 
+              # What a claim answers with is the coupon it handed over, as the
+              # wallet renders it: what the member goes on to show or type at
+              # checkout.
               def serializer_class
-                Spree::Api::V3::MembershipRightSerializer
+                Spree::Api::V3::CouponHoldingSerializer
               end
 
               private

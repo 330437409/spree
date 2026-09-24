@@ -13,14 +13,14 @@ module Spree
         include Typelizer::DSL
 
         typelize mode: :string, can_count: :number, usable_num: :number,
-                 coupons: 'Array<Record<string, unknown>>'
+                 coupons: 'Array<YearGiftCoupon>'
 
         attribute(:mode) { |gift| gift.mode }
         attribute(:can_count) { |gift| gift.can_count }
         attribute(:usable_num) { |gift| gift.usable_num }
 
         attribute(:coupons) do |gift|
-          gift.coupons.map { |coupon| Spree::Api::V3::YearGiftCouponSerializer.new(coupon).to_h }
+          gift.coupons.map { |coupon| Spree::Api::V3::YearGiftCouponSerializer.new(coupon, params: params).to_h }
         end
       end
     end

@@ -55,7 +55,7 @@ RSpec.describe Spree::Memberships::YearGift, type: :model do
   it 'answers the coupon a claim would take next' do
     claim(first_coupon)
 
-    expect(gift.next_promotion).to eq(second_coupon)
+    expect(gift.next_coupon.promotion).to eq(second_coupon)
   end
 
   it 'holds no coupon for a promotion that is not the gift’s' do

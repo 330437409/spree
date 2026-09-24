@@ -56,9 +56,9 @@ module Spree
       # The coupon a claim takes when the caller names none: the first of the
       # gift's own order the member has not taken yet.
       #
-      # @return [Spree::Promotion, nil]
-      def next_promotion
-        coupons.detect { |coupon| !coupon.claimed? }&.promotion
+      # @return [Spree::Memberships::YearGift::Coupon, nil]
+      def next_coupon
+        coupons.detect { |coupon| !coupon.claimed? }
       end
 
       # @param promotion_id [String] a promotion's prefixed id
@@ -68,22 +68,16 @@ module Spree
         coupons.detect { |coupon| coupon.promotion.prefixed_id == promotion_id.to_s }
       end
 
-      # The claim this member made for one coupon this year, if any.
-      #
-      # @param promotion [Spree::Promotion]
-      # @return [Spree::Grant, nil]
-      def claim_for(promotion)
-        claims.detect { |grant| grant.metadata['promotion_id'].to_s == promotion.id.to_s }
-      end
-
-      # This year's claims for this right.
+      # This year's claims for this tier's gift. Scoped to the tier rather than
+      # to the right row, which an operator replaces: the allowance belongs to
+      # the tier, so replacing its gift does not hand the year back.
       #
       # @return [Array<Spree::Grant>]
       def claims
         return @claims if defined?(@claims)
 
         @claims = Spree::Grant.
-                  where(kind: YearGiftClaim.api_type, customer_id: customer&.id, source: right).
+                  where(kind: YearGiftClaim.api_type, customer_id: customer&.id, source: right.customer_group).
                   where(granted_at: year_window).to_a
       end
 
@@ -116,7 +110,7 @@ module Spree
       #
       # @return [Range<Time>]
       def year_window
-        zone = Time.find_zone(store&.preferred_timezone) || Time.zone
+        zone = SpreeMemberships.zone_for(store)
 
         zone.local(year, 1, 1)..zone.local(year + 1, 1, 1)
       end

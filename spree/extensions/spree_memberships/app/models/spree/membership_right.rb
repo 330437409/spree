@@ -34,9 +34,9 @@ module Spree
     registers_subclasses_via { SpreeMemberships.membership_rights }
 
     validates :type, presence: true
-    # One of each kind per tier. Among live rows only, matching the index — a
-    # retired row is history, and a replacement is saved before the row it
-    # supersedes is retired.
+    # One of each kind per tier. Among live rows only, matching the index — the
+    # row a replacement supersedes is retired first, because a retired row is
+    # history while a live duplicate is refused.
     validates :type, uniqueness: {
       scope: [:customer_group_id, *spree_base_uniqueness_scope],
       conditions: -> { where(deleted_at: nil) }
@@ -150,11 +150,19 @@ module Spree
     # scoped to the store, because a pool in another store's promotion is a code
     # this tier must not draw.
     def promotion_must_belong_to_the_store
-      promotion = Spree::Promotion.find_by_prefix_id(preferred_promotion_id)
-      return errors.add(:preferences, :invalid) if promotion.nil?
-      return if store.nil? || promotion.store_id == store.id
+      return if promotion_of_this_store?(preferred_promotion_id)
 
       errors.add(:preferences, :invalid)
+    end
+
+    # @param promotion_id [String] a promotion's prefixed id
+    # @return [Boolean] whether this store runs that promotion — the shared half
+    #   of the entry coupon's check and of a kind that names its own coupons
+    def promotion_of_this_store?(promotion_id)
+      promotion = Spree::Promotion.find_by_prefix_id(promotion_id)
+      return false if promotion.nil?
+
+      store.nil? || promotion.store_id == store.id
     end
 
     def type_must_be_registered

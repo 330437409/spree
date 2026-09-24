@@ -122,7 +122,11 @@ RSpec.describe 'the membership reads', type: :request do
     # The ladder is where the store is, so a gift of another store's tier is not
     # one this customer may claim.
     it 'answers 404 for a right of another store' do
-      elsewhere = create(:give_gift_right, customer_group: create(:customer_group, store: create(:store)))
+      other_store = create(:store)
+      elsewhere = create(:give_gift_right, customer_group: create(:customer_group, store: other_store),
+                                           preferences: {
+                                             gift_promotion_ids: [create(:promotion, store: other_store).prefixed_id]
+                                           })
 
       post "/api/v3/store/customers/me/membership_rights/#{elsewhere.prefixed_id}/year_gift_claims", headers: headers
 

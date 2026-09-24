@@ -10,15 +10,34 @@ RSpec.describe Spree::MembershipRights::GiveGift, type: :model do
   end
 
   it 'is a coupon gift of one claim a year until an operator says otherwise' do
-    right = gift({})
+    right = gift(gift_promotion_ids: [promotion.prefixed_id])
 
     expect(right).to be_valid
     expect(right).to be_coupon_gift
     expect(right.preferred_yearly_limit).to eq(1)
   end
 
+  # A coupon gift nothing can be claimed from would report an allowance no claim
+  # can spend, so it is refused where it is written.
+  it 'refuses a coupon gift with no coupons' do
+    expect(gift({})).not_to be_valid
+  end
+
+  it 'offers a coupon once however many times an operator lists it' do
+    right = gift(gift_promotion_ids: [promotion.prefixed_id, promotion.prefixed_id])
+
+    expect(right.gift_promotions).to eq([promotion])
+  end
+
+  # A delivered gift is not claimed here, so it answers nothing to read.
+  it 'has no payload of its own when it is delivered' do
+    right = gift(gift_mode: 'logistics')
+
+    expect(right.member_payload(customer: nil, store: store)).to be_nil
+  end
+
   it 'refuses an allowance nothing can be claimed against' do
-    expect(gift(yearly_limit: 0)).not_to be_valid
+    expect(gift(gift_promotion_ids: [promotion.prefixed_id], yearly_limit: 0)).not_to be_valid
   end
 
   it 'refuses a mode no claim understands' do
