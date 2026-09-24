@@ -21,8 +21,10 @@ module Spree
             def scope
               orders = super.for_customer(current_user)
               # What a plan that sells something here asks for: its own history,
-              # which is this list narrowed to the kind it registered.
-              orders = orders.for_kind(params[:kind]) if params[:kind].present?
+              # which is this list narrowed to the kind it registered. A filter
+              # that is not a string is ignored rather than cast, the way a
+              # `status` the branches do not know is.
+              orders = orders.for_kind(params[:kind]) if params[:kind].is_a?(String) && params[:kind].present?
 
               case params[:status].presence
               when 'open' then orders.open_now

@@ -18,9 +18,14 @@ module Spree
             def show
               purchase = Spree::ScenarioOrder.for_store(current_store).for_customer(current_user).
                          find_by_prefix_id!(params[:scenario_order_id])
+              # The purchase's own customer is what makes this the caller's card,
+              # so the card is not asked again whose it is: a kind that issues it
+              # to somebody other than the buyer would otherwise have the buyer
+              # answered nothing for the purchase they paid for.
+              #
               # What the serializer reads is loaded with the row, as the wallet
               # loads it: a post-payment read should not pay a query per tier.
-              card = Spree::MembershipCard.for_store(current_store).for_customer(current_user).
+              card = Spree::MembershipCard.for_store(current_store).
                      includes(:pending_transfer, tier_setting: :customer_group).
                      find_by!(scenario_order: purchase)
 

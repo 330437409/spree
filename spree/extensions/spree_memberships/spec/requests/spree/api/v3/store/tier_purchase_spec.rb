@@ -86,11 +86,31 @@ RSpec.describe 'buying a term', type: :request do
     end
 
     # Read through the customer's own purchases, so somebody else's is not found
-    # rather than answered.
-    it 'answers 404 for a purchase that is not theirs' do
-      other = create(:scenario_order, store: store, customer: create(:customer), kind: 'vip')
+    # rather than answered. Their purchase is settled, so it is the purchase's
+    # own scope that answers this and not the card's absence.
+    it 'answers 404 for a settled purchase that is not theirs' do
+      stranger = create(:customer)
+      purchase = create(:scenario_order, store: store, customer: stranger, kind: 'vip', status: 'paid')
+      create(:membership_card, store: store, customer: stranger, customer_group: group,
+                               scenario_order: purchase)
 
-      get "/api/v3/store/scenario_orders/#{other.prefixed_id}/membership_card", headers: headers
+      get "/api/v3/store/scenario_orders/#{purchase.prefixed_id}/membership_card", headers: headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    # The caller's own purchase, in another store: the store is the outer scope
+    # and the one that answers. The card's own customer is deliberately not
+    # asked again — a kind that issued it to somebody else would otherwise leave
+    # the buyer answered nothing for what they paid for.
+    it 'answers 404 for a purchase of another store' do
+      elsewhere = create(:store)
+      purchase = create(:scenario_order, store: elsewhere, customer: user, kind: 'vip', status: 'paid')
+      create(:membership_card, store: elsewhere, customer: user,
+                               customer_group: create(:customer_group, store: elsewhere),
+                               scenario_order: purchase)
+
+      get "/api/v3/store/scenario_orders/#{purchase.prefixed_id}/membership_card", headers: headers
 
       expect(response).to have_http_status(:not_found)
     end
