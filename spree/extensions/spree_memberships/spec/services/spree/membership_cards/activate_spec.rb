@@ -56,7 +56,7 @@ RSpec.describe Spree::MembershipCards::Activate do
   # The client's own warning: 自{lowEndTime}起，您的权益将变更为… — the tier the
   # customer holds now keeps them until its term ends.
   it 'waits for the tier the customer holds now' do
-    other_tier = create(:membership_tier_setting, customer_group: create(:customer_group, store: store), rank: 2)
+    other_tier = another_tier
     running = create(:membership, customer: customer, customer_group: other_tier.customer_group, ends_at: 5.days.from_now)
     Spree::Memberships::AssignTier.call(customer: customer, customer_group: other_tier.customer_group)
 

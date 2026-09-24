@@ -13,6 +13,12 @@ Spree::Core::Engine.add_routes do
         resources :membership_rights, only: [:index]
         resources :membership_tiers, only: [:index]
 
+        # What a customer is warned about before they buy a term, asked of the
+        # package the buy page is showing. A read on the `vip` kind rather than a
+        # second purchase: it answers what the terms they already hold would do
+        # to the one they are about to pay for.
+        resources :membership_purchase_checks, only: [:index]
+
         # What a settled purchase released, read back off the purchase: the
         # purchase is the scenario plan's row and the card is this gem's, so only
         # this nested read is drawn here

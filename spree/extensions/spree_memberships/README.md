@@ -40,6 +40,7 @@ SpreeMemberships.membership_rights << MyGem::Rights::FreeShipping
 | --- | --- |
 | `GET /api/v3/store/membership_rights` | The rights catalogue: every right this store's tiers carry, published or not, each with the tier it belongs to |
 | `GET /api/v3/store/membership_tiers` | The ladder, in rank order |
+| `GET /api/v3/store/membership_purchase_checks?tier_id=` | What buying that package means for the terms the customer already holds. Answers `checks`, empty in the ordinary case: `overlap` names the term the purchase waits behind and the instant it ends, and `open_ended` says a term held with no end will refuse the card. Advisory — a purchase proceeds on any answer. Both sides are the store's own: another store's package is a 404, and a term held against another store's tier is not this store's business |
 | `GET /api/v3/store/customers/me/membership` | The customer's own rung, its sections and how many rights it carries. A customer in no tier is answered a null tier rather than refused. A right whose kind has something of its own to say carries it here — the annual gift's coupons and both of its counts ride the entry as `gift` |
 | `GET /api/v3/store/customers/me/membership_cards` | The wallet: the cards this customer bought or was granted, and what each is waiting for |
 | `POST /api/v3/store/customers/me/membership_cards/:id/activations` | 激活 — the card leaves `dormant` and a term starts for the customer who activated it |
@@ -126,6 +127,11 @@ term that ends leaves it, and a term that expires hands the customer to their
 next one. A card bought while another tier still runs does not take it out from
 under them: the term is written and waits for the tier it replaces — the client's
 own 自{lowEndTime}起 promise — so a customer is never on two tiers.
+
+That wait is computed once, by `Spree::Membership.arrival_for`, and both the
+activation and the pre-purchase check read it. A customer is therefore warned
+about the wait they will get rather than about a second computation of it that
+agrees today.
 
 **The sweep advances every window.** `Spree::Memberships::AdvanceDueJob` starts
 the terms whose window opened (moving the group), renews the ones a tier renews
