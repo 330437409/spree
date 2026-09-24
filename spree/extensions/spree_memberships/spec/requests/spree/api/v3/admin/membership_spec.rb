@@ -38,6 +38,15 @@ RSpec.describe 'the membership operator reads', type: :request do
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(Spree::MembershipBanner.count).to eq(0)
+
+      # A list of lists is the shape that slips past a test for "something that
+      # can become a hash": every Array can.
+      post "/api/v3/admin/customer_groups/#{group.prefixed_id}/banner", headers: headers,
+           params: { pic: 'https://cdn.example.com/banner.png',
+                     areas: [%w[area_rem left:\ 1rem;]] }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(Spree::MembershipBanner.count).to eq(0)
     end
 
     # A group of another store is not this store's to write, and its own banner

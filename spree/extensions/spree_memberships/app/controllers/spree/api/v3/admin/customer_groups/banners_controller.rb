@@ -38,7 +38,12 @@ module Spree
               return if params[:areas].blank?
 
               targets = params[:areas]
-              return if targets.is_a?(Array) && targets.all? { |target| target.respond_to?(:to_h) }
+              # The shapes a target can be: what a request hands over is
+              # `ActionController::Parameters`, which is not a Hash — and every
+              # Array responds to `to_h`, so a list of lists must not pass.
+              return if targets.is_a?(Array) && targets.all? { |target|
+                target.is_a?(Hash) || target.is_a?(ActionController::Parameters)
+              }
 
               render_error(
                 code: Spree::Api::V3::ErrorHandler::ERROR_CODES[:validation_error],

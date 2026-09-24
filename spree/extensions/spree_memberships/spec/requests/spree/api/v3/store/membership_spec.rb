@@ -112,9 +112,14 @@ RSpec.describe 'the membership reads', type: :request do
       expect(response.parsed_body).to be_nil
     end
 
-    # The banner of another tier in this same store is not the customer's.
+    # The banner of another tier in this same store is not the customer's: they
+    # hold a tier of their own, so this is the resolution rather than the
+    # absence of a membership.
     it 'answers nothing for a banner of a tier they are not in' do
       banner
+      their_group = create(:customer_group, store: store)
+      create(:membership_tier_setting, customer_group: their_group, rank: 2)
+      their_group.add_customers([user.id])
 
       get '/api/v3/store/customers/me/membership_banner', headers: headers
 

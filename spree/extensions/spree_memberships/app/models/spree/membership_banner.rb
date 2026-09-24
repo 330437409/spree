@@ -30,7 +30,7 @@ module Spree
     # normalizer, defeat the default, and be caught by the column's NOT NULL
     # after the model had already called the record valid.
     normalizes :areas, apply_to_nil: true, with: ->(areas) {
-      Array.wrap(areas).map { |area| area.respond_to?(:to_h) ? area.to_h : area }
+      Array.wrap(areas).map { |area| area.respond_to?(:to_h) && !area.is_a?(Array) ? area.to_h : area }
     }
 
     validates :pic, presence: true
@@ -71,7 +71,7 @@ module Spree
 
       area = area.with_indifferent_access
 
-      area[:area_rem].is_a?(String) && area[:area_rem].present? &&
+      area[:area_rem].is_a?(String) && area[:area_rem].include?(':') &&
         area[:link].is_a?(String) && area[:link].present? &&
         (area.keys.map(&:to_s) - AREA_KEYS).empty?
     end

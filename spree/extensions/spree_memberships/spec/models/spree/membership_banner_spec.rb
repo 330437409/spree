@@ -30,10 +30,20 @@ RSpec.describe Spree::MembershipBanner, type: :model do
   end
 
   # The client scales the style by replacing in it, so a coordinate that is not
-  # a string is a target it cannot place.
+  # a string — or a string that declares nothing — is a target it cannot place.
   it 'refuses a coordinate that is not written as a style' do
     expect(banner(areas: [{ 'area_rem' => 1, 'link' => '/a' }])).not_to be_valid
     expect(banner(areas: [{ 'area_rem' => 'left: 1rem;', 'link' => 2 }])).not_to be_valid
+    expect(banner(areas: [{ 'area_rem' => '1', 'link' => '/a' }])).not_to be_valid
+  end
+
+  # An element that is not a target is refused by the validation rather than
+  # raising from the normalizer: a console or an import may hand over anything.
+  it 'refuses a target that is not a hash rather than raising' do
+    row = banner(areas: [%w[a b c]])
+
+    expect { row.valid? }.not_to raise_error
+    expect(row).not_to be_valid
   end
 
   # An explicit nil is an empty list rather than a column the model calls valid
