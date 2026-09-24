@@ -6,6 +6,17 @@ en:
     memberships:
       tier_catalog_name: "%{name} — member price"
       tier_price_list_name: "%{name} — member price list"
+      # The member day's own words, rendered from the weekday it falls on rather
+      # than typed: an operator who moves the day must not leave a page saying the
+      # old one.
+      weekdays:
+        sunday: Every Sunday
+        monday: Every Monday
+        tuesday: Every Tuesday
+        wednesday: Every Wednesday
+        thursday: Every Thursday
+        friday: Every Friday
+        saturday: Every Saturday
       errors:
         store_missing: the tier's store cannot be reached
         catalog_unavailable: the member price catalogue could not be set up
@@ -28,6 +39,7 @@ en:
         gift_coupon_taken_back: this annual gift's coupon was taken back and cannot be claimed again this year
         gift_coupon_contended: another request took this annual gift's coupon at the same moment, try again
         gift_coupon_unavailable: this annual gift's coupon could not be handed over
+        not_member_day: today is not this tier's member day, so this order earns the ordinary rate
         gift_allowance_spent: this year's annual gift has already been claimed
         tier_open_ended: this customer holds a tier with no end, so a new one cannot wait for it
     membership_right_types:

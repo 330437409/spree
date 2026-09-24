@@ -30,7 +30,9 @@ module Spree
 
         on = SpreeMemberships.today_in(order.store, now: now)
 
-        rights_for(order.store, customer).map { |right| right.order_multiplier(customer: customer, on: on) }.max || 1
+        rights_for(order.store, customer).map do |right|
+          right.order_multiplier(customer: customer, on: on, order: order)
+        end.max || 1
       end
 
       # @return [Array<Spree::MembershipRight>] empty when the customer is in no

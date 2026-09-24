@@ -10,6 +10,7 @@ module Spree
   # (docs/plans/6.1-membership-tiers-and-rights.md).
   class MembershipRight < Spree.base_class
     include Spree::PreferenceSchema
+    include Spree::Memberships::PreferenceTypes
     include Spree::Metadata
 
     acts_as_paranoid
@@ -126,19 +127,41 @@ module Spree
       nil
     end
 
-    # What this right multiplies an order's earn by on a given day. The day is the
-    # kind's own business — a birthday today, a member day once its period exists —
-    # so the trigger lives with the kind rather than in the readers that ask, and a
-    # kind added later multiplies by declaring itself instead of by being named in
-    # two places (`Spree::Dependencies.points_multiplier_service`).
+    # Whether this right's occasion falls on a date, for a customer: the question
+    # a reader asks when it has no basket — the member centre counting down to a
+    # birthday, or asking what a tier grants on a day it is not holding an order
+    # for. The date is the caller's, already read in the store's own calendar, the
+    # way every store-local fact in this gem is.
     #
-    # Every kind answers this: the readers fold it over a tier's rights, so a kind
+    # Every kind answers it: a kind that does not is a right that never applies.
+    #
+    # @param customer [Object] whose occasion it is
+    # @param on [Date]
+    # @return [Boolean]
+    def applies_on?(customer:, on:)
+      false
+    end
+
+    # What this right multiplies an order's earn by on a given day, **for a real
+    # order**. The day is the kind's own business — a birthday today, a member day
+    # on its weekday — so the trigger lives with the kind rather than in the
+    # readers that ask, and a kind added later multiplies by declaring itself
+    # instead of by being named in two places
+    # (`Spree::Dependencies.points_multiplier_service`).
+    #
+    # The basket is required and not optional: a kind whose occasion also asks what
+    # the basket has to reach — the member day earns on orders over a threshold and
+    # on nothing else — answers about a basket or not at all, and a reader that has
+    # no basket asks `applies_on?` instead of this.
+    #
+    # Every kind answers this: the reader folds it over a tier's rights, so a kind
     # that does not override it is a right that multiplies nothing.
     #
     # @param customer [Object] whose occasion it is
     # @param on [Date] the day to answer for, in the store's calendar
+    # @param order [Spree::Order] whose earn it is
     # @return [Integer] 1 when this right does not apply that day
-    def order_multiplier(customer:, on:)
+    def order_multiplier(customer:, on:, order:)
       1
     end
 
@@ -151,6 +174,18 @@ module Spree
     end
 
     private
+
+    # A day's rate, floored at the ordinary earning of one. Two kinds multiply an
+    # earn by one, so the floor is theirs together: the ledger neutralises a
+    # non-positive multiplier, and a client shown 0倍 or -2倍 would be reading a
+    # number that never applied.
+    #
+    # @param value [Object] whatever the kind's own preference holds
+    # @return [Integer]
+    def floored_multiplier(value)
+      amount = value.to_i
+      amount > 1 ? amount : 1
+    end
 
     # The promotions a kind's own preference names, in the order it names them,
     # read in one query with what reading them needs. Three kinds keep such a

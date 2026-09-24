@@ -44,6 +44,11 @@ Spree::Core::Engine.add_routes do
           # The banner their member centre opens with, resolved from their tier.
           resource :membership_banner, only: [:show], controller: 'membership_banner'
 
+          # The member day their tier buys on better terms, and the verdict the
+          # day-page cards ask for before they reach a cart.
+          resource :membership_day, only: [:show], controller: 'membership_day'
+          resource :membership_day_check, only: [:show], controller: 'membership_day_check'
+
           # What a member claims of a right — the right is the tier's, and the
           # claim is theirs — and 立即领取 is the only one so far.
           resources :membership_rights, only: [] do

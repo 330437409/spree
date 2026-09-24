@@ -264,6 +264,171 @@ RSpec.describe 'the membership reads', type: :request do
     end
   end
 
+  # The member day: the weekday the customer's tier buys on better terms, and
+  # what the day hands over. It is what the member-day page and the home page's
+  # popup both open with.
+  describe 'GET /api/v3/store/customers/me/membership_day' do
+    let(:wednesday) { Time.zone.local(2026, 9, 23, 12) }
+
+    def declares_a_member_day
+      create(:svip_date_right, customer_group: group, published: true, preferences: {
+               weekday: 'wednesday', multiplier: 3, minimum_amount: '199.5',
+               rights_red_money: '20', day_name: '超级会员日', rules: '会员日规则',
+               qualifying_kinds: ['SVIP超级会员'], share_title: '超级会员日',
+               share_icon: 'https://cdn.example.com/day.png'
+             })
+    end
+
+    it 'answers the day of the customer’s own tier' do
+      declares_a_member_day
+      group.add_customers([user.id])
+
+      Timecop.freeze(wednesday) do
+        get '/api/v3/store/customers/me/membership_day', headers: headers
+      end
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to include(
+        'name' => '超级会员日',
+        'today' => true,
+        'line' => 'Every Wednesday',
+        'times' => 3,
+        'minimum_amount' => '199.5',
+        'qualifying_kinds' => ['SVIP超级会员'],
+        'rights_red' => true,
+        'rights_red_money' => '20.0',
+        'rule' => '会员日规则',
+        'share_title' => '超级会员日',
+        'share_icon' => 'https://cdn.example.com/day.png'
+      )
+    end
+
+    it 'says the day is not today on any other day' do
+      declares_a_member_day
+      group.add_customers([user.id])
+
+      Timecop.freeze(wednesday + 1.day) do
+        get '/api/v3/store/customers/me/membership_day', headers: headers
+      end
+
+      expect(response.parsed_body['today']).to be(false)
+      expect(response.parsed_body['line']).to eq('Every Wednesday')
+    end
+
+    # The day is the store's own, the way the birthday is: a member in Shanghai
+    # is already on the day while UTC is still on the one before it.
+    it 'reads today in the store’s own timezone' do
+      store.update!(preferred_timezone: 'Asia/Shanghai')
+      declares_a_member_day
+      group.add_customers([user.id])
+
+      Timecop.freeze(Time.utc(2026, 9, 22, 17, 0)) do
+        get '/api/v3/store/customers/me/membership_day', headers: headers
+
+        expect(response.parsed_body['today']).to be(true)
+      end
+
+      Timecop.freeze(Time.utc(2026, 9, 22, 15, 0)) do
+        get '/api/v3/store/customers/me/membership_day', headers: headers
+
+        expect(response.parsed_body['today']).to be(false)
+      end
+    end
+
+    # Nothing to show is not an error, the same way a tier with no banner is
+    # answered nothing.
+    it 'answers nothing for a customer in no tier' do
+      declares_a_member_day
+
+      get '/api/v3/store/customers/me/membership_day', headers: headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to be_nil
+    end
+
+    it 'answers nothing for a tier nobody has declared a day for' do
+      group.add_customers([user.id])
+
+      get '/api/v3/store/customers/me/membership_day', headers: headers
+
+      expect(response.parsed_body).to be_nil
+    end
+
+    it 'answers nothing for a day an operator has not published' do
+      create(:svip_date_right, customer_group: group, published: false)
+      group.add_customers([user.id])
+
+      get '/api/v3/store/customers/me/membership_day', headers: headers
+
+      expect(response.parsed_body).to be_nil
+    end
+
+    # The day of another store's tier is not this customer's — they hold a tier
+    # of this store, and the ladder is where the store is.
+    it 'answers nothing for a day of another store’s tier' do
+      elsewhere = create(:customer_group, store: create(:store))
+      create(:membership_tier_setting, customer_group: elsewhere)
+      create(:svip_date_right, customer_group: elsewhere, published: true)
+      group.add_customers([user.id])
+
+      get '/api/v3/store/customers/me/membership_day', headers: headers
+
+      expect(response.parsed_body).to be_nil
+    end
+
+    it 'requires a signed-in customer' do
+      get '/api/v3/store/customers/me/membership_day', headers: api_key_headers
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
+  # Asked when a member taps buy on a day-page card, before it reaches a cart:
+  # a verdict rather than a payload, because the client reads a refusal as
+  # "carry on without the multiplier?".
+  describe 'GET /api/v3/store/customers/me/membership_day_check' do
+    let(:wednesday) { Time.zone.local(2026, 9, 23, 12) }
+
+    it 'answers nothing to say for a customer in the day today' do
+      create(:svip_date_right, customer_group: group, published: true, preferences: { weekday: 'wednesday' })
+      group.add_customers([user.id])
+
+      Timecop.freeze(wednesday) do
+        get '/api/v3/store/customers/me/membership_day_check', headers: headers
+      end
+
+      expect(response).to have_http_status(:no_content)
+      expect(response.body).to be_blank
+    end
+
+    it 'refuses the day the customer is not in' do
+      create(:svip_date_right, customer_group: group, published: true, preferences: { weekday: 'wednesday' })
+      group.add_customers([user.id])
+
+      Timecop.freeze(wednesday + 1.day) do
+        get '/api/v3/store/customers/me/membership_day_check', headers: headers
+      end
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body['error']['message']).to eq(Spree.t('memberships.errors.not_member_day'))
+    end
+
+    it 'refuses a customer whose tier declares no day' do
+      group.add_customers([user.id])
+
+      get '/api/v3/store/customers/me/membership_day_check', headers: headers
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body['error']['message']).to eq(Spree.t('memberships.errors.not_member_day'))
+    end
+
+    it 'requires a signed-in customer' do
+      get '/api/v3/store/customers/me/membership_day_check', headers: api_key_headers
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
   # What a tier says a member saves, read before anybody buys it — the buy page's
   # 每月约省 popup.
   describe 'GET /api/v3/store/membership_savings' do
