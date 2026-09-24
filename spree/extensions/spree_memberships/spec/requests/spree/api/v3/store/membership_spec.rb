@@ -206,6 +206,66 @@ RSpec.describe 'the membership reads', type: :request do
     end
   end
 
+  # What a tier says a member saves, read before anybody buys it — the buy page's
+  # 每月约省 popup.
+  describe 'GET /api/v3/store/membership_savings' do
+    def get_savings(for_tier = tier)
+      get '/api/v3/store/membership_savings', headers: headers, params: { tier_id: for_tier.prefixed_id }
+    end
+
+    it 'answers the four rows in order, the rules and the monthly figure' do
+      tier.update!(preferences: { saving_order_title: '下单立省', saving_order_content: '会员价再低一点',
+                                  saving_coupon_title: '专属券', saving_coupon_content: '每月领',
+                                  saving_month_amount: 12.5, saving_rules: '以实际订单为准' })
+
+      get_savings
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['rows'].map { |row| row['title'] }).
+        to eq(['下单立省', '专属券', nil, nil])
+      expect(response.parsed_body).to include('month_amount' => '12.5', 'rules' => '以实际订单为准')
+    end
+
+    # An unwritten popup is not a missing tier: the page opens it, prints what
+    # there is and skips the rows nobody wrote.
+    it 'answers blanks for a tier nobody has written for' do
+      get_savings
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['rows'].length).to eq(4)
+      expect(response.parsed_body['rows'].map { |row| row['title'] }).to all(be_nil)
+      # Null rather than nought: a tier nobody has written for is not one whose
+      # operator said a member saves nothing.
+      expect(response.parsed_body['month_amount']).to be_nil
+      expect(response.parsed_body['rules']).to be_nil
+    end
+
+    it 'requires a signed-in customer' do
+      get '/api/v3/store/membership_savings', headers: api_key_headers, params: { tier_id: tier.prefixed_id }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'answers 404 for a tier of another store' do
+      elsewhere = create(:membership_tier_setting, customer_group: create(:customer_group, store: create(:store)))
+
+      get_savings(elsewhere)
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    # A well-formed id of a tier this store no longer sells, so that what is
+    # under test is the scoping rather than the prefix the id was minted with.
+    it 'answers 404 for a tier nobody sells any more' do
+      retired = create(:membership_tier_setting, customer_group: create(:customer_group, store: store))
+      retired.destroy
+
+      get_savings(retired)
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
   # 立即领取 — the annual gift's claim, and the entry the panel reads the gift
   # off in the first place.
   describe 'POST /api/v3/store/customers/me/membership_rights/:id/year_gift_claims' do

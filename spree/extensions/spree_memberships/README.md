@@ -41,6 +41,7 @@ SpreeMemberships.membership_rights << MyGem::Rights::FreeShipping
 | `GET /api/v3/store/membership_rights` | The rights catalogue: every right this store's tiers carry, published or not, each with the tier it belongs to |
 | `GET /api/v3/store/membership_tiers` | The ladder, in rank order |
 | `GET /api/v3/store/membership_purchase_checks?tier_id=` | What buying that package means for the terms the customer already holds. Answers `checks`, empty in the ordinary case: `overlap` names the term the purchase waits behind and the instant it ends, and `open_ended` says a term held with no end will refuse the card. Advisory — a purchase proceeds on any answer. Both sides are the store's own: another store's package is a 404, and a term held against another store's tier is not this store's business |
+| `GET /api/v3/store/membership_savings?tier_id=` | What the buy page's 每月约省 popup says: four rows of copy in the order the client's icons are in, the rules under them, and the monthly figure. All of it the operator's — nothing is computed, because what a member saves is their basket times the member price and neither is known before they spend. A tier nobody has written for answers blanks |
 | `GET /api/v3/store/customers/me/membership` | The customer's own rung, its sections and how many rights it carries. A customer in no tier is answered a null tier rather than refused. A right whose kind has something of its own to say carries it here — the annual gift's coupons and both of its counts ride the entry as `gift` |
 | `GET /api/v3/store/customers/me/membership_cards` | The wallet: the cards this customer bought or was granted, and what each is waiting for |
 | `POST /api/v3/store/customers/me/membership_cards/:id/activations` | 激活 — the card leaves `dormant` and a term starts for the customer who activated it |
@@ -56,7 +57,7 @@ SpreeMemberships.membership_rights << MyGem::Rights::FreeShipping
 | --- | --- |
 | `GET /api/v3/admin/membership_rights/types` | The registry picker: every installed kind with the settings it declares, so an admin form renders whatever is installed |
 | `GET`/`POST`/`PATCH`/`DELETE /api/v3/admin/customer_groups/:id/membership_rights` | What a tier carries. The kind is chosen per request; its settings are its own preferences |
-| `GET`/`POST`/`PATCH /api/v3/admin/customer_groups/:id/tier_setting` | What makes the group a tier. 404 while it is not one |
+| `GET`/`POST`/`PATCH /api/v3/admin/customer_groups/:id/tier_setting` | What makes the group a tier, and what it says it saves: the savings popup's copy is a `preferences` field on this row, declared as a typed schema so a form renders it. 404 while the group is not a tier |
 | `GET /api/v3/admin/membership_cards`, `GET /api/v3/admin/memberships` | Read-only: which cards a store issued and what became of them, and who holds which tier until when |
 | `POST /api/v3/admin/membership_cards/:id/recycling` | The one write: a support desk voiding a card the client cannot (a lost phone, a fraud report) |
 | `GET`/`POST`/`PATCH /api/v3/admin/customer_groups/:id/banner` | The banner the group's members see: the picture's URL, a name, and the tap targets over it |

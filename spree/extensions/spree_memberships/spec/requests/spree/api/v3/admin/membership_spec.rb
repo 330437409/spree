@@ -154,6 +154,24 @@ RSpec.describe 'the membership operator reads', type: :request do
       expect(response).to have_http_status(:unprocessable_content)
     end
 
+    # What the tier says a member saves is copy about the tier, so it is written
+    # with the tier and read back from it.
+    it 'takes the savings copy with the tier, and answers it back' do
+      post "/api/v3/admin/customer_groups/#{group.prefixed_id}/tier_setting", headers: headers,
+           params: { rank: 2, preferences: { saving_order_title: '下单立省', saving_month_amount: 12.5 } }
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body['preferences']).to include('saving_order_title' => '下单立省')
+      # The schema travels with the values, so a form renders the fields without
+      # knowing a key: what the tier says it saves is the row's own declaration.
+      expect(response.parsed_body['preference_schema'].map { |field| field['key'] }).
+        to eq(Spree::MembershipTierSetting.preference_schema.map { |field| field[:key].to_s })
+
+      setting = Spree::MembershipTierSetting.find_by(customer_group: group)
+      expect(setting.saving_rows.first['title']).to eq('下单立省')
+      expect(setting.reload.preferred_saving_month_amount.to_s).to eq('12.5')
+    end
+
     # The member price is set here and read back here: the operator never has to
     # visit the catalogues page to say what a tier gives its members.
     it 'takes a member price with the tier, and answers it back' do

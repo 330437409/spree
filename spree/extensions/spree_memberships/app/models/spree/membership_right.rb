@@ -33,6 +33,12 @@ module Spree
 
     registers_subclasses_via { SpreeMemberships.membership_rights }
 
+    # A kind's settings are read by their own key, and that key is a symbol: a
+    # write arriving with strings — an import, a console, a rake task — is one
+    # every reader answers with the default, silently. The model owns the bridge,
+    # so both spellings land on the one the readers use.
+    normalizes :preferences, with: ->(value) { value.to_h.deep_symbolize_keys }
+
     validates :type, presence: true
     # One of each kind per tier. Among live rows only, matching the index — the
     # row a replacement supersedes is retired first, because a retired row is

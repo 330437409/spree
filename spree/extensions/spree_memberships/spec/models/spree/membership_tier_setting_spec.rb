@@ -10,6 +10,66 @@ RSpec.describe Spree::MembershipTierSetting, type: :model do
     expect(tier.name).to eq(group.name)
   end
 
+  # What the buy page's savings popup renders: four rows of the operator's copy,
+  # in the order the client's icons are in, and nothing worked out.
+  describe 'what it says a member saves' do
+    it 'answers four rows in the client’s own order' do
+      tier.update!(preferences: { saving_order_title: '下单立省', saving_order_content: '会员价再低一点',
+                                  saving_gift_title: '开卡送酒', saving_gift_content: '首月送一瓶' })
+
+      expect(tier.reload.saving_rows).to eq([
+        { 'title' => '下单立省', 'content' => '会员价再低一点' },
+        { 'title' => '', 'content' => '' },
+        { 'title' => '', 'content' => '' },
+        { 'title' => '开卡送酒', 'content' => '首月送一瓶' }
+      ])
+    end
+
+    # A row nobody wrote stays in the list rather than being dropped: the client
+    # places its icons by position, so a shorter list would shift them.
+    it 'answers blanks for a tier nobody has written for' do
+      expect(tier.saving_rows.length).to eq(4)
+      expect(tier.saving_rows.map(&:values).flatten).to all(be_blank)
+      expect(tier.saving_month_amount).to be_nil
+    end
+
+    # Plain decimal notation, because `BigDecimal#to_s` renders 0.06 as "0.6e-1"
+    # — not a number to print beside a currency sign.
+    it 'answers the monthly figure in the notation the rest of the API uses' do
+      { '0.06' => '0.06', 12.5 => '12.5', '12.50' => '12.5', 0 => '0.0' }.each do |written, answered|
+        tier.update!(preferences: { saving_month_amount: written })
+
+        expect(tier.reload.saving_month_amount).to eq(answered)
+      end
+    end
+
+    # The whole popup renders through this reader, so a value nobody can make
+    # sense of is answered nil rather than raised over.
+    it 'answers nothing for a figure that cannot be read as a number' do
+      tier.update_columns(preferences: { saving_month_amount: 'abc' })
+
+      expect(tier.reload.saving_month_amount).to be_nil
+    end
+
+    # A wholesale preferences write skips the typecast each preference's own
+    # writer does, so the shape is checked where the operator writes it: a title
+    # that is an object and a figure that is not a number both break the read
+    # that renders them.
+    it 'refuses copy that is not text and a figure that is not a number' do
+      tier.preferences = { saving_order_title: { nested: 'yes' } }
+      expect(tier).not_to be_valid
+
+      tier.preferences = { saving_coupon_title: 42 }
+      expect(tier).not_to be_valid
+
+      tier.preferences = { saving_month_amount: 'abc' }
+      expect(tier).not_to be_valid
+
+      tier.preferences = { saving_month_amount: '12.50', saving_order_title: '下单立省' }
+      expect(tier).to be_valid
+    end
+  end
+
   # One row per group is what makes a group a tier rather than an audience.
   it 'belongs to a group once' do
     tier
