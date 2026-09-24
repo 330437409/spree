@@ -70,6 +70,70 @@ RSpec.describe 'the membership reads', type: :request do
         to include('type' => 'exclusive_coupon', 'is_have' => true)
     end
   end
+  # 立即领取 — the annual gift's claim, and the entry the panel reads the gift
+  # off in the first place.
+  describe 'POST /api/v3/store/customers/me/membership_rights/:id/year_gift_claims' do
+    let(:coupon) { create(:promotion, store: store, name: 'A bottle of wine') }
+    let(:other_coupon) { create(:promotion, store: store, name: 'Another bottle') }
+    let!(:gift) do
+      create(:give_gift_right, customer_group: group, published: true, preferences: {
+        gift_promotion_ids: [coupon.prefixed_id, other_coupon.prefixed_id], yearly_limit: 1
+      })
+    end
+    let(:path) { "/api/v3/store/customers/me/membership_rights/#{gift.prefixed_id}/year_gift_claims" }
+
+    before { group.add_customers([user.id]) }
+
+    it 'hands over the gift’s coupon' do
+      post path, headers: headers
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body).to include('source' => 'membership', 'status' => 'unused')
+      expect(response.parsed_body['promotion']).to include('name' => 'A bottle of wine')
+    end
+
+    it 'lists the gift on the member centre entry, with what is left of it' do
+      get '/api/v3/store/customers/me/membership', headers: headers
+
+      entry = response.parsed_body['sections']['yearGiftLevelSettingVos'].first
+      expect(entry['is_have']).to be(true)
+      expect(entry['gift']).to include('mode' => 'coupon', 'can_count' => 1, 'usable_num' => 2)
+      expect(entry['gift']['coupons'].first).
+        to include('promotion_id' => coupon.prefixed_id, 'name' => 'A bottle of wine', 'claimed' => false)
+    end
+
+    # The allowance is spent while a coupon remains: the next claim is refused
+    # rather than the gift being emptied.
+    it 'refuses the claim past the year’s allowance' do
+      post path, headers: headers
+      post path, headers: headers
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body['error']['message']).
+        to eq(Spree.t('memberships.errors.gift_allowance_spent'))
+    end
+
+    it 'requires a signed-in customer' do
+      post path, headers: api_key_headers
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    # The ladder is where the store is, so a gift of another store's tier is not
+    # one this customer may claim.
+    it 'answers 404 for a right of another store' do
+      other_store = create(:store)
+      elsewhere = create(:give_gift_right, customer_group: create(:customer_group, store: other_store),
+                                           preferences: {
+                                             gift_promotion_ids: [create(:promotion, store: other_store).prefixed_id]
+                                           })
+
+      post "/api/v3/store/customers/me/membership_rights/#{elsewhere.prefixed_id}/year_gift_claims", headers: headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
   describe 'the card wallet' do
     let(:card) { create(:membership_card, customer: user, customer_group: group) }
 

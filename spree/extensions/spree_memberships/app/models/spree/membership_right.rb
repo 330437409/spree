@@ -34,9 +34,9 @@ module Spree
     registers_subclasses_via { SpreeMemberships.membership_rights }
 
     validates :type, presence: true
-    # One of each kind per tier. Among live rows only, matching the index — a
-    # retired row is history, and a replacement is saved before the row it
-    # supersedes is retired.
+    # One of each kind per tier. Among live rows only, matching the index — the
+    # row a replacement supersedes is retired first, because a retired row is
+    # history while a live duplicate is refused.
     validates :type, uniqueness: {
       scope: [:customer_group_id, *spree_base_uniqueness_scope],
       conditions: -> { where(deleted_at: nil) }
@@ -54,6 +54,14 @@ module Spree
     preference :promotion_id, :string, nullable: true
 
     scope :published, -> { where(published: true) }
+
+    # The rights this store's ladder carries. A right carries no tenancy column
+    # of its own — it reaches the store through its tier — so this is spelled
+    # from the model rather than through an association, and every store-scoped
+    # read of a right shares it.
+    scope :for_store, ->(store) {
+      where(customer_group_id: Spree::MembershipTierSetting.for_store(store).select(:customer_group_id))
+    }
 
     # @return [Array<Class>] the kinds a right may be
     def self.available_types
@@ -99,6 +107,19 @@ module Spree
       preferred_promotion_id.presence
     end
 
+    # What this kind contributes to the member centre beyond the right itself,
+    # answered per customer because what it contributes is a state of theirs
+    # rather than a setting of the tier's: which of the annual gift's coupons
+    # they have taken, and what is left of the year's allowance. Most kinds
+    # contribute nothing and answer nil here.
+    #
+    # @param customer [Object] the member the read is for
+    # @param store [Spree::Store]
+    # @return [Object, nil] the payload, for the API to serialize by its shape
+    def member_payload(customer:, store:)
+      nil
+    end
+
     # What this right multiplies an order's earn by on a given day. The day is the
     # kind's own business — a birthday today, a member day once its period exists —
     # so the trigger lives with the kind rather than in the readers that ask, and a
@@ -129,11 +150,19 @@ module Spree
     # scoped to the store, because a pool in another store's promotion is a code
     # this tier must not draw.
     def promotion_must_belong_to_the_store
-      promotion = Spree::Promotion.find_by_prefix_id(preferred_promotion_id)
-      return errors.add(:preferences, :invalid) if promotion.nil?
-      return if store.nil? || promotion.store_id == store.id
+      return if promotion_of_this_store?(preferred_promotion_id)
 
       errors.add(:preferences, :invalid)
+    end
+
+    # @param promotion_id [String] a promotion's prefixed id
+    # @return [Boolean] whether this store runs that promotion — the shared half
+    #   of the entry coupon's check and of a kind that names its own coupons
+    def promotion_of_this_store?(promotion_id)
+      promotion = Spree::Promotion.find_by_prefix_id(promotion_id)
+      return false if promotion.nil?
+
+      store.nil? || promotion.store_id == store.id
     end
 
     def type_must_be_registered

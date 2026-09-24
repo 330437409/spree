@@ -23,9 +23,7 @@ module Spree
           # tenancy column of its own, so this is built from the model rather
           # than from the base's store-scoped relation.
           def scope
-            Spree::MembershipRight.where(
-              customer_group_id: Spree::MembershipTierSetting.for_store(current_store).select(:customer_group_id)
-            )
+            Spree::MembershipRight.for_store(current_store)
           end
 
           def apply_collection_sort(collection)

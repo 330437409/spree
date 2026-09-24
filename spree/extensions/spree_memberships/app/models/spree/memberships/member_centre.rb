@@ -61,6 +61,17 @@ module Spree
         rights.count { |right| right.customer_group_id == tier.customer_group_id }
       end
 
+      # What a kind contributes beyond the right itself, for this customer — the
+      # annual gift's coupons and what is left of the year's allowance — or nil
+      # for a kind that has nothing of its own to say. Asked of the right, so a
+      # kind's payload is no change to this read.
+      #
+      # @param right [Spree::MembershipRight]
+      # @return [Object, nil]
+      def payload_for(right)
+        right.member_payload(customer: customer, store: store)
+      end
+
       # The birthday, as the client's `getVipBirthday` reads it: whether it is
       # set, how many days away it is, and the multiplier this customer's tier
       # grants for it — nil when the tier carries no birthday right, which is the
@@ -123,8 +134,7 @@ module Spree
 
       # @return [ActiveRecord::Relation]
       def rights_relation
-        Spree::MembershipRight.
-          where(customer_group_id: Spree::MembershipTierSetting.for_store(store).select(:customer_group_id)).
+        Spree::MembershipRight.for_store(store).
           joins(:tier_setting).
           order(Spree::MembershipTierSetting.arel_table[:rank].asc, :position, :id)
       end
