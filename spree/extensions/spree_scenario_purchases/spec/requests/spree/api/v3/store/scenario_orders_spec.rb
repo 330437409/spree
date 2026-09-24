@@ -77,6 +77,28 @@ RSpec.describe 'GET /api/v3/store/customers/me/scenario_orders', type: :request 
     mine(status: 'paid')
     expect(response.parsed_body['data'].map { |row| row['status'] }).to eq(['paid'])
   end
+
+  # What a plan that sells something here reads back as its own history: this
+  # list narrowed to the kind it registered.
+  it 'narrows to one kind of purchase' do
+    create(:scenario_order, store: store, customer: user, kind: 'never')
+    create(:scenario_order, store: store, customer: user, kind: 'simple')
+
+    mine(kind: 'simple')
+
+    expect(response.parsed_body['data'].map { |row| row['kind'] }).to eq(['simple'])
+  end
+
+  # A filter is not a lookup: a shape this list does not take is ignored rather
+  # than cast into the query.
+  it 'ignores a kind that is not a name' do
+    create(:scenario_order, store: store, customer: user, kind: 'simple')
+
+    mine(kind: { 'x' => 'y' })
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body['data'].map { |row| row['kind'] }).to eq(['simple'])
+  end
 end
 
 RSpec.describe 'the purchase itself', type: :request do
