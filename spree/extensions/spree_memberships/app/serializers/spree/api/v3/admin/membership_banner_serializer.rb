@@ -6,10 +6,12 @@ module Spree
         # the record's timestamps. The typelize declarations are restated because
         # an admin serializer does not inherit its store parent's.
         class MembershipBannerSerializer < Spree::Api::V3::MembershipBannerSerializer
-          # `areas` is left loose here on purpose: the area serializer is
-          # store-side, so its type is generated into the store SDK alone and
-          # naming it would break the admin build.
-          typelize name: 'string | null', pic: :string, areas: 'Array<Record<string, unknown>>',
+          # `areas` declares its *element* type rather than the array: the
+          # store parent already marks it multi, so an `Array<…>` string would
+          # be wrapped a second time. Its element is loose on purpose — the area
+          # serializer is store-side, so naming its type would break the admin
+          # build.
+          typelize name: 'string | null', pic: :string, areas: 'Record<string, unknown>',
                    deleted_at: 'string | null'
 
           attributes :created_at, :updated_at, :deleted_at

@@ -13,6 +13,11 @@ class CreateSpreeMembershipBanners < ActiveRecord::Migration[8.1]
       else
         t.json :areas, null: false
       end
+      if t.respond_to?(:jsonb)
+        t.jsonb :metadata
+      else
+        t.json :metadata
+      end
       t.datetime :deleted_at
       t.timestamps
     end

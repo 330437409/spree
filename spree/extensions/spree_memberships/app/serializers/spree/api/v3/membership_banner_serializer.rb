@@ -8,7 +8,7 @@ module Spree
 
         attributes :name, :pic
         attribute(:areas) do |banner|
-          (banner.areas || []).map do |area|
+          banner.areas.map do |area|
             Spree::Api::V3::MembershipBannerAreaSerializer.new(area, params: params).to_h
           end
         end
