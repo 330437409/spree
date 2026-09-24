@@ -97,7 +97,7 @@ module Spree
           # Asked again with this claim in hand, and only for a claim that is not
           # a replay of one already made: a claim that raced another past the
           # reading above finds the year spent and stands down.
-          if !coupon.claimed? && spent?(right, customer, store, gift.year)
+          if !coupon.claimed? && spent?(right, customer, store)
             result = failure(right, Spree.t('memberships.errors.gift_allowance_spent'))
             raise ActiveRecord::Rollback
           end
@@ -124,19 +124,14 @@ module Spree
         result
       end
 
-      # Whether this year's allowance is spent, this claim included. Read under
-      # the tier's own lock, where every claim that raced this one has either
-      # committed — and is counted — or is waiting for the lock.
+      # Whether the year now holds more claims than its allowance, this claim
+      # included — asked of the year's own reader, read under the tier's own
+      # lock, where every claim that raced this one has either committed or is
+      # waiting for the lock.
       #
       # @return [Boolean]
-      def spent?(right, customer, store, year)
-        zone = SpreeMemberships.zone_for(store)
-        claims = Spree::Grant.
-                 where(kind: YearGiftClaim.api_type, customer_id: customer&.id, source: right.customer_group).
-                 where(granted_at: zone.local(year, 1, 1)..zone.local(year + 1, 1, 1)).
-                 count
-
-        claims > right.preferred_yearly_limit.to_i
+      def spent?(right, customer, store)
+        Spree::Memberships::YearGift.new(right: right, customer: customer, store: store).over_allowance?
       end
 
       # A refusal a client can act on. A validation error keeps its own message,

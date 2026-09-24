@@ -33,6 +33,16 @@ module Spree
         [limit - claims.size, 0].max
       end
 
+      # Whether the year has more claims than its allowance. Read rather than
+      # clamped, so a caller that has already written its own claim can ask
+      # whether that claim was one too many — which is how a claim that raced
+      # another stands down.
+      #
+      # @return [Boolean]
+      def over_allowance?
+        claims.size > limit
+      end
+
       # How much of the gift is still unclaimed — the client's `usableNum`. It
       # is a second number because the two disagree: a member whose allowance is
       # spent while coupons remain has claimed everything they may this year,
