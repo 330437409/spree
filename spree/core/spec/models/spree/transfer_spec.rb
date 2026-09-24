@@ -50,6 +50,17 @@ RSpec.describe Spree::Transfer, type: :model do
       expect(row.to_customer).to be_nil
     end
 
+    # A voucher is shared rather than addressed: the token is what carries it,
+    # and the phone a giver types is a hint about where it went, not a
+    # permission — the claim checks the window, never the number.
+    it 'may be open to whoever holds its token' do
+      row = build_transfer(to_phone: nil)
+      row.save!
+
+      expect(row).to be_pending
+      expect(row.to_phone).to be_nil
+    end
+
     # Expiry is a date fact, never a stored status — the same rule a gift card
     # follows — so a reader is told `expired` while the column still says pending.
     it 'reads a closed window as expired' do

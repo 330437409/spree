@@ -326,6 +326,38 @@ RSpec.describe 'the membership reads', type: :request do
       expect(card.reload).to be_active
       expect(card.membership.customer).to eq(user)
       expect(user.reload.customer_groups).to include(group)
+
+      # The claim is the activation, so what the answer hands back is the term
+      # it just started — the client reads its end off this and does not ask
+      # again.
+      expect(response.parsed_body.dig('card', 'membership')).to include('status' => 'active')
+      expect(response.parsed_body.dig('card', 'membership', 'ends_at')).
+        to eq(card.membership.ends_at.iso8601)
+    end
+
+    # What the recipient reads beside the code: the rights the card carries, so
+    # they know what they are claiming before they claim it, and the window it is
+    # open in.
+    it 'answers what the card is worth, and the window it is open in' do
+      get "/api/v3/store/membership_card_transfers/#{window.token}", headers: api_key_headers
+
+      expect(response.parsed_body['rights'].map { |right| right['type'] }).to eq(['exclusive_coupon'])
+      expect(response.parsed_body['valid_from']).to be_present
+      expect(response.parsed_body['expires_at']).to eq(window.expires_at.iso8601)
+    end
+
+    # 会员券 — a voucher is shared rather than addressed, so the phone is a hint
+    # about where it went and not a permission: whoever holds the token claims
+    # it, and the claim is what starts their term.
+    it 'claims an open window for whoever holds its token' do
+      open_card = create(:membership_card, customer: create(:customer), customer_group: group)
+      open_window = create(:transfer, from_customer: open_card.customer, transferable: open_card, to_phone: nil)
+
+      post "/api/v3/store/membership_card_transfers/#{open_window.token}/claims", headers: headers
+
+      expect(response).to have_http_status(:created)
+      expect(open_card.reload).to be_active
+      expect(open_card.membership.customer).to eq(user)
     end
 
     it 'answers 404 for a token nobody holds' do

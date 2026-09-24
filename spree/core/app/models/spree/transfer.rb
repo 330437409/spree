@@ -41,7 +41,10 @@ module Spree
     # Nil until somebody claims it: the recipient may not have an account yet.
     belongs_to :to_customer, class_name: "::#{Spree.customer_class}", optional: true
 
-    validates :to_phone, presence: true
+    # A window may name who it is for, or be open to whoever holds the token —
+    # a voucher shared in a group chat is the second kind, and the token is then
+    # the only thing that carries it. What a giver types is a delivery hint
+    # rather than a permission: the claim checks the window, never the phone.
     validates :expires_at, presence: true
     validate :expires_at_lies_ahead, on: :create
     validate :transferable_answers_the_contract

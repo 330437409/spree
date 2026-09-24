@@ -44,6 +44,8 @@ SpreeMemberships.membership_rights << MyGem::Rights::FreeShipping
 | `POST /api/v3/store/customers/me/membership_cards/:id/activations` | 激活 — the card leaves `dormant` and a term starts for the customer who activated it |
 | `POST /api/v3/store/customers/me/membership_rights/:id/year_gift_claims` | 立即领取 — the annual gift: one of the tier's gift coupons is handed over and the claim recorded, once per coupon per year |
 | `GET /api/v3/store/scenario_orders/:id/membership_card` | The card a settled purchase released, read back off the purchase. The purchase itself is the scenario plan's row; its history is that plan's list narrowed by `kind=vip` |
+| `GET /api/v3/store/membership_card_transfers/:token` | The voucher read before signing in: the window it is open in and the rights the card carries |
+| `POST /api/v3/store/membership_card_transfers/:token/claims` | 兑换 — claim and activate in one step. The same door a phone-addressed gift uses; a voucher is simply a window nobody's number was written on |
 
 ## Admin API
 

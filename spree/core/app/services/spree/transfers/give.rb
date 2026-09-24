@@ -14,7 +14,7 @@ module Spree
       prepend Spree::ServiceModule::Base
 
       # @return [Spree::ServiceModule::Result] value is the transfer
-      def call(from:, transferable:, to_phone:, expires_at:, message: nil)
+      def call(from:, transferable:, to_phone: nil, expires_at:, message: nil)
         return failure(nil, Spree.t('transfers.errors.transferable_gone')) if released?(transferable)
 
         transfer = nil

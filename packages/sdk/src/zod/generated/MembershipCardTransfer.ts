@@ -8,6 +8,8 @@ export const MembershipCardTransferSchema = z.object({
   status: z.string(),
   message: z.string().nullable(),
   expires_at: z.string().nullable(),
+  valid_from: z.string().nullable(),
+  rights: z.array(z.any()),
   card: MembershipCardSummarySchema.nullable(),
 });
 

@@ -99,6 +99,15 @@ module Spree
       dormant? && activates_before.present? && activates_before <= Time.current
     end
 
+    # What the tier this card carries grants, in the order the ladder lists it —
+    # what a recipient reads before claiming the card, since the rights are what
+    # the card is worth.
+    #
+    # @return [ActiveRecord::Relation]
+    def tier_rights
+      Spree::MembershipRight.where(customer_group_id: customer_group_id).order(:position, :id)
+    end
+
     private
 
     def group_in_same_store
