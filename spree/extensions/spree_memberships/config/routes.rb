@@ -13,6 +13,13 @@ Spree::Core::Engine.add_routes do
         resources :membership_rights, only: [:index]
         resources :membership_tiers, only: [:index]
 
+        # What a settled purchase released, read back off the purchase. The
+        # purchase itself is the scenario plan's row, so only this nested read is
+        # drawn here (docs/plans/6.1-scenario-purchases.md).
+        resources :scenario_orders, only: [] do
+          resource :membership_card, only: [:show], controller: 'scenario_orders/membership_cards'
+        end
+
         namespace :customer, path: 'customers/me' do
           # The customer's own rung and what it carries.
           resource :membership, only: [:show], controller: 'membership'

@@ -20,6 +20,9 @@ module Spree
 
             def scope
               orders = super.for_customer(current_user)
+              # What a plan that sells something here asks for: its own history,
+              # which is this list narrowed to the kind it registered.
+              orders = orders.where(kind: params[:kind]) if params[:kind].present?
 
               case params[:status].presence
               when 'open' then orders.open_now

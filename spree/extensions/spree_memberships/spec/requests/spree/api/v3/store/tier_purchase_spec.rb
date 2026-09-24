@@ -14,6 +14,17 @@ RSpec.describe 'buying a term', type: :request do
          params: { kind: 'vip', context: { tier_id: tier.prefixed_id }.merge(context) }
   end
 
+  # The purchase the last `buy` made, paid for — which is when the card exists.
+  # The frame's session-completed subscriber does this in production, called here
+  # because the suite disables events.
+  def settle
+    buy
+    purchase = Spree::ScenarioOrder.find_by_prefix_id(response.parsed_body['id'])
+    Spree::PaymentSessions::Complete.call(payment_session: purchase.payment_session)
+    Spree::ScenarioOrders::Settle.call(scenario_order: purchase)
+    purchase
+  end
+
   # One call buys it — no cart, no line item, no address — and settling it issues
   # the card, which is the whole of what this kind hands over.
   it 'issues a dormant card once the purchase is paid' do
@@ -25,11 +36,9 @@ RSpec.describe 'buying a term', type: :request do
 
     purchase = Spree::ScenarioOrder.find_by_prefix_id(response.parsed_body['id'])
     Spree::PaymentSessions::Complete.call(payment_session: purchase.payment_session)
-    # What the frame's session-completed subscriber does, called here because the
-    # suite disables events.
     Spree::ScenarioOrders::Settle.call(scenario_order: purchase)
 
-    card = Spree::MembershipCard.last
+    card = Spree::MembershipCard.find_by(scenario_order: purchase)
     expect(card).to be_dormant
     expect(card.customer).to eq(user)
     expect(card.scenario_order.reload).to be_paid
@@ -55,5 +64,46 @@ RSpec.describe 'buying a term', type: :request do
     expect(offer['offers']).to contain_exactly(
       include('tier_id' => tier.prefixed_id, 'amount' => '365.0', 'currency' => 'USD')
     )
+  end
+
+  # What the client reads back after paying: the gift the purchase released,
+  # addressed by the purchase rather than searched for in the wallet.
+  describe 'GET /api/v3/store/scenario_orders/:id/membership_card' do
+    it 'answers the card the purchase issued' do
+      purchase = settle
+
+      get "/api/v3/store/scenario_orders/#{purchase.prefixed_id}/membership_card", headers: headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to include('status' => 'dormant', 'source' => 'purchase')
+      expect(response.parsed_body['tier']).to include('id' => tier.prefixed_id, 'rank' => 1)
+    end
+
+    it 'answers 404 for a purchase that released nothing yet' do
+      buy
+      purchase = Spree::ScenarioOrder.find_by_prefix_id(response.parsed_body['id'])
+
+      get "/api/v3/store/scenario_orders/#{purchase.prefixed_id}/membership_card", headers: headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    # Read through the customer's own purchases, so somebody else's is not found
+    # rather than answered.
+    it 'answers 404 for a purchase that is not theirs' do
+      other = create(:scenario_order, store: store, customer: create(:customer), kind: 'vip')
+
+      get "/api/v3/store/scenario_orders/#{other.prefixed_id}/membership_card", headers: headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'requires a signed-in customer' do
+      purchase = settle
+
+      get "/api/v3/store/scenario_orders/#{purchase.prefixed_id}/membership_card", headers: api_key_headers
+
+      expect(response).to have_http_status(:unauthorized)
+    end
   end
 end

@@ -29,7 +29,7 @@ SpreeScenarioPurchases.scenario_order_kinds << SpreeMembership::Kinds::Vip
 | --- | --- |
 | `GET /api/v3/store/pay_config` | What can be bought here and how: the channels with a gateway behind them, what each kind sells, and whether the customer has a payment PIN. Readable before sign-in |
 | `POST /api/v3/store/scenario_orders` | Buy something. Body: `kind`, `channel`, `context` (the kind's own), and the payment `scene`/`code` the customer is paying with. The answer carries the session the client passes on to the gateway |
-| `GET /api/v3/store/customers/me/scenario_orders` | The customer's own purchases. `status=open` is what the unpaid screens list; `paid`, `canceled` and `expired` narrow it further |
+| `GET /api/v3/store/customers/me/scenario_orders` | The customer's own purchases. `status=open` is what the unpaid screens list; `paid`, `canceled` and `expired` narrow it further, and `kind=vip` narrows to one kind's own history |
 | `GET /api/v3/store/scenario_orders/:id` | One purchase |
 | `POST /api/v3/store/scenario_orders/:id/cancellation` | Call off a purchase that was not paid for |
 | `DELETE /api/v3/store/scenario_orders/:id` | Remove one from the customer's own list |
