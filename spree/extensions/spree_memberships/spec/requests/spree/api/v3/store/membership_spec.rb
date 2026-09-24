@@ -70,6 +70,75 @@ RSpec.describe 'the membership reads', type: :request do
         to include('type' => 'exclusive_coupon', 'is_have' => true)
     end
   end
+  # The banner the member centre opens with: the picture of the customer's own
+  # tier, and the tap targets over it.
+  describe 'GET /api/v3/store/customers/me/membership_banner' do
+    let(:banner) do
+      create(:membership_banner, customer_group: group, name: '会员中心',
+                                 areas: [{ 'area_rem' => 'left: 1rem;top: 2rem;width: 3rem;height: 1rem;',
+                                           'link' => '/pages/member/index' }])
+    end
+
+    it 'answers the banner of the customer’s own tier' do
+      banner
+      group.add_customers([user.id])
+
+      get '/api/v3/store/customers/me/membership_banner', headers: headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to include('name' => '会员中心', 'pic' => banner.pic)
+      expect(response.parsed_body['areas'].first).to include(
+        'area_rem' => 'left: 1rem;top: 2rem;width: 3rem;height: 1rem;',
+        'link' => '/pages/member/index'
+      )
+    end
+
+    # Nothing to show is not an error: the page has no banner, and a body that
+    # is not an object is how a client reads that.
+    it 'answers nothing for a customer in no tier' do
+      banner
+
+      get '/api/v3/store/customers/me/membership_banner', headers: headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to be_nil
+    end
+
+    it 'answers nothing for a tier nobody has set a banner for' do
+      group.add_customers([user.id])
+
+      get '/api/v3/store/customers/me/membership_banner', headers: headers
+
+      expect(response.parsed_body).to be_nil
+    end
+
+    # The banner of another tier in this same store is not the customer's: they
+    # hold a tier of their own, so this is the resolution rather than the
+    # absence of a membership.
+    it 'answers nothing for a banner of a tier they are not in' do
+      banner
+      their_group = create(:customer_group, store: store)
+      create(:membership_tier_setting, customer_group: their_group, rank: 2)
+      their_group.add_customers([user.id])
+
+      get '/api/v3/store/customers/me/membership_banner', headers: headers
+
+      expect(response.parsed_body).to be_nil
+    end
+
+    # A row written past the model — a console, an import — is left out of the
+    # answer rather than rendered as a target nobody can place.
+    it 'leaves out a target that is not a target at all' do
+      banner
+      group.add_customers([user.id])
+      banner.update_column(:areas, '{"area_rem":"left: 1rem;"}')
+
+      get '/api/v3/store/customers/me/membership_banner', headers: headers
+
+      expect(response.parsed_body['areas']).to eq([])
+    end
+  end
+
   # 立即领取 — the annual gift's claim, and the entry the panel reads the gift
   # off in the first place.
   describe 'POST /api/v3/store/customers/me/membership_rights/:id/year_gift_claims' do

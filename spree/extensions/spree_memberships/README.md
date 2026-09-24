@@ -24,6 +24,7 @@ SpreeMemberships.membership_rights << MyGem::Rights::FreeShipping
 | `Spree::Memberships::YearGift` | One member's annual gift: the coupons it offers, the ones they have taken this year, and what is left of the year's allowance |
 | `Spree::Memberships::ClaimYearGift` | 立即领取 — draws one of the gift's coupons, hands it over through the wallet and records the claim, all under one idempotency key |
 | `Spree::Memberships::YearGiftClaim` | The kind of grant a claim is: one member, one tier, one coupon, one year |
+| `Spree::MembershipBanner` | The member centre's banner: one picture per tier, and the tap targets laid over it |
 | `Spree::MembershipCard` | What a membership is bought, granted, held or given away as, before anybody is entitled to anything |
 | `Spree::Membership` | The term itself: a period a named customer holds a tier for |
 | `Spree::Memberships::SetMemberDiscount` | The tier's member price: a catalogue of its own, an owned automatic list and the assignment that shows it to the tier's group |
@@ -44,6 +45,7 @@ SpreeMemberships.membership_rights << MyGem::Rights::FreeShipping
 | `POST /api/v3/store/customers/me/membership_cards/:id/activations` | 激活 — the card leaves `dormant` and a term starts for the customer who activated it |
 | `POST /api/v3/store/customers/me/membership_rights/:id/year_gift_claims` | 立即领取 — the annual gift: one of the tier's gift coupons is handed over and the claim recorded, once per coupon per year |
 | `GET /api/v3/store/scenario_orders/:id/membership_card` | The card a settled purchase released, read back off the purchase. The purchase itself is the scenario plan's row; its history is that plan's list narrowed by `kind=vip` |
+| `GET /api/v3/store/customers/me/membership_banner` | The banner the customer's member centre opens with: the picture of their tier and the tap targets over it. `null` when they are in no tier, or their tier has none |
 | `GET /api/v3/store/membership_card_transfers/:token` | The voucher read before signing in: the window it is open in and the rights the card carries |
 | `POST /api/v3/store/membership_card_transfers/:token/claims` | 兑换 — claim and activate in one step. The same door a phone-addressed gift uses; a voucher is simply a window nobody's number was written on |
 
@@ -56,6 +58,7 @@ SpreeMemberships.membership_rights << MyGem::Rights::FreeShipping
 | `GET`/`POST`/`PATCH /api/v3/admin/customer_groups/:id/tier_setting` | What makes the group a tier. 404 while it is not one |
 | `GET /api/v3/admin/membership_cards`, `GET /api/v3/admin/memberships` | Read-only: which cards a store issued and what became of them, and who holds which tier until when |
 | `POST /api/v3/admin/membership_cards/:id/recycling` | The one write: a support desk voiding a card the client cannot (a lost phone, a fraud report) |
+| `GET`/`POST`/`PATCH /api/v3/admin/customer_groups/:id/banner` | The banner the group's members see: the picture's URL, a name, and the tap targets over it |
 
 ## A right is a kind, and the panels are a projection
 

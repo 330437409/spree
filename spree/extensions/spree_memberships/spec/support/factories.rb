@@ -27,6 +27,14 @@ FactoryBot.define do
     currency { 'USD' }
   end
 
+  # The member centre's banner: a picture and the tap targets over it.
+  factory :membership_banner, class: 'Spree::MembershipBanner' do
+    customer_group
+    name { 'Member centre' }
+    pic { 'https://cdn.example.com/banner.png' }
+    areas { [] }
+  end
+
   # A period a customer holds a tier for.
   factory :membership, class: 'Spree::Membership' do
     customer

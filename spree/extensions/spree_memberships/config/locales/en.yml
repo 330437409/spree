@@ -18,6 +18,7 @@ en:
         card_transferring: this card is on its way to somebody else
         promotion_unknown: the coupon this tier hands over is not one this store runs
         gift_not_a_gift: this right is not a tier's annual gift
+        banner_areas_invalid: the banner's targets must be a list
         gift_not_coupons: this tier's annual gift is not a coupon
         gift_not_the_tiers: this annual gift belongs to a tier you are not on
         gift_coupon_unknown: this coupon is not one of the annual gift's

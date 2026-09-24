@@ -8,6 +8,77 @@ RSpec.describe 'the membership operator reads', type: :request do
   let(:group) { create(:customer_group, store: store) }
 
 
+  # The banner a tier's members see: a group has at most one, so it is written
+  # and read the way the group's settings row is.
+  describe 'the tier banner' do
+    it 'writes it and answers what it wrote' do
+      post "/api/v3/admin/customer_groups/#{group.prefixed_id}/banner", headers: headers,
+           params: { name: '会员中心', pic: 'https://cdn.example.com/banner.png',
+                     areas: [{ area_rem: 'left: 1rem;top: 2rem;', link: '/pages/member/index' }] }
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body).to include('name' => '会员中心', 'pic' => 'https://cdn.example.com/banner.png')
+      expect(response.parsed_body['areas'].first).to include(
+        'area_rem' => 'left: 1rem;top: 2rem;', 'link' => '/pages/member/index'
+      )
+    end
+
+    # Permitted parameters drop an `areas` they cannot permit, so a payload that
+    # named targets and sent something else would be saved as a banner with
+    # none: refused rather than answered 201.
+    it 'refuses targets that are not a list' do
+      post "/api/v3/admin/customer_groups/#{group.prefixed_id}/banner", headers: headers,
+           params: { pic: 'https://cdn.example.com/banner.png', areas: 'oops' }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(Spree::MembershipBanner.count).to eq(0)
+
+      post "/api/v3/admin/customer_groups/#{group.prefixed_id}/banner", headers: headers,
+           params: { pic: 'https://cdn.example.com/banner.png', areas: %w[a b] }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(Spree::MembershipBanner.count).to eq(0)
+
+      # A list of lists is the shape that slips past a test for "something that
+      # can become a hash": every Array can.
+      post "/api/v3/admin/customer_groups/#{group.prefixed_id}/banner", headers: headers,
+           params: { pic: 'https://cdn.example.com/banner.png',
+                     areas: [%w[area_rem left:\ 1rem;]] }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(Spree::MembershipBanner.count).to eq(0)
+    end
+
+    # A group of another store is not this store's to write, and its own banner
+    # is not touched.
+    it 'answers 404 for a group of another store' do
+      elsewhere = create(:customer_group, store: create(:store))
+
+      post "/api/v3/admin/customer_groups/#{elsewhere.prefixed_id}/banner", headers: headers,
+           params: { pic: 'https://cdn.example.com/banner.png' }
+
+      expect(response).to have_http_status(:not_found)
+      expect(Spree::MembershipBanner.count).to eq(0)
+    end
+
+    it 'answers 404 while a tier has no banner' do
+      get "/api/v3/admin/customer_groups/#{group.prefixed_id}/banner", headers: headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    # An operator changes the picture or a target without touching the rest.
+    it 'updates the one it already has' do
+      create(:membership_banner, customer_group: group)
+
+      patch "/api/v3/admin/customer_groups/#{group.prefixed_id}/banner", headers: headers,
+            params: { name: '新名字' }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['name']).to eq('新名字')
+    end
+  end
+
   describe 'GET /api/v3/admin/membership_rights/types' do
     it 'answers the registry, each kind with the settings it declares' do
       get '/api/v3/admin/membership_rights/types', headers: headers

@@ -51,6 +51,8 @@ export { MediaSchema, type Media } from './Media';
 export { MediaEventSchema, type MediaEvent } from './MediaEvent';
 export { MemberCentreSchema, type MemberCentre } from './MemberCentre';
 export { MembershipSchema, type Membership } from './Membership';
+export { MembershipBannerSchema, type MembershipBanner } from './MembershipBanner';
+export { MembershipBannerAreaSchema, type MembershipBannerArea } from './MembershipBannerArea';
 export { MembershipCardSchema, type MembershipCard } from './MembershipCard';
 export { MembershipCardSummarySchema, type MembershipCardSummary } from './MembershipCardSummary';
 export { MembershipCardTierSchema, type MembershipCardTier } from './MembershipCardTier';
