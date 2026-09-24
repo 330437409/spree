@@ -13,7 +13,7 @@ module Spree
                  entry_bag: 'Record<string, unknown> | null',
                  giftable: :boolean, activates_before: 'string | null',
                  activated_at: 'string | null', membership: 'Record<string, unknown> | null',
-                 transfer: 'Record<string, unknown> | null'
+                 transfer: 'MembershipCardTransfer | null'
 
         attribute(:tier) do |card|
           tier = card.tier_setting
@@ -43,10 +43,12 @@ module Spree
           Spree::Api::V3::MembershipSerializer.new(card.membership, params: params).to_h
         end
 
-        # The window the card is inside: what the client reads as 赠送中, and
-        # what carries the token it shares.
+        # The window the card is inside, in whatever state it is: 赠送中 while it
+        # is on its way, and 已赠送 once it was claimed, which the client reads
+        # off the window's status beside the card's own. Carries the token the
+        # giver shared.
         attribute(:transfer) do |card|
-          window = card.pending_transfer
+          window = card.latest_transfer
           next if window.nil?
 
           Spree::Api::V3::MembershipCardTransferSerializer.new(window, params: params).to_h

@@ -148,6 +148,19 @@ RSpec.describe 'the membership reads', type: :request do
       expect(row['tier']).to include('rank' => 1)
     end
 
+    # The wallet renders the window a card is inside, and a wallet of cards must
+    # not pay for what only the voucher page shows: the rights the card carries
+    # are that read's own.
+    it 'leaves the voucher’s rights off the wallet’s window' do
+      window = create(:transfer, from_customer: user, transferable: card, to_phone: nil)
+
+      get '/api/v3/store/customers/me/membership_cards', headers: headers
+
+      window_body = response.parsed_body['data'].find { |row| row['id'] == card.prefixed_id }['transfer']
+      expect(window_body).to include('token' => window.token)
+      expect(window_body).not_to have_key('rights')
+    end
+
     it 'activates a card and answers the term it started' do
       post "/api/v3/store/customers/me/membership_cards/#{card.prefixed_id}/activations", headers: headers
 
@@ -337,8 +350,16 @@ RSpec.describe 'the membership reads', type: :request do
 
     # What the recipient reads beside the code: the rights the card carries, so
     # they know what they are claiming before they claim it, and the window it is
-    # open in.
-    it 'answers what the card is worth, and the window it is open in' do
+    # open in. The list is this tier's *published* rights and nothing else — a
+    # second tier's right and an unpublished one of this tier are both things a
+    # claim would not hand over, and promising them here would be a promise the
+    # redemption breaks.
+    it 'answers what the card grants, and the window it is open in' do
+      other_group = create(:customer_group, store: store)
+      create(:membership_tier_setting, customer_group: other_group, rank: 2)
+      create(:membership_right, customer_group: other_group)
+      create(:entry_integral_right, customer_group: group, published: false)
+
       get "/api/v3/store/membership_card_transfers/#{window.token}", headers: api_key_headers
 
       expect(response.parsed_body['rights'].map { |right| right['type'] }).to eq(['exclusive_coupon'])
@@ -346,18 +367,49 @@ RSpec.describe 'the membership reads', type: :request do
       expect(response.parsed_body['expires_at']).to eq(window.expires_at.iso8601)
     end
 
-    # 会员券 — a voucher is shared rather than addressed, so the phone is a hint
-    # about where it went and not a permission: whoever holds the token claims
-    # it, and the claim is what starts their term.
-    it 'claims an open window for whoever holds its token' do
-      open_card = create(:membership_card, customer: create(:customer), customer_group: group)
-      open_window = create(:transfer, from_customer: open_card.customer, transferable: open_card, to_phone: nil)
+    # 已赠送 — the giver's own wallet keeps the window they opened, so the client
+    # reads an accepted one beside the card's own status instead of taking the
+    # claimer's term for the giver's own activation.
+    it 'keeps the window on the giver’s card after it is claimed' do
+      giver = create(:customer)
+      giver_card = create(:membership_card, customer: giver, customer_group: group)
+      open_window = create(:transfer, from_customer: giver, transferable: giver_card, to_phone: nil)
 
       post "/api/v3/store/membership_card_transfers/#{open_window.token}/claims", headers: headers
 
+      giver_headers = api_key_headers.merge(
+        'Authorization' => "Bearer #{Spree::Api::V3::TestingSupport.generate_jwt(giver)}"
+      )
+      get '/api/v3/store/customers/me/membership_cards', headers: giver_headers
+
+      row = response.parsed_body['data'].first
+      expect(row['transfer']).to include('status' => 'accepted', 'token' => open_window.token)
+      expect(row['membership']).to be_present
+    end
+
+    # 会员券 — a voucher is shared rather than addressed: the giver opens a window
+    # that names nobody, and whoever holds its token claims it. The empty field a
+    # form submits when nobody fills it in is no phone at all, which is the same
+    # open window — and the buyer stays the buyer while the term is the claimer's.
+    it 'gives a card without a phone and hands it to whoever claims the token' do
+      giver = create(:customer)
+      giver_card = create(:membership_card, customer: giver, customer_group: group)
+      giver_headers = api_key_headers.merge(
+        'Authorization' => "Bearer #{Spree::Api::V3::TestingSupport.generate_jwt(giver)}"
+      )
+
+      post "/api/v3/store/customers/me/membership_cards/#{giver_card.prefixed_id}/transfers",
+           headers: giver_headers, params: { to_phone: '', expires_at: 1.week.from_now.iso8601 }
+
       expect(response).to have_http_status(:created)
-      expect(open_card.reload).to be_active
-      expect(open_card.membership.customer).to eq(user)
+      token = response.parsed_body['token']
+
+      post "/api/v3/store/membership_card_transfers/#{token}/claims", headers: headers
+
+      expect(response).to have_http_status(:created)
+      expect(giver_card.reload).to be_active
+      expect(giver_card.membership.customer).to eq(user)
+      expect(giver_card.customer).to eq(giver)
     end
 
     it 'answers 404 for a token nobody holds' do

@@ -26,7 +26,8 @@ module Spree
               # What the serializer reads is loaded with the row, as the wallet
               # loads it: a post-payment read should not pay a query per tier.
               card = Spree::MembershipCard.for_store(current_store).
-                     includes(:pending_transfer, tier_setting: :customer_group).
+                     includes({ latest_transfer: { transferable: [:membership, { tier_setting: :customer_group }] } },
+                              :membership, tier_setting: :customer_group).
                      find_by!(scenario_order: purchase)
 
               render json: serialize_resource(card)

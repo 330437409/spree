@@ -23,7 +23,8 @@ module Spree
               # whether it is live or lapsed.
               def index
                 windows = Spree::Transfer.for_giver(current_user).
-                          where(transferable: @card).with_status(:pending)
+                          where(transferable: @card).with_status(:pending).
+                          includes(transferable: [:membership, { tier_setting: :customer_group }])
 
                 render json: { data: windows.map { |window| serialize_resource(window) } }
               end

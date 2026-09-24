@@ -45,6 +45,12 @@ module Spree
     # a voucher shared in a group chat is the second kind, and the token is then
     # the only thing that carries it. What a giver types is a delivery hint
     # rather than a permission: the claim checks the window, never the phone.
+    #
+    # Normalised rather than validated, because a form that submits an empty
+    # field sends `''`: an empty answer is no answer, so it opens a window
+    # instead of storing an address nobody can send to.
+    normalizes :to_phone, with: ->(value) { value.to_s.strip.presence }
+
     validates :expires_at, presence: true
     validate :expires_at_lies_ahead, on: :create
     validate :transferable_answers_the_contract

@@ -63,6 +63,14 @@ module Spree
     has_one :pending_transfer, -> { with_status(:pending) }, class_name: 'Spree::Transfer',
             as: :transferable, inverse_of: :transferable
 
+    # The window in whatever state it is: pending while the card is on its way,
+    # accepted once somebody claimed it. What the wallet reads, because 已赠送 is
+    # the client reading an accepted window beside the card's own status, and a
+    # read that only answered live windows would leave a giver's card looking
+    # like one they activated themselves.
+    has_one :latest_transfer, -> { order(created_at: :desc) }, class_name: 'Spree::Transfer',
+            as: :transferable, inverse_of: :transferable
+
     #
     # The transfer contract (docs/plans/6.1-transfer-primitive.md). The card
     # answers all three, which is what makes it transferable at all.
@@ -97,15 +105,6 @@ module Spree
     # @return [Boolean] whether the deadline to activate it has passed
     def overdue?
       dormant? && activates_before.present? && activates_before <= Time.current
-    end
-
-    # What the tier this card carries grants, in the order the ladder lists it —
-    # what a recipient reads before claiming the card, since the rights are what
-    # the card is worth.
-    #
-    # @return [ActiveRecord::Relation]
-    def tier_rights
-      Spree::MembershipRight.where(customer_group_id: customer_group_id).order(:position, :id)
     end
 
     private

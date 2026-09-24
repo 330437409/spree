@@ -59,6 +59,13 @@ RSpec.describe Spree::Transfer, type: :model do
 
       expect(row).to be_pending
       expect(row.to_phone).to be_nil
+
+      # The shape a form submits when nobody fills the field in: an empty answer
+      # is no answer, and the window is open rather than addressed to nobody.
+      blank = build_transfer(to_phone: '  ')
+      blank.save!
+
+      expect(blank.to_phone).to be_nil
     end
 
     # Expiry is a date fact, never a stored status — the same rule a gift card

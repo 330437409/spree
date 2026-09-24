@@ -9,8 +9,7 @@ module Spree
       # is not theirs to learn, and the claimer is not known until they claim.
       class MembershipCardTransferSerializer < BaseSerializer
         typelize token: :string, status: :string, message: 'string | null', expires_at: 'string | null',
-                 valid_from: 'string | null', rights: 'Array<Record<string, unknown>>',
-                 card: 'MembershipCardSummary | null'
+                 valid_from: 'string | null', card: 'MembershipCardSummary | null'
 
         attributes :token
         attribute(:status) { |transfer| transfer.display_status }
@@ -19,18 +18,6 @@ module Spree
         # A window is live from the moment it is opened, so that is what a reader
         # counting towards the end needs: it is always behind them.
         attribute(:valid_from) { |transfer| transfer.created_at&.iso8601 }
-
-        # What the card is worth, so the recipient reads what they are about to
-        # claim rather than claiming to find out. Empty for a transferable that
-        # is not this gem's.
-        attribute(:rights) do |transfer|
-          card = transfer.transferable
-          next [] unless card.is_a?(Spree::MembershipCard)
-
-          card.tier_rights.map do |right|
-            Spree::Api::V3::MembershipRightSerializer.new(right, params: params).to_h
-          end
-        end
 
         # The lean read: a window carries the card, and the wallet's card
         # carries its window, so rendering one through the other is a loop.
