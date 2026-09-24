@@ -46,6 +46,11 @@ module SpreeMemberships
       SpreeMemberships::Engine.register_kinds(SpreeScenarioPurchases.scenario_order_kinds,
                                               [Spree::MembershipKinds::Vip])
 
+      # The annual gift's claims are grants of this gem's own kind — the
+      # primitive writes a debt under a kind, and only a registered one, so the
+      # claim has to be registered before it can be recorded.
+      SpreeMemberships::Engine.register_kinds(Spree.grant_kinds, [Spree::Memberships::YearGiftClaim])
+
       # The points plan's earn takes a multiplier from whatever a day's rights
       # say, and left the seam nil for this gem to fill: the birthday, and the
       # member day once its own dates are a thing something can name.

@@ -17,6 +17,11 @@ en:
         card_not_giftable: this card cannot be given away
         card_transferring: this card is on its way to somebody else
         promotion_unknown: the coupon this tier hands over is not one this store runs
+        gift_not_coupons: this tier's annual gift is not a coupon
+        gift_not_the_tiers: this annual gift belongs to a tier you are not on
+        gift_coupon_unknown: this coupon is not one of the annual gift's
+        gift_claimed: every coupon of this annual gift has been claimed this year
+        gift_allowance_spent: this year's annual gift has already been claimed
         tier_open_ended: this customer holds a tier with no end, so a new one cannot wait for it
     membership_right_types:
       entry_integral:

@@ -55,6 +55,14 @@ module Spree
 
     scope :published, -> { where(published: true) }
 
+    # The rights this store's ladder carries. A right carries no tenancy column
+    # of its own — it reaches the store through its tier — so this is spelled
+    # from the model rather than through an association, and every store-scoped
+    # read of a right shares it.
+    scope :for_store, ->(store) {
+      where(customer_group_id: Spree::MembershipTierSetting.for_store(store).select(:customer_group_id))
+    }
+
     # @return [Array<Class>] the kinds a right may be
     def self.available_types
       SpreeMemberships.membership_rights
@@ -97,6 +105,19 @@ module Spree
     #   coupon leaves it unset, which is nil here.
     def entry_coupon
       preferred_promotion_id.presence
+    end
+
+    # What this kind contributes to the member centre beyond the right itself,
+    # answered per customer because what it contributes is a state of theirs
+    # rather than a setting of the tier's: which of the annual gift's coupons
+    # they have taken, and what is left of the year's allowance. Most kinds
+    # contribute nothing and answer nil here.
+    #
+    # @param customer [Object] the member the read is for
+    # @param store [Spree::Store]
+    # @return [Object, nil] the payload, for the API to serialize by its shape
+    def member_payload(customer:, store:)
+      nil
     end
 
     # What this right multiplies an order's earn by on a given day. The day is the

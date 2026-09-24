@@ -48,4 +48,5 @@ FactoryBot.define do
   factory :entry_integral_right, parent: :membership_right, class: 'Spree::MembershipRights::EntryIntegral'
   factory :member_price_right, parent: :membership_right, class: 'Spree::MembershipRights::MemberPrice'
   factory :birthday_right, parent: :membership_right, class: 'Spree::MembershipRights::BirthdayDoubleIntegral'
+  factory :give_gift_right, parent: :membership_right, class: 'Spree::MembershipRights::GiveGift'
 end

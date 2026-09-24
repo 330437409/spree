@@ -118,3 +118,5 @@ export { VariantSchema, type Variant } from './Variant';
 export { VerificationCheckSchema, type VerificationCheck } from './VerificationCheck';
 export { WishlistSchema, type Wishlist } from './Wishlist';
 export { WishlistItemSchema, type WishlistItem } from './WishlistItem';
+export { YearGiftSchema, type YearGift } from './YearGift';
+export { YearGiftCouponSchema, type YearGiftCoupon } from './YearGiftCoupon';

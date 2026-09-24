@@ -22,11 +22,19 @@ module Spree
 
         attribute(:birthday) { |centre| centre.birthday }
 
+        # A kind that contributes something of its own — the annual gift's
+        # coupons and what is left of the year's allowance — has it merged into
+        # its entry rather than answered by a second read: the panel and the
+        # entitlement read are one payload here. A kind that contributes nothing
+        # is asked and answers nil, so this names no kind.
         attribute(:sections) do |centre|
           centre.sections.transform_values do |rights|
             rights.map do |right|
-              Spree::Api::V3::MembershipRightSerializer.new(right, params: params).
-                to_h.merge('is_have' => centre.holds?(right))
+              entry = Spree::Api::V3::MembershipRightSerializer.new(right, params: params).
+                      to_h.merge('is_have' => centre.holds?(right))
+
+              payload = centre.payload_for(right)
+              payload.nil? ? entry : entry.merge('gift' => Spree::Api::V3::YearGiftSerializer.new(payload).to_h)
             end
           end
         end

@@ -1217,3 +1217,11 @@ Plan: `6.1-type-generation-for-fork-gems.md`, built. This **supersedes the "exte
 
 **What is true, and what actually bit:** the reader is `preferences[:name]` — a **symbol** key — so a preferences hash written with **string** keys (`{ 'amount' => 100 }`) is stored and never read, silently falling back to the kind's default, and it behaves that way on every column type. That is the whole trap, and it is a caller's mistake rather than a schema one: specs and operators' writes carry symbol keys.
 
+
+## 2026-09-24 (the annual gift) — A claim is a grant, and a kind's own payload rides its entry
+
+Plan: `6.1-membership-tiers-and-rights.md`, the annual gift's coupon mode built. Two of its rulings bind code outside that plan.
+
+**A claim is a `Spree::Grant` whose `source` is the right, consumed as it is written, and keyed on what it claims.** `Spree::Memberships::YearGiftClaim` builds its own key — the member, the right, the store's own year and the coupon — so the idempotent write stays the primitive's, no table was added for the claim, and a year turning needs no job: the next year is a different key. The row records that something *was* handed over rather than that something is owed, so it is consumed in the same transaction that issues the coupon and rolls back with it; what it names rides `metadata` and `issued` rather than being taken apart from the key. **Accepted cost:** a retry is idempotent only when the request names the same claim. A repeat that names no coupon is asking for whatever is next, so the year's allowance refuses it — which is why the claim takes an optional `promotion_id` and a client should send the coupon the member tapped.
+
+**A kind contributes its own per-customer payload to the member-centre entry, not through a read of its own.** `Spree::MembershipRight#member_payload(customer:, store:)` answers nil for every kind with nothing of its own to say, and the member centre asks each right it has already loaded, merging what comes back into that entry as `gift`. A kind added later gets its payload rendered with no change to a serializer, the panel table or the client's own grouping, and `yearGiftShow` needs no key of its own — the entry's `is_have` already says whose rung it is. **Accepted cost:** a second payload shape means naming its serializer where today's single shape is rendered.

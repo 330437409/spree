@@ -17,6 +17,12 @@ Spree::Core::Engine.add_routes do
           # The customer's own rung and what it carries.
           resource :membership, only: [:show], controller: 'membership'
 
+          # What a member claims of a right — the right is the tier's, and the
+          # claim is theirs — and 立即领取 is the only one so far.
+          resources :membership_rights, only: [] do
+            resources :year_gift_claims, only: [:create], controller: 'membership_rights/year_gift_claims'
+          end
+
           # The wallet, and the one transition the customer drives from it: 激活
           # is a resource of its own because it is a thing that happens once per
           # card, not an edit to the card.
