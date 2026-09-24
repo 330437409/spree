@@ -14,6 +14,12 @@ module Spree
     # difference here: giving a card away is the transfer the wallet already has,
     # and activating it is a later door that starts the term.
     class Vip < Spree::ScenarioOrders::Kind
+      # The two things a purchase can be warned about, named once: what the
+      # buyer is told before they pay is what the client switches on.
+      OVERLAP_CHECK = 'overlap'.freeze
+      BLOCKED_CHECK = 'open_ended'.freeze
+      CHECK_KINDS = [OVERLAP_CHECK, BLOCKED_CHECK].freeze
+
       # Fixed rather than derived — the default is the class name's, and renaming
       # the class must not change what a client sends.
       def self.api_type
@@ -59,6 +65,38 @@ module Spree
         customer.present?
       end
 
+      # What buying this tier means for the terms the buyer already holds — the
+      # client's pre-purchase warning (`vip/addOrderCheck`), asked before the
+      # money rather than after it.
+      #
+      # A read, not a second purchase, and advisory: the client buys on any
+      # answer, so nothing here refuses. What it can say is which of the two
+      # facts the buyer is walking into — that the term they are buying waits
+      # behind one they already hold, or that a term held with no end refuses
+      # the card once they have paid for it.
+      #
+      # @param tier [Spree::MembershipTierSetting] the package being bought
+      # @param customer [Object] the buyer
+      # @return [Array<Hash>] empty when there is nothing to warn about
+      def self.purchase_checks(tier:, customer:)
+        arrival = Spree::Membership.arrival_for(customer: customer,
+                                                customer_group_id: tier.customer_group_id)
+
+        # The same tier's own live term is extended rather than waited out: the
+        # buyer keeps what they hold and no right of theirs changes.
+        return [] if arrival[:same_tier].present?
+
+        if arrival[:blocked_by].present?
+          [{ 'kind' => BLOCKED_CHECK, 'tier_name' => tier_name_of(arrival[:blocked_by]) }]
+        elsif arrival[:waits_behind].present?
+          [{ 'kind' => OVERLAP_CHECK,
+             'tier_name' => tier_name_of(arrival[:waits_behind]),
+             'held_until' => arrival[:waits_behind].ends_at }]
+        else
+          []
+        end
+      end
+
       # @param scenario_order [Spree::ScenarioOrder]
       # @return [Spree::ServiceModule::Result] the card it issued, or the
       #   existing one when the settlement is retried
@@ -91,6 +129,15 @@ module Spree
 
       class << self
         private
+
+        # The tier a term holds, under the name the operator gave it: the tier
+        # set is their data, so the client renders the name rather than mapping
+        # a key of its own.
+        #
+        # @return [String, nil]
+        def tier_name_of(term)
+          term.tier_setting&.name
+        end
 
         # @param context [Hash] the purchase's payload, whose keys arrive as
         #   strings: it is stored as JSON

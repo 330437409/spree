@@ -46,6 +46,62 @@ RSpec.describe 'the membership reads', type: :request do
     end
   end
 
+  # The warning the buy page shows before it takes the money: what the terms a
+  # customer already holds do to the package they are about to buy.
+  describe 'GET /api/v3/store/membership_purchase_checks' do
+    def get_checks(for_tier = tier)
+      get '/api/v3/store/membership_purchase_checks', headers: headers, params: { tier_id: for_tier.prefixed_id }
+    end
+
+    # A tier of somebody else's, to hold a term of. It is never bought here.
+    def holding_tier(rank)
+      create(:membership_tier_setting, customer_group: create(:customer_group, store: store), rank: rank)
+    end
+
+    it 'answers nothing to warn about for a customer who holds nothing' do
+      get_checks
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['checks']).to eq([])
+    end
+
+    it 'names the term the purchase waits behind, and the instant it ends' do
+      held = create(:membership, customer: user, customer_group: holding_tier(2).customer_group,
+                                 ends_at: 3.months.from_now)
+
+      get_checks
+
+      expect(response.parsed_body['checks']).to contain_exactly(
+        'kind' => 'overlap',
+        'tier_name' => held.customer_group.name,
+        'held_until' => held.ends_at.iso8601
+      )
+    end
+
+    it 'requires a signed-in customer' do
+      get '/api/v3/store/membership_purchase_checks', headers: api_key_headers,
+                                                      params: { tier_id: tier.prefixed_id }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    # The ladder is where the store is, so a package another store sells is not
+    # one this customer is buying.
+    it 'answers 404 for a tier of another store' do
+      elsewhere = create(:membership_tier_setting, customer_group: create(:customer_group, store: create(:store)))
+
+      get_checks(elsewhere)
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'answers 404 for a tier nobody sells' do
+      get '/api/v3/store/membership_purchase_checks', headers: headers, params: { tier_id: 'vip_nonsense' }
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
   describe 'GET /api/v3/store/customers/me/membership' do
     it 'answers a null tier for a customer who is in none' do
       get '/api/v3/store/customers/me/membership', headers: headers

@@ -58,6 +58,7 @@ export { MembershipCardSummarySchema, type MembershipCardSummary } from './Membe
 export { MembershipCardTierSchema, type MembershipCardTier } from './MembershipCardTier';
 export { MembershipCardTransferSchema, type MembershipCardTransfer } from './MembershipCardTransfer';
 export { MembershipCardVoucherSchema, type MembershipCardVoucher } from './MembershipCardVoucher';
+export { MembershipPurchaseCheckSchema, type MembershipPurchaseCheck } from './MembershipPurchaseCheck';
 export { MembershipRightSchema, type MembershipRight } from './MembershipRight';
 export { MembershipTierSchema, type MembershipTier } from './MembershipTier';
 export { NewsletterSubscriberSchema, type NewsletterSubscriber } from './NewsletterSubscriber';
