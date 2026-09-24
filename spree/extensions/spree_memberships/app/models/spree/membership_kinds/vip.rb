@@ -14,11 +14,12 @@ module Spree
     # difference here: giving a card away is the transfer the wallet already has,
     # and activating it is a later door that starts the term.
     class Vip < Spree::ScenarioOrders::Kind
-      # The two things a purchase can be warned about, named once: what the
-      # buyer is told before they pay is what the client switches on.
+      # The things a purchase can be warned about, named once: what the buyer is
+      # told before they pay is what the client switches on.
       OVERLAP_CHECK = 'overlap'.freeze
       BLOCKED_CHECK = 'open_ended'.freeze
-      CHECK_KINDS = [OVERLAP_CHECK, BLOCKED_CHECK].freeze
+      NO_TIME_CHECK = 'adds_no_time'.freeze
+      CHECK_KINDS = [OVERLAP_CHECK, BLOCKED_CHECK, NO_TIME_CHECK].freeze
 
       # Fixed rather than derived — the default is the class name's, and renaming
       # the class must not change what a client sends.
@@ -85,16 +86,24 @@ module Spree
                                                 customer_group_id: tier.customer_group_id,
                                                 store: store)
 
-        # The same tier's own live term is extended rather than waited out: the
-        # buyer keeps what they hold and no right of theirs changes.
-        return [] if arrival[:same_tier].present?
-
-        if arrival[:blocked_by].present?
-          [{ 'kind' => BLOCKED_CHECK, 'tier_name' => tier_name_of(arrival[:blocked_by]) }]
+        # Whether the extension adds anything is the **tier's** length, not the
+        # term's end: `MembershipCards::Activate#extend_term` reads the tier, so a
+        # held term whose end an operator removed with that tier would otherwise
+        # read as extendable while the activation hands it back untouched.
+        if arrival[:same_tier].present? && tier.term_length.present?
+          # The same tier's own live term is extended rather than waited out: the
+          # buyer keeps what they hold and no right of theirs changes.
+          []
+        elsif arrival[:same_tier].present?
+          # A tier an operator sells without a length is a term nobody has to
+          # renew, so a second purchase would extend nothing. This is the only
+          # place left to say so before the money moves.
+          [check(NO_TIME_CHECK, arrival[:same_tier])]
+        elsif arrival[:blocked_by].present?
+          [check(BLOCKED_CHECK, arrival[:blocked_by])]
         elsif arrival[:waits_behind].present?
-          [{ 'kind' => OVERLAP_CHECK,
-             'tier_name' => tier_name_of(arrival[:waits_behind]),
-             'held_until' => arrival[:waits_behind].ends_at }]
+          [check(OVERLAP_CHECK, arrival[:waits_behind],
+                 held_until: Spree::Membership.arrival_at(arrival[:waits_behind]))]
         else
           []
         end
@@ -132,6 +141,17 @@ module Spree
 
       class << self
         private
+
+        # One check, as the wire spells it: the kind, the tier it is about, and
+        # the instant only one of the kinds turns on.
+        #
+        # @param kind [String] one of `CHECK_KINDS`
+        # @param term [Spree::Membership] the term it is about
+        # @param held_until [ActiveSupport::TimeWithZone, nil]
+        # @return [Hash]
+        def check(kind, term, held_until: nil)
+          { 'kind' => kind, 'tier_name' => tier_name_of(term), 'held_until' => held_until }
+        end
 
         # The tier a term holds, under the name the operator gave it: the tier
         # set is their data, so the client renders the name rather than mapping

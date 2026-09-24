@@ -85,6 +85,32 @@ RSpec.describe 'the membership reads', type: :request do
       )
     end
 
+    # A tier sold without a length is held for good, so buying it again would
+    # extend a term with no end to extend: the money would buy nothing.
+    it 'warns that buying a tier held with no end adds no time' do
+      tier.update!(validity_days: nil)
+      held = create(:membership, customer: user, customer_group: group, ends_at: nil)
+
+      get_checks
+
+      expect(response.parsed_body['checks']).to contain_exactly(
+        'kind' => 'adds_no_time', 'tier_name' => held.customer_group.name, 'held_until' => nil
+      )
+    end
+
+    # The tier's length is what the activation reads, so a tier sold without one
+    # adds nothing however dated the term the customer still holds is.
+    it 'warns when the tier carries no length even though the held term is dated' do
+      held = create(:membership, customer: user, customer_group: group, ends_at: 10.days.from_now)
+      tier.update!(validity_days: nil)
+
+      get_checks
+
+      expect(response.parsed_body['checks']).to contain_exactly(
+        'kind' => 'adds_no_time', 'tier_name' => held.customer_group.name, 'held_until' => nil
+      )
+    end
+
     it 'requires a signed-in customer' do
       get '/api/v3/store/membership_purchase_checks', headers: api_key_headers,
                                                       params: { tier_id: tier.prefixed_id }

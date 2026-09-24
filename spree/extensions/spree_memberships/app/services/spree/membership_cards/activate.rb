@@ -133,7 +133,7 @@ module Spree
         # From the instant the customer still holds, not from a lapsed end:
         # grace days are the tier's, and a term inside its grace window is
         # holding a tier that the customer has just paid to keep.
-        from = [term.ends_at, Time.current].compact.max
+        from = Spree::Membership.arrival_at(term)
         term.update!(status: 'active', ends_at: from + added)
 
         term
@@ -146,8 +146,9 @@ module Spree
       #   and holds the tier
       # @return [Spree::Membership]
       def write_term(waits_behind)
-        starts_at = waits_behind&.ends_at
-        return start_now if starts_at.nil?
+        return start_now if waits_behind.nil?
+
+        starts_at = Spree::Membership.arrival_at(waits_behind)
 
         Spree::Membership.create!(
           store: card.store,

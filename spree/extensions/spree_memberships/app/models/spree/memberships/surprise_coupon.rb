@@ -127,10 +127,15 @@ module Spree
         actions.any? { |action| action.is_a?(Spree::Promotion::Actions::CreateLineItems) }
       end
 
+      # A calculator's amount is in a currency of its own, and a figure in
+      # another one is not a figure this card can state — the store prints its
+      # own, so a coupon priced in a currency this storefront is not shopping in
+      # claims none rather than a number that means something else.
+      #
       # @return [BigDecimal, nil]
       def amount
         value = calculators.filter_map do |calculator|
-          calculator.preferred_amount if calculator.respond_to?(:preferred_amount)
+          calculator.preferred_amount if calculator.respond_to?(:preferred_amount) && priced_here?(calculator)
         end.first
         amount = value.to_d if value.present?
         amount if amount&.positive?
@@ -144,6 +149,18 @@ module Spree
       def rate
         percent = calculators.filter_map { |calculator| percentage_of(calculator) }.first
         percent if percent&.positive? && percent < 100
+      end
+
+      # Whether the amount is in the currency the customer is shopping in, read
+      # the way the calculator's own `compute` reads it: the comparison ignores
+      # case, and a calculator naming no currency takes nothing off at all rather
+      # than applying to every one.
+      #
+      # @return [Boolean]
+      def priced_here?(calculator)
+        return true unless calculator.respond_to?(:preferred_currency)
+
+        calculator.preferred_currency.to_s.casecmp(Spree::Current.currency.to_s.upcase).zero?
       end
 
       # @return [BigDecimal, nil]

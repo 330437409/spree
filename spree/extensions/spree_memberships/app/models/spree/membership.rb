@@ -88,6 +88,23 @@ module Spree
       }
     end
 
+    # When a term that would wait behind another one begins: the later of the
+    # instant that one ends and this moment.
+    #
+    # A term whose end has gone by — one the hourly sweep has not reached, or one
+    # inside its grace window — is waited out from *now*, so the changeover a
+    # customer is told about is never one they have already missed. One definition
+    # for the two readers that face a customer: the activation starts the term at
+    # this instant and the pre-purchase warning names it. The sweep is the third
+    # and clamps against its own clock (`Memberships::Advance`), because an hourly
+    # pass decides a whole batch as of one instant.
+    #
+    # @param waits_behind [Spree::Membership, nil] nil when nothing is in the way
+    # @return [ActiveSupport::TimeWithZone]
+    def self.arrival_at(waits_behind)
+      [waits_behind&.ends_at, Time.current].compact.max
+    end
+
     # Whether this term is holding its tier right now — started, and not ended.
     # The same question the `running` scope asks, in Ruby.
     #

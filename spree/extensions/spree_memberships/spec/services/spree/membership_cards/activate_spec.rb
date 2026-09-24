@@ -53,6 +53,19 @@ RSpec.describe Spree::MembershipCards::Activate do
     expect(Spree::Membership.where(customer: customer).count).to eq(1)
   end
 
+  # A term whose end has gone by — one the hourly sweep has not reached, or one
+  # inside its grace window — is waited out from now: the term this card starts
+  # does not begin in the past, which is what the same read tells the buyer.
+  it 'waits from now when the term it waits behind has already ended' do
+    other_tier = another_tier
+    create(:membership, customer: customer, customer_group: other_tier.customer_group,
+                        status: 'active', starts_at: 2.months.ago, ends_at: 1.day.ago)
+
+    described_class.call(card: card)
+
+    expect(card.reload.membership.starts_at).to be_within(1.minute).of(Time.current)
+  end
+
   # The client's own warning: 自{lowEndTime}起，您的权益将变更为… — the tier the
   # customer holds now keeps them until its term ends.
   it 'waits for the tier the customer holds now' do
