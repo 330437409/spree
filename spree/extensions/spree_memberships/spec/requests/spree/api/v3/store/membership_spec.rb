@@ -7,6 +7,29 @@ RSpec.describe 'the membership reads', type: :request do
   let!(:tier) { create(:membership_tier_setting, customer_group: group, rank: 1) }
   let!(:right) { create(:membership_right, customer_group: group) }
 
+  # A coupon of the shape an operator writes, and what a tier says about it: the
+  # packet is read on two surfaces, so how one is built lives in one place.
+  def money_off_promotion(amount, minimum: nil)
+    promotion = create(:promotion, store: store, name: "减#{amount}")
+    calculator = Spree::Calculator::FlatRate.new
+    calculator.preferred_amount = amount
+    Spree::Promotion::Actions::CreateAdjustment.create!(promotion: promotion, calculator: calculator)
+    if minimum
+      Spree::Promotion::Rules::ItemTotal.create!(promotion: promotion, preferred_amount_min: minimum)
+    end
+    promotion
+  end
+
+  def entry_for(promotion, **settings)
+    { 'promotion_id' => promotion.prefixed_id, 'self_use' => 1, 'friend_use' => 0 }
+      .merge(settings.transform_keys(&:to_s))
+  end
+
+  def grant_packet(*entries)
+    create(:surprise_right, customer_group: group, published: true,
+                            preferences: { surprise_coupons: entries, surprise_other_type: '多张券' })
+  end
+
   describe 'GET /api/v3/store/membership_rights' do
     it 'answers the rights catalogue, each with the tier it belongs to' do
       get '/api/v3/store/membership_rights', headers: headers
@@ -136,6 +159,21 @@ RSpec.describe 'the membership reads', type: :request do
       expect(response.parsed_body['sections']['vipCouponInfoVo'].first).
         to include('type' => 'exclusive_coupon', 'is_have' => true)
     end
+
+    # The 惊喜红包 panel, filled from the same payload the settlement page reads:
+    # a kind that contributes something of its own contributes it here.
+    it 'carries the surprise packet on the entry that grants it' do
+      grant_packet(entry_for(money_off_promotion(30), self_use: 2))
+      group.add_customers([user.id])
+
+      get '/api/v3/store/customers/me/membership', headers: headers
+
+      entry = response.parsed_body['sections']['rightsLevelSurpriseVoVos'].first
+      expect(entry).to include('type' => 'surprise_red_envelope', 'is_have' => true)
+      expect(entry['packet']).to include('total_money_sum' => '60.0', 'exchange' => false,
+                                         'other_type' => '多张券')
+      expect(entry['packet']['coupons'].first).to include('discount_type' => 'minus', 'discount_minus' => '30.0')
+    end
   end
   # The banner the member centre opens with: the picture of the customer's own
   # tier, and the tap targets over it.
@@ -261,6 +299,62 @@ RSpec.describe 'the membership reads', type: :request do
       retired.destroy
 
       get_savings(retired)
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  # The packet of coupons a tier hands over, asked about a package the customer
+  # has not bought yet — what the settlement page shows before the purchase.
+  describe 'GET /api/v3/store/membership_surprise_packet' do
+    def get_packet(for_tier = tier)
+      get '/api/v3/store/membership_surprise_packet', headers: headers, params: { tier_id: for_tier.prefixed_id }
+    end
+
+    it 'answers the packet’s coupons, in the tier’s order, with what each is worth' do
+      grant_packet(entry_for(money_off_promotion(30, minimum: 199), self_use: 2, friend_use: 1,
+                                                              grant_type: 'month', instruction: '每月一张'))
+
+      get_packet
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to include('total_money_sum' => '90.0', 'exchange' => false,
+                                              'other_type' => '多张券')
+      expect(response.parsed_body['coupons'].first).to include(
+        'discount_type' => 'minus', 'discount_minus' => '30.0', 'discount_rate' => nil,
+        'limit_amount_min' => '199.0', 'self_use' => 2, 'friend_use' => 1,
+        'grant_type' => 'month', 'instruction' => '每月一张'
+      )
+    end
+
+    # Nothing to show is not an error, the same way a tier with no banner is not
+    # one: the client opens the popup and prints no cards.
+    it 'answers nothing for a tier that grants no packet' do
+      get_packet
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to be_nil
+    end
+
+    it 'answers nothing for a packet nobody published' do
+      grant_packet(entry_for(money_off_promotion(30)))
+      Spree::MembershipRight.where(customer_group_id: group.id).update_all(published: false)
+
+      get_packet
+
+      expect(response.parsed_body).to be_nil
+    end
+
+    it 'requires a signed-in customer' do
+      get '/api/v3/store/membership_surprise_packet', headers: api_key_headers, params: { tier_id: tier.prefixed_id }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'answers 404 for a tier of another store' do
+      elsewhere = create(:membership_tier_setting, customer_group: create(:customer_group, store: create(:store)))
+
+      get_packet(elsewhere)
 
       expect(response).to have_http_status(:not_found)
     end
