@@ -10,6 +10,29 @@ RSpec.describe Spree::MembershipTierSetting, type: :model do
     expect(tier.name).to eq(group.name)
   end
 
+  # What the buy page's savings popup renders: four rows of the operator's copy,
+  # in the order the client's icons are in, and nothing worked out.
+  describe 'what it says a member saves' do
+    it 'answers four rows in the client’s own order' do
+      tier.update!(preferences: { saving_order_title: '下单立省', saving_order_content: '会员价再低一点',
+                                  saving_gift_title: '开卡送酒', saving_gift_content: '首月送一瓶' })
+
+      expect(tier.reload.saving_rows).to eq([
+        { 'title' => '下单立省', 'content' => '会员价再低一点' },
+        { 'title' => '', 'content' => '' },
+        { 'title' => '', 'content' => '' },
+        { 'title' => '开卡送酒', 'content' => '首月送一瓶' }
+      ])
+    end
+
+    # A row nobody wrote stays in the list rather than being dropped: the client
+    # places its icons by position, so a shorter list would shift them.
+    it 'answers blanks for a tier nobody has written for' do
+      expect(tier.saving_rows.length).to eq(4)
+      expect(tier.saving_rows.map(&:values).flatten).to all(be_blank)
+    end
+  end
+
   # One row per group is what makes a group a tier rather than an audience.
   it 'belongs to a group once' do
     tier

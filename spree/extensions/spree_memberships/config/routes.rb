@@ -19,6 +19,11 @@ Spree::Core::Engine.add_routes do
         # to the one they are about to pay for.
         resources :membership_purchase_checks, only: [:index]
 
+        # What a tier says it saves, read before the purchase the popup sits on:
+        # the copy is the operator's, and the read repeats it rather than working
+        # anything out.
+        resources :membership_savings, only: [:index]
+
         # What a settled purchase released, read back off the purchase: the
         # purchase is the scenario plan's row and the card is this gem's, so only
         # this nested read is drawn here
