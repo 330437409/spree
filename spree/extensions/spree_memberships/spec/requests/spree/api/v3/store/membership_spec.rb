@@ -367,6 +367,24 @@ RSpec.describe 'the membership reads', type: :request do
       expect(response.parsed_body['expires_at']).to eq(window.expires_at.iso8601)
     end
 
+    # The tier's rights as the operator arranged them, the way the ladder and the
+    # rights page list them. The drag is what makes the difference visible: the
+    # association's own order is the ladder's, and a reader that left it to the
+    # database would answer whatever order the adapter happened to return.
+    it 'lists the card’s rights in the ladder’s order' do
+      create(:coupon_right, customer_group: group, published: true)
+      dragged = create(:entry_integral_right, customer_group: group, published: true)
+      dragged.move_to_top
+
+      get "/api/v3/store/membership_card_transfers/#{window.token}", headers: api_key_headers
+
+      ladder = Spree::MembershipRight.where(customer_group_id: group.id).order(:position, :id).
+               map { |entry| entry.class.api_type }
+
+      expect(response.parsed_body['rights'].map { |entry| entry['type'] }).to eq(ladder)
+      expect(ladder.first).to eq('entry_integral')
+    end
+
     # 已赠送 — the giver's own wallet keeps the window they opened, so the client
     # reads an accepted one beside the card's own status instead of taking the
     # claimer's term for the giver's own activation.
