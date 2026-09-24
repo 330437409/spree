@@ -12,7 +12,6 @@ module Spree
       include ActiveModel::Attributes
 
       attribute :right
-      attribute :store
 
       # The packet's coupons, in the order the right lists them.
       #

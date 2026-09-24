@@ -16,7 +16,7 @@ module Spree
         include MembershipMoney
 
         typelize promotion_id: :string,
-                 discount_type: [:string, enum: Spree::Memberships::SurpriseCoupon::DISCOUNT_TYPES],
+                 discount_type: [:string, nullable: true, enum: Spree::Memberships::SurpriseCoupon::DISCOUNT_TYPES],
                  discount_minus: 'string | null', discount_rate: 'string | null',
                  limit_amount_min: 'string | null', instruction: 'string | null',
                  self_use: :number, friend_use: :number,

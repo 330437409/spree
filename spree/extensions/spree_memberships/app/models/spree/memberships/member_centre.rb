@@ -68,7 +68,15 @@ module Spree
       #
       # @param right [Spree::MembershipRight]
       # @return [Object, nil]
+      # A draft contributes nothing: the entry still lists the right, because the
+      # panel is the ladder and the ladder shows what is coming, but what the
+      # right hands over is a promise about a purchase, and a panel is not where
+      # a promise nobody has published belongs. The settlement page reads the
+      # same rule from the other side — it answers nothing for a right an
+      # operator has not published.
       def payload_for(right)
+        return nil unless right.published?
+
         right.member_payload(customer: customer, store: store)
       end
 

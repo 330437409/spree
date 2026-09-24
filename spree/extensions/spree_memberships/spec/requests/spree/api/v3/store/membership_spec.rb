@@ -152,6 +152,22 @@ RSpec.describe 'the membership reads', type: :request do
                                          'other_type' => '多张券')
       expect(entry['packet']['coupons'].first).to include('discount_type' => 'minus', 'discount_minus' => '30.0')
     end
+
+    # A draft is a right nobody has published, so what it hands over is not a
+    # promise yet. The ladder still lists it — that is what the panel is — and
+    # the entry says nothing about what it gives, which is the same rule the
+    # settlement page reads from the other side.
+    it 'carries no packet for a right nobody has published' do
+      grant_packet(entry_for(money_off_promotion(30)))
+      Spree::MembershipRight.where(customer_group_id: group.id).update_all(published: false)
+      group.add_customers([user.id])
+
+      get '/api/v3/store/customers/me/membership', headers: headers
+
+      entry = response.parsed_body['sections']['rightsLevelSurpriseVoVos'].first
+      expect(entry).to include('published' => false)
+      expect(entry).not_to have_key('packet')
+    end
   end
   # The banner the member centre opens with: the picture of the customer's own
   # tier, and the tap targets over it.
@@ -303,6 +319,19 @@ RSpec.describe 'the membership reads', type: :request do
         'limit_amount_min' => '199.0', 'self_use' => 2, 'friend_use' => 1,
         'grant_type' => 'month', 'instruction' => '每月一张'
       )
+    end
+
+    # The read asks every coupon for its rate, so a packet holding one the goods
+    # are handed over for has to answer rather than take the whole page down.
+    it 'answers a packet holding a coupon that hands goods over' do
+      grant_packet(entry_for(goods_promotion))
+
+      get_packet
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to include('exchange' => true, 'total_money_sum' => '0.0')
+      expect(response.parsed_body['coupons'].first).
+        to include('discount_type' => 'exchange', 'discount_minus' => nil, 'discount_rate' => nil)
     end
 
     # Nothing to show is not an error, the same way a tier with no banner is not

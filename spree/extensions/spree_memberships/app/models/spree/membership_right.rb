@@ -164,13 +164,18 @@ module Spree
     # relation. A reader that needs one loads it, which is one query for a page
     # that quotes a figure and none for a page that does not.
     #
+    # Read through *this* row's store, the way the write is checked: the rows are
+    # guarded where an operator writes them, and reading through the store as
+    # well is what keeps a row written before that guard from naming another
+    # store's promotion to a customer.
+    #
     # @param prefixed_ids [Array<String>]
     # @return [Array<Spree::Promotion>]
     def promotions_for(prefixed_ids)
       ids = Array(prefixed_ids).filter_map { |id| Spree::Promotion.decode_prefixed_id(id.to_s) }.uniq
       return [] if ids.empty?
 
-      found = Spree::Promotion.where(id: ids).
+      found = Spree::Promotion.where(id: ids, store: store).
               includes(:promotion_rules, :promotion_actions).
               index_by { |promotion| promotion.id.to_s }
       ids.filter_map { |id| found[id.to_s] }

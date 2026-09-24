@@ -6,8 +6,8 @@ module Spree
     # refuses to spell a held coupon out because the cart is where it is priced,
     # and this does the opposite job: a sales page has to say 满199减30 before
     # anybody buys. It stays one source of truth by reading the promotion rather
-    # than repeating it, which is also why a promotion of no recognisable shape
-    # answers no figure at all rather than a made-up one
+    # than repeating it, which is also why a promotion whose worth it cannot read
+    # claims no figure and no type rather than a made-up one
     # (docs/plans/6.1-membership-tiers-and-rights.md).
     class SurpriseCoupon
       include ActiveModel::Model
@@ -23,12 +23,16 @@ module Spree
       # What the tier says about this coupon: its two counts and its cadence.
       attribute :settings, default: -> { {} }
 
-      # @return [String] money off a price, a rate off one, or goods handed over
+      # @return [String, nil] money off a price, a rate off one, or goods handed
+      #   over — **nil** when the promotion states no worth this can read, which
+      #   is a card showing what the coupon is and how many of it arrive, and
+      #   claiming nothing about what it takes off
       def discount_type
         return EXCHANGE if hands_over_goods?
         return DISCOUNT if rate.present?
+        return MINUS if amount.present?
 
-        MINUS
+        nil
       end
 
       # @return [BigDecimal, nil] the flat amount taken off, for a money-off one
@@ -41,24 +45,25 @@ module Spree
       #
       # @return [BigDecimal, nil]
       def discount_rate
-        return nil if rate.nil?
+        return unless discount_type == DISCOUNT
 
         (100.to_d - rate) / 10
       end
 
-      # The first rule that names what an order has to reach — how an operator
-      # writes "over this much", and what the client prints as the threshold.
-      # Asked as a question about a preference rather than as a class, so a rule
-      # a gem adds that spells a minimum the same way is read the same way.
+      # The floor an order has to clear. Rules are ANDed, so where more than one
+      # names a floor the higher one is what the coupon asks for — core refuses
+      # two rules of a kind on one promotion, so today that means a kind a gem
+      # adds beside `ItemTotal`.
       #
       # @return [BigDecimal, nil]
       def limit_amount_min
-        rule = promotion.rules.detect do |candidate|
-          candidate.respond_to?(:preferred_amount_min) && candidate.preferred_amount_min.to_d.positive?
-        end
-        return if rule.nil?
+        floors = promotion.promotion_rules.filter_map do |rule|
+          next unless rule.respond_to?(:preferred_amount_min)
 
-        rule.preferred_amount_min.to_d
+          floor = rule.preferred_amount_min.to_d
+          floor if floor.positive?
+        end
+        floors.max
       end
 
       # @return [Integer] the copies the member may use themselves
@@ -100,52 +105,55 @@ module Spree
 
       private
 
-      # What does the work, and a promotion may carry several actions. The first
-      # is the one an operator's form writes.
+      # A promotion may carry several actions and nothing orders them, so every
+      # one is read rather than whichever the database happened to return first.
       #
-      # @return [Spree::PromotionAction, nil]
-      def action
-        @action ||= promotion.actions.first
+      # @return [Array<Spree::PromotionAction>]
+      def actions
+        @actions ||= promotion.promotion_actions.order(:id).to_a
       end
 
-      # Goods rather than money: the action that hands a product over is the
-      # coupon the client calls an exchange.
+      # Only some of core's action classes carry a calculator — the one that hands
+      # goods over does not — so each is asked whether it has one rather than
+      # assumed to.
       #
+      # @return [Array<Spree::Calculator>]
+      def calculators
+        @calculators ||= actions.filter_map { |action| action.calculator if action.respond_to?(:calculator) }
+      end
+
       # @return [Boolean]
       def hands_over_goods?
-        action.is_a?(Spree::Promotion::Actions::CreateLineItems)
-      end
-
-      # Where an operator sets the amount or the rate, so where it is read from.
-      #
-      # @return [Spree::Calculator, nil]
-      def calculator
-        action&.calculator
+        actions.any? { |action| action.is_a?(Spree::Promotion::Actions::CreateLineItems) }
       end
 
       # @return [BigDecimal, nil]
       def amount
-        return unless calculator.respond_to?(:preferred_amount)
-
-        value = calculator.preferred_amount
-        value.to_d if value.present? && value.to_d.positive?
+        value = calculators.filter_map do |calculator|
+          calculator.preferred_amount if calculator.respond_to?(:preferred_amount)
+        end.first
+        amount = value.to_d if value.present?
+        amount if amount&.positive?
       end
 
       # Two spellings, because two calculators carry a percentage. One that
-      # carries neither — a tiered rate among them — answers nil, and the coupon
-      # renders with no figure.
+      # carries neither — a tiered rate among them — states none, and the coupon
+      # claims none.
       #
       # @return [BigDecimal, nil]
       def rate
-        percent = if calculator.respond_to?(:preferred_percent)
-                    calculator.preferred_percent
-                  elsif calculator.respond_to?(:preferred_flat_percent)
-                    calculator.preferred_flat_percent
-                  end
-        return if percent.blank?
+        percent = calculators.filter_map { |calculator| percentage_of(calculator) }.first
+        percent if percent&.positive? && percent < 100
+      end
 
-        percent = percent.to_d
-        percent if percent.positive? && percent < 100
+      # @return [BigDecimal, nil]
+      def percentage_of(calculator)
+        value = if calculator.respond_to?(:preferred_percent)
+                  calculator.preferred_percent
+                elsif calculator.respond_to?(:preferred_flat_percent)
+                  calculator.preferred_flat_percent
+                end
+        value.to_d if value.present?
       end
     end
   end

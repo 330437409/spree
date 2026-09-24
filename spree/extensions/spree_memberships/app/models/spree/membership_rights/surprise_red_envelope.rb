@@ -26,8 +26,8 @@ module Spree
       # a figure, and the client prints this instead.
       preference :surprise_other_type, :string, default: ''
 
-      validate :surprise_coupons_must_be_well_formed, if: -> { new_record? || will_save_change_to_preferences? }
-      validate :instruction_is_text_when_written, if: -> { new_record? || will_save_change_to_preferences? }
+      validate :surprise_coupons_must_be_well_formed, if: :writing_surprise_coupons?
+      validate :instruction_is_text_when_written, if: :writing_surprise_coupons?
 
       # 惊喜红包
       def self.presents_as
@@ -41,7 +41,7 @@ module Spree
       # @param store [Spree::Store]
       # @return [Spree::Memberships::SurprisePacket]
       def member_payload(customer:, store:)
-        Spree::Memberships::SurprisePacket.new(right: self, store: store)
+        Spree::Memberships::SurprisePacket.new(right: self)
       end
 
       # The packet's coupons, in the order the tier wrote them: each promotion
@@ -64,6 +64,26 @@ module Spree
       end
 
       private
+
+      # Whether an operator is writing the packet's entries now. Read by
+      # comparing them with what the row holds rather than by the attribute's
+      # dirty flag: `Spree::Base` fills the declared defaults in when a row is
+      # loaded, so that flag is true for the first save of *every* row — which
+      # would refuse a retirement nobody asked to validate, and then wave the
+      # very same write through on a second attempt.
+      #
+      # @return [Boolean]
+      def writing_surprise_coupons?
+        return true if new_record?
+
+        Array(preferred_surprise_coupons) != stored_surprise_coupons
+      end
+
+      # @return [Array] what this row's own column holds, before the write
+      def stored_surprise_coupons
+        stored = preferences_in_database || {}
+        Array(stored[:surprise_coupons] || stored['surprise_coupons'])
+      end
 
       # Every entry names one promotion of this store, counts a member could
       # hold, and is listed once: a packet nothing can be handed over from, or
@@ -97,7 +117,19 @@ module Spree
         return false unless promotion_of_this_store?(settings[:promotion_id])
         return false unless GRANT_TYPES.include?(settings[:grant_type].to_s.presence || DEFAULT_GRANT_TYPE)
 
-        %w[self_use friend_use].all? { |facet| settings[facet.to_sym].to_i >= 0 }
+        %w[self_use friend_use].all? { |facet| count_written?(settings[facet.to_sym]) }
+      end
+
+      # A coupon with no count is one nobody said how many of the member gets,
+      # and reading that as none would be `to_i`'s decision rather than the
+      # operator's. Both spellings a client sends are accepted: a number from
+      # JSON, and the digits a form sends.
+      #
+      # @return [Boolean]
+      def count_written?(value)
+        return value >= 0 if value.is_a?(Integer)
+
+        value.is_a?(String) && value.match?(/\A\d+\z/)
       end
 
       # The sentence beside a coupon is copy, so it is text or it is absent —
