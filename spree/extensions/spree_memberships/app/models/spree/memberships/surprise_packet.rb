@@ -4,11 +4,9 @@ module Spree
     # centre's 惊喜红包 panel, and the settlement page asking about a tier nobody
     # has bought yet.
     #
-    # Read rather than stored, and its coupons are *read* rather than configured:
-    # what one is worth comes from the promotion it draws on, so an operator who
-    # edits a promotion does not have to remember a second number. What the right
-    # does own is how many of each a member is handed and how often — the part no
-    # promotion knows (docs/plans/6.1-membership-tiers-and-rights.md).
+    # Read rather than stored — what one of its coupons is worth is
+    # {Spree::Memberships::SurpriseCoupon}'s to say
+    # (docs/plans/6.1-membership-tiers-and-rights.md).
     class SurprisePacket
       include ActiveModel::Model
       include ActiveModel::Attributes
@@ -20,8 +18,8 @@ module Spree
       #
       # @return [Array<Spree::Memberships::SurpriseCoupon>]
       def coupons
-        @coupons ||= right.coupon_promotions.map do |promotion|
-          SurpriseCoupon.new(promotion: promotion, settings: right.coupon_settings(promotion))
+        @coupons ||= right.coupon_entries.map do |promotion, settings|
+          SurpriseCoupon.new(promotion: promotion, settings: settings)
         end
       end
 

@@ -44,9 +44,10 @@ module Spree
               payload = centre.payload_for(right)
               next entry if payload.nil?
 
-              key, serializer = PAYLOADS.fetch(payload.class) do
-                raise ArgumentError, "no wire shape for #{payload.class}"
-              end
+              shape = PAYLOADS.detect { |klass, _| payload.is_a?(klass) }
+              raise ArgumentError, "no wire shape for #{payload.class}" if shape.nil?
+
+              key, serializer = shape.last
               entry.merge(key => serializer.new(payload, params: params).to_h)
             end
           end

@@ -7,28 +7,6 @@ RSpec.describe 'the membership reads', type: :request do
   let!(:tier) { create(:membership_tier_setting, customer_group: group, rank: 1) }
   let!(:right) { create(:membership_right, customer_group: group) }
 
-  # A coupon of the shape an operator writes, and what a tier says about it: the
-  # packet is read on two surfaces, so how one is built lives in one place.
-  def money_off_promotion(amount, minimum: nil)
-    promotion = create(:promotion, store: store, name: "减#{amount}")
-    calculator = Spree::Calculator::FlatRate.new
-    calculator.preferred_amount = amount
-    Spree::Promotion::Actions::CreateAdjustment.create!(promotion: promotion, calculator: calculator)
-    if minimum
-      Spree::Promotion::Rules::ItemTotal.create!(promotion: promotion, preferred_amount_min: minimum)
-    end
-    promotion
-  end
-
-  def entry_for(promotion, **settings)
-    { 'promotion_id' => promotion.prefixed_id, 'self_use' => 1, 'friend_use' => 0 }
-      .merge(settings.transform_keys(&:to_s))
-  end
-
-  def grant_packet(*entries)
-    create(:surprise_right, customer_group: group, published: true,
-                            preferences: { surprise_coupons: entries, surprise_other_type: '多张券' })
-  end
 
   describe 'GET /api/v3/store/membership_rights' do
     it 'answers the rights catalogue, each with the tier it belongs to' do

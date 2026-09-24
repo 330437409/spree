@@ -4,45 +4,6 @@ RSpec.describe Spree::Memberships::SurprisePacket do
   let(:store) { @default_store }
   let(:group) { create(:customer_group, store: store) }
 
-  # A promotion shaped the way the client's cards are: money off over a basket,
-  # a rate off one, or goods handed over rather than money.
-  def money_off_promotion(amount, minimum: nil)
-    promotion = create(:promotion, store: store, name: "减#{amount}")
-    calculator = Spree::Calculator::FlatRate.new
-    calculator.preferred_amount = amount
-    Spree::Promotion::Actions::CreateAdjustment.create!(promotion: promotion, calculator: calculator)
-    if minimum
-      Spree::Promotion::Rules::ItemTotal.create!(promotion: promotion, preferred_amount_min: minimum)
-    end
-    promotion
-  end
-
-  def rate_off_promotion(percent)
-    promotion = create(:promotion, store: store, name: "打#{percent}")
-    calculator = Spree::Calculator::PercentOnLineItem.new
-    calculator.preferred_percent = percent
-    Spree::Promotion::Actions::CreateAdjustment.create!(promotion: promotion, calculator: calculator)
-    promotion
-  end
-
-  def goods_promotion
-    promotion = create(:promotion, store: store, name: '兑换')
-    Spree::Promotion::Actions::CreateLineItems.create!(promotion: promotion)
-    promotion
-  end
-
-  # What the tier says about one coupon: the copies it is handed over in, and
-  # how often.
-  def entry_for(promotion, **settings)
-    { 'promotion_id' => promotion.prefixed_id, 'self_use' => 1, 'friend_use' => 0 }
-      .merge(settings.transform_keys(&:to_s))
-  end
-
-  def right_granting(*entries)
-    create(:surprise_right, customer_group: group, published: true,
-                            preferences: { surprise_coupons: entries })
-  end
-
   def packet_for(right)
     described_class.new(right: right, store: store)
   end
@@ -51,7 +12,7 @@ RSpec.describe Spree::Memberships::SurprisePacket do
     it 'reads a flat amount off the promotion, with the basket it needs' do
       promotion = money_off_promotion(30, minimum: 199)
 
-      coupon = packet_for(right_granting(entry_for(promotion))).coupons.first
+      coupon = packet_for(grant_packet(entry_for(promotion))).coupons.first
 
       expect(coupon.discount_type).to eq('minus')
       expect(coupon.discount_minus).to eq(30)
@@ -61,7 +22,7 @@ RSpec.describe Spree::Memberships::SurprisePacket do
 
     # The client prints 折 rather than the percentage: 15% off is 8.5折.
     it 'reads a rate off the promotion, as the number the client prints' do
-      coupon = packet_for(right_granting(entry_for(rate_off_promotion(15)))).coupons.first
+      coupon = packet_for(grant_packet(entry_for(rate_off_promotion(15)))).coupons.first
 
       expect(coupon.discount_type).to eq('discount')
       expect(coupon.discount_rate).to eq(8.5)
@@ -69,7 +30,7 @@ RSpec.describe Spree::Memberships::SurprisePacket do
     end
 
     it 'reads goods handed over as an exchange rather than a reduction' do
-      coupon = packet_for(right_granting(entry_for(goods_promotion))).coupons.first
+      coupon = packet_for(grant_packet(entry_for(goods_promotion))).coupons.first
 
       expect(coupon.discount_type).to eq('exchange')
       expect(coupon).to be_exchange
@@ -78,11 +39,25 @@ RSpec.describe Spree::Memberships::SurprisePacket do
     # A promotion nobody wrote a figure on is a coupon with no figure — not one
     # with a nought, which is what a customer would read as "nothing off".
     it 'claims no figure for a promotion it cannot read one off' do
-      coupon = packet_for(right_granting(entry_for(create(:promotion, store: store)))).coupons.first
+      coupon = packet_for(grant_packet(entry_for(create(:promotion, store: store)))).coupons.first
 
       expect(coupon.discount_type).to eq('minus')
       expect(coupon.discount_minus).to be_nil
       expect(coupon.money_value).to eq(0)
+    end
+
+    # A ladder is not a figure, so a tiered rate is read the same way: what the
+    # card cannot say, it does not claim.
+    it 'claims no rate for a calculator whose percentage is a ladder' do
+      promotion = create(:promotion, store: store, name: '阶梯')
+      calculator = Spree::Calculator::TieredPercent.new(preferred_base_percent: 10)
+      Spree::Promotion::Actions::CreateAdjustment.create!(promotion: promotion, calculator: calculator)
+
+      coupon = packet_for(grant_packet(entry_for(promotion))).coupons.first
+
+      expect(coupon.discount_type).to eq(Spree::Memberships::SurpriseCoupon::MINUS)
+      expect(coupon.discount_rate).to be_nil
+      expect(coupon.discount_minus).to be_nil
     end
   end
 
@@ -90,7 +65,7 @@ RSpec.describe Spree::Memberships::SurprisePacket do
     # Only money-off coupons have a figure nobody has to spend first: a rate and
     # an exchange are worth what the basket makes them worth.
     it 'counts every copy of every money-off coupon, and nothing else' do
-      right = right_granting(
+      right = grant_packet(
         entry_for(money_off_promotion(30), self_use: 2, friend_use: 1),
         entry_for(rate_off_promotion(15), self_use: 3, friend_use: 0),
         entry_for(money_off_promotion(10), self_use: 1, friend_use: 0)
@@ -100,7 +75,7 @@ RSpec.describe Spree::Memberships::SurprisePacket do
     end
 
     it 'says so when one of its coupons is exchanged for goods' do
-      right = right_granting(entry_for(money_off_promotion(30)), entry_for(goods_promotion))
+      right = grant_packet(entry_for(money_off_promotion(30)), entry_for(goods_promotion))
 
       expect(packet_for(right)).to be_exchange
     end
@@ -109,7 +84,7 @@ RSpec.describe Spree::Memberships::SurprisePacket do
       first = money_off_promotion(30)
       second = rate_off_promotion(15)
 
-      packet = packet_for(right_granting(entry_for(first), entry_for(second)))
+      packet = packet_for(grant_packet(entry_for(first), entry_for(second)))
 
       expect(packet.coupons.map { |coupon| coupon.promotion.id }).to eq([first.id, second.id])
     end
@@ -117,7 +92,7 @@ RSpec.describe Spree::Memberships::SurprisePacket do
 
   describe 'how a coupon is handed over' do
     it 'takes the copies and the cadence from the tier, not from the promotion' do
-      right = right_granting(entry_for(money_off_promotion(30), self_use: 2, friend_use: 1,
+      right = grant_packet(entry_for(money_off_promotion(30), self_use: 2, friend_use: 1,
                                                               grant_type: 'month', instruction: '每月一张'))
 
       coupon = packet_for(right).coupons.first
@@ -129,7 +104,7 @@ RSpec.describe Spree::Memberships::SurprisePacket do
     end
 
     it 'hands a coupon over once when the tier does not say otherwise' do
-      coupon = packet_for(right_granting(entry_for(money_off_promotion(30)))).coupons.first
+      coupon = packet_for(grant_packet(entry_for(money_off_promotion(30)))).coupons.first
 
       expect(coupon.grant_type).to eq('once')
       expect(coupon.instruction).to be_nil

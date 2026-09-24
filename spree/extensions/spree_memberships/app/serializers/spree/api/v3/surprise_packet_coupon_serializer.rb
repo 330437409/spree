@@ -13,6 +13,7 @@ module Spree
       class SurprisePacketCouponSerializer
         include Alba::Resource
         include Typelizer::DSL
+        include MembershipMoney
 
         typelize promotion_id: :string,
                  discount_type: [:string, enum: Spree::Memberships::SurpriseCoupon::DISCOUNT_TYPES],
@@ -30,16 +31,6 @@ module Spree
         attribute(:self_use) { |coupon| coupon.self_use }
         attribute(:friend_use) { |coupon| coupon.friend_use }
         attribute(:grant_type) { |coupon| coupon.grant_type }
-
-        private
-
-        # Plain decimal notation, which is the wire form every money field of
-        # this API uses: `BigDecimal#to_s` on its own renders 0.06 as "0.6e-1".
-        def decimal(value)
-          return if value.nil?
-
-          BigDecimal(value.to_s).to_s('F')
-        end
       end
     end
   end

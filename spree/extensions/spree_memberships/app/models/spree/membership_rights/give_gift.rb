@@ -34,17 +34,11 @@ module Spree
         'yearGiftLevelSettingVos'
       end
 
-      # The coupons this gift offers, in the order claims take them, read in one
-      # query. A coupon the operator has since deleted drops out rather than
-      # failing the read.
+      # The coupons this gift offers, in the order claims take them.
       #
       # @return [Array<Spree::Promotion>]
       def gift_promotions
-        ids = Array(preferred_gift_promotion_ids).filter_map { |id| Spree::Promotion.decode_prefixed_id(id) }.uniq
-        return [] if ids.empty?
-
-        by_id = Spree::Promotion.where(id: ids).index_by { |promotion| promotion.id.to_s }
-        ids.filter_map { |id| by_id[id.to_s] }
+        promotions_for(preferred_gift_promotion_ids)
       end
 
       # @return [Boolean] whether a claim here hands a coupon over

@@ -9,8 +9,10 @@ module Spree
     # (docs/plans/6.1-membership-tiers-and-rights.md).
     class SurpriseRedEnvelope < Spree::MembershipRight
       # How a packet hands its coupons over: once with the card, or again every
-      # month the term runs.
-      GRANT_TYPES = %w[once month].freeze
+      # month the term runs. Named rather than read off the list's first entry,
+      # so reordering the list cannot change what every packet does.
+      DEFAULT_GRANT_TYPE = 'once'.freeze
+      GRANT_TYPES = [DEFAULT_GRANT_TYPE, 'month'].freeze
 
       # The packet's coupons, in the order the client shows them: each entry
       # names the promotion it draws on and how many copies it grants, and how
@@ -42,56 +44,58 @@ module Spree
         Spree::Memberships::SurprisePacket.new(right: self, store: store)
       end
 
-      # The promotions this packet draws on, in the order it lists them, read in
-      # one query. A promotion an operator has since deleted drops out rather
-      # than failing the read — the same tolerance the annual gift's list has.
+      # The packet's coupons, in the order the tier wrote them: each promotion
+      # paired with what the tier says about it. One reading of the list, so a
+      # coupon and its counts cannot come from two different entries.
       #
-      # @return [Array<Spree::Promotion>]
-      def coupon_promotions
-        ids = Array(preferred_surprise_coupons).filter_map do |entry|
-          next unless entry.respond_to?(:to_h)
-
-          Spree::Promotion.decode_prefixed_id(entry.to_h[:promotion_id].to_s)
-        end.uniq
-        return [] if ids.empty?
-
-        by_id = Spree::Promotion.where(id: ids).index_by { |promotion| promotion.id.to_s }
-        ids.filter_map { |id| by_id[id.to_s] }
-      end
-
-      # What the packet says about one coupon: the counts it is handed over in
-      # and its cadence. The preference is JSON the model symbolises, so its keys
-      # are symbols here and strings on the wire.
+      # The preference is JSON the model symbolises, so an entry's keys are
+      # symbols here and strings on the wire.
       #
-      # @param promotion [Spree::Promotion]
-      # @return [Hash] empty when the packet says nothing, which is what a
-      #   coupon listed without settings reads as
-      def coupon_settings(promotion)
-        entry = Array(preferred_surprise_coupons).detect do |candidate|
-          candidate.respond_to?(:to_h) && candidate.to_h[:promotion_id].to_s == promotion.prefixed_id
+      # @return [Array<Array(Spree::Promotion, Hash)>] a coupon whose promotion
+      #   an operator has since deleted drops out rather than failing the read
+      def coupon_entries
+        entries = Array(preferred_surprise_coupons).map { |entry| entry.respond_to?(:to_h) ? entry.to_h : {} }
+        found = promotions_for(entries.map { |entry| entry[:promotion_id] }).index_by(&:prefixed_id)
+
+        entries.filter_map do |entry|
+          promotion = found[entry[:promotion_id].to_s]
+          [promotion, entry] if promotion
         end
-
-        entry ? entry.to_h : {}
       end
 
       private
 
-      # Every entry names a promotion of this store and counts a member could
-      # hold: a packet nothing can be handed over from is an operator error, and
-      # it is refused where they write it rather than where a member meets it.
+      # Every entry names one promotion of this store, counts a member could
+      # hold, and is listed once: a packet nothing can be handed over from, or
+      # one that lists the same coupon twice with two sets of counts, is an
+      # operator error refused where they write it rather than where a member
+      # meets it.
       def surprise_coupons_must_be_well_formed
         entries = Array(preferred_surprise_coupons)
-        return if entries.present? && entries.all? { |entry| coupon_entry_valid?(entry) }
+        return if entries.present? && coupon_entries_are_well_formed?(entries)
 
         errors.add(:preferences, :invalid)
       end
 
-      def coupon_entry_valid?(entry)
-        return false unless entry.respond_to?(:to_h)
+      def coupon_entries_are_well_formed?(entries)
+        listed = entries.filter_map { |entry| coupon_entry_promotion_id(entry) }
 
+        listed.size == entries.size && listed.uniq.size == listed.size &&
+          entries.all? { |entry| coupon_entry_valid?(entry) }
+      end
+
+      # @return [String, nil] the promotion an entry names, nil when it names
+      #   none — which is what makes an entry that is not a hash fail
+      def coupon_entry_promotion_id(entry)
+        return unless entry.respond_to?(:to_h)
+
+        entry.to_h[:promotion_id].to_s.presence
+      end
+
+      def coupon_entry_valid?(entry)
         settings = entry.to_h
         return false unless promotion_of_this_store?(settings[:promotion_id])
-        return false unless GRANT_TYPES.include?(settings[:grant_type].to_s.presence || 'once')
+        return false unless GRANT_TYPES.include?(settings[:grant_type].to_s.presence || DEFAULT_GRANT_TYPE)
 
         %w[self_use friend_use].all? { |facet| settings[facet.to_sym].to_i >= 0 }
       end

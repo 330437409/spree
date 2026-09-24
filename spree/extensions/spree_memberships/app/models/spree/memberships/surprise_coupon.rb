@@ -20,8 +20,7 @@ module Spree
       DISCOUNT_TYPES = [MINUS, DISCOUNT, EXCHANGE].freeze
 
       attribute :promotion
-      # What the tier's right says about this coupon: its two counts and its
-      # cadence. An unlisted coupon reads empty.
+      # What the tier says about this coupon: its two counts and its cadence.
       attribute :settings, default: -> { {} }
 
       # @return [String] money off a price, a rate off one, or goods handed over
@@ -47,9 +46,19 @@ module Spree
         (100.to_d - rate) / 10
       end
 
-      # @return [BigDecimal, nil] what an order has to reach before it applies
+      # The first rule that names what an order has to reach — how an operator
+      # writes "over this much", and what the client prints as the threshold.
+      # Asked as a question about a preference rather than as a class, so a rule
+      # a gem adds that spells a minimum the same way is read the same way.
+      #
+      # @return [BigDecimal, nil]
       def limit_amount_min
-        minimum
+        rule = promotion.rules.detect do |candidate|
+          candidate.respond_to?(:preferred_amount_min) && candidate.preferred_amount_min.to_d.positive?
+        end
+        return if rule.nil?
+
+        rule.preferred_amount_min.to_d
       end
 
       # @return [Integer] the copies the member may use themselves
@@ -65,7 +74,7 @@ module Spree
       # @return [String] `once` with the card, or `month` for every month the
       #   term runs — the client's 每月发 badge
       def grant_type
-        settings[:grant_type].to_s.presence || Spree::MembershipRights::SurpriseRedEnvelope::GRANT_TYPES.first
+        settings[:grant_type].to_s.presence || Spree::MembershipRights::SurpriseRedEnvelope::DEFAULT_GRANT_TYPE
       end
 
       # @return [String, nil] the sentence the operator wrote beside the coupon
@@ -137,21 +146,6 @@ module Spree
 
         percent = percent.to_d
         percent if percent.positive? && percent < 100
-      end
-
-      # The first rule that names what an order has to reach — how an operator
-      # writes "over this much", and what the client prints as the threshold.
-      # Asked as a question about a preference rather than as a class, so a rule
-      # a gem adds that spells a minimum the same way is read the same way.
-      #
-      # @return [BigDecimal, nil]
-      def minimum
-        rule = promotion.rules.detect do |candidate|
-          candidate.respond_to?(:preferred_amount_min) && candidate.preferred_amount_min.to_d.positive?
-        end
-        return if rule.nil?
-
-        rule.preferred_amount_min.to_d
       end
     end
   end

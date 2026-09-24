@@ -10,6 +10,7 @@ module Spree
       class SurprisePacketSerializer
         include Alba::Resource
         include Typelizer::DSL
+        include MembershipMoney
 
         typelize coupons: 'SurprisePacketCoupon[]', total_money_sum: :string,
                  exchange: :boolean, other_type: 'string | null'
@@ -22,14 +23,6 @@ module Spree
         attribute(:total_money_sum) { |packet| decimal(packet.total_money_sum) }
         attribute(:exchange) { |packet| packet.exchange? }
         attribute(:other_type) { |packet| packet.other_type }
-
-        private
-
-        # Plain decimal notation, which is the wire form every money field of
-        # this API uses: `BigDecimal#to_s` on its own renders 0.06 as "0.6e-1".
-        def decimal(value)
-          BigDecimal(value.to_s).to_s('F')
-        end
       end
     end
   end

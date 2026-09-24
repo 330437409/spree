@@ -30,6 +30,12 @@ module Spree
                       find_by_prefix_id!(params[:tier_id])
           end
 
+          # The kind is named because this endpoint is about what that kind
+          # grants. A gem adding a second packet-bearing kind would extend this
+          # and the member centre's payload lookup together — the member centre
+          # renders any payload it knows a shape for, while this answers only the
+          # built-in one.
+          #
           # @return [Spree::Memberships::SurprisePacket, nil]
           def packet_for(tier)
             right = tier.published_rights.detect do |candidate|

@@ -152,6 +152,30 @@ module Spree
 
     private
 
+    # The promotions a kind's own preference names, in the order it names them,
+    # read in one query with what reading them needs. Three kinds keep such a
+    # list — the entry coupon, the annual gift and the surprise packet — so it is
+    # spelled once; a promotion an operator has since deleted drops out rather
+    # than failing the read.
+    #
+    # The actions and rules are preloaded but their **calculators are not**: only
+    # some actions carry one — the one that hands goods over does not — and an
+    # association a subclass does not define cannot be preloaded for a whole
+    # relation. A reader that needs one loads it, which is one query for a page
+    # that quotes a figure and none for a page that does not.
+    #
+    # @param prefixed_ids [Array<String>]
+    # @return [Array<Spree::Promotion>]
+    def promotions_for(prefixed_ids)
+      ids = Array(prefixed_ids).filter_map { |id| Spree::Promotion.decode_prefixed_id(id.to_s) }.uniq
+      return [] if ids.empty?
+
+      found = Spree::Promotion.where(id: ids).
+              includes(:promotion_rules, :promotion_actions).
+              index_by { |promotion| promotion.id.to_s }
+      ids.filter_map { |id| found[id.to_s] }
+    end
+
     # Keyed on `preferences`, which is the field an operator's form writes — and
     # scoped to the store, because a pool in another store's promotion is a code
     # this tier must not draw.
