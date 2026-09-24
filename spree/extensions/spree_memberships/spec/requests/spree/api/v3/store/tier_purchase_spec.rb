@@ -99,10 +99,10 @@ RSpec.describe 'buying a term', type: :request do
       expect(response).to have_http_status(:not_found)
     end
 
-    # The caller's own purchase, in another store: the store is the outer scope
-    # and the one that answers. The card's own customer is deliberately not
-    # asked again — a kind that issued it to somebody else would otherwise leave
-    # the buyer answered nothing for what they paid for.
+    # The caller's own purchase, in another store: the card's own store scope is
+    # what answers, since the purchase scope alone would find it. Either guard is
+    # enough — the read is refused unless both the purchase and the card are of
+    # the store the request is shopping in.
     it 'answers 404 for a purchase of another store' do
       elsewhere = create(:store)
       purchase = create(:scenario_order, store: elsewhere, customer: user, kind: 'vip', status: 'paid')
