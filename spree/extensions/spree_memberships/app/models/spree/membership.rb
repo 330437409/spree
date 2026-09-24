@@ -50,6 +50,35 @@ module Spree
         or(with_status(:active, :past_due).where(ends_at: ..now))
     }
 
+    # What a term of this tier would find waiting: the live terms the customer
+    # already holds, and which of them a new one is subject to.
+    #
+    # Activating a card writes the same tier's live term longer, waits behind
+    # another tier's, or starts now — and a customer is warned about that wait
+    # *before* they pay for the card that will be subject to it. Both ask this
+    # question of these rows, so the wait the customer is told about and the
+    # wait they get are one computation rather than two that agree today.
+    #
+    # @param customer [Object]
+    # @param customer_group_id [String] the tier the incoming term is for
+    # @return [Hash] `:same_tier` — the live term of this tier the incoming one
+    #   extends instead of waiting; `:waits_behind` — the live term it queues
+    #   behind, which is the last of them to end, because a customer who bought
+    #   two tiers ahead waits for both; `:blocked_by` — a live term held with no
+    #   end, which is a person's decision rather than a clock's and refuses the
+    #   incoming one outright. The last two are mutually exclusive, and both are
+    #   nil when nothing is in the way.
+    def self.arrival_for(customer:, customer_group_id:)
+      held = live.for_customer(customer)
+      waits_behind = held.where.not(ends_at: nil).order(:ends_at).last
+
+      {
+        same_tier: held.on(customer_group_id).first,
+        waits_behind: waits_behind,
+        blocked_by: waits_behind.nil? ? held.first : nil
+      }
+    end
+
     # Whether this term is holding its tier right now — started, and not ended.
     # The same question the `running` scope asks, in Ruby.
     #

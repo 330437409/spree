@@ -98,6 +98,9 @@ module Spree
       # a running one and a waiting one alike, because the ladder's uniqueness
       # is over live terms, not over running ones; another tier's is waited out;
       # with nothing live the term starts now.
+      #
+      # Which of the four it is comes from the read that also warns the customer
+      # before they pay for the card (`Spree::Membership.arrival_for`).
       def issue_term
         # Locked and re-read: a double tap sends two activations, and the second
         # has to find the term the first wrote rather than write another one for
@@ -105,10 +108,20 @@ module Spree
         card.lock!
         return @membership = card.membership if card.membership.present?
 
-        held = Spree::Membership.live.for_customer(entitled_customer)
-        same_tier = held.on(card.customer_group_id).first
+        arrival = Spree::Membership.arrival_for(customer: entitled_customer,
+                                                customer_group_id: card.customer_group_id)
 
-        @membership = same_tier ? extend_term(same_tier) : write_term(held)
+        if arrival[:same_tier].present?
+          @membership = extend_term(arrival[:same_tier])
+        elsif arrival[:blocked_by].present?
+          # A live term with no end is a tier held for good: a card bought under
+          # one waits for a person rather than for a clock, and a term that can
+          # never start is not a wait. The card stays dormant with the
+          # customer's money unspent.
+          failure(card, Spree.t('memberships.errors.tier_open_ended'))
+        else
+          @membership = write_term(arrival[:waits_behind])
+        end
       end
 
       # @return [Spree::Membership]
@@ -125,23 +138,15 @@ module Spree
         term
       end
 
-      # A term that starts now, or one that waits.
+      # A term that starts now, or one that waits for the last live term to end.
       #
-      # With nothing live the term starts and holds the tier; with another tier
-      # already holding or waiting for the customer this one waits for that one
-      # to end, and a live term with no end waits for a person rather than being
-      # taken out from under.
-      #
+      # @param waits_behind [Spree::Membership, nil] the term the incoming one
+      #   queues behind; nil when nothing is in the way, and the term starts now
+      #   and holds the tier
       # @return [Spree::Membership]
-      def write_term(held)
-        return start_now if held.empty?
-
-        starts_at = held.where.not(ends_at: nil).order(:ends_at).last&.ends_at
-        # A live term with no end is a tier held for good. A card bought under
-        # one waits for a person rather than for a clock — but a term that can
-        # never start is not a wait, and the card stays dormant with the
-        # customer's money unspent.
-        return failure(card, Spree.t('memberships.errors.tier_open_ended')) if starts_at.nil?
+      def write_term(waits_behind)
+        starts_at = waits_behind&.ends_at
+        return start_now if starts_at.nil?
 
         Spree::Membership.create!(
           store: card.store,
