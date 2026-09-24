@@ -19,10 +19,11 @@ module Spree
     class << self
       # @param from [Object] the customer giving it away
       # @param transferable [Object] the holding, the gift card, the membership card
-      # @param to_phone [String] where the gift is sent
+      # @param to_phone [String, nil] where the gift is sent; nil for a window
+      #   open to whoever holds its token
       # @param expires_at [Time] when the window closes; nothing flips a status
       # @return [Spree::ServiceModule::Result] value is the transfer
-      def give!(from:, transferable:, to_phone:, expires_at:, message: nil)
+      def give!(from:, transferable:, to_phone: nil, expires_at:, message: nil)
         Give.call(from: from, transferable: transferable, to_phone: to_phone,
                   expires_at: expires_at, message: message)
       end

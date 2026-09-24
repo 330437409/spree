@@ -20,8 +20,11 @@ module Spree
             Spree::Transfer
           end
 
+          # The voucher's own read rather than the window's: this is the one
+          # surface that shows what the card is worth before somebody claims it,
+          # and it is one row, so the rights cost nothing here.
           def serializer_class
-            Spree::Api::V3::MembershipCardTransferSerializer
+            Spree::Api::V3::MembershipCardVoucherSerializer
           end
 
           # The address is the token, not an id; the scope is the base's, so it
@@ -30,7 +33,12 @@ module Spree
           # is still what the link points at, and its own status is the answer —
           # only a token nobody holds is a 404.
           def find_resource
-            scope.where(transferable_type: 'Spree::MembershipCard').find_by!(token: params[:token])
+            scope.where(transferable_type: 'Spree::MembershipCard').
+              includes(transferable: [
+                :membership,
+                { tier_setting: [:customer_group, { published_rights: { tier_setting: :customer_group } }] }
+              ]).
+              find_by!(token: params[:token])
           end
         end
       end

@@ -9,12 +9,15 @@ module Spree
       # is not theirs to learn, and the claimer is not known until they claim.
       class MembershipCardTransferSerializer < BaseSerializer
         typelize token: :string, status: :string, message: 'string | null', expires_at: 'string | null',
-                 card: 'MembershipCardSummary | null'
+                 valid_from: 'string | null', card: 'MembershipCardSummary | null'
 
         attributes :token
         attribute(:status) { |transfer| transfer.display_status }
         attributes :message
         attribute(:expires_at) { |transfer| transfer.expires_at&.iso8601 }
+        # A window is live from the moment it is opened, so that is what a reader
+        # counting towards the end needs: it is always behind them.
+        attribute(:valid_from) { |transfer| transfer.created_at&.iso8601 }
 
         # The lean read: a window carries the card, and the wallet's card
         # carries its window, so rendering one through the other is a loop.

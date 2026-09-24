@@ -6,6 +6,7 @@ export const MembershipCardSummarySchema = z.object({
   tier: z.record(z.string(), z.unknown()).nullable(),
   status: z.string(),
   activates_before: z.string().nullable(),
+  membership: z.record(z.string(), z.unknown()).nullable(),
 });
 
 export type MembershipCardSummary = z.infer<typeof MembershipCardSummarySchema>;

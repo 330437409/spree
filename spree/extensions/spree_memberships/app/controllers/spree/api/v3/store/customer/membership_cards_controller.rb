@@ -38,8 +38,12 @@ module Spree
               collection.order(Arel.sql("status = 'dormant' DESC"), :id)
             end
 
+            # What the wallet's own card read renders: its tier, the term it
+            # started, and the window it is inside — with what that window's own
+            # read needs, since it nests the card it carries.
             def collection_includes
-              [{ tier_setting: :published_rights }, :membership, :pending_transfer]
+              [{ tier_setting: :customer_group }, :membership,
+               { latest_transfer: { transferable: [:membership, { tier_setting: :customer_group }] } }]
             end
 
             def scope_includes

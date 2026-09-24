@@ -23,8 +23,9 @@ module Spree
     # The rights this tier carries, published ones only — the mirror of
     # `MembershipRight#tier_setting`, and the one place the pair is spelled. The
     # scope lives on the association so a preloaded tier answers it without a
-    # query of its own.
-    has_many :published_rights, -> { published }, class_name: 'Spree::MembershipRight',
+    # query of its own, and the order is the ladder's, so every read of a tier's
+    # rights lists them the way the operator arranged them.
+    has_many :published_rights, -> { published.order(:position, :id) }, class_name: 'Spree::MembershipRight',
                                 primary_key: :customer_group_id, foreign_key: :customer_group_id, inverse_of: nil
 
     # The tier reaches the store through its group: a second tenancy column
