@@ -146,8 +146,9 @@ module Spree
       #   and holds the tier
       # @return [Spree::Membership]
       def write_term(waits_behind)
-        starts_at = waits_behind&.ends_at
-        return start_now if starts_at.nil?
+        return start_now if waits_behind.nil?
+
+        starts_at = Spree::Membership.arrival_at(waits_behind)
 
         Spree::Membership.create!(
           store: card.store,

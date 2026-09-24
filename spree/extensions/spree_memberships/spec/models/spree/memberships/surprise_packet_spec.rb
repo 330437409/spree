@@ -69,6 +69,18 @@ RSpec.describe Spree::Memberships::SurprisePacket do
       expect(coupon.money_value).to eq(0)
     end
 
+    # A calculator's amount is in a currency of its own, and the store prints its
+    # own: a figure in another one is not a figure this card can state.
+    it 'claims no figure for a coupon priced in another currency' do
+      promotion = create(:promotion, store: store, name: '外币')
+      Spree::Promotion::Actions::CreateAdjustment.create!(
+        promotion: promotion,
+        calculator: Spree::Calculator::FlatRate.new(preferred_currency: 'CNY', preferred_amount: 30)
+      )
+
+      expect(coupon_for(promotion).discount_type).to be_nil
+    end
+
     it 'claims no type for free shipping, whose action carries no calculator' do
       coupon = packet_for(grant_packet(entry_for(create(:free_shipping_promotion, store: store)))).coupons.first
 

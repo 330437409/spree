@@ -14,11 +14,12 @@ module Spree
     # difference here: giving a card away is the transfer the wallet already has,
     # and activating it is a later door that starts the term.
     class Vip < Spree::ScenarioOrders::Kind
-      # The two things a purchase can be warned about, named once: what the
-      # buyer is told before they pay is what the client switches on.
+      # The things a purchase can be warned about, named once: what the buyer is
+      # told before they pay is what the client switches on.
       OVERLAP_CHECK = 'overlap'.freeze
       BLOCKED_CHECK = 'open_ended'.freeze
-      CHECK_KINDS = [OVERLAP_CHECK, BLOCKED_CHECK].freeze
+      NO_TIME_CHECK = 'adds_no_time'.freeze
+      CHECK_KINDS = [OVERLAP_CHECK, BLOCKED_CHECK, NO_TIME_CHECK].freeze
 
       # Fixed rather than derived — the default is the class name's, and renaming
       # the class must not change what a client sends.
@@ -86,15 +87,26 @@ module Spree
                                                 store: store)
 
         # The same tier's own live term is extended rather than waited out: the
-        # buyer keeps what they hold and no right of theirs changes.
-        return [] if arrival[:same_tier].present?
+        # buyer keeps what they hold and no right of theirs changes — unless that
+        # term has no end to extend, which is a purchase that would add nothing
+        # and take the money anyway. A tier an operator sells without a length is
+        # a term nobody has to renew, so saying so before the purchase is the only
+        # place left to say it.
+        if arrival[:same_tier].present?
+          return [] if arrival[:same_tier].ends_at.present?
+
+          return [{ 'kind' => NO_TIME_CHECK, 'tier_name' => tier_name_of(arrival[:same_tier]) }]
+        end
 
         if arrival[:blocked_by].present?
           [{ 'kind' => BLOCKED_CHECK, 'tier_name' => tier_name_of(arrival[:blocked_by]) }]
         elsif arrival[:waits_behind].present?
           [{ 'kind' => OVERLAP_CHECK,
              'tier_name' => tier_name_of(arrival[:waits_behind]),
-             'held_until' => arrival[:waits_behind].ends_at }]
+             # The instant the new term begins: the held term's end, or this
+             # moment when that end has gone by. One reader, so what the buyer is
+             # warned about and what the activation starts are the same instant.
+             'held_until' => Spree::Membership.arrival_at(arrival[:waits_behind]) }]
         else
           []
         end

@@ -123,6 +123,26 @@ RSpec.describe Spree::MembershipKinds::Vip do
       expect(checks).to contain_exactly('kind' => 'open_ended', 'tier_name' => held.customer_group.name)
     end
 
+    # A tier sold without a length is held for good, so buying it again extends a
+    # term that has no end to extend: the money would buy nothing, and this is the
+    # only place left to say so.
+    it 'warns that buying the open-ended tier it already holds adds no time' do
+      tier.update!(validity_days: nil)
+      held = create(:membership, customer: buyer, customer_group: group, ends_at: nil)
+
+      expect(checks).to contain_exactly('kind' => 'adds_no_time', 'tier_name' => held.customer_group.name)
+    end
+
+    # The instant is clamped to now: a term whose end has gone by — one the hourly
+    # sweep has not reached, or one inside its grace window — is not a changeover
+    # the buyer has already missed.
+    it 'names this moment for a wait whose end has passed' do
+      create(:membership, customer: buyer, customer_group: another_tier.customer_group,
+                          status: 'active', starts_at: 2.months.ago, ends_at: 1.day.ago)
+
+      expect(checks.first['held_until']).to be_within(1.minute).of(Time.current)
+    end
+
     it 'warns about nothing for a term that has ended' do
       create(:membership, customer: buyer, customer_group: another_tier.customer_group,
                           status: 'expired', starts_at: 2.days.ago, ends_at: 1.day.ago)

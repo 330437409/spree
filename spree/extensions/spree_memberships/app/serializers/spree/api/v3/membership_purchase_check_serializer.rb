@@ -17,7 +17,7 @@ module Spree
         attribute(:kind) { |check| check['kind'] }
         attribute(:tier_name) { |check| check['tier_name'] }
         # One instant, not two: the held term's end is the bought term's start,
-        # and the client renders it on both sides of the sentence.
+        # clamped to now, and the client renders it on both sides of the sentence.
         attribute(:held_until) { |check| check['held_until']&.iso8601 }
       end
     end
