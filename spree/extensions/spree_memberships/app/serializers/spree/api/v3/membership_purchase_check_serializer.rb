@@ -15,12 +15,9 @@ module Spree
                  held_until: [:string, nullable: true]
 
         attribute(:kind) { |check| check['kind'] }
-        # The tier the check is about, under the name the operator gave it: the
-        # tier set is their data, so the client renders this rather than mapping
-        # a key of its own.
         attribute(:tier_name) { |check| check['tier_name'] }
-        # When that term ends, which is when the bought one begins — one instant
-        # seen from either side, so a client that shows both shows it twice.
+        # One instant, not two: the held term's end is the bought term's start,
+        # and the client renders it on both sides of the sentence.
         attribute(:held_until) { |check| check['held_until']&.iso8601 }
       end
     end

@@ -53,11 +53,6 @@ RSpec.describe 'the membership reads', type: :request do
       get '/api/v3/store/membership_purchase_checks', headers: headers, params: { tier_id: for_tier.prefixed_id }
     end
 
-    # A tier of somebody else's, to hold a term of. It is never bought here.
-    def holding_tier(rank)
-      create(:membership_tier_setting, customer_group: create(:customer_group, store: store), rank: rank)
-    end
-
     it 'answers nothing to warn about for a customer who holds nothing' do
       get_checks
 
@@ -66,7 +61,7 @@ RSpec.describe 'the membership reads', type: :request do
     end
 
     it 'names the term the purchase waits behind, and the instant it ends' do
-      held = create(:membership, customer: user, customer_group: holding_tier(2).customer_group,
+      held = create(:membership, customer: user, customer_group: another_tier.customer_group,
                                  ends_at: 3.months.from_now)
 
       get_checks

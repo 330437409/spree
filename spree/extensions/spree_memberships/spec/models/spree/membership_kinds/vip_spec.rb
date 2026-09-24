@@ -77,11 +77,6 @@ RSpec.describe Spree::MembershipKinds::Vip do
       described_class.purchase_checks(tier: for_tier, customer: buyer)
     end
 
-    # A tier of somebody else's, to hold a term of. It is never bought here.
-    def another_tier(rank)
-      create(:membership_tier_setting, customer_group: create(:customer_group, store: store), rank: rank)
-    end
-
     it 'warns about nothing when the customer holds nothing' do
       expect(checks).to eq([])
     end
@@ -95,7 +90,7 @@ RSpec.describe Spree::MembershipKinds::Vip do
     end
 
     it 'names the term the purchase waits behind, and when it ends' do
-      held = create(:membership, customer: buyer, customer_group: another_tier(2).customer_group,
+      held = create(:membership, customer: buyer, customer_group: another_tier.customer_group,
                                  ends_at: 3.months.from_now)
 
       expect(checks).to contain_exactly(
@@ -108,9 +103,9 @@ RSpec.describe Spree::MembershipKinds::Vip do
     # A term queues behind every live one, so a customer who bought two tiers
     # ahead waits for the later of them rather than for the running one.
     it 'waits for the last term held, not the running one' do
-      running = create(:membership, customer: buyer, customer_group: another_tier(2).customer_group,
+      running = create(:membership, customer: buyer, customer_group: another_tier.customer_group,
                                     ends_at: 3.months.from_now)
-      later = create(:membership, customer: buyer, customer_group: another_tier(3).customer_group,
+      later = create(:membership, customer: buyer, customer_group: another_tier.customer_group,
                                   status: 'pending', starts_at: running.ends_at, ends_at: 6.months.from_now)
 
       expect(checks).to contain_exactly(
@@ -123,13 +118,13 @@ RSpec.describe Spree::MembershipKinds::Vip do
     # A live term with no end refuses the activation outright, and a customer
     # would otherwise find that out after paying for the card.
     it 'warns that a term held with no end refuses the purchase' do
-      held = create(:membership, customer: buyer, customer_group: another_tier(2).customer_group, ends_at: nil)
+      held = create(:membership, customer: buyer, customer_group: another_tier.customer_group, ends_at: nil)
 
       expect(checks).to contain_exactly('kind' => 'open_ended', 'tier_name' => held.customer_group.name)
     end
 
     it 'warns about nothing for a term that has ended' do
-      create(:membership, customer: buyer, customer_group: another_tier(2).customer_group,
+      create(:membership, customer: buyer, customer_group: another_tier.customer_group,
                           status: 'expired', starts_at: 2.days.ago, ends_at: 1.day.ago)
 
       expect(checks).to eq([])

@@ -99,7 +99,7 @@ module Spree
       # is over live terms, not over running ones; another tier's is waited out;
       # with nothing live the term starts now.
       #
-      # Which of the four it is comes from the read that also warns the customer
+      # Which of the three it is comes from the read that also warns the customer
       # before they pay for the card (`Spree::Membership.arrival_for`).
       def issue_term
         # Locked and re-read: a double tap sends two activations, and the second

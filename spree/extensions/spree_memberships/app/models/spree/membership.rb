@@ -69,11 +69,14 @@ module Spree
     #   incoming one outright. The last two are mutually exclusive, and both are
     #   nil when nothing is in the way.
     def self.arrival_for(customer:, customer_group_id:)
-      held = live.for_customer(customer)
-      waits_behind = held.where.not(ends_at: nil).order(:ends_at).last
+      # Loaded once and answered in Ruby: all three questions are asked of the
+      # same handful of rows — one live term per tier at most — and asking the
+      # database for each would be three round trips for one answer.
+      held = live.for_customer(customer).to_a
+      waits_behind = held.select(&:ends_at).max_by(&:ends_at)
 
       {
-        same_tier: held.on(customer_group_id).first,
+        same_tier: held.find { |term| term.customer_group_id == customer_group_id },
         waits_behind: waits_behind,
         blocked_by: waits_behind.nil? ? held.first : nil
       }
