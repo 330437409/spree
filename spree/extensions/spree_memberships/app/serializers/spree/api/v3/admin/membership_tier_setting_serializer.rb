@@ -7,7 +7,8 @@ module Spree
           typelize rank: :number, threshold: 'string | null', validity_days: 'number | null',
                    rights_total: :number, member_discount_percentage: 'string | null',
                    auto_renew: :boolean, grace_days: :number, sku: 'string | null',
-                   preferences: 'Record<string, unknown> | null', deleted_at: 'string | null'
+                   preferences: 'Record<string, unknown> | null',
+                   preference_schema: 'Array<Record<string, unknown>>', deleted_at: 'string | null'
 
           attributes :rank
           attribute(:threshold) { |setting| decimal_string(setting.threshold) }
@@ -22,8 +23,11 @@ module Spree
           attribute(:member_discount_percentage) { |setting| decimal_string(setting.member_discount_percentage) }
           # What the tier says about itself to somebody who has not bought it
           # yet: the savings popup's copy, declared on the row as typed
-          # preferences, so an operator's form renders them from the schema.
-          attribute(:preferences) { |setting| setting.serialized_preferences }
+          # preferences. The schema travels with the values so an operator's form
+          # renders the fields — and their labels and defaults — without knowing
+          # a single key.
+          attribute :preferences, &:serialized_preferences
+          attribute :preference_schema, &:serialized_preference_schema
           attributes :created_at, :updated_at, :deleted_at
         end
       end

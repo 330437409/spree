@@ -162,6 +162,10 @@ RSpec.describe 'the membership operator reads', type: :request do
 
       expect(response).to have_http_status(:created)
       expect(response.parsed_body['preferences']).to include('saving_order_title' => '下单立省')
+      # The schema travels with the values, so a form renders the fields without
+      # knowing a key: what the tier says it saves is the row's own declaration.
+      expect(response.parsed_body['preference_schema'].map { |field| field['key'] }).
+        to eq(Spree::MembershipTierSetting.preference_schema.map { |field| field[:key].to_s })
 
       setting = Spree::MembershipTierSetting.find_by(customer_group: group)
       expect(setting.saving_rows.first['title']).to eq('下单立省')

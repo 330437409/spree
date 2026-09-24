@@ -234,7 +234,10 @@ RSpec.describe 'the membership reads', type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['rows'].length).to eq(4)
       expect(response.parsed_body['rows'].map { |row| row['title'] }).to all(be_nil)
-      expect(response.parsed_body['month_amount']).to eq('0.0')
+      # Null rather than nought: a tier nobody has written for is not one whose
+      # operator said a member saves nothing.
+      expect(response.parsed_body['month_amount']).to be_nil
+      expect(response.parsed_body['rules']).to be_nil
     end
 
     it 'requires a signed-in customer' do
@@ -247,6 +250,17 @@ RSpec.describe 'the membership reads', type: :request do
       elsewhere = create(:membership_tier_setting, customer_group: create(:customer_group, store: create(:store)))
 
       get_savings(elsewhere)
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    # A well-formed id of a tier this store no longer sells, so that what is
+    # under test is the scoping rather than the prefix the id was minted with.
+    it 'answers 404 for a tier nobody sells any more' do
+      retired = create(:membership_tier_setting, customer_group: create(:customer_group, store: store))
+      retired.destroy
+
+      get_savings(retired)
 
       expect(response).to have_http_status(:not_found)
     end

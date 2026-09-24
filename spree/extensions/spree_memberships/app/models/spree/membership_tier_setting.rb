@@ -67,8 +67,9 @@ module Spree
     preference :saving_rules, :string, default: ''
     # What the operator says a member saves in a month. Nothing computes it: what
     # a member saves is their basket times this tier's member price, and neither
-    # is known before they spend.
-    preference :saving_month_amount, :decimal, default: 0
+    # is known before they spend. Nullable rather than defaulted to zero, so that
+    # a tier nobody has written for is not one whose operator wrote nought.
+    preference :saving_month_amount, :decimal, nullable: true
 
     scope :ordered, -> { order(:rank, :id) }
     scope :for_store, ->(store) { joins(:customer_group).where(spree_customer_groups: { store_id: store&.id }) }
@@ -123,6 +124,19 @@ module Spree
           'content' => public_send(:"preferred_saving_#{slot}_content")
         }
       end
+    end
+
+    # The monthly figure in the notation every other money field of this API
+    # uses, or nil when the operator has not written one. `BigDecimal#to_s` on
+    # its own renders 0.06 as "0.6e-1", which is not a number to print beside a
+    # currency sign.
+    #
+    # @return [String, nil]
+    def saving_month_amount
+      amount = preferred_saving_month_amount
+      return if amount.blank?
+
+      BigDecimal(amount.to_s).to_s('F')
     end
 
     # The list this tier prices through: the catalogue's own, when the
