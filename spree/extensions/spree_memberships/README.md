@@ -23,7 +23,7 @@ SpreeMemberships.membership_rights << MyGem::Rights::FreeShipping
 | `Spree::Memberships::MemberCentre` | The projection the member centre reads: every right of the store's ladder, grouped by the panel its kind declares |
 | `Spree::Memberships::YearGift` | One member's annual gift: the coupons it offers, the ones they have taken this year, and what is left of the year's allowance |
 | `Spree::Memberships::ClaimYearGift` | 立即领取 — draws one of the gift's coupons, hands it over through the wallet and records the claim, all under one idempotency key |
-| `Spree::Memberships::YearGiftClaim` | The kind of grant a claim is: one member, one right, one coupon, one year |
+| `Spree::Memberships::YearGiftClaim` | The kind of grant a claim is: one member, one tier, one coupon, one year |
 | `Spree::MembershipCard` | What a membership is bought, granted, held or given away as, before anybody is entitled to anything |
 | `Spree::Membership` | The term itself: a period a named customer holds a tier for |
 | `Spree::Memberships::SetMemberDiscount` | The tier's member price: a catalogue of its own, an owned automatic list and the assignment that shows it to the tier's group |
