@@ -86,14 +86,18 @@ module Spree
                                                 customer_group_id: tier.customer_group_id,
                                                 store: store)
 
-        if arrival[:same_tier].present? && arrival[:same_tier].ends_at.present?
+        # Whether the extension adds anything is the **tier's** length, not the
+        # term's end: `MembershipCards::Activate#extend_term` reads the tier, so a
+        # held term whose end an operator removed with that tier would otherwise
+        # read as extendable while the activation hands it back untouched.
+        if arrival[:same_tier].present? && tier.term_length.present?
           # The same tier's own live term is extended rather than waited out: the
           # buyer keeps what they hold and no right of theirs changes.
           []
         elsif arrival[:same_tier].present?
           # A tier an operator sells without a length is a term nobody has to
-          # renew, so a second purchase would extend a term that has no end to
-          # extend — this is the only place left to say so before the money moves.
+          # renew, so a second purchase would extend nothing. This is the only
+          # place left to say so before the money moves.
           [check(NO_TIME_CHECK, arrival[:same_tier])]
         elsif arrival[:blocked_by].present?
           [check(BLOCKED_CHECK, arrival[:blocked_by])]

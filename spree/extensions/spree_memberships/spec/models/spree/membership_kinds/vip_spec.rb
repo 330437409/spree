@@ -133,6 +133,26 @@ RSpec.describe Spree::MembershipKinds::Vip do
       expect(checks).to contain_exactly('kind' => 'adds_no_time', 'tier_name' => held.customer_group.name, 'held_until' => nil)
     end
 
+    # Whether the extension adds anything is the **tier's** length, because that
+    # is what the activation reads — so a held term whose end an operator removed
+    # with the tier is still extended by the length the tier carries now.
+    it 'warns about nothing when the tier carries a length, whatever its term looks like' do
+      create(:membership, customer: buyer, customer_group: group, ends_at: nil)
+
+      expect(tier.term_length).to be_present
+      expect(checks).to eq([])
+    end
+
+    # And the other way round, which is the purchase this check exists for: a tier
+    # sold without a length extends nothing, however dated the held term is.
+    it 'warns when the tier carries no length even though the held term is dated' do
+      held = create(:membership, customer: buyer, customer_group: group, ends_at: 10.days.from_now)
+      tier.update!(validity_days: nil)
+
+      expect(checks).to contain_exactly('kind' => 'adds_no_time', 'tier_name' => held.customer_group.name,
+                                        'held_until' => nil)
+    end
+
     # The instant is clamped to now: a term whose end has gone by — one the hourly
     # sweep has not reached, or one inside its grace window — is not a changeover
     # the buyer has already missed.
