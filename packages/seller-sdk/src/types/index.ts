@@ -36,8 +36,6 @@ export type AdministrativeDivisionListParams = {
   level?: string
 }
 
-import type { default as TeamMember } from './generated/TeamMember'
-
 /**
  * A seller as the login and `/me` responses summarise it — enough for the
  * panel to let a seller choose which seller to act as.
