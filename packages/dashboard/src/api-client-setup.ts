@@ -18,6 +18,9 @@ setApiClient({
 
     return { rules: response.permissions, keys: response.permission_keys ?? [] }
   },
+  // The account menu's language switcher writes through this, so the one
+  // shared component does not have to know which API it is talking to.
+  updateAccount: (params) => adminClient.me.update(params),
   listCountries: () => adminClient.countries.list({ expand: ['states'] }),
   listAdministrativeDivisions: (params) => adminClient.administrativeDivisions.list(params),
   createDirectUpload: (params) => adminClient.directUploads.create(params),

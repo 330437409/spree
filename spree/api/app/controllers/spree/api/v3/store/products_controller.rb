@@ -124,8 +124,12 @@ module Spree
             end
           end
 
+          # Catalog narrowing for the buyer: their company's effective
+          # catalogs, their group's, or the channel default — union of
+          # assortments, resolved in one place
+          # (docs/plans/6.0-b2b-companies-and-catalogs.md).
           def scope
-            product_catalogue
+            product_catalogue(super)
           end
 
           # The listing loads the same associations as every other read of this

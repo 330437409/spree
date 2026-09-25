@@ -26,6 +26,7 @@ module Spree
         seller = Spree::Seller.find_by(id: seller_id)
         return if seller.nil? || !seller.payouts_enabled?
 
+        Spree::Current.store = seller.store
         provider = seller.store.payout_provider_instance
 
         # Credits only — see the scope: an earning, and the subsidy the platform

@@ -53,6 +53,7 @@ import { Route as SettingsPayoutsRouteImport } from './../../dashboard/src/route
 import { Route as SettingsPaymentMethodsRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/settings/payment-methods'
 import { Route as SettingsPackageTypesRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/settings/package-types'
 import { Route as SettingsMarketsRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/settings/markets'
+import { Route as SettingsMarketplaceRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/settings/marketplace'
 import { Route as SettingsIntegrationsRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/settings/integrations'
 import { Route as SettingsEmailsRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/settings/emails'
 import { Route as SettingsCustomFieldDefinitionsRouteImport } from './../../dashboard/src/routes/_authenticated/$storeId/settings/custom-field-definitions'
@@ -330,6 +331,11 @@ const SettingsPackageTypesRoute = SettingsPackageTypesRouteImport.update({
 const SettingsMarketsRoute = SettingsMarketsRouteImport.update({
   id: '/markets',
   path: '/markets',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsMarketplaceRoute = SettingsMarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
   getParentRoute: () => SettingsRoute,
 } as any)
 const SettingsIntegrationsRoute = SettingsIntegrationsRouteImport.update({
@@ -680,6 +686,7 @@ export interface FileRoutesByFullPath {
   '/$storeId/settings/custom-field-definitions': typeof SettingsCustomFieldDefinitionsRoute
   '/$storeId/settings/emails': typeof SettingsEmailsRoute
   '/$storeId/settings/integrations': typeof SettingsIntegrationsRoute
+  '/$storeId/settings/marketplace': typeof SettingsMarketplaceRoute
   '/$storeId/settings/markets': typeof SettingsMarketsRoute
   '/$storeId/settings/package-types': typeof SettingsPackageTypesRoute
   '/$storeId/settings/payment-methods': typeof SettingsPaymentMethodsRoute
@@ -780,6 +787,7 @@ export interface FileRoutesByTo {
   '/$storeId/settings/custom-field-definitions': typeof SettingsCustomFieldDefinitionsRoute
   '/$storeId/settings/emails': typeof SettingsEmailsRoute
   '/$storeId/settings/integrations': typeof SettingsIntegrationsRoute
+  '/$storeId/settings/marketplace': typeof SettingsMarketplaceRoute
   '/$storeId/settings/markets': typeof SettingsMarketsRoute
   '/$storeId/settings/package-types': typeof SettingsPackageTypesRoute
   '/$storeId/settings/payment-methods': typeof SettingsPaymentMethodsRoute
@@ -884,6 +892,7 @@ export interface FileRoutesById {
   '/_authenticated/$storeId/settings/custom-field-definitions': typeof SettingsCustomFieldDefinitionsRoute
   '/_authenticated/$storeId/settings/emails': typeof SettingsEmailsRoute
   '/_authenticated/$storeId/settings/integrations': typeof SettingsIntegrationsRoute
+  '/_authenticated/$storeId/settings/marketplace': typeof SettingsMarketplaceRoute
   '/_authenticated/$storeId/settings/markets': typeof SettingsMarketsRoute
   '/_authenticated/$storeId/settings/package-types': typeof SettingsPackageTypesRoute
   '/_authenticated/$storeId/settings/payment-methods': typeof SettingsPaymentMethodsRoute
@@ -988,6 +997,7 @@ export interface FileRouteTypes {
     | '/$storeId/settings/custom-field-definitions'
     | '/$storeId/settings/emails'
     | '/$storeId/settings/integrations'
+    | '/$storeId/settings/marketplace'
     | '/$storeId/settings/markets'
     | '/$storeId/settings/package-types'
     | '/$storeId/settings/payment-methods'
@@ -1088,6 +1098,7 @@ export interface FileRouteTypes {
     | '/$storeId/settings/custom-field-definitions'
     | '/$storeId/settings/emails'
     | '/$storeId/settings/integrations'
+    | '/$storeId/settings/marketplace'
     | '/$storeId/settings/markets'
     | '/$storeId/settings/package-types'
     | '/$storeId/settings/payment-methods'
@@ -1191,6 +1202,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$storeId/settings/custom-field-definitions'
     | '/_authenticated/$storeId/settings/emails'
     | '/_authenticated/$storeId/settings/integrations'
+    | '/_authenticated/$storeId/settings/marketplace'
     | '/_authenticated/$storeId/settings/markets'
     | '/_authenticated/$storeId/settings/package-types'
     | '/_authenticated/$storeId/settings/payment-methods'
@@ -1564,6 +1576,13 @@ declare module '@tanstack/react-router' {
       path: '/markets'
       fullPath: '/$storeId/settings/markets'
       preLoaderRoute: typeof SettingsMarketsRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/_authenticated/$storeId/settings/marketplace': {
+      id: '/_authenticated/$storeId/settings/marketplace'
+      path: '/marketplace'
+      fullPath: '/$storeId/settings/marketplace'
+      preLoaderRoute: typeof SettingsMarketplaceRouteImport
       parentRoute: typeof SettingsRoute
     }
     '/_authenticated/$storeId/settings/integrations': {
@@ -1976,6 +1995,7 @@ interface SettingsRouteChildren {
   SettingsCustomFieldDefinitionsRoute: typeof SettingsCustomFieldDefinitionsRoute
   SettingsEmailsRoute: typeof SettingsEmailsRoute
   SettingsIntegrationsRoute: typeof SettingsIntegrationsRoute
+  SettingsMarketplaceRoute: typeof SettingsMarketplaceRoute
   SettingsMarketsRoute: typeof SettingsMarketsRoute
   SettingsPackageTypesRoute: typeof SettingsPackageTypesRoute
   SettingsPaymentMethodsRoute: typeof SettingsPaymentMethodsRoute
@@ -2008,6 +2028,7 @@ const SettingsRouteChildren: SettingsRouteChildren = {
   SettingsCustomFieldDefinitionsRoute: SettingsCustomFieldDefinitionsRoute,
   SettingsEmailsRoute: SettingsEmailsRoute,
   SettingsIntegrationsRoute: SettingsIntegrationsRoute,
+  SettingsMarketplaceRoute: SettingsMarketplaceRoute,
   SettingsMarketsRoute: SettingsMarketsRoute,
   SettingsPackageTypesRoute: SettingsPackageTypesRoute,
   SettingsPaymentMethodsRoute: SettingsPaymentMethodsRoute,

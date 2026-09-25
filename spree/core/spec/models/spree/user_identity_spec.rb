@@ -31,6 +31,13 @@ describe Spree::UserIdentity, type: :model do
       expect(identity.errors[:provider]).to include('is not included in the list')
     end
 
+    it 'accepts a provider registered only for the Seller API' do
+      Spree.seller_authentication_strategies.add(:seller_sso, Class.new)
+      expect(build(:user_identity, provider: 'seller_sso')).to be_valid
+    ensure
+      Spree.seller_authentication_strategies.remove(:seller_sso)
+    end
+
     describe 'uniqueness validation' do
       let(:user) { create(:user) }
       let!(:existing_identity) do
@@ -66,12 +73,48 @@ describe Spree::UserIdentity, type: :model do
 
     it 'finds the identity for the user class' do
       expect(described_class.find_for(provider: provider, uid: uid)).to eq(identity)
+
+
     end
 
     it 'does not match an identity belonging to another user class' do
       stub_const('Spree::AdminUser', Class.new(Spree.customer_class))
 
       expect(described_class.find_for(provider: provider, uid: uid, user_class: Spree::AdminUser)).to be_nil
+    end
+  end
+
+  describe 'token encryption' do
+    let(:identity) do
+      create(:user_identity, access_token: 'plain-access-token', refresh_token: 'plain-refresh-token')
+    end
+
+    it 'stores the OAuth tokens encrypted' do
+      raw = described_class.connection.select_one(
+        described_class.where(id: identity.id).select(:access_token, :refresh_token).to_sql
+      )
+
+      expect(raw['access_token']).to be_present
+      expect(raw['access_token']).not_to include('plain-access-token')
+      expect(raw['refresh_token']).to be_present
+      expect(raw['refresh_token']).not_to include('plain-refresh-token')
+    end
+
+    it 'reads the OAuth tokens back decrypted' do
+      reloaded = described_class.find(identity.id)
+
+      expect(reloaded.access_token).to eq('plain-access-token')
+      expect(reloaded.refresh_token).to eq('plain-refresh-token')
+    end
+
+    it 'still reads tokens stored before encryption was enabled' do
+      described_class.where(id: identity.id)
+        .update_all("access_token = 'legacy-access-token', refresh_token = 'legacy-refresh-token'")
+
+      reloaded = described_class.find(identity.id)
+
+      expect(reloaded.access_token).to eq('legacy-access-token')
+      expect(reloaded.refresh_token).to eq('legacy-refresh-token')
     end
   end
 

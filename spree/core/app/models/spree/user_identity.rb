@@ -4,20 +4,30 @@ module Spree
 
     belongs_to :user, polymorphic: true, optional: false
 
-    # Provider tokens are credentials to the shopper's profile — a WeChat
-    # refresh token lives 30 days — so they get the same treatment the
-    # codebase already gives comparable secrets (Spree::WebhookEndpoint,
-    # Spree::GatewayCustomer).
-    encrypts :access_token, :refresh_token if Rails.configuration.active_record.encryption.include?(:primary_key)
-
     validates :provider, presence: true
     validates :uid, presence: true, uniqueness: { scope: %i[provider user_type] }
 
     validates :provider, inclusion: {
       in: lambda { |_record|
-        (Spree.store_authentication_strategies.keys + Spree.admin_authentication_strategies.keys).uniq.map(&:to_s)
+        (
+          Spree.store_authentication_strategies.keys +
+          Spree.admin_authentication_strategies.keys +
+          Spree.seller_authentication_strategies.keys
+        ).uniq.map(&:to_s)
       }
     }
+
+    # Provider tokens are credentials to the shopper's profile — a WeChat
+    # refresh token lives 30 days — so they get the same treatment the
+    # codebase already gives comparable secrets (Spree::WebhookEndpoint,
+    # Spree::GatewayCustomer). Keys may come from config or from encrypted
+    # credentials.
+    #
+    # Rows written before encryption was enabled stay readable and are
+    # encrypted on their next write.
+    if ActiveRecord::Encryption.config.has_primary_key?
+      encrypts :access_token, :refresh_token, support_unencrypted_data: true
+    end
 
     class << self
       # @param provider [String, Symbol]

@@ -13,6 +13,7 @@ export type {
 // drift apart silently.
 export * from './generated'
 
+import type { default as Account } from './generated/Account'
 /**
  * One node of the administrative tree the service-area picker cascades through,
  * as `GET /administrative_divisions` answers it. Hand-written because the
@@ -35,8 +36,6 @@ export type AdministrativeDivisionListParams = {
   level?: string
 }
 
-import type { default as TeamMember } from './generated/TeamMember'
-
 /**
  * A seller as the login and `/me` responses summarise it — enough for the
  * panel to let a seller choose which seller to act as.
@@ -51,7 +50,13 @@ export interface SellerSummary {
 /** What the login and refresh endpoints answer. */
 export interface AuthTokens {
   token: string
-  user: TeamMember
+  /**
+   * `Account`, not `TeamMember`: the panel adopts the signed-in person's saved
+   * language from this payload at sign-in, which is what carries the choice to
+   * a second browser. Serialized only for the person signing in, so it does
+   * not publish a colleague's preference the way widening the team shape would.
+   */
+  user: Account
   sellers: SellerSummary[]
 }
 

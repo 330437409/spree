@@ -12,6 +12,9 @@ module Spree
       # workflow so the session can record them on the payment.
       def perform(payment_method_id:, action:, payment_session_id: nil, refund_id: nil, refund_status: nil, transaction_id: nil, metadata: {})
         payment_method = Spree::PaymentMethod.find(payment_method_id)
+        # The job runs outside a request, so the store context a webhook needs is
+        # set here rather than resolved from the caller.
+        Spree::Current.store = payment_method.store
 
         if action.to_sym == :refund
           refund = Spree::Refund.find(refund_id)
