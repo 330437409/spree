@@ -170,6 +170,17 @@ module Spree
       order_group_id po_number
     ]
     self.whitelisted_ransackable_scopes = %w[complete incomplete refunded partially_refunded search multi_search]
+    # A seller never sees the buyer's email, and a company member filtering the
+    # company's orders must not learn a colleague's; the risk flag and coupon
+    # are back-office data. `search` matches on the email too.
+    self.private_ransackable_attributes = {
+      store: %w[email considered_risky coupon_code],
+      seller: %w[email considered_risky coupon_code]
+    }
+    self.private_ransackable_scopes = {
+      store: %w[search multi_search],
+      seller: %w[search multi_search]
+    }
 
     # Set to false on admin-initiated flows to suppress customer-facing emails.
     attr_accessor :notify_customer
@@ -242,6 +253,11 @@ module Spree
     # checkout names the one child being refunded. Keyed on that column rather
     # than walked through payments, which a grouped order does not own.
     has_many :refunds, class_name: 'Spree::Refund', inverse_of: :order, dependent: :nullify
+    # The other half of what this order gave back. A refund paid as store
+    # credit writes no Spree::Refund row, so anything measuring what the
+    # customer got back has to add the two ledgers.
+    has_many :store_credit_refunds, class_name: 'Spree::StoreCredit', inverse_of: :refunded_order,
+                                    foreign_key: :refunded_order_id, dependent: :nullify
 
     # Typed adjustment rows owned by this order (line-, fulfillment- and
     # order-level). See docs/plans/6.0-6.1-split-adjustments.md.
@@ -333,12 +349,8 @@ module Spree
     scope :partially_shipped, -> { where(fulfillment_status: %w[partial]) }
     scope :not_shipped, -> { where(fulfillment_status: %w[unfulfilled partial]) }
     scope :shipped, -> { where(fulfillment_status: %w[fulfilled delivered shipped]) }
-    scope :refunded, lambda {
-      joins(:refunds).group(:id).having("sum(#{Spree::Refund.table_name}.amount) = #{Spree::Order.table_name}.total")
-    }
-    scope :partially_refunded, lambda {
-      joins(:refunds).group(:id).having("sum(#{Spree::Refund.table_name}.amount) < #{Spree::Order.table_name}.total")
-    }
+    scope :refunded, -> { where(payment_status: 'refunded') }
+    scope :partially_refunded, -> { where(payment_status: 'partially_refunded') }
     scope :with_deleted_bill_address, -> { joins(:bill_address).where.not(Address.table_name => { deleted_at: nil }) }
     scope :with_deleted_ship_address, -> { joins(:ship_address).where.not(Address.table_name => { deleted_at: nil }) }
     # The customer's own history, split by whether they have taken an order off
@@ -769,12 +781,8 @@ module Spree
 
     # What has been captured against this order, net of refunds.
     #
-    # An order placed in a split checkout owns no payments, so its own
-    # +payment_total+ stays at zero however much the customer paid — the
-    # figure comes from its share of the group's payments instead, the same
-    # way {Spree::Orders::UpdateStatuses} derives +payment_status+. The
-    # group's own total will not do: once one seller has been captured and
-    # another has not, no proportion of it describes either.
+    # Read from the share rows rather than the +payment_total+ they are summed
+    # into, since a caller about to move money needs what they say now.
     #
     # @return [BigDecimal]
     def net_captured_total
@@ -1270,6 +1278,21 @@ module Spree
     end
 
     private
+
+    # An order placed in a split checkout owns no payments, so its money is
+    # the sum of its shares of the group's instead — the same source
+    # {Spree::Orders::UpdateStatuses} derives payment_status from.
+    #
+    # @return [Arel::Nodes::NamedFunction]
+    def settled_payments_arel
+      return super unless grouped?
+
+      splits = Spree::PaymentSplit.arel_table
+      net = splits.project(splits[:captured_amount].sum - splits[:refunded_amount].sum).
+            where(splits[:order_id].eq(id))
+
+      Arel::Nodes::NamedFunction.new('COALESCE', [Arel::Nodes::Grouping.new(net), Arel.sql('0')])
+    end
 
     def ensure_can_be_deleted
       return true if can_be_deleted?

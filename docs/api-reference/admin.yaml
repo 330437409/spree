@@ -563,9 +563,10 @@ paths:
         whether or not the email matches an account, to prevent enumeration.
 
         `redirect_url` is where the emailed link should point (the reset token
-        is appended as a `token` query param). It must match one of the store's
-        allowed origins — otherwise it is silently ignored and the server-side
-        default is used. The email is delivered by Spree itself via the
+        is appended as a `token` query param). It is honoured only on the
+        dashboard's origin and for an account that is staff of the store —
+        otherwise it is silently ignored and the link opens the dashboard's
+        reset page. The email is delivered by Spree itself via the
         `admin_user.password_reset_requested` event; this event is never
         forwarded to webhook endpoints.
       x-codeSamples:
@@ -615,8 +616,8 @@ paths:
                 redirect_url:
                   type: string
                   example: https://admin.your-store.com/reset-password
-                  description: Must match an allowed origin of the store; ignored
-                    otherwise.
+                  description: Honoured only on the dashboard origin, for an account
+                    that is staff of the store; ignored otherwise.
               required:
               - email
   "/api/v3/admin/auth/password_resets/{id}":
@@ -3105,7 +3106,6 @@ paths:
                   meta_description:
                   meta_keywords:
                   children_count: 0
-                  products_count: 0
                   parent_id:
                   description: ''
                   description_html: ''
@@ -3119,6 +3119,7 @@ paths:
                   pretty_name: Clothing
                   lft: 1
                   rgt: 2
+                  products_count: 0
                   created_at: '2026-01-15T12:00:00.000Z'
                   updated_at: '2026-01-15T12:00:00.000Z'
                 meta:
@@ -3181,7 +3182,6 @@ paths:
                 meta_description:
                 meta_keywords:
                 children_count: 0
-                products_count: 0
                 parent_id: ctg_UkLWZg9DAJ
                 description: ''
                 description_html: ''
@@ -3195,6 +3195,7 @@ paths:
                 pretty_name: Clothing -> Shirts
                 lft: 2
                 rgt: 3
+                products_count: 0
                 created_at: '2026-01-15T12:00:00.000Z'
                 updated_at: '2026-01-15T12:00:00.000Z'
               schema:
@@ -3291,7 +3292,6 @@ paths:
                 meta_description:
                 meta_keywords:
                 children_count: 0
-                products_count: 0
                 parent_id:
                 description: ''
                 description_html: ''
@@ -3305,6 +3305,7 @@ paths:
                 pretty_name: Clothing
                 lft: 1
                 rgt: 2
+                products_count: 0
                 created_at: '2026-01-15T12:00:00.000Z'
                 updated_at: '2026-01-15T12:00:00.000Z'
               schema:
@@ -3363,7 +3364,6 @@ paths:
                 meta_description:
                 meta_keywords:
                 children_count: 0
-                products_count: 0
                 parent_id:
                 description: ''
                 description_html: ''
@@ -3377,6 +3377,7 @@ paths:
                 pretty_name: Apparel
                 lft: 1
                 rgt: 2
+                products_count: 0
                 created_at: '2026-01-15T12:00:00.000Z'
                 updated_at: '2026-01-15T12:00:00.000Z'
               schema:
@@ -3480,7 +3481,6 @@ paths:
                 meta_description:
                 meta_keywords:
                 children_count: 0
-                products_count: 0
                 parent_id: ctg_UkLWZg9DAJ
                 description: ''
                 description_html: ''
@@ -3494,6 +3494,7 @@ paths:
                 pretty_name: Clothing -> Footwear
                 lft: 2
                 rgt: 3
+                products_count: 0
                 created_at: '2026-01-15T12:00:00.000Z'
                 updated_at: '2026-01-15T12:00:00.000Z'
               schema:
@@ -5310,13 +5311,7 @@ paths:
                   last_name: Ebert
                   phone:
                   accepts_email_marketing: false
-                  nickname:
-                  gender:
-                  city:
                   email_marketing_consent_updated_at: '2026-01-15T12:00:00Z'
-                  birthday:
-                  avatar_url:
-                  orders_count: 0
                   full_name: Dan Ebert
                   available_store_credit_total: '0'
                   display_available_store_credit_total: "$0.00"
@@ -5332,6 +5327,7 @@ paths:
                   internal_note_html:
                   default_billing_address_id:
                   default_shipping_address_id:
+                  orders_count: 0
                   total_spent: '0.0'
                   display_total_spent: "$0.00"
                   last_order_completed_at:
@@ -5520,16 +5516,11 @@ paths:
                   email: jane@example.com
                   first_name: Jane
                   last_name: Doe
-                  nickname:
                   phone:
-                  gender:
-                  birthday:
-                  city:
                   selected_locale:
                   tags: []
                   metadata:
                   internal_note:
-                  avatar_filename:
                   created_at: '2026-01-15T12:00:00Z'
                   anonymized_at:
                 marketing_consent:
@@ -5628,13 +5619,7 @@ paths:
                 last_name: Redacted
                 phone:
                 accepts_email_marketing: false
-                nickname:
-                gender:
-                city:
                 email_marketing_consent_updated_at: '2026-01-15T12:00:00Z'
-                birthday:
-                avatar_url:
-                orders_count: 0
                 full_name: Redacted Redacted
                 available_store_credit_total: '0'
                 display_available_store_credit_total: "$0.00"
@@ -5650,6 +5635,7 @@ paths:
                 internal_note_html:
                 default_billing_address_id:
                 default_shipping_address_id:
+                orders_count: 0
                 total_spent: '0.0'
                 display_total_spent: "$0.00"
                 last_order_completed_at:
@@ -6663,13 +6649,7 @@ paths:
                   last_name: Doe
                   phone:
                   accepts_email_marketing: false
-                  nickname:
-                  gender:
-                  city:
                   email_marketing_consent_updated_at: '2026-01-15T12:00:00Z'
-                  birthday:
-                  avatar_url:
-                  orders_count: 0
                   full_name: Jane Doe
                   available_store_credit_total: '0'
                   display_available_store_credit_total: "$0.00"
@@ -6685,6 +6665,7 @@ paths:
                   internal_note_html:
                   default_billing_address_id:
                   default_shipping_address_id:
+                  orders_count: 0
                   total_spent: '0'
                   display_total_spent: "$0.00"
                   last_order_completed_at:
@@ -6756,13 +6737,7 @@ paths:
                 last_name: Customer
                 phone:
                 accepts_email_marketing: false
-                nickname:
-                gender:
-                city:
                 email_marketing_consent_updated_at: '2026-01-15T12:00:00Z'
-                birthday:
-                avatar_url:
-                orders_count: 0
                 full_name: New Customer
                 available_store_credit_total: '0'
                 display_available_store_credit_total: "$0.00"
@@ -6778,6 +6753,7 @@ paths:
                 internal_note_html:
                 default_billing_address_id:
                 default_shipping_address_id:
+                orders_count: 0
                 total_spent: '0.0'
                 display_total_spent: "$0.00"
                 last_order_completed_at:
@@ -6881,13 +6857,7 @@ paths:
                 last_name: Doe
                 phone:
                 accepts_email_marketing: false
-                nickname:
-                gender:
-                city:
                 email_marketing_consent_updated_at: '2026-01-15T12:00:00Z'
-                birthday:
-                avatar_url:
-                orders_count: 0
                 full_name: Jane Doe
                 available_store_credit_total: '0'
                 display_available_store_credit_total: "$0.00"
@@ -6903,6 +6873,7 @@ paths:
                 internal_note_html:
                 default_billing_address_id:
                 default_shipping_address_id:
+                orders_count: 0
                 total_spent: '0'
                 display_total_spent: "$0.00"
                 last_order_completed_at:
@@ -6964,13 +6935,7 @@ paths:
                 last_name: Doe
                 phone:
                 accepts_email_marketing: false
-                nickname:
-                gender:
-                city:
                 email_marketing_consent_updated_at: '2026-01-15T12:00:00Z'
-                birthday:
-                avatar_url:
-                orders_count: 0
                 full_name: Updated Doe
                 available_store_credit_total: '0'
                 display_available_store_credit_total: "$0.00"
@@ -6986,6 +6951,7 @@ paths:
                 internal_note_html:
                 default_billing_address_id:
                 default_shipping_address_id:
+                orders_count: 0
                 total_spent: '0.0'
                 display_total_spent: "$0.00"
                 last_order_completed_at:
@@ -11233,6 +11199,8 @@ paths:
                   default: true
                   country_codes:
                   - US
+                  country_isos:
+                  - US
                   supported_locales:
                   - en
                   tax_provider:
@@ -11245,6 +11213,8 @@ paths:
                   tax_inclusive: false
                   default: false
                   country_codes:
+                  - DE
+                  country_isos:
                   - DE
                   supported_locales:
                   - en
@@ -11339,6 +11309,8 @@ paths:
                 tax_inclusive: true
                 default: false
                 country_codes:
+                - FR
+                country_isos:
                 - FR
                 supported_locales:
                 - en
@@ -11487,6 +11459,8 @@ paths:
                 default: false
                 country_codes:
                 - DE
+                country_isos:
+                - DE
                 supported_locales:
                 - en
                 tax_provider:
@@ -11567,6 +11541,8 @@ paths:
                 tax_inclusive: true
                 default: false
                 country_codes:
+                - DE
+                country_isos:
                 - DE
                 supported_locales:
                 - en
@@ -12575,7 +12551,7 @@ paths:
             application/json:
               example:
                 id: gc_UkLWZg9DAJ
-                code: 9F88A495EABED4D5
+                code: "************2F41"
                 status: active
                 currency: USD
                 amount: '10.0'
@@ -12730,14 +12706,11 @@ paths:
                   seller_id:
                   preorder: false
                   preorder_ships_at:
-                  promotion_id:
-                  promotion_candidates: []
                   quantity: 2
                   currency: USD
                   name: Product 479180
                   slug: product-479180
                   options_text: 'Size: S'
-                  selected: true
                   price: '10.0'
                   display_price: "$10.00"
                   total: '20.0'
@@ -12850,14 +12823,11 @@ paths:
                 seller_id:
                 preorder: false
                 preorder_ships_at:
-                promotion_id:
-                promotion_candidates: []
                 quantity: 3
                 currency: USD
                 name: Product 4999
                 slug: product-4999
                 options_text: 'Size: S'
-                selected: true
                 price: '19.99'
                 display_price: "$19.99"
                 total: '59.97'
@@ -12992,14 +12962,11 @@ paths:
                 seller_id:
                 preorder: false
                 preorder_ships_at:
-                promotion_id:
-                promotion_candidates: []
                 quantity: 2
                 currency: USD
                 name: Product 502714
                 slug: product-502714
                 options_text: 'Size: S'
-                selected: true
                 price: '10.0'
                 display_price: "$10.00"
                 total: '20.0'
@@ -13107,14 +13074,11 @@ paths:
                 seller_id:
                 preorder: false
                 preorder_ships_at:
-                promotion_id:
-                promotion_candidates: []
                 quantity: 5
                 currency: USD
                 name: Product 519758
                 slug: product-519758
                 options_text: 'Size: S'
-                selected: true
                 price: '19.99'
                 display_price: "$19.99"
                 total: '99.95'
@@ -13275,10 +13239,8 @@ paths:
               example:
                 id: or_UkLWZg9DAJ
                 market_id: mkt_UkLWZg9DAJ
-                payment_deadline:
                 withdrawal_period_ends_at:
                 within_withdrawal_period: false
-                cancellable: false
                 cart_id:
                 channel_id: ch_UkLWZg9DAJ
                 company_id:
@@ -13293,7 +13255,6 @@ paths:
                 locale: en
                 total_quantity: 1
                 coupon_code:
-                status: draft
                 fulfillment_status:
                 payment_status:
                 completed_at:
@@ -13322,7 +13283,6 @@ paths:
                 store_credit_total: '50.0'
                 display_store_credit_total: "-$50.00"
                 covered_by_store_credit: false
-                balance_not_password: true
                 gift_card:
                 market:
                   id: mkt_UkLWZg9DAJ
@@ -13333,12 +13293,15 @@ paths:
                   default: true
                   country_codes:
                   - US
+                  country_isos:
+                  - US
                   supported_locales:
                   - en
                   tax_provider:
                   created_at: '2026-01-15T12:00:00.000Z'
                   updated_at: '2026-01-15T12:00:00.000Z'
                 external_references: {}
+                status: draft
                 last_ip_address:
                 considered_risky: false
                 confirmation_delivered: false
@@ -13542,10 +13505,8 @@ paths:
                 data:
                 - id: or_UkLWZg9DAJ
                   market_id: mkt_UkLWZg9DAJ
-                  payment_deadline:
                   withdrawal_period_ends_at:
                   within_withdrawal_period: false
-                  cancellable: false
                   cart_id:
                   channel_id: ch_UkLWZg9DAJ
                   company_id:
@@ -13560,7 +13521,6 @@ paths:
                   locale: en
                   total_quantity: 0
                   coupon_code:
-                  status: draft
                   fulfillment_status:
                   payment_status:
                   completed_at:
@@ -13589,7 +13549,6 @@ paths:
                   store_credit_total: '0.0'
                   display_store_credit_total: "$0.00"
                   covered_by_store_credit: false
-                  balance_not_password: true
                   gift_card:
                   market:
                     id: mkt_UkLWZg9DAJ
@@ -13600,12 +13559,15 @@ paths:
                     default: true
                     country_codes:
                     - US
+                    country_isos:
+                    - US
                     supported_locales:
                     - en
                     tax_provider:
                     created_at: '2026-01-15T12:00:00.000Z'
                     updated_at: '2026-01-15T12:00:00.000Z'
                   external_references: {}
+                  status: draft
                   last_ip_address:
                   considered_risky: false
                   confirmation_delivered: false
@@ -13786,10 +13748,8 @@ paths:
               example:
                 id: or_gbHJdmfrXB
                 market_id: mkt_UkLWZg9DAJ
-                payment_deadline:
                 withdrawal_period_ends_at:
                 within_withdrawal_period: false
-                cancellable: false
                 cart_id:
                 channel_id: ch_UkLWZg9DAJ
                 company_id:
@@ -13804,7 +13764,6 @@ paths:
                 locale: en
                 total_quantity: 0
                 coupon_code:
-                status: draft
                 fulfillment_status:
                 payment_status:
                 completed_at:
@@ -13833,7 +13792,6 @@ paths:
                 store_credit_total: '0.0'
                 display_store_credit_total: "$0.00"
                 covered_by_store_credit: false
-                balance_not_password: true
                 gift_card:
                 market:
                   id: mkt_UkLWZg9DAJ
@@ -13844,12 +13802,15 @@ paths:
                   default: true
                   country_codes:
                   - US
+                  country_isos:
+                  - US
                   supported_locales:
                   - en
                   tax_provider:
                   created_at: '2026-01-15T12:00:00.000Z'
                   updated_at: '2026-01-15T12:00:00.000Z'
                 external_references: {}
+                status: draft
                 last_ip_address:
                 considered_risky: false
                 confirmation_delivered: false
@@ -14063,10 +14024,8 @@ paths:
               example:
                 id: or_UkLWZg9DAJ
                 market_id: mkt_UkLWZg9DAJ
-                payment_deadline:
                 withdrawal_period_ends_at:
                 within_withdrawal_period: false
-                cancellable: false
                 cart_id:
                 channel_id: ch_UkLWZg9DAJ
                 company_id:
@@ -14081,7 +14040,6 @@ paths:
                 locale: en
                 total_quantity: 0
                 coupon_code:
-                status: draft
                 fulfillment_status:
                 payment_status:
                 completed_at:
@@ -14110,7 +14068,6 @@ paths:
                 store_credit_total: '0.0'
                 display_store_credit_total: "$0.00"
                 covered_by_store_credit: false
-                balance_not_password: true
                 gift_card:
                 market:
                   id: mkt_UkLWZg9DAJ
@@ -14121,12 +14078,15 @@ paths:
                   default: true
                   country_codes:
                   - US
+                  country_isos:
+                  - US
                   supported_locales:
                   - en
                   tax_provider:
                   created_at: '2026-01-15T12:00:00.000Z'
                   updated_at: '2026-01-15T12:00:00.000Z'
                 external_references: {}
+                status: draft
                 last_ip_address:
                 considered_risky: false
                 confirmation_delivered: false
@@ -14228,10 +14188,8 @@ paths:
               example:
                 id: or_UkLWZg9DAJ
                 market_id: mkt_UkLWZg9DAJ
-                payment_deadline:
                 withdrawal_period_ends_at:
                 within_withdrawal_period: false
-                cancellable: false
                 cart_id:
                 channel_id: ch_UkLWZg9DAJ
                 company_id:
@@ -14246,7 +14204,6 @@ paths:
                 locale: en
                 total_quantity: 0
                 coupon_code:
-                status: draft
                 fulfillment_status:
                 payment_status:
                 completed_at:
@@ -14275,7 +14232,6 @@ paths:
                 store_credit_total: '0.0'
                 display_store_credit_total: "$0.00"
                 covered_by_store_credit: false
-                balance_not_password: true
                 gift_card:
                 market:
                   id: mkt_UkLWZg9DAJ
@@ -14286,12 +14242,15 @@ paths:
                   default: true
                   country_codes:
                   - US
+                  country_isos:
+                  - US
                   supported_locales:
                   - en
                   tax_provider:
                   created_at: '2026-01-15T12:00:00.000Z'
                   updated_at: '2026-01-15T12:00:00.000Z'
                 external_references: {}
+                status: draft
                 last_ip_address:
                 considered_risky: false
                 confirmation_delivered: false
@@ -14460,6 +14419,10 @@ paths:
 
         Set `notify_customer: true` to send the order confirmation email.
 
+        On a marketplace, an order holding several sellers' goods becomes one
+        order per seller, and the response is the order group they belong to
+        with those orders nested inside it.
+
 
         **Required scope:** `write_orders` (for API-key authentication).
       x-codeSamples:
@@ -14473,9 +14436,12 @@ paths:
             secretKey: 'sk_xxx',
           })
 
-          const order = await client.orders.complete('or_UkLWZg9DAJ', {
+          const result = await client.orders.complete('or_UkLWZg9DAJ', {
             notify_customer: true,
           })
+
+          // An order holding several sellers' goods becomes one order per seller.
+          const orders = isOrderGroup(result) ? result.orders : [result]
       - lang: bash
         label: Spree CLI
         source: spree api patch /orders/{id}/complete -d '{"notify_customer":true}'
@@ -14505,10 +14471,8 @@ paths:
               example:
                 id: or_UkLWZg9DAJ
                 market_id: mkt_UkLWZg9DAJ
-                payment_deadline:
                 withdrawal_period_ends_at:
                 within_withdrawal_period: true
-                cancellable: true
                 cart_id:
                 channel_id: ch_UkLWZg9DAJ
                 company_id:
@@ -14523,7 +14487,6 @@ paths:
                 locale: en
                 total_quantity: 1
                 coupon_code:
-                status: placed
                 fulfillment_status: unfulfilled
                 payment_status: paid
                 completed_at: '2026-01-15T12:00:00.000Z'
@@ -14552,7 +14515,6 @@ paths:
                 store_credit_total: '0.0'
                 display_store_credit_total: "$0.00"
                 covered_by_store_credit: false
-                balance_not_password: true
                 gift_card:
                 market:
                   id: mkt_UkLWZg9DAJ
@@ -14563,12 +14525,15 @@ paths:
                   default: true
                   country_codes:
                   - US
+                  country_isos:
+                  - US
                   supported_locales:
                   - en
                   tax_provider:
                   created_at: '2026-01-15T12:00:00.000Z'
                   updated_at: '2026-01-15T12:00:00.000Z'
                 external_references: {}
+                status: placed
                 last_ip_address:
                 considered_risky: false
                 confirmation_delivered: false
@@ -14705,10 +14670,8 @@ paths:
               example:
                 id: or_UkLWZg9DAJ
                 market_id: mkt_UkLWZg9DAJ
-                payment_deadline:
                 withdrawal_period_ends_at:
                 within_withdrawal_period: false
-                cancellable: false
                 cart_id:
                 channel_id: ch_UkLWZg9DAJ
                 company_id:
@@ -14723,7 +14686,6 @@ paths:
                 locale: en
                 total_quantity: 1
                 coupon_code:
-                status: canceled
                 fulfillment_status: canceled
                 payment_status: none
                 completed_at: '2026-01-15T12:00:00.000Z'
@@ -14752,7 +14714,6 @@ paths:
                 store_credit_total: '0.0'
                 display_store_credit_total: "$0.00"
                 covered_by_store_credit: false
-                balance_not_password: true
                 gift_card:
                 market:
                   id: mkt_UkLWZg9DAJ
@@ -14763,12 +14724,15 @@ paths:
                   default: true
                   country_codes:
                   - US
+                  country_isos:
+                  - US
                   supported_locales:
                   - en
                   tax_provider:
                   created_at: '2026-01-15T12:00:00.000Z'
                   updated_at: '2026-01-15T12:00:00.000Z'
                 external_references: {}
+                status: canceled
                 last_ip_address:
                 considered_risky: false
                 confirmation_delivered: false
@@ -14883,10 +14847,8 @@ paths:
               example:
                 id: or_UkLWZg9DAJ
                 market_id: mkt_UkLWZg9DAJ
-                payment_deadline: '2026-01-15T12:30:00Z'
                 withdrawal_period_ends_at:
                 within_withdrawal_period: true
-                cancellable: true
                 cart_id:
                 channel_id: ch_UkLWZg9DAJ
                 company_id:
@@ -14901,7 +14863,6 @@ paths:
                 locale: en
                 total_quantity: 1
                 coupon_code:
-                status: placed
                 fulfillment_status:
                 payment_status:
                 completed_at: '2026-01-15T12:00:00.000Z'
@@ -14930,7 +14891,6 @@ paths:
                 store_credit_total: '0.0'
                 display_store_credit_total: "$0.00"
                 covered_by_store_credit: false
-                balance_not_password: true
                 gift_card:
                 market:
                   id: mkt_UkLWZg9DAJ
@@ -14941,12 +14901,15 @@ paths:
                   default: true
                   country_codes:
                   - US
+                  country_isos:
+                  - US
                   supported_locales:
                   - en
                   tax_provider:
                   created_at: '2026-01-15T12:00:00.000Z'
                   updated_at: '2026-01-15T12:00:00.000Z'
                 external_references: {}
+                status: placed
                 last_ip_address:
                 considered_risky: false
                 confirmation_delivered: false
@@ -15035,10 +14998,8 @@ paths:
               example:
                 id: or_UkLWZg9DAJ
                 market_id: mkt_UkLWZg9DAJ
-                payment_deadline: '2026-01-15T12:30:00Z'
                 withdrawal_period_ends_at:
                 within_withdrawal_period: true
-                cancellable: true
                 cart_id:
                 channel_id: ch_UkLWZg9DAJ
                 company_id:
@@ -15053,7 +15014,6 @@ paths:
                 locale: en
                 total_quantity: 1
                 coupon_code:
-                status: placed
                 fulfillment_status:
                 payment_status:
                 completed_at: '2026-01-15T12:00:00.000Z'
@@ -15082,7 +15042,6 @@ paths:
                 store_credit_total: '0.0'
                 display_store_credit_total: "$0.00"
                 covered_by_store_credit: false
-                balance_not_password: true
                 gift_card:
                 market:
                   id: mkt_UkLWZg9DAJ
@@ -15093,12 +15052,15 @@ paths:
                   default: true
                   country_codes:
                   - US
+                  country_isos:
+                  - US
                   supported_locales:
                   - en
                   tax_provider:
                   created_at: '2026-01-15T12:00:00.000Z'
                   updated_at: '2026-01-15T12:00:00.000Z'
                 external_references: {}
+                status: placed
                 last_ip_address:
                 considered_risky: false
                 confirmation_delivered: false
@@ -15427,11 +15389,9 @@ paths:
                 data:
                 - id: py_UkLWZg9DAJ
                   payment_method_id: pm_UkLWZg9DAJ
-                  response_code: BGS-bc1fd73a8b7b
+                  response_code: BGS-343039b69b86
                   number: R1001-P1
                   status: completed
-                  merchant_id:
-                  gateway_transaction_id:
                   amount: '110.0'
                   display_amount: "$110.00"
                   source_type: credit_card
@@ -15527,8 +15487,6 @@ paths:
                 response_code:
                 number: R1002-P1
                 status: checkout
-                merchant_id:
-                gateway_transaction_id:
                 amount: '110.0'
                 display_amount: "$110.00"
                 source_type:
@@ -15632,11 +15590,9 @@ paths:
               example:
                 id: py_UkLWZg9DAJ
                 payment_method_id: pm_UkLWZg9DAJ
-                response_code: BGS-ca35554e0345
+                response_code: BGS-4a236d40ef07
                 number: R1001-P1
                 status: completed
-                merchant_id:
-                gateway_transaction_id:
                 amount: '110.0'
                 display_amount: "$110.00"
                 source_type: credit_card
@@ -15723,11 +15679,9 @@ paths:
               example:
                 id: py_UkLWZg9DAJ
                 payment_method_id: pm_UkLWZg9DAJ
-                response_code: BGS-8a6060710698
+                response_code: BGS-ccc19f06b194
                 number: R1001-P1
                 status: completed
-                merchant_id:
-                gateway_transaction_id:
                 amount: '110.0'
                 display_amount: "$110.00"
                 source_type: credit_card
@@ -15823,11 +15777,9 @@ paths:
               example:
                 id: py_UkLWZg9DAJ
                 payment_method_id: pm_UkLWZg9DAJ
-                response_code: void-BGS-e57755779fe4
+                response_code: void-BGS-11f2e975ba0c
                 number: R1001-P1
                 status: void
-                merchant_id:
-                gateway_transaction_id:
                 amount: '110.0'
                 display_amount: "$110.00"
                 source_type: credit_card
@@ -22622,11 +22574,11 @@ paths:
           const refund = await client.orders.refunds.create('or_UkLWZg9DAJ', {
             payment_id: 'pay_UkLWZg9DAJ',
             amount: '5.00',
-            refund_reason_id: 'refrsn_UkLWZg9DAJ',
+            refund_reason_id: 'rr_UkLWZg9DAJ',
           })
       - lang: bash
         label: Spree CLI
-        source: spree api post /orders/{order_id}/refunds -d '{"payment_id":"pay_UkLWZg9DAJ","amount":"5.00","refund_reason_id":"refrsn_UkLWZg9DAJ"}'
+        source: spree api post /orders/{order_id}/refunds -d '{"payment_id":"pay_UkLWZg9DAJ","amount":"5.00","refund_reason_id":"rr_UkLWZg9DAJ"}'
       parameters:
       - name: x-spree-api-key
         in: header
@@ -22652,13 +22604,12 @@ paths:
             application/json:
               example:
                 id: re_UkLWZg9DAJ
-                transaction_id: BGS-98f3b10ad47a
+                transaction_id: BGS-c5ae59a82a25
                 amount: '5.0'
                 payment_id: py_UkLWZg9DAJ
                 refund_reason_id: rr_UkLWZg9DAJ
                 originator_id:
                 originator_type:
-                status: completed
                 metadata: {}
                 created_at: '2026-01-15T12:00:00.000Z'
                 updated_at: '2026-01-15T12:00:00.000Z'
@@ -22772,11 +22723,6 @@ paths:
                 id: store_UkLWZg9DAJ
                 metadata: {}
                 name: Spree Test Store
-                preferred_reverse_geocode_provider: tencent
-                preferred_reverse_geocode_fallback_provider:
-                preferred_reverse_geocode_tencent_key:
-                preferred_reverse_geocode_ttl_days: 30
-                preferred_tencent_maps_js_key:
                 code: spree_1
                 preferred_storefront_url:
                 default_currency: USD
@@ -22812,6 +22758,10 @@ paths:
                 preferred_payout_provider:
                 preferred_default_payouts_schedule_interval: monthly
                 preferred_default_minimum_payout_amount: 0
+                preferred_auto_approve_sellers: false
+                preferred_auto_approve_seller_products: false
+                preferred_send_seller_transactional_emails: true
+                preferred_default_commission_tax_rate: 0
                 preferred_document_number_format: sequential
                 preferred_order_number_prefix: R
                 preferred_order_number_suffix: ''
@@ -23106,11 +23056,6 @@ paths:
                 id: store_UkLWZg9DAJ
                 metadata: {}
                 name: Renamed Store
-                preferred_reverse_geocode_provider: tencent
-                preferred_reverse_geocode_fallback_provider:
-                preferred_reverse_geocode_tencent_key:
-                preferred_reverse_geocode_ttl_days: 30
-                preferred_tencent_maps_js_key:
                 code: spree_1
                 preferred_storefront_url:
                 default_currency: USD
@@ -23146,6 +23091,10 @@ paths:
                 preferred_payout_provider:
                 preferred_default_payouts_schedule_interval: monthly
                 preferred_default_minimum_payout_amount: 0
+                preferred_auto_approve_sellers: false
+                preferred_auto_approve_seller_products: false
+                preferred_send_seller_transactional_emails: true
+                preferred_default_commission_tax_rate: 0
                 preferred_document_number_format: sequential
                 preferred_order_number_prefix: R
                 preferred_order_number_suffix: ''
@@ -24277,7 +24226,7 @@ paths:
       - api_key: []
         bearer_auth: []
       description: |-
-        Removes the user's role assignments on the current store. The account is preserved — the user keeps access to any other stores.
+        Removes the user's role assignments on the current store. The account is preserved — the user keeps access to any other stores. Removing a role needs the same rights as granting it, and the store always keeps at least one admin.
 
         **Required scope:** `write_staff` (for API-key authentication).
       x-codeSamples:
@@ -24368,7 +24317,6 @@ paths:
                   role_id: role_UkLWZg9DAJ
                   role_name: admin
                   inviter_email: teisha_prohaska@mcdermott.us
-                  acceptance_url: "/accept-invitation/inv_UkLWZg9DAJ?token=bcFtaxxWh2f6dkZb6EQNpKhJ"
                   invitee_exists: false
                   store:
                     id: store_UkLWZg9DAJ
@@ -24438,7 +24386,6 @@ paths:
                 role_id: role_UkLWZg9DAJ
                 role_name: admin
                 inviter_email: xavier_zemlak@jones.co.uk
-                acceptance_url: "/accept-invitation/inv_gbHJdmfrXB?token=VVL8HRJRDHaZmJ4pQEhtz6ey"
                 invitee_exists: false
                 store:
                   id: store_UkLWZg9DAJ
@@ -24501,6 +24448,59 @@ paths:
       responses:
         '204':
           description: invitation revoked
+  "/api/v3/admin/invitations/{invitation_id}/acceptance_link":
+    get:
+      summary: Get an invitation acceptance link
+      tags:
+      - Staff
+      security:
+      - api_key: []
+        bearer_auth: []
+      description: |-
+        Returns the link the invitee opens to accept a pending invitation. The link carries the invitation token, so it needs write access to staff and the right to grant the invitation's role; invitation listings never include it.
+
+        **Required scope:** `write_staff` (for API-key authentication).
+      x-codeSamples:
+      - lang: javascript
+        label: Spree Admin SDK
+        source: |-
+          import { createAdminClient } from '@spree/admin-sdk'
+
+          const client = createAdminClient({
+            baseUrl: 'https://your-store.com',
+            secretKey: 'sk_xxx',
+          })
+
+          const { acceptance_url } = await client.invitations.acceptanceLink('inv_xxx')
+      - lang: bash
+        label: Spree CLI
+        source: spree api get /invitations/{invitation_id}/acceptance_link
+      parameters:
+      - name: x-spree-api-key
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: invitation_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: acceptance link found
+          content:
+            application/json:
+              example:
+                id: inv_UkLWZg9DAJ
+                acceptance_url: http://www.example.com:3000/accept-invitation/inv_UkLWZg9DAJ?token=jDy3giwKk1iUW1wTMg5LRLEG
+              schema:
+                "$ref": "#/components/schemas/InvitationAcceptanceLink"
   "/api/v3/admin/invitations/{id}/resend":
     patch:
       summary: Resend an invitation
@@ -24559,7 +24559,6 @@ paths:
                 role_id: role_UkLWZg9DAJ
                 role_name: admin
                 inviter_email: fumiko@jacobsonkirlin.co.uk
-                acceptance_url: "/accept-invitation/inv_UkLWZg9DAJ?token=FxDpzwwoQd483CL8xLvY7u6R"
                 invitee_exists: false
                 store:
                   id: store_UkLWZg9DAJ
@@ -25465,14 +25464,8 @@ paths:
                   pickup_enabled: false
                   pickup_stock_policy: local
                   returns_enabled: true
-                  administrative_division_code:
-                  polygon:
-                  geocode_status: pending
-                  latitude:
-                  longitude:
                   created_at: '2026-01-15T12:00:00.000Z'
                   updated_at: '2026-01-15T12:00:00.000Z'
-                  geocoded_at:
                   seller_id:
                   seller_name:
                 meta:
@@ -25590,14 +25583,8 @@ paths:
                 pickup_enabled: true
                 pickup_stock_policy: local
                 returns_enabled: true
-                administrative_division_code:
-                polygon:
-                geocode_status:
-                latitude:
-                longitude:
                 created_at: '2026-01-15T12:00:00.000Z'
                 updated_at: '2026-01-15T12:00:00.000Z'
-                geocoded_at:
                 seller_id:
                 seller_name:
               schema:
@@ -25780,14 +25767,8 @@ paths:
                 pickup_enabled: false
                 pickup_stock_policy: local
                 returns_enabled: true
-                administrative_division_code:
-                polygon:
-                geocode_status: pending
-                latitude:
-                longitude:
                 created_at: '2026-01-15T12:00:00.000Z'
                 updated_at: '2026-01-15T12:00:00.000Z'
-                geocoded_at:
                 seller_id:
                 seller_name:
               schema:
@@ -25880,14 +25861,8 @@ paths:
                 pickup_enabled: true
                 pickup_stock_policy: local
                 returns_enabled: true
-                administrative_division_code:
-                polygon:
-                geocode_status: pending
-                latitude:
-                longitude:
                 created_at: '2026-01-15T12:00:00.000Z'
                 updated_at: '2026-01-15T12:00:00.000Z'
-                geocoded_at:
                 seller_id:
                 seller_name:
               schema:
@@ -32955,13 +32930,13 @@ paths:
                   video_embed_url:
                   video_url:
                   poster_url:
-                  original_url: http://localhost:3000/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e/thinking-cat.jpg
-                  mini_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsxMjgsMTI4XSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--5296bc8cce596c2234ff6779bd3c4a8f941dcc17/thinking-cat.jpg
-                  small_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsyNTYsMjU2XSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--1a8dbb09f3c2c6d84917acefec679859743287da/thinking-cat.jpg
-                  medium_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOls0MDAsNDAwXSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--e6a41abf8d7ff30c7239590c73a0c01e591c1222/thinking-cat.jpg
-                  large_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOls3MjAsNzIwXSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--f5a8b7a5019a59ecdc9184d319446997383f3d9d/thinking-cat.jpg
-                  xlarge_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsyMDAwLDIwMDBdLCJzYXZlciI6eyJzdHJpcCI6dHJ1ZSwicXVhbGl0eSI6NzUsImxvc3NsZXNzIjpmYWxzZSwiYWxwaGFfcSI6ODUsInJlZHVjdGlvbl9lZmZvcnQiOjYsInNtYXJ0X3N1YnNhbXBsZSI6dHJ1ZX19LCJwdXIiOiJ2YXJpYXRpb24ifX0=--e8ac740013aabfa94429f6a5f64458397c8bd88c/thinking-cat.jpg
-                  og_image_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsxMjAwLDYzMF0sInNhdmVyIjp7InN0cmlwIjp0cnVlLCJxdWFsaXR5Ijo3NSwibG9zc2xlc3MiOmZhbHNlLCJhbHBoYV9xIjo4NSwicmVkdWN0aW9uX2VmZm9ydCI6Niwic21hcnRfc3Vic2FtcGxlIjp0cnVlfX0sInB1ciI6InZhcmlhdGlvbiJ9fQ==--d6f94c6583540517909cf38c4d488f5fd89ea2dd/thinking-cat.jpg
+                  original_url: http://localhost:3000/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc/thinking-cat.jpg
+                  mini_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsxMjgsMTI4XSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--842df2157f0239c97e8da1cb68e59bad0bb1c65c/thinking-cat.jpg
+                  small_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsyNTYsMjU2XSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--efc4098d67c95b766076ffd76169e7d49199c517/thinking-cat.jpg
+                  medium_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOls0MDAsNDAwXSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--e5a1c73260840c5ab2bb78ebed47f7f5db621e85/thinking-cat.jpg
+                  large_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOls3MjAsNzIwXSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--60df672360d3d2c45cd72572b2e6faf9882995e1/thinking-cat.jpg
+                  xlarge_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsyMDAwLDIwMDBdLCJzYXZlciI6eyJzdHJpcCI6dHJ1ZSwicXVhbGl0eSI6NzUsImxvc3NsZXNzIjpmYWxzZSwiYWxwaGFfcSI6ODUsInJlZHVjdGlvbl9lZmZvcnQiOjYsInNtYXJ0X3N1YnNhbXBsZSI6dHJ1ZX19LCJwdXIiOiJ2YXJpYXRpb24ifX0=--74872e2b62fcbb93875b99ea99356c004855f9d3/thinking-cat.jpg
+                  og_image_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsxMjAwLDYzMF0sInNhdmVyIjp7InN0cmlwIjp0cnVlLCJxdWFsaXR5Ijo3NSwibG9zc2xlc3MiOmZhbHNlLCJhbHBoYV9xIjo4NSwicmVkdWN0aW9uX2VmZm9ydCI6Niwic21hcnRfc3Vic2FtcGxlIjp0cnVlfX0sInB1ciI6InZhcmlhdGlvbiJ9fQ==--e97abb6268b26c7a282c61cd0aedea525f75a555/thinking-cat.jpg
                   external_references: {}
                   created_at: '2026-01-15T12:00:00.000Z'
                   updated_at: '2026-01-15T12:00:00.000Z'
@@ -32969,10 +32944,10 @@ paths:
                   filename: thinking-cat.jpg
                   content_type: image/jpeg
                   byte_size: 18090
-                  embed_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2xpbWl0IjpbMTIwMCwxMjAwXSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--599a9c879c8ca906198b170f0c515f87b01a8458/thinking-cat.jpg
-                  signed_id: eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e
+                  embed_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2xpbWl0IjpbMTIwMCwxMjAwXSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--8bb0d93bcda0e7a158700e75fe6ce3f53ca8d223/thinking-cat.jpg
+                  signed_id: eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc
                   viewable_id: prod_UkLWZg9DAJ
-                  download_url: http://localhost:3000/rails/active_storage/blobs/redirect/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e/thinking-cat.jpg?disposition=attachment
+                  download_url: http://localhost:3000/rails/active_storage/blobs/redirect/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc/thinking-cat.jpg?disposition=attachment
                   metadata: {}
                   viewable_type: product
                 meta:
@@ -33043,13 +33018,13 @@ paths:
                 video_embed_url:
                 video_url:
                 poster_url:
-                original_url: http://localhost:3000/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--62f268a374af0310863a42cba30f5489ffc1e701/library-upload.jpg
-                mini_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--62f268a374af0310863a42cba30f5489ffc1e701/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsxMjgsMTI4XSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--5296bc8cce596c2234ff6779bd3c4a8f941dcc17/library-upload.jpg
-                small_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--62f268a374af0310863a42cba30f5489ffc1e701/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsyNTYsMjU2XSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--1a8dbb09f3c2c6d84917acefec679859743287da/library-upload.jpg
-                medium_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--62f268a374af0310863a42cba30f5489ffc1e701/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOls0MDAsNDAwXSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--e6a41abf8d7ff30c7239590c73a0c01e591c1222/library-upload.jpg
-                large_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--62f268a374af0310863a42cba30f5489ffc1e701/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOls3MjAsNzIwXSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--f5a8b7a5019a59ecdc9184d319446997383f3d9d/library-upload.jpg
-                xlarge_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--62f268a374af0310863a42cba30f5489ffc1e701/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsyMDAwLDIwMDBdLCJzYXZlciI6eyJzdHJpcCI6dHJ1ZSwicXVhbGl0eSI6NzUsImxvc3NsZXNzIjpmYWxzZSwiYWxwaGFfcSI6ODUsInJlZHVjdGlvbl9lZmZvcnQiOjYsInNtYXJ0X3N1YnNhbXBsZSI6dHJ1ZX19LCJwdXIiOiJ2YXJpYXRpb24ifX0=--e8ac740013aabfa94429f6a5f64458397c8bd88c/library-upload.jpg
-                og_image_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--62f268a374af0310863a42cba30f5489ffc1e701/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsxMjAwLDYzMF0sInNhdmVyIjp7InN0cmlwIjp0cnVlLCJxdWFsaXR5Ijo3NSwibG9zc2xlc3MiOmZhbHNlLCJhbHBoYV9xIjo4NSwicmVkdWN0aW9uX2VmZm9ydCI6Niwic21hcnRfc3Vic2FtcGxlIjp0cnVlfX0sInB1ciI6InZhcmlhdGlvbiJ9fQ==--d6f94c6583540517909cf38c4d488f5fd89ea2dd/library-upload.jpg
+                original_url: http://localhost:3000/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--77436642b5a367321ca4aa243635450a505a66c9/library-upload.jpg
+                mini_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--77436642b5a367321ca4aa243635450a505a66c9/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsxMjgsMTI4XSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--842df2157f0239c97e8da1cb68e59bad0bb1c65c/library-upload.jpg
+                small_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--77436642b5a367321ca4aa243635450a505a66c9/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsyNTYsMjU2XSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--efc4098d67c95b766076ffd76169e7d49199c517/library-upload.jpg
+                medium_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--77436642b5a367321ca4aa243635450a505a66c9/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOls0MDAsNDAwXSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--e5a1c73260840c5ab2bb78ebed47f7f5db621e85/library-upload.jpg
+                large_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--77436642b5a367321ca4aa243635450a505a66c9/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOls3MjAsNzIwXSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--60df672360d3d2c45cd72572b2e6faf9882995e1/library-upload.jpg
+                xlarge_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--77436642b5a367321ca4aa243635450a505a66c9/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsyMDAwLDIwMDBdLCJzYXZlciI6eyJzdHJpcCI6dHJ1ZSwicXVhbGl0eSI6NzUsImxvc3NsZXNzIjpmYWxzZSwiYWxwaGFfcSI6ODUsInJlZHVjdGlvbl9lZmZvcnQiOjYsInNtYXJ0X3N1YnNhbXBsZSI6dHJ1ZX19LCJwdXIiOiJ2YXJpYXRpb24ifX0=--74872e2b62fcbb93875b99ea99356c004855f9d3/library-upload.jpg
+                og_image_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--77436642b5a367321ca4aa243635450a505a66c9/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsxMjAwLDYzMF0sInNhdmVyIjp7InN0cmlwIjp0cnVlLCJxdWFsaXR5Ijo3NSwibG9zc2xlc3MiOmZhbHNlLCJhbHBoYV9xIjo4NSwicmVkdWN0aW9uX2VmZm9ydCI6Niwic21hcnRfc3Vic2FtcGxlIjp0cnVlfX0sInB1ciI6InZhcmlhdGlvbiJ9fQ==--e97abb6268b26c7a282c61cd0aedea525f75a555/library-upload.jpg
                 external_references: {}
                 created_at: '2026-01-15T12:00:00.000Z'
                 updated_at: '2026-01-15T12:00:00.000Z'
@@ -33057,10 +33032,10 @@ paths:
                 filename: library-upload.jpg
                 content_type: image/jpeg
                 byte_size: 18090
-                embed_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--62f268a374af0310863a42cba30f5489ffc1e701/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2xpbWl0IjpbMTIwMCwxMjAwXSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--599a9c879c8ca906198b170f0c515f87b01a8458/library-upload.jpg
-                signed_id: eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--62f268a374af0310863a42cba30f5489ffc1e701
+                embed_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--77436642b5a367321ca4aa243635450a505a66c9/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2xpbWl0IjpbMTIwMCwxMjAwXSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--8bb0d93bcda0e7a158700e75fe6ce3f53ca8d223/library-upload.jpg
+                signed_id: eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--77436642b5a367321ca4aa243635450a505a66c9
                 viewable_id:
-                download_url: http://localhost:3000/rails/active_storage/blobs/redirect/eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--62f268a374af0310863a42cba30f5489ffc1e701/library-upload.jpg?disposition=attachment
+                download_url: http://localhost:3000/rails/active_storage/blobs/redirect/eyJfcmFpbHMiOnsiZGF0YSI6MiwicHVyIjoiYmxvYl9pZCJ9fQ==--77436642b5a367321ca4aa243635450a505a66c9/library-upload.jpg?disposition=attachment
                 metadata: {}
                 viewable_type:
               schema:
@@ -33217,13 +33192,13 @@ paths:
                 video_embed_url:
                 video_url:
                 poster_url:
-                original_url: http://localhost:3000/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e/thinking-cat.jpg
-                mini_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsxMjgsMTI4XSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--5296bc8cce596c2234ff6779bd3c4a8f941dcc17/thinking-cat.jpg
-                small_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsyNTYsMjU2XSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--1a8dbb09f3c2c6d84917acefec679859743287da/thinking-cat.jpg
-                medium_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOls0MDAsNDAwXSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--e6a41abf8d7ff30c7239590c73a0c01e591c1222/thinking-cat.jpg
-                large_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOls3MjAsNzIwXSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--f5a8b7a5019a59ecdc9184d319446997383f3d9d/thinking-cat.jpg
-                xlarge_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsyMDAwLDIwMDBdLCJzYXZlciI6eyJzdHJpcCI6dHJ1ZSwicXVhbGl0eSI6NzUsImxvc3NsZXNzIjpmYWxzZSwiYWxwaGFfcSI6ODUsInJlZHVjdGlvbl9lZmZvcnQiOjYsInNtYXJ0X3N1YnNhbXBsZSI6dHJ1ZX19LCJwdXIiOiJ2YXJpYXRpb24ifX0=--e8ac740013aabfa94429f6a5f64458397c8bd88c/thinking-cat.jpg
-                og_image_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsxMjAwLDYzMF0sInNhdmVyIjp7InN0cmlwIjp0cnVlLCJxdWFsaXR5Ijo3NSwibG9zc2xlc3MiOmZhbHNlLCJhbHBoYV9xIjo4NSwicmVkdWN0aW9uX2VmZm9ydCI6Niwic21hcnRfc3Vic2FtcGxlIjp0cnVlfX0sInB1ciI6InZhcmlhdGlvbiJ9fQ==--d6f94c6583540517909cf38c4d488f5fd89ea2dd/thinking-cat.jpg
+                original_url: http://localhost:3000/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc/thinking-cat.jpg
+                mini_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsxMjgsMTI4XSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--842df2157f0239c97e8da1cb68e59bad0bb1c65c/thinking-cat.jpg
+                small_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsyNTYsMjU2XSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--efc4098d67c95b766076ffd76169e7d49199c517/thinking-cat.jpg
+                medium_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOls0MDAsNDAwXSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--e5a1c73260840c5ab2bb78ebed47f7f5db621e85/thinking-cat.jpg
+                large_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOls3MjAsNzIwXSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--60df672360d3d2c45cd72572b2e6faf9882995e1/thinking-cat.jpg
+                xlarge_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsyMDAwLDIwMDBdLCJzYXZlciI6eyJzdHJpcCI6dHJ1ZSwicXVhbGl0eSI6NzUsImxvc3NsZXNzIjpmYWxzZSwiYWxwaGFfcSI6ODUsInJlZHVjdGlvbl9lZmZvcnQiOjYsInNtYXJ0X3N1YnNhbXBsZSI6dHJ1ZX19LCJwdXIiOiJ2YXJpYXRpb24ifX0=--74872e2b62fcbb93875b99ea99356c004855f9d3/thinking-cat.jpg
+                og_image_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2ZpbGwiOlsxMjAwLDYzMF0sInNhdmVyIjp7InN0cmlwIjp0cnVlLCJxdWFsaXR5Ijo3NSwibG9zc2xlc3MiOmZhbHNlLCJhbHBoYV9xIjo4NSwicmVkdWN0aW9uX2VmZm9ydCI6Niwic21hcnRfc3Vic2FtcGxlIjp0cnVlfX0sInB1ciI6InZhcmlhdGlvbiJ9fQ==--e97abb6268b26c7a282c61cd0aedea525f75a555/thinking-cat.jpg
                 external_references: {}
                 created_at: '2026-01-15T12:00:00.000Z'
                 updated_at: '2026-01-15T12:00:00.000Z'
@@ -33231,10 +33206,10 @@ paths:
                 filename: thinking-cat.jpg
                 content_type: image/jpeg
                 byte_size: 18090
-                embed_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2xpbWl0IjpbMTIwMCwxMjAwXSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--599a9c879c8ca906198b170f0c515f87b01a8458/thinking-cat.jpg
-                signed_id: eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e
+                embed_url: http://localhost:3000/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc/eyJfcmFpbHMiOnsiZGF0YSI6eyJmb3JtYXQiOiJ3ZWJwIiwicmVzaXplX3RvX2xpbWl0IjpbMTIwMCwxMjAwXSwic2F2ZXIiOnsic3RyaXAiOnRydWUsInF1YWxpdHkiOjc1LCJsb3NzbGVzcyI6ZmFsc2UsImFscGhhX3EiOjg1LCJyZWR1Y3Rpb25fZWZmb3J0Ijo2LCJzbWFydF9zdWJzYW1wbGUiOnRydWV9fSwicHVyIjoidmFyaWF0aW9uIn19--8bb0d93bcda0e7a158700e75fe6ce3f53ca8d223/thinking-cat.jpg
+                signed_id: eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc
                 viewable_id: prod_gbHJdmfrXB
-                download_url: http://localhost:3000/rails/active_storage/blobs/redirect/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--5f019e4cfc2632d04d88521d5dbee0080830f86e/thinking-cat.jpg?disposition=attachment
+                download_url: http://localhost:3000/rails/active_storage/blobs/redirect/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--118079e2383257795a7c941f07809ce1d921cedc/thinking-cat.jpg?disposition=attachment
                 metadata: {}
                 viewable_type: product
               schema:
@@ -37699,7 +37674,7 @@ paths:
               example:
                 error:
                   code: processing_error
-                  message: already_approved
+                  message: Already approved
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
   "/api/v3/admin/sellers/{id}/suspend":
@@ -39045,14 +39020,8 @@ paths:
                   pickup_enabled: false
                   pickup_stock_policy: local
                   returns_enabled: true
-                  administrative_division_code:
-                  polygon:
-                  geocode_status: pending
-                  latitude:
-                  longitude:
                   created_at: '2026-01-15T12:00:00.000Z'
                   updated_at: '2026-01-15T12:00:00.000Z'
-                  geocoded_at:
                   seller_id:
                   seller_name:
                 destination_location:
@@ -39081,14 +39050,8 @@ paths:
                   pickup_enabled: false
                   pickup_stock_policy: local
                   returns_enabled: true
-                  administrative_division_code:
-                  polygon:
-                  geocode_status: pending
-                  latitude:
-                  longitude:
                   created_at: '2026-01-15T12:00:00.000Z'
                   updated_at: '2026-01-15T12:00:00.000Z'
-                  geocoded_at:
                   seller_id:
                   seller_name:
               schema:
@@ -40907,8 +40870,6 @@ components:
       properties:
         id:
           type: string
-        selected_quantity:
-          type: number
         market_id:
           type: string
           nullable: true
@@ -41087,7 +41048,6 @@ components:
             "$ref": "#/components/schemas/AppliedPromotion"
       required:
       - id
-      - selected_quantity
       - market_id
       - channel_id
       - preferred_stock_location_id
@@ -41417,8 +41377,6 @@ components:
           nullable: true
         children_count:
           type: number
-        products_count:
-          type: number
         parent_id:
           type: string
           nullable: true
@@ -41464,6 +41422,8 @@ components:
           type: number
         rgt:
           type: number
+        products_count:
+          type: number
         created_at:
           type: string
         updated_at:
@@ -41478,7 +41438,6 @@ components:
       - meta_description
       - meta_keywords
       - children_count
-      - products_count
       - parent_id
       - description
       - description_html
@@ -41492,6 +41451,7 @@ components:
       - pretty_name
       - lft
       - rgt
+      - products_count
       - created_at
       - updated_at
       x-typelizer: true
@@ -42432,29 +42392,9 @@ components:
           nullable: true
         accepts_email_marketing:
           type: boolean
-        nickname:
-          type: string
-          nullable: true
-        gender:
-          type: string
-          nullable: true
-          enum:
-          - male
-          - female
-        city:
-          type: string
-          nullable: true
         email_marketing_consent_updated_at:
           type: string
           nullable: true
-        birthday:
-          type: string
-          nullable: true
-        avatar_url:
-          type: string
-          nullable: true
-        orders_count:
-          type: number
         full_name:
           type: string
         available_store_credit_total:
@@ -42513,6 +42453,8 @@ components:
         default_shipping_address_id:
           type: string
           nullable: true
+        orders_count:
+          type: number
         total_spent:
           type: string
         display_total_spent:
@@ -42543,13 +42485,7 @@ components:
       - last_name
       - phone
       - accepts_email_marketing
-      - nickname
-      - gender
-      - city
       - email_marketing_consent_updated_at
-      - birthday
-      - avatar_url
-      - orders_count
       - full_name
       - available_store_credit_total
       - display_available_store_credit_total
@@ -42565,6 +42501,7 @@ components:
       - internal_note_html
       - default_billing_address_id
       - default_shipping_address_id
+      - orders_count
       - total_spent
       - display_total_spent
       - last_order_completed_at
@@ -44183,6 +44120,17 @@ components:
       - preferences
       - preference_schema
       x-typelizer: true
+    InvitationAcceptanceLink:
+      type: object
+      properties:
+        id:
+          type: string
+        acceptance_url:
+          type: string
+      required:
+      - id
+      - acceptance_url
+      x-typelizer: true
     Invitation:
       type: object
       properties:
@@ -44211,8 +44159,6 @@ components:
           type: string
         inviter_email:
           type: string
-        acceptance_url:
-          type: string
         invitee_exists:
           type: boolean
         store:
@@ -44227,7 +44173,6 @@ components:
       - role_id
       - role_name
       - inviter_email
-      - acceptance_url
       - invitee_exists
       - store
       x-typelizer: true
@@ -44246,13 +44191,6 @@ components:
         preorder_ships_at:
           type: string
           nullable: true
-        promotion_id:
-          type: string
-          nullable: true
-        promotion_candidates:
-          type: array
-          items:
-            "$ref": "#/components/schemas/PromotionCandidate"
         quantity:
           type: number
         currency:
@@ -44263,8 +44201,6 @@ components:
           type: string
         options_text:
           type: string
-        selected:
-          type: boolean
         price:
           type: string
         display_price:
@@ -44360,14 +44296,11 @@ components:
       - seller_id
       - preorder
       - preorder_ships_at
-      - promotion_id
-      - promotion_candidates
       - quantity
       - currency
       - name
       - slug
       - options_text
-      - selected
       - price
       - display_price
       - total
@@ -44420,6 +44353,10 @@ components:
           type: array
           items:
             type: string
+        country_isos:
+          type: array
+          items:
+            type: string
         supported_locales:
           type: array
           items:
@@ -44443,6 +44380,7 @@ components:
       - tax_inclusive
       - default
       - country_codes
+      - country_isos
       - supported_locales
       - tax_provider
       - created_at
@@ -44882,15 +44820,10 @@ components:
         market_id:
           type: string
           nullable: true
-        payment_deadline:
-          type: string
-          nullable: true
         withdrawal_period_ends_at:
           type: string
           nullable: true
         within_withdrawal_period:
-          type: boolean
-        cancellable:
           type: boolean
         cart_id:
           type: string
@@ -44930,12 +44863,6 @@ components:
         coupon_code:
           type: string
           nullable: true
-        status:
-          type: string
-          enum:
-          - draft
-          - placed
-          - canceled
         fulfillment_status:
           type: string
           nullable: true
@@ -45014,8 +44941,6 @@ components:
           type: string
         covered_by_store_credit:
           type: boolean
-        balance_not_password:
-          type: boolean
         items:
           type: array
           items:
@@ -45046,6 +44971,12 @@ components:
           nullable: true
         external_references:
           type: object
+        status:
+          type: string
+          enum:
+          - draft
+          - placed
+          - canceled
         last_ip_address:
           type: string
           nullable: true
@@ -45205,10 +45136,8 @@ components:
       required:
       - id
       - market_id
-      - payment_deadline
       - withdrawal_period_ends_at
       - within_withdrawal_period
-      - cancellable
       - cart_id
       - channel_id
       - company_id
@@ -45223,7 +45152,6 @@ components:
       - locale
       - total_quantity
       - coupon_code
-      - status
       - fulfillment_status
       - payment_status
       - completed_at
@@ -45252,10 +45180,10 @@ components:
       - store_credit_total
       - display_store_credit_total
       - covered_by_store_credit
-      - balance_not_password
       - gift_card
       - market
       - external_references
+      - status
       - last_ip_address
       - considered_risky
       - confirmation_delivered
@@ -45469,12 +45397,6 @@ components:
           - type: string
           description: The values listed are the built-in ones; extensions may add
             more.
-        merchant_id:
-          type: string
-          nullable: true
-        gateway_transaction_id:
-          type: string
-          nullable: true
         amount:
           type: string
         display_amount:
@@ -45533,8 +45455,6 @@ components:
       - response_code
       - number
       - status
-      - merchant_id
-      - gateway_transaction_id
       - amount
       - display_amount
       - source_type
@@ -46061,10 +45981,6 @@ components:
           type: array
           items:
             "$ref": "#/components/schemas/OptionValue"
-        sale_option_values:
-          type: array
-          items:
-            "$ref": "#/components/schemas/OptionValue"
         categories:
           type: array
           items:
@@ -46341,32 +46257,6 @@ components:
       - preference_schema
       - calculator
       - line_items
-      x-typelizer: true
-    PromotionCandidate:
-      type: object
-      properties:
-        id:
-          type: string
-        code:
-          type: string
-          nullable: true
-        name:
-          type: string
-          nullable: true
-        description:
-          type: string
-          nullable: true
-        amount:
-          type: string
-        display_amount:
-          type: string
-      required:
-      - id
-      - code
-      - name
-      - description
-      - amount
-      - display_amount
       x-typelizer: true
     PromotionRule:
       type: object
@@ -46757,16 +46647,6 @@ components:
         originator_type:
           type: string
           nullable: true
-        status:
-          anyOf:
-          - type: string
-            enum:
-            - processing
-            - completed
-            - canceled
-          - type: string
-          description: The values listed are the built-in ones; extensions may add
-            more.
         metadata:
           type: object
         created_at:
@@ -46798,7 +46678,6 @@ components:
       - refund_reason_id
       - originator_id
       - originator_type
-      - status
       - metadata
       - created_at
       - updated_at
@@ -47511,7 +47390,6 @@ components:
           type: string
           enum:
           - earning
-          - subsidy
           - refund_reversal
         status:
           anyOf:
@@ -47864,30 +47742,10 @@ components:
           - any
         returns_enabled:
           type: boolean
-        administrative_division_code:
-          type: string
-          nullable: true
-        polygon:
-          type: array
-          items:
-            "$ref": "#/components/schemas/number[][]"
-          nullable: true
-        geocode_status:
-          type: string
-          nullable: true
-        latitude:
-          type: number
-          nullable: true
-        longitude:
-          type: number
-          nullable: true
         created_at:
           type: string
         updated_at:
           type: string
-        geocoded_at:
-          type: string
-          nullable: true
         seller_id:
           type: string
           nullable: true
@@ -47922,14 +47780,8 @@ components:
       - pickup_enabled
       - pickup_stock_policy
       - returns_enabled
-      - administrative_division_code
-      - polygon
-      - geocode_status
-      - latitude
-      - longitude
       - created_at
       - updated_at
-      - geocoded_at
       - seller_id
       - seller_name
       x-typelizer: true
@@ -48477,21 +48329,6 @@ components:
           type: object
         name:
           type: string
-        preferred_reverse_geocode_provider:
-          type: string
-          nullable: true
-        preferred_reverse_geocode_fallback_provider:
-          type: string
-          nullable: true
-        preferred_reverse_geocode_tencent_key:
-          type: string
-          nullable: true
-        preferred_reverse_geocode_ttl_days:
-          type: number
-          nullable: true
-        preferred_tencent_maps_js_key:
-          type: string
-          nullable: true
         code:
           type: string
         preferred_storefront_url:
@@ -48574,6 +48411,14 @@ components:
           type: string
         preferred_default_minimum_payout_amount:
           type: number
+        preferred_auto_approve_sellers:
+          type: boolean
+        preferred_auto_approve_seller_products:
+          type: boolean
+        preferred_send_seller_transactional_emails:
+          type: boolean
+        preferred_default_commission_tax_rate:
+          type: number
         preferred_document_number_format:
           type: string
         preferred_order_number_prefix:
@@ -48626,11 +48471,6 @@ components:
       - id
       - metadata
       - name
-      - preferred_reverse_geocode_provider
-      - preferred_reverse_geocode_fallback_provider
-      - preferred_reverse_geocode_tencent_key
-      - preferred_reverse_geocode_ttl_days
-      - preferred_tencent_maps_js_key
       - code
       - preferred_storefront_url
       - default_currency
@@ -48666,6 +48506,10 @@ components:
       - preferred_payout_provider
       - preferred_default_payouts_schedule_interval
       - preferred_default_minimum_payout_amount
+      - preferred_auto_approve_sellers
+      - preferred_auto_approve_seller_products
+      - preferred_send_seller_transactional_emails
+      - preferred_default_commission_tax_rate
       - preferred_document_number_format
       - preferred_order_number_prefix
       - preferred_order_number_suffix
@@ -49316,6 +49160,7 @@ components:
           nullable: true
         payload:
           type: object
+          nullable: true
         webhook_endpoint_id:
           type: string
         webhook_endpoint_url:

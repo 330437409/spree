@@ -120,7 +120,7 @@
         "message": "{{name}} stops applying. Its audience goes back to the shop prices, and everything the catalog holds is kept."
       },
       "delete_confirm": {
-        "message": "This deletes {{name}} and its assignments. Products and price lists are not affected.",
+        "message": "This deletes {{name}}, its assignments, and its price list with the prices in it. The products stay in your store. This cannot be undone.",
         "title": "Delete catalog?"
       },
       "detach_warning": "Saving will remove this catalog’s price list and the prices in it. This audience will pay normal prices.",
@@ -564,7 +564,7 @@
         "settings_label": "Calculator settings"
       },
       "create_line_items_action_editor": {
-        "description": "When the promotion qualifies, these items are added to the cart.",
+        "description": "When the promotion qualifies, these items are added to the cart free of charge.",
         "empty": "No variants yet. Search below to add one.",
         "search_placeholder": "Search variants by name or SKU…",
         "variant_label": "Add variant"
@@ -1238,7 +1238,7 @@
             "Spree::Order": "Orders",
             "Spree::Product": "Products",
             "Spree::Taxon": "Categories",
-            "Spree::User": "Customers",
+            "Spree::Customer": "Customers",
             "Spree::Variant": "Variants"
           },
           "read_only_help": "The owner can't be changed once values exist for this field."
@@ -1851,32 +1851,6 @@
           "label": "Tax remitted by"
         }
       },
-      "setup": {
-        "country_code": {
-          "help": "Where you ship from. Your store can sell worldwide — this just sets the starting currency, warehouse and delivery zones, all editable later.",
-          "label": "Country",
-          "placeholder": "Search countries"
-        },
-        "currency": {
-          "help": "Your default currency. Add more anytime.",
-          "label": "Currency",
-          "placeholder": "Search currencies"
-        },
-        "locale": {
-          "help": "Your default language. Add more anytime.",
-          "label": "Language"
-        },
-        "password_confirmation": {
-          "label": "Confirm password"
-        },
-        "sample_data": {
-          "help": "Adds demo products, categories, customers and orders in the background so you can explore the dashboard. Takes a few minutes and downloads product images.",
-          "label": "Load sample data"
-        },
-        "store_name": {
-          "label": "Store name"
-        }
-      },
       "state": {
         "label": "State"
       },
@@ -2123,7 +2097,10 @@
           "minimum": {
             "label": "Minimum payout",
             "help": "Below this, a seller’s balance carries to the next period rather than being sent. Zero pays whatever is owed."
-          }
+          },
+          "provider_needs_connection": "Connect {{name}} to use it",
+          "provider_connect_hint": "{{name}} pays sellers through its payment method, which is not active on this store yet.",
+          "provider_connect_link": "Set it up in Payment methods"
         },
         "limit_digital_download_count": {
           "help": "Off means buyers can download as often as they like.",
@@ -2149,6 +2126,23 @@
         "preferred_default_package_weight": {
           "help": "Packaging weight (box and filler) added to every package's contents when calculating delivery rates. Set to 0 to disable.",
           "label": "Default package weight"
+        },
+        "auto_approve_sellers": {
+          "label": "Approve sellers automatically",
+          "help": "A seller starts trading as soon as they finish their checklist, without anyone reviewing them."
+        },
+        "auto_approve_seller_products": {
+          "label": "Publish seller products automatically",
+          "help": "A seller’s product goes on sale the moment they submit it, without anyone reviewing it."
+        },
+        "send_seller_transactional_emails": {
+          "label": "Email sellers",
+          "help": "Sends sellers transactional emails about approval, products and payouts. Turn this off if you write to your sellers yourself. Customer emails are unaffected."
+        },
+        "default_commission_tax_rate": {
+          "label": "Default tax on commission",
+          "help": "Charged on your commission when neither the commission rate nor your tax provider gives a rate of its own. Leave at 0 if you charge no tax on your fee.",
+          "suffix": "%"
         },
         "location_services": {
           "title": "Location services",
@@ -2768,6 +2762,8 @@
           "cancel_shipment_message": "Cancel this fulfillment?",
           "capture_message": "Capture this payment?",
           "complete_message": "Complete this draft order now?",
+          "delete_message": "Delete draft order {{number}}? This cannot be undone.",
+          "delete_title": "Delete draft order?",
           "remove_gift_card_message": "Remove this gift card from the order?",
           "remove_item_message": "Remove this item from the order?",
           "remove_store_credit_message": "Remove store credit from the order?",
@@ -2795,7 +2791,8 @@
           "approve_failed": "Failed to approve order",
           "cancel_failed": "Failed to cancel order",
           "complete_failed": "Failed to complete order",
-          "confirmation_send_failed": "Failed to send confirmation"
+          "confirmation_send_failed": "Failed to send confirmation",
+          "delete_failed": "Failed to delete order"
         },
         "fulfillments": {
           "add_delivery": "Add tracking",
@@ -2896,7 +2893,10 @@
           "canceled": "Order canceled",
           "captured": "Payment captured",
           "completed": "Order completed",
+          "completed_as_group_one": "Order completed as {{count}} separate order",
+          "completed_as_group_other": "Order completed as {{count}} separate orders",
           "confirmation_sent": "Confirmation sent",
+          "deleted": "Draft order deleted",
           "voided": "Payment voided"
         },
         "no_customer": "No customer information",
@@ -3997,12 +3997,18 @@
           },
           "title": "Webhooks"
         },
-        "payouts": {
-          "title": "Payouts",
-          "subtitle": "How and when this marketplace pays its sellers."
-        },
         "package_types": {
           "add_sheet_title": "Add package type"
+        },
+        "marketplace": {
+          "title": "Marketplace",
+          "subtitle": "How this marketplace pays its sellers, how sellers join it, what they hear from you, and the tax on your commission.",
+          "payouts_title": "Payouts",
+          "payouts_description": "How and when this marketplace pays its sellers. A seller can carry their own schedule and minimum instead.",
+          "admission_title": "Seller admission",
+          "admission_description": "Turning either of these on removes a human decision. Fine for an invite-only marketplace where you already know every seller; risky for one anyone can join.",
+          "communication_title": "Communication",
+          "commission_tax_title": "Commission tax"
         }
       },
       "staff": {
@@ -5039,9 +5045,9 @@
         "tax_categories": "Tax classes assigned to products",
         "tax_rates": "Rates applied per market and region",
         "webhooks": "Endpoints notified when events happen",
-        "payouts": "Who pays your sellers, how often, and the minimum worth sending",
         "package_types": "Boxes, cartons, pallets and containers",
-        "suppliers": "Who you buy stock from, and how to reach them"
+        "suppliers": "Who you buy stock from, and how to reach them",
+        "marketplace": "Seller payouts, seller approval, seller emails and commission tax"
       },
       "groups": {
         "audit": "Audit",
@@ -5077,9 +5083,12 @@
         "tax_categories": "Tax categories",
         "tax_rates": "Tax rates",
         "webhooks": "Webhooks",
-        "payouts": "Payouts",
         "package_types": "Package types",
-        "suppliers": "Suppliers"
+        "suppliers": "Suppliers",
+        "marketplace": "Settings"
+      },
+      "breadcrumbs": {
+        "marketplace": "Marketplace"
       }
     },
     "setup": {
@@ -5099,7 +5108,11 @@
       "subtitle": "Create your admin account and tell us about your store. Everything here can be changed later.",
       "title": "Set up Spree",
       "welcome_description": "Work through the checklist below to open {{store}} for business.",
-      "welcome_title": "Welcome, your store is now ready!"
+      "welcome_title": "Welcome, your store is now ready!",
+      "rate_limited_title": "Too many attempts",
+      "rate_limited_message": "Setup was checked too many times in a short period. Wait a minute, then try again.",
+      "check_failed_title": "Couldn't check setup",
+      "check_failed_message": "The server couldn't be reached to check whether this installation needs setup. Make sure it is running, then try again."
     },
     "staff": {
       "actions": {
@@ -5124,7 +5137,8 @@
       "errors": {
         "failed_to_remove": "Failed to remove staff",
         "failed_to_resend": "Failed to resend invitation",
-        "failed_to_revoke": "Failed to revoke invitation"
+        "failed_to_revoke": "Failed to revoke invitation",
+        "failed_to_copy_link": "Failed to copy invitation link"
       },
       "invite": {
         "email_placeholder": "teammate@example.com",

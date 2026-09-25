@@ -11,26 +11,21 @@ module Spree
         # the same catalogue: a customer's purchase history is a subset of what
         # this request may see, not a set of its own
         # (docs/plans/6.1-store-api-miniprogram-gaps.md).
+        #
+        # The narrowing is `StorefrontProducts` — upstream's answer to the same
+        # question, which the reads that accept a product or a variant from the
+        # buyer use too. Nothing here repeats it: this adds only what *listing*
+        # that catalogue costs, the associations a product row touches.
         module ProductCatalogue
+          include Spree::Api::V3::Store::StorefrontProducts
+
           protected
 
+          # @param base [ActiveRecord::Relation, nil] products to narrow; this
+          #   store's own by default
           # @return [ActiveRecord::Relation] the products this request may buy
-          def product_catalogue
-            base = model_class.for_store(current_store).
-                   available(Time.current, Spree::Current.currency, include_preorderable: true).
-                   includes(*catalogue_includes).
-                   preload_associations_lazily
-
-            # Catalog narrowing for the buyer: their company's effective
-            # catalogs, their group's, or the channel default — union of
-            # assortments, resolved in one place
-            # (docs/plans/6.0-b2b-companies-and-catalogs.md).
-            Spree.products_for_context_service.call(
-              store: current_store,
-              channel: current_channel,
-              customer: current_user,
-              base: base
-            ).value
+          def product_catalogue(base = model_class.for_store(current_store))
+            storefront_products(base.includes(*catalogue_includes).preload_associations_lazily)
           end
 
           # Associations a product row in one of these reads touches, which

@@ -383,6 +383,8 @@ en:
               greater_than_max_amount: is greater than the allowed maximum amount of %{max_amount}
         spree/price:
           attributes:
+            amount:
+              leaves_a_rising_ladder: would leave the price from %{quantity} units at %{amount}, above the %{floor} a buyer pays below that quantity
             min_quantity:
               requires_price_list: quantity breaks can only be set on a price list
               too_many_breaks: a variant can carry at most %{count} quantity breaks on one price list
@@ -393,9 +395,12 @@ en:
         spree/price_list:
           attributes:
             base:
+              duplicate_quantity: each quantity break must have its own quantity
               invalid_quantity: each quantity break must start at a whole number of units
               negative_price: a price cannot be below zero
               nothing_to_apply_to: has no rules, no catalog and no products, so it would apply to nothing. Add one before activating.
+              price_rises_with_quantity: a quantity break cannot cost more than the price a buyer pays below it
+              quantity_on_base_price: a shop price applies at every quantity, so it cannot start at one. Remove the quantity, or pick a price list to put the break on.
             ends_at:
               must_be_after_starts_at: must be after starts at
             price_adjustment_percentage:
@@ -852,15 +857,6 @@ en:
     company_invitations:
       email_mismatch: This invitation was sent to a different email address.
       not_pending: This invitation is no longer pending and cannot be revoked.
-    company_mailer:
-      invitation_email:
-        action: Accept invitation
-        expiry_notice: This invitation link will expire in 30 days.
-        greeting: Hi,
-        ignore_notice: If you were not expecting this invitation, you can safely ignore this email.
-        instructions: You have been invited to join %{company} on %{store}. Accept the invitation to start purchasing on the company's behalf.
-        subject: invitation to join %{company}
-        title: Join %{company}
     compare_at_amount: Compare at amount
     compare_at_price: Compare at price
     complete: complete
@@ -920,21 +916,6 @@ en:
       anonymize_failed: The erasure could not be completed and nothing was changed
     customer_group: Customer Group
     customer_groups: Customer Groups
-    customer_mailer:
-      data_export_email:
-        action: Download Your Data
-        expiry_notice: This download link expires on %{date}.
-        greeting: Hello,
-        ignore_notice: If you did not request a copy of your data, please contact us.
-        instructions: Your copy of the personal data we hold about you is ready. Use the button below to download it.
-        subject: Your Data Is Ready to Download
-      password_reset_email:
-        action: Reset Password
-        expiry_notice: This password reset link will expire shortly. If you did not request this, no action is needed.
-        greeting: Hi %{name},
-        ignore_notice: If you did not request a password reset, you can safely ignore this email. Your password will not be changed.
-        instructions: We received a request to reset your password. Click the button below to choose a new password.
-        subject: Password Reset Instructions
     customer_support_email: Customer Support Email
     customers: Customers
     cut: Cut
@@ -993,14 +974,6 @@ en:
     developers: Developers
     digital:
       digital_delivery: Digital Delivery
-    digital_asset_mailer:
-      files_ready_email:
-        available_until: Available until %{date}
-        dear_customer: Dear %{name},
-        instructions: The files from your order %{number} are ready to download.
-        store_team: "%{store_name} Team"
-        subject: Your files are ready
-        thanks: Thank you for your business.
     digital_assets: Digital assets
     digital_assets_attachment_must_be_private: Upload the file to private storage before attaching it
     discontinue_on: Discontinue On
@@ -1161,17 +1134,6 @@ en:
     free_shipping: Free Shipping
     from: From
     front_end: Front End
-    fulfillment_mailer:
-      fulfilled_email:
-        dear_customer: Dear %{name},
-        delivery_method: 'Delivery method: %{delivery_method}'
-        fulfillment_summary: Fulfillment summary for order
-        instructions: Your order %{number} has been fulfilled
-        store_team: "%{store_name} Team"
-        subject: Fulfillment Notification
-        thanks: Thank you for your business.
-        track_information: 'Tracking Information: %{tracking}'
-        track_link: 'Tracking Link: %{url}'
     fulfillments:
       errors:
         backordered_units: This fulfillment holds backordered units and cannot be handed over yet
@@ -1347,16 +1309,6 @@ en:
     new_state: New State
     new_user: New User
     new_variant: New Variant
-    newsletter_mailer:
-      email_confirmation:
-        dear_customer: Hey,
-        ignore_disclaimer: If you didn't request this, please ignore this email.
-        instructions: Please click the button below to verify your email address.
-        message_copy_link: 'If the button doesn''t work please copy and paste the following link to your browser:'
-        store_team: "%{store_name} Team"
-        subject: Verify your email address
-        thanks: Thank you
-        verify_email_address_link: Verify email address
     newsletter_subscribers: Newsletter Subscribers
     next: Next
     no_cc_type: N/A
@@ -1388,34 +1340,6 @@ en:
     order: Order
     order_canceled: Order canceled
     order_cannot_be_deleted: Completed orders and orders with settled payments cannot be deleted
-    order_mailer:
-      cancel_email:
-        dear_customer: Hey %{name},
-        instructions: Your order has been CANCELED.  Please retain this cancellation information for your records.
-        order_summary_canceled: Order %{number} Summary [CANCELED]
-        subject: Cancellation of Order
-        thanks: Thank you for
-      confirm_email:
-        dear_customer: Hey %{name},
-        instructions: Please review and retain the following order information for your records.
-        order_summary: Order %{number} Summary
-        subject: Order Confirmation
-        thanks: Thank you
-      payment_link_email:
-        message: Please click the button below to pay for your order.
-        message_copy_link: 'If the button doesn''t work please copy and paste the following link to your browser:'
-        pay_for_order: Pay for order
-        subject: 'Payment link for order #%{number}'
-      po_number: 'PO Number: %{number}'
-      store_owner_notification_email:
-        heading: New Order Received
-        instructions: You have received a new order.
-        order_summary: Order %{number} Summary
-        subject: "%{store_name} received a new order"
-        thanks: Thank you
-      store_team: "%{store_name} Team"
-      subtotal: 'Subtotal:'
-      total: 'Order Total:'
     order_not_found: We couldn't find your order. Please try that action again.
     order_number: Order %{number}
     order_resumed: Order resumed
@@ -1553,6 +1477,7 @@ en:
     price_list_import_invalid_amount: "%{column} must be a number like 16.50, got %{value}."
     price_list_import_invalid_quantity: min_quantity must be a whole number of units, got %{value}.
     price_list_import_no_price_list: This import is not attached to a price list.
+    price_list_import_price_rises_with_quantity: The price from %{quantity} units must not be above %{floor}, what a buyer pays below that quantity. A file is applied a row at a time, so list the higher quantities first when lowering a whole ladder.
     price_list_import_sku_required: SKU is required.
     price_list_import_too_many_breaks: A variant can carry at most %{count} quantity breaks on one price list.
     price_list_import_unknown_sku: No product in this store has the SKU %{sku}.
@@ -1587,7 +1512,7 @@ en:
         description: Creates a promotion credit adjustment on a line item
         name: Create per-line-item adjustment
       create_line_items:
-        description: Populates the cart with the specified quantity of variant
+        description: Adds the specified quantity of a variant to the cart free of charge
         name: Create line items
       free_shipping:
         description: Makes all shipments for the order free
@@ -2018,16 +1943,6 @@ en:
     return: return
     return_errors:
       outside_window: This order is outside the %{days}-day return window
-    return_mailer:
-      refunded_email:
-        dear_customer: Dear %{name},
-        instructions: Your return for order %{number} has been refunded.
-        refund_summary: Refund Summary
-        returned_items: Returned Items
-        store_team: "%{store_name} Team"
-        subject: Return Refunded
-        thanks: Thank you for your business.
-        total_refunded: 'Total refunded: %{total}'
     return_quantity: Return Quantity
     returned: Returned
     returns: Returns
@@ -2068,22 +1983,6 @@ en:
     selected_quantity_not_available: selected of %{item} is not available.
     seller: Seller
     seller_access_denied: You do not have access to this seller.
-    seller_mailer:
-      approved_email:
-        action: Go to your dashboard
-        heading: You're approved
-        message: Your application to sell on %{store_name} has been approved. You can now list products and start taking orders.
-        subject: You're approved to sell on %{store_name}
-      get_in_touch: If you think this is a mistake, reply to this email or contact us at %{store_email}.
-      greeting: Hi %{seller_name},
-      rejected_email:
-        heading: About your application
-        message: Your application to sell on %{store_name} has not been accepted.
-        subject: Your application to sell on %{store_name}
-      suspended_email:
-        heading: Your account has been suspended
-        message: Selling on %{store_name} has been paused for your account. Your products and order history are unaffected.
-        subject: Your %{store_name} account has been suspended
     seller_membership_required: This account does not belong to any seller.
     seller_payout_nothing_to_settle: This seller has nothing to settle right now.
     seller_requirement_types:
@@ -2148,17 +2047,6 @@ en:
     ship_total: Ship Total
     shipment: Shipment
     shipment_adjustments: Shipment adjustments
-    shipment_mailer:
-      shipped_email:
-        dear_customer: Dear %{name},
-        instructions: Your order %{number} has been shipped
-        shipment_summary: Shipment Summary for order
-        shipping_method: 'Shipping method: %{shipping_method}'
-        store_team: "%{store_name} Team"
-        subject: Shipment Notification
-        thanks: Thank you for your business.
-        track_information: 'Tracking Information: %{tracking}'
-        track_link: 'Tracking Link: %{url}'
     shipment_state: Shipment State
     shipments: Shipments
     shipped: Shipped

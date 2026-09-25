@@ -140,6 +140,14 @@ module Spree
         app.config.spree.line_item_comparison_hooks = Set.new
       end
 
+      # The one eligibility rule core ships: a per-market return window,
+      # bypassed by staff. Registered before application initializers so a
+      # store can unregister it in its own initializer.
+      initializer 'spree.returns.register_eligibility_validator', before: :load_config_initializers do
+        Spree.hooks.register('returns.create.validate', 'Spree::Returns::EligibilityValidator')
+        Spree.hooks.register('exchanges.create.validate', 'Spree::Returns::EligibilityValidator')
+      end
+
       initializer 'spree.register.payment_methods', after: 'acts_as_list.insert_into_active_record' do |app|
       end
 
@@ -740,14 +748,6 @@ module Spree
         app.config.after_initialize do
           Spree::Events.activate!
         end
-      end
-
-      # The one eligibility rule core ships: a per-market return window,
-      # bypassed by staff. Registered after application initializers so a
-      # store can unregister it in its own initializer.
-      initializer 'spree.returns.register_eligibility_validator', after: :load_config_initializers do
-        Spree.hooks.register('returns.create.validate', 'Spree::Returns::EligibilityValidator')
-        Spree.hooks.register('exchanges.create.validate', 'Spree::Returns::EligibilityValidator')
       end
 
       # A hook registered against a key no workflow declares would never fire
