@@ -116,6 +116,27 @@ RSpec.describe Spree::Memberships::PointsMultiplier do
     end
   end
 
+  # The member day is the second kind folded here, and the one that asks about
+  # the basket: the folder hands the order over, so the day pays on the orders it
+  # asks for and on no others.
+  it 'multiplies on the member day, for the basket the day asks for' do
+    in_tier!
+    create(:svip_date_right, customer_group: group, published: true,
+                             preferences: { weekday: 'wednesday', multiplier: 3,
+                                            minimum_amount: 199 })
+    large = build(:order, store: store, customer: customer, total: 300)
+    small = build(:order, store: store, customer: customer, total: 99)
+
+    Timecop.freeze(Time.zone.local(2026, 9, 23, 10)) do
+      expect(described_class.call(order: large).value).to eq(3)
+      expect(described_class.call(order: small).value).to eq(1)
+    end
+
+    Timecop.freeze(Time.zone.local(2026, 9, 24, 10)) do
+      expect(described_class.call(order: large).value).to eq(1)
+    end
+  end
+
   # The order's own earn goes through this: the seam the points plan left nil for
   # this gem, now pointing at it.
   it 'is what a paid order earns with, on the day' do

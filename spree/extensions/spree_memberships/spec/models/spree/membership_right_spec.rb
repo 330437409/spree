@@ -58,4 +58,23 @@ RSpec.describe Spree::MembershipRight, type: :model do
     birthday.preferred_multiplier = 3
     expect(birthday.multiplier).to eq(3)
   end
+
+  # The admin API delivers preferences as one nested field, so the write goes
+  # past the typecast a preference's own writer does. A figure that is an object
+  # would reach a customer's read — and every order's earn — as a crash, so it is
+  # refused where the operator writes it.
+  it 'refuses a setting of a shape its kind cannot read' do
+    right.preferences = { promotion_id: { nested: 'yes' } }
+    expect(right).not_to be_valid
+
+    right.preferences = { promotion_id: create(:promotion, store: store).prefixed_id }
+    expect(right).to be_valid
+
+    birthday = build(:birthday_right, customer_group: group)
+    birthday.preferences = { multiplier: { nested: 'yes' } }
+    expect(birthday).not_to be_valid
+
+    birthday.preferences = { multiplier: '3' }
+    expect(birthday).to be_valid
+  end
 end

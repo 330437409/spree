@@ -20,7 +20,10 @@ SpreeMemberships.membership_rights << MyGem::Rights::FreeShipping
 | `Spree::MembershipRight` | What a tier grants, as an STI row whose kind is a registered class |
 | `Spree::MembershipRights::*` | The ten built-in kinds — `member_price`, `exclusive_coupon`, `coupon`, `large_coupon`, `add_bag`, `priority_distribution`, `birthday_double_integral`, `give_gift`, `surprise_red_envelope`, `svip_date` |
 | `SpreeMemberships.membership_rights` | The registry a gem adds a kind to |
+| `Spree::Memberships::PreferenceTypes` | The rule that a setting written through the API must fit the type its kind declared — a figure that is an object is refused where the operator writes it rather than where a member reads it. Shared by the rights and the tier's settings |
 | `Spree::Memberships::MemberCentre` | The projection the member centre reads: every right of the store's ladder, grouped by the panel its kind declares |
+| `Spree::Memberships::PointsMultiplier` | What an order earns on the day it was paid: the highest multiplier the customer's tier asks for, folded over its rights in the store's own calendar |
+| `Spree::Memberships::MemberDay` | The member day as its page and the home page's popup both read it: the weekday the tier's day falls on, whether it is today, what it earns and what the operator wrote around it |
 | `Spree::Memberships::YearGift` | One member's annual gift: the coupons it offers, the ones they have taken this year, and what is left of the year's allowance |
 | `Spree::Memberships::ClaimYearGift` | 立即领取 — draws one of the gift's coupons, hands it over through the wallet and records the claim, all under one idempotency key |
 | `Spree::Memberships::YearGiftClaim` | The kind of grant a claim is: one member, one tier, one coupon, one year |
@@ -50,6 +53,8 @@ SpreeMemberships.membership_rights << MyGem::Rights::FreeShipping
 | `POST /api/v3/store/customers/me/membership_rights/:id/year_gift_claims` | 立即领取 — the annual gift: one of the tier's gift coupons is handed over and the claim recorded, once per coupon per year |
 | `GET /api/v3/store/scenario_orders/:id/membership_card` | The card a settled purchase released, read back off the purchase. The purchase itself is the scenario plan's row; its history is that plan's list narrowed by `kind=vip` |
 | `GET /api/v3/store/customers/me/membership_banner` | The banner the customer's member centre opens with: the picture of their tier and the tap targets over it. `null` when they are in no tier, or their tier has none |
+| `GET /api/v3/store/customers/me/membership_day` | 会员日 — the weekday this customer's tier buys on better terms, whether today is it, what an order paid that day earns, the basket it has to reach, the red packet the day offers and the copy around them. One read for the day's own page and the home page's popup, which is this block plus the `today` the page has no use for. The day's words are rendered from the weekday rather than typed, so an operator who moves the day cannot leave a page saying the old one, and today is the store's own date rather than the server's. `null` when they are in no tier, or their tier declares no day |
+| `GET /api/v3/store/customers/me/membership_day_check` | Whether today is this customer's member day — asked when they tap buy on a day-page card, before it reaches a cart. `204` when they are eligible; anything else refuses with the reason, which the client reads as "carry on without the multiplier?" |
 | `GET /api/v3/store/membership_card_transfers/:token` | The voucher read before signing in: the window it is open in and the rights the card carries |
 | `POST /api/v3/store/membership_card_transfers/:token/claims` | 兑换 — claim and activate in one step. The same door a phone-addressed gift uses; a voucher is simply a window nobody's number was written on |
 
@@ -180,8 +185,13 @@ record of what that engine said.
 - **No purchase yet.** Buying a term is the `vip` kind of a scenario order, and
   it arrives with the plan that owns what a purchase costs and issues
   (`6.1-scenario-purchases.md`); a card today is granted, not sold.
-- **No grants yet.** The activation gift bag, the annual gift and the member day
-  are the rights' own claims and the next step of the plan.
+- **No payout of the member day's own.** The day's earning is read by the
+  multiplier seam when an order is paid, and its red packet is what the day's
+  page prints rather than a balance anybody holds — nothing hands a packet over,
+  because the client asks for no such thing.
+- **No member day's goods.** The day's own picks are not part of its read yet,
+  and the paginated recommendations beside them are the store's product list,
+  which the client already pages.
 - **No per-period tally and no grant history.** The six `rights/*` endpoints the
   client never calls are not built, so those two reads are not invented here.
 

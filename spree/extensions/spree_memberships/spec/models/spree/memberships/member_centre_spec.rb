@@ -108,6 +108,46 @@ RSpec.describe Spree::Memberships::MemberCentre, type: :model do
         expect(centre.birthday).to include('days_away' => 0)
       end
     end
+
+    # Other kinds apply on dates too — a member day is a weekday, and this
+    # customer's birthday is a Wednesday — so the rate reported here is the
+    # birthday's rather than whichever right the date happens to suit.
+    it 'answers the birthday’s own rate when the tier’s day falls on it too' do
+      tier
+      Spree::Memberships::AssignTier.call(customer: customer, customer_group: group)
+      create(:birthday_right, customer_group: group, published: true, preferences: { multiplier: 3 })
+      create(:svip_date_right, customer_group: group, published: true,
+                               preferences: { weekday: 'wednesday', multiplier: 5 })
+
+      Timecop.freeze(Time.zone.local(2026, 5, 20, 10)) do
+        expect(centre.birthday).to include('multiplier' => 3)
+      end
+    end
+
+    # A day the tier runs is not a birthday the tier grants: the countdown is the
+    # birthday's, and a tier carrying no birthday right grants none.
+    it 'answers no rate for a tier that grants no birthday' do
+      tier
+      Spree::Memberships::AssignTier.call(customer: customer, customer_group: group)
+      create(:svip_date_right, customer_group: group, published: true,
+                               preferences: { weekday: 'wednesday', multiplier: 5 })
+
+      Timecop.freeze(Time.zone.local(2026, 5, 20, 10)) do
+        expect(centre.birthday).to include('multiplier' => nil)
+      end
+    end
+
+    # A draft grants nothing yet, so its rate is nobody's promise: the multiplier
+    # the ledger pays by is folded over published rights alone.
+    it 'answers no rate for a birthday right an operator has not published' do
+      tier
+      Spree::Memberships::AssignTier.call(customer: customer, customer_group: group)
+      create(:birthday_right, customer_group: group, published: false, preferences: { multiplier: 4 })
+
+      Timecop.freeze(Time.zone.local(2026, 5, 20, 10)) do
+        expect(centre.birthday).to include('multiplier' => nil)
+      end
+    end
   end
 
 end

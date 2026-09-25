@@ -7,12 +7,10 @@ module Spree
     class BirthdayDoubleIntegral < Spree::MembershipRight
       preference :multiplier, :integer, default: 2
 
-      # @return [Integer] what the day's earnings are multiplied by. Never 1 or
-      #   less: the ledger neutralises a non-positive multiplier, and a client
-      #   shown 0倍 or -2倍 would be reading a number that never applied.
+      # @return [Integer] what the day's earnings are multiplied by, never less
+      #   than the ordinary rate
       def multiplier
-        amount = preferred_multiplier.to_i
-        amount > 1 ? amount : 1
+        floored_multiplier(preferred_multiplier)
       end
 
       # The customer's birthday, in the store's calendar. A 29 February birthday
@@ -21,13 +19,17 @@ module Spree
       #
       # @param customer [Object]
       # @param on [Date]
-      # @return [Integer] the multiplier on the day, 1 otherwise
-      def order_multiplier(customer:, on:)
+      # @return [Boolean]
+      def applies_on?(customer:, on:)
         birthday = customer&.birthday
-        return 1 if birthday.nil?
-        return 1 unless on.month == birthday.month && on.day == celebrated_day(birthday, on)
+        return false if birthday.nil?
 
-        multiplier
+        on.month == birthday.month && on.day == celebrated_day(birthday, on)
+      end
+
+      # @return [Integer] the multiplier on the day, 1 otherwise
+      def order_multiplier(customer:, on:, order:)
+        applies_on?(customer: customer, on: on) ? multiplier : 1
       end
 
       private

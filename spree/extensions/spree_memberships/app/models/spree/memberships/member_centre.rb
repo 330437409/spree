@@ -119,18 +119,20 @@ module Spree
         Date.new(year, on.month, -1)
       end
 
-      # What the customer's own tier grants on that day, asked of the kinds
-      # themselves — read off the rights this response already loaded.
+      # What the customer's own tier grants on that day, asked of the right that
+      # grants a birthday: other kinds apply on dates too — the member day is a
+      # weekday, and a birthday can fall on it — and taking whoever matched would
+      # report their rate as this birthday's.
       #
       # @return [Integer, nil]
       def multiplier_on(occurrence)
         return nil if tier.nil?
 
-        right = rights.detect do |candidate|
-          candidate.customer_group_id == tier.customer_group_id &&
-            candidate.order_multiplier(customer: customer, on: occurrence) > 1
-        end
-        right&.multiplier
+        right = birthday_right
+        return nil if right.nil? || !right.applies_on?(customer: customer, on: occurrence)
+
+        rate = right.multiplier
+        rate if rate > 1
       end
 
       # @return [Boolean] whether the customer holds the tier this right hangs on
@@ -139,6 +141,22 @@ module Spree
       end
 
       private
+
+      # The customer's own tier's birthday right, named because this reader is
+      # about the birthday: a kind is what a right *is*, and a reader answering a
+      # kind's own question asks that kind rather than whatever applies today.
+      #
+      # Published only, like every other read of a right: a draft grants nothing
+      # yet, and reporting its rate would promise a rate the ledger does not pay.
+      #
+      # @return [Spree::MembershipRight, nil]
+      def birthday_right
+        rights.detect do |candidate|
+          candidate.customer_group_id == tier.customer_group_id &&
+            candidate.published? &&
+            candidate.is_a?(Spree::MembershipRights::BirthdayDoubleIntegral)
+        end
+      end
 
       # @return [ActiveRecord::Relation]
       def rights_relation
