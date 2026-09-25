@@ -74,6 +74,16 @@ describe Spree::UserIdentity, type: :model do
     it 'finds the identity for the user class' do
       expect(described_class.find_for(provider: provider, uid: uid)).to eq(identity)
 
+
+    end
+
+    it 'does not match an identity belonging to another user class' do
+      stub_const('Spree::AdminUser', Class.new(Spree.customer_class))
+
+      expect(described_class.find_for(provider: provider, uid: uid, user_class: Spree::AdminUser)).to be_nil
+    end
+  end
+
   describe 'token encryption' do
     let(:identity) do
       create(:user_identity, access_token: 'plain-access-token', refresh_token: 'plain-refresh-token')
@@ -105,15 +115,6 @@ describe Spree::UserIdentity, type: :model do
 
       expect(reloaded.access_token).to eq('legacy-access-token')
       expect(reloaded.refresh_token).to eq('legacy-refresh-token')
-    end
-  end
-
-    end
-
-    it 'does not match an identity belonging to another user class' do
-      stub_const('Spree::AdminUser', Class.new(Spree.customer_class))
-
-      expect(described_class.find_for(provider: provider, uid: uid, user_class: Spree::AdminUser)).to be_nil
     end
   end
 

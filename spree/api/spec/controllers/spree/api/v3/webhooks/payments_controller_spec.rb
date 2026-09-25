@@ -63,7 +63,10 @@ RSpec.describe Spree::Api::V3::Webhooks::PaymentsController, type: :controller d
         }.to have_enqueued_job(Spree::Payments::HandleWebhookJob).with(
           payment_method_id: other_payment_method.id,
           action: 'captured',
-          payment_session_id: payment_session.id
+          payment_session_id: payment_session.id,
+          # The gateway's own identifiers travel with the job, which is how the
+          # session records them on the payment.
+          metadata: {}
         )
 
         expect(response).to have_http_status(:ok)
