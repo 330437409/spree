@@ -2590,6 +2590,79 @@
         "title": "Verwendet in"
       }
     },
+    "membership_rights": {
+      "title": "Vorteile",
+      "help": "Was diese Stufe gewährt. Jeder Vorteil wird einzeln gespeichert.",
+      "add_cta": "Vorteil hinzufügen",
+      "empty": "Diese Stufe gewährt noch nichts.",
+      "draft": "Entwurf — Mitglieder sehen ihn nicht",
+      "published": "Für Mitglieder sichtbar",
+      "delete_confirm": {
+        "title": "Diesen Vorteil entfernen?",
+        "message": "{{name}} wird dieser Stufe nicht mehr gewährt."
+      },
+      "picker": {
+        "title": "Welche Art von Vorteil?"
+      },
+      "messages": {
+        "created": "Vorteil hinzugefügt",
+        "create_failed": "Der Vorteil konnte nicht hinzugefügt werden",
+        "updated": "Vorteil gespeichert",
+        "update_failed": "Der Vorteil konnte nicht gespeichert werden",
+        "deleted": "Vorteil entfernt",
+        "delete_failed": "Der Vorteil konnte nicht entfernt werden"
+      }
+    },
+    "membership_tiers": {
+      "new_cta": "Neue Stufe",
+      "open_ended": "Kein Ende",
+      "days_suffix": "Tage",
+      "table": {
+        "title": "Mitgliedsstufen",
+        "search_placeholder": "Stufen suchen",
+        "empty": "Noch keine Stufen. Eine Stufe ist eine Kundengruppe mit dem, was sie gewährt."
+      },
+      "columns": {
+        "rank": "Rang",
+        "validity_days": "Laufzeit",
+        "rights": "Vorteile"
+      },
+      "new": {
+        "title": "Neue Stufe",
+        "description": "Eine Stufe ist eine Kundengruppe mit eigenen Einstellungen — eine neue Stufe beginnt daher mit einer Gruppe.",
+        "group_label": "Kundengruppe",
+        "submit": "Stufe erstellen"
+      },
+      "settings": {
+        "title": "Die Stufe",
+        "help": "Was einen Kunden für diese Stufe qualifiziert und was sie ihm bietet."
+      },
+      "copy": {
+        "title": "Was die Stufe über sich sagt",
+        "help": "Wird Kunden angezeigt, die sie noch nicht gekauft haben — der Text im Ersparnis-Popup."
+      },
+      "member_discount": {
+        "label": "Mitgliedspreis",
+        "help": "Ein prozentualer Nachlass auf den Verkaufspreis, vom Shop getragen. Leer lassen für keinen Mitgliedspreis."
+      },
+      "sku": {
+        "label": "Kauf per SKU",
+        "help": "Das Produkt, als das diese Stufe gekauft wird. Leer lassen, wenn sie zugewiesen statt verkauft wird."
+      },
+      "grace_days": {
+        "label": "Nachfrist nach Ablauf",
+        "help": "Wie lange ein Mitglied die Stufe nach Ende der Laufzeit behält."
+      },
+      "auto_renew": {
+        "label": "Verlängert sich selbst"
+      },
+      "messages": {
+        "created": "Stufe erstellt",
+        "create_failed": "Die Stufe konnte nicht erstellt werden",
+        "updated": "Stufe gespeichert",
+        "update_failed": "Die Stufe konnte nicht gespeichert werden"
+      }
+    },
     "nav": {
       "account": "Konto",
       "catalogs": "Kataloge",
@@ -2622,6 +2695,7 @@
       "inventory": "Lagerbestand",
       "suppliers": "Lieferanten",
       "loyalty": "Treue",
+      "memberships": "Mitgliedschaften",
       "store_credits": "Guthaben",
       "commission_rates": "Provisionssätze"
     },
@@ -5404,6 +5478,7 @@
       "collections": "Produktgruppen, die Sie gemeinsam vermarkten — manuell oder per Regel.",
       "companies": "Geschäftskunden, ihre Teams und die Konditionen, zu denen sie kaufen.",
       "customer_groups": "Gruppen, in die Sie Kunden einteilen — für Preise und Aktionen.",
+      "membership_tiers": "Die Leiter: jede Mitgliedsstufe Ihres Shops, in der Reihenfolge, in der sie erscheint.",
       "delivery_profiles": "Regeln dafür, wie ein Produkt versendet wird, je Produkt angewendet.",
       "options": "Auswahlmöglichkeiten wie Größe oder Farbe, aus denen Varianten entstehen.",
       "price_lists": "Alternative Preise, die gelten, wenn ihre Regeln zutreffen.",

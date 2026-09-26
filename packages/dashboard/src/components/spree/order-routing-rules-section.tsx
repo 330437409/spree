@@ -1,21 +1,19 @@
 import {
   closestCenter,
   DndContext,
-  type DragEndEvent,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { OrderRoutingRule, PaginatedResponse, ResourceTypeDefinition } from '@spree/admin-sdk'
+import type { OrderRoutingRule, ResourceTypeDefinition } from '@spree/admin-sdk'
 import {
   Can,
   PreferencesForm,
@@ -27,9 +25,9 @@ import {
 } from '@spree/dashboard-core'
 import { Button, DragHandle, Switch, useConfirm } from '@spree/dashboard-ui'
 import { PlusIcon, SlidersHorizontalIcon, Trash2Icon } from '@spree/dashboard-ui/icons'
-import { useQueryClient } from '@tanstack/react-query'
 import { type CSSProperties, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useOptimisticReorder } from '../../hooks/use-optimistic-reorder'
 import {
   useCreateOrderRoutingRule,
   useDeleteOrderRoutingRule,
@@ -37,6 +35,7 @@ import {
   useOrderRoutingRuleTypes,
   useUpdateOrderRoutingRule,
 } from '../../hooks/use-order-routing-rules'
+import { TypePicker } from './type-picker'
 
 /**
  * Per-channel routing-rules editor rendered inside the channel edit sheet.
@@ -52,7 +51,6 @@ export function OrderRoutingRulesSection({ channelId }: { channelId: string }) {
   const updateMutation = useUpdateOrderRoutingRule(channelId)
   const deleteMutation = useDeleteOrderRoutingRule(channelId)
   const confirm = useConfirm()
-  const queryClient = useQueryClient()
   const buildKey = useResourceKeyBuilder()
   const { permissions } = usePermissions()
 
@@ -73,28 +71,12 @@ export function OrderRoutingRulesSection({ channelId }: { channelId: string }) {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-    const fromIndex = rules.findIndex((r) => r.id === active.id)
-    const toIndex = rules.findIndex((r) => r.id === over.id)
-    if (fromIndex === -1 || toIndex === -1) return
-
-    // Reorder the cache first so the row doesn't snap back while the PATCH
-    // runs; the mutation's invalidation then restores canonical positions.
-    // On failure, restore the pre-drag snapshot — success-only invalidation
-    // would otherwise leave the never-persisted order on screen.
-    const listKey = buildKey('channels', channelId, 'order-routing-rules')
-    const snapshot = queryClient.getQueryData<PaginatedResponse<OrderRoutingRule>>(listKey)
-    const next = arrayMove(rules, fromIndex, toIndex).map((r, i) => ({ ...r, position: i + 1 }))
-    queryClient.setQueryData(listKey, (prev: PaginatedResponse<OrderRoutingRule> | undefined) =>
-      prev ? { ...prev, data: next } : prev,
-    )
-    updateMutation.mutate(
-      { id: String(active.id), params: { position: toIndex + 1 } },
-      { onError: () => queryClient.setQueryData(listKey, snapshot) },
-    )
-  }
+  const handleDragEnd = useOptimisticReorder({
+    listKey: buildKey('channels', channelId, 'order-routing-rules'),
+    items: rules,
+    reorder: (id, position, onError) =>
+      updateMutation.mutate({ id, params: { position } }, { onError }),
+  })
 
   async function handleDelete(rule: OrderRoutingRule) {
     const ok = await confirm({
@@ -162,7 +144,9 @@ export function OrderRoutingRulesSection({ channelId }: { channelId: string }) {
       {!isLoading && availableTypes.length > 0 && (
         <Can I="create" a={Subject.OrderRoutingRule}>
           {showPicker ? (
-            <RuleTypePicker
+            <TypePicker
+              family="order_routing_rule"
+              titleKey="admin.pages.channels.order_routing_rules.picker_title"
               types={availableTypes}
               disabled={createMutation.isPending}
               onPick={(type) => {
@@ -297,50 +281,6 @@ function RulePreferencesEditor({
           {t('admin.actions.save')}
         </Button>
       </div>
-    </div>
-  )
-}
-
-function RuleTypePicker({
-  types,
-  disabled,
-  onPick,
-  onCancel,
-}: {
-  types: ResourceTypeDefinition[]
-  disabled: boolean
-  onPick: (type: ResourceTypeDefinition) => void
-  onCancel: () => void
-}) {
-  const { t } = useTranslation()
-
-  return (
-    <div className="flex flex-col gap-1 rounded-md border p-2">
-      <span className="px-1 text-xs font-medium text-muted-foreground">
-        {t('admin.pages.channels.order_routing_rules.picker_title')}
-      </span>
-      {types.map((type) => {
-        const description = typeDescription('order_routing_rule', type.type, type.description ?? '')
-        return (
-          <button
-            key={type.type}
-            type="button"
-            disabled={disabled}
-            className="rounded-md px-2 py-1.5 text-left hover:bg-accent disabled:opacity-50"
-            onClick={() => onPick(type)}
-          >
-            <span className="block text-sm">
-              {typeLabel('order_routing_rule', type.type, type.label)}
-            </span>
-            {description && (
-              <span className="block text-xs text-muted-foreground">{description}</span>
-            )}
-          </button>
-        )
-      })}
-      <Button type="button" variant="outline" size="sm" className="self-start" onClick={onCancel}>
-        {t('admin.actions.cancel')}
-      </Button>
     </div>
   )
 }

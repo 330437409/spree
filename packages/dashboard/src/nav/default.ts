@@ -273,6 +273,13 @@ nav.add({
       position: 100,
     },
     {
+      key: 'loyalty.memberships',
+      labelKey: 'admin.nav.memberships',
+      path: '/loyalty/memberships',
+      subject: Subject.MembershipTierSetting,
+      position: 150,
+    },
+    {
       key: 'loyalty.store-credits',
       labelKey: 'admin.nav.store_credits',
       path: '/loyalty/store-credits',

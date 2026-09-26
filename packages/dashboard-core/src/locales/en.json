@@ -1878,6 +1878,48 @@
           "description": "Offer this delivery method only when the parcel weight is within a range"
         }
       },
+      "membership_right": {
+        "add_bag": {
+          "name": "Add-on pack",
+          "description": "Coupon bundles this tier may buy"
+        },
+        "birthday_double_integral": {
+          "name": "Birthday double points",
+          "description": "Points earned on the member's birthday are multiplied"
+        },
+        "coupon": {
+          "name": "Member coupon",
+          "description": "A coupon this tier hands over"
+        },
+        "exclusive_coupon": {
+          "name": "Exclusive coupon",
+          "description": "A coupon the tier's members receive on entering"
+        },
+        "give_gift": {
+          "name": "Annual gift",
+          "description": "A gift the member claims once a year, as a coupon or as delivered goods"
+        },
+        "large_coupon": {
+          "name": "Large coupon exchange",
+          "description": "Coupons this tier may exchange upward for a larger one"
+        },
+        "member_price": {
+          "name": "Member price",
+          "description": "The tier's member pricing: a catalogue of its own and the discount it grants"
+        },
+        "priority_distribution": {
+          "name": "Priority distribution",
+          "description": "Orders from this tier are served before others"
+        },
+        "surprise_red_envelope": {
+          "name": "Surprise packet",
+          "description": "A packet of coupons this tier hands over"
+        },
+        "svip_date": {
+          "name": "Member day",
+          "description": "A weekday the tier's members buy on better terms"
+        }
+      },
       "order_routing_rule": {
         "default_location": {
           "name": "Default location",

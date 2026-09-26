@@ -2590,6 +2590,79 @@
         "title": "Used in"
       }
     },
+    "membership_rights": {
+      "title": "Rights",
+      "help": "What this tier grants. Each right is saved on its own.",
+      "add_cta": "Add right",
+      "empty": "This tier grants nothing yet.",
+      "draft": "Draft — members do not see it",
+      "published": "Visible to members",
+      "delete_confirm": {
+        "title": "Remove this right?",
+        "message": "{{name}} will no longer be granted to this tier."
+      },
+      "picker": {
+        "title": "Which kind of right?"
+      },
+      "messages": {
+        "created": "Right added",
+        "create_failed": "The right could not be added",
+        "updated": "Right saved",
+        "update_failed": "The right could not be saved",
+        "deleted": "Right removed",
+        "delete_failed": "The right could not be removed"
+      }
+    },
+    "membership_tiers": {
+      "new_cta": "New tier",
+      "open_ended": "No end",
+      "days_suffix": "days",
+      "table": {
+        "title": "Membership tiers",
+        "search_placeholder": "Search tiers",
+        "empty": "No tiers yet. A tier is a customer group with what it grants."
+      },
+      "columns": {
+        "rank": "Rank",
+        "validity_days": "Term",
+        "rights": "Rights"
+      },
+      "new": {
+        "title": "New tier",
+        "description": "A tier is a customer group carrying its own settings, so a new one starts from a group.",
+        "group_label": "Customer group",
+        "submit": "Create tier"
+      },
+      "settings": {
+        "title": "The tier",
+        "help": "What qualifies a customer for this tier, and what it gives them."
+      },
+      "copy": {
+        "title": "What the tier says about itself",
+        "help": "Shown to customers who have not bought it yet — the savings popup copy."
+      },
+      "member_discount": {
+        "label": "Member price",
+        "help": "A percentage off the shelf price, funded by the store. Leave blank for no member price."
+      },
+      "sku": {
+        "label": "Purchased by SKU",
+        "help": "The product this tier is bought as. Leave blank when it is assigned rather than sold."
+      },
+      "grace_days": {
+        "label": "Grace after it ends",
+        "help": "How long a member keeps the tier after their term ends."
+      },
+      "auto_renew": {
+        "label": "Extends itself"
+      },
+      "messages": {
+        "created": "Tier created",
+        "create_failed": "The tier could not be created",
+        "updated": "Tier saved",
+        "update_failed": "The tier could not be saved"
+      }
+    },
     "nav": {
       "account": "Account",
       "catalogs": "Catalogs",
@@ -2622,6 +2695,7 @@
       "inventory": "Inventory",
       "suppliers": "Suppliers",
       "loyalty": "Loyalty",
+      "memberships": "Memberships",
       "store_credits": "Store Credits",
       "commission_rates": "Commission rates"
     },
@@ -5404,6 +5478,7 @@
       "collections": "Groups of products you merchandise together, picked by hand or by rule.",
       "companies": "Business buyers, their teams and the terms they buy on.",
       "customer_groups": "Groups you sort customers into, for pricing and promotions.",
+      "membership_tiers": "The ladder: every membership tier this store runs, in the order it presents them.",
       "delivery_profiles": "Rules for how a product ships, applied per product.",
       "options": "Choices like size or colour that turn one product into variants.",
       "price_lists": "Alternative prices that apply when their rules match.",

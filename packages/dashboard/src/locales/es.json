@@ -4818,6 +4818,79 @@
         "variant_count_other": "{{count}} variantes"
       }
     },
+    "membership_rights": {
+      "title": "Beneficios",
+      "help": "Lo que otorga este nivel. Cada beneficio se guarda por separado.",
+      "add_cta": "Agregar beneficio",
+      "empty": "Este nivel todavía no otorga nada.",
+      "draft": "Borrador: los miembros no lo ven",
+      "published": "Visible para los miembros",
+      "delete_confirm": {
+        "title": "¿Quitar este beneficio?",
+        "message": "{{name}} ya no se otorgará a este nivel."
+      },
+      "picker": {
+        "title": "¿Qué tipo de beneficio?"
+      },
+      "messages": {
+        "created": "Beneficio agregado",
+        "create_failed": "No se pudo agregar el beneficio",
+        "updated": "Beneficio guardado",
+        "update_failed": "No se pudo guardar el beneficio",
+        "deleted": "Beneficio quitado",
+        "delete_failed": "No se pudo quitar el beneficio"
+      }
+    },
+    "membership_tiers": {
+      "new_cta": "Nuevo nivel",
+      "open_ended": "Sin fin",
+      "days_suffix": "días",
+      "table": {
+        "title": "Niveles de membresía",
+        "search_placeholder": "Buscar niveles",
+        "empty": "Todavía no hay niveles. Un nivel es un grupo de clientes con lo que otorga."
+      },
+      "columns": {
+        "rank": "Rango",
+        "validity_days": "Vigencia",
+        "rights": "Beneficios"
+      },
+      "new": {
+        "title": "Nuevo nivel",
+        "description": "Un nivel es un grupo de clientes con su propia configuración, así que uno nuevo parte de un grupo.",
+        "group_label": "Grupo de clientes",
+        "submit": "Crear nivel"
+      },
+      "settings": {
+        "title": "El nivel",
+        "help": "Qué hace que un cliente acceda a este nivel y qué le da."
+      },
+      "copy": {
+        "title": "Lo que el nivel dice de sí mismo",
+        "help": "Se muestra a los clientes que todavía no lo compraron: el texto de la ventana emergente de ahorro."
+      },
+      "member_discount": {
+        "label": "Precio de miembro",
+        "help": "Un porcentaje de descuento sobre el precio de venta, a cargo de la tienda. Dejalo vacío para no tener precio de miembro."
+      },
+      "sku": {
+        "label": "Compra por SKU",
+        "help": "El producto con el que se compra este nivel. Dejalo vacío cuando se asigna en lugar de venderse."
+      },
+      "grace_days": {
+        "label": "Gracia tras el vencimiento",
+        "help": "Cuánto tiempo conserva el miembro el nivel después de que termina su vigencia."
+      },
+      "auto_renew": {
+        "label": "Se renueva solo"
+      },
+      "messages": {
+        "created": "Nivel creado",
+        "create_failed": "No se pudo crear el nivel",
+        "updated": "Nivel guardado",
+        "update_failed": "No se pudo guardar el nivel"
+      }
+    },
     "nav": {
       "account": "Cuenta",
       "catalogs": "Catálogos",
@@ -4850,6 +4923,7 @@
       "inventory": "Inventario",
       "suppliers": "Proveedores",
       "loyalty": "Fidelización",
+      "memberships": "Membresías",
       "store_credits": "Créditos de tienda",
       "commission_rates": "Tasas de comisión"
     },
@@ -5417,6 +5491,7 @@
       "collections": "Grupos de productos que destacás juntos, elegidos a mano o por regla.",
       "companies": "Compradores corporativos, sus equipos y las condiciones en las que compran.",
       "customer_groups": "Grupos en los que clasificás a los clientes, para precios y promociones.",
+      "membership_tiers": "La escalera: todos los niveles de membresía de tu tienda, en el orden en que se muestran.",
       "delivery_profiles": "Reglas sobre cómo se envía un producto, aplicadas por producto.",
       "options": "Elecciones como talle o color que convierten un producto en variantes.",
       "price_lists": "Precios alternativos que se aplican cuando coinciden sus reglas.",

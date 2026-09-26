@@ -1876,6 +1876,48 @@
           "description": "Proposer ce mode de livraison uniquement si le poids est dans une plage"
         }
       },
+      "membership_right": {
+        "add_bag": {
+          "name": "Pack complémentaire",
+          "description": "Des lots de coupons que ce niveau peut acheter"
+        },
+        "birthday_double_integral": {
+          "name": "Points doublés à l’anniversaire",
+          "description": "Les points gagnés le jour de l’anniversaire du membre sont multipliés"
+        },
+        "coupon": {
+          "name": "Coupon membre",
+          "description": "Un coupon que ce niveau remet"
+        },
+        "exclusive_coupon": {
+          "name": "Coupon exclusif",
+          "description": "Un coupon que les membres du niveau reçoivent en entrant"
+        },
+        "give_gift": {
+          "name": "Cadeau annuel",
+          "description": "Un cadeau que le membre réclame une fois par an, sous forme de coupon ou de marchandise livrée"
+        },
+        "large_coupon": {
+          "name": "Échange contre un gros coupon",
+          "description": "Des coupons que ce niveau peut échanger contre un plus important"
+        },
+        "member_price": {
+          "name": "Prix membre",
+          "description": "La tarification membre du niveau : un catalogue propre et la remise qu’il accorde"
+        },
+        "priority_distribution": {
+          "name": "Traitement prioritaire",
+          "description": "Les commandes de ce niveau sont traitées avant les autres"
+        },
+        "surprise_red_envelope": {
+          "name": "Paquet surprise",
+          "description": "Un paquet de coupons que ce niveau remet"
+        },
+        "svip_date": {
+          "name": "Jour du membre",
+          "description": "Un jour de la semaine où les membres du niveau achètent à de meilleures conditions"
+        }
+      },
       "order_routing_rule": {
         "default_location": {
           "name": "Lieu de stock par défaut",
