@@ -1901,6 +1901,47 @@ export interface CustomerGroupUpdateParams {
 }
 
 /**
+ * What makes a group a membership tier. Written through the group, because a
+ * tier *is* the group plus this row — the ladder is read as a ladder and edited
+ * as groups.
+ */
+export interface MembershipTierSettingCreateParams {
+  rank: number
+  threshold?: string | null
+  validity_days?: number | null
+  auto_renew?: boolean
+  grace_days?: number
+  /** The variant a term of this tier is bought by, when it is sold. */
+  sku?: string | null
+  /** The member price, as a percentage off the shelf price. */
+  member_discount_percentage?: string | null
+  /** The tier's own settings, keyed as the kind's `preference_schema` names them. */
+  preferences?: Record<string, unknown>
+}
+
+export type MembershipTierSettingUpdateParams = Partial<MembershipTierSettingCreateParams>
+
+/**
+ * One right a tier carries. The `type` is the registry shorthand
+ * (`member_price`, `svip_date`, …) and everything else the row says about
+ * itself; what the kind *grants* is its own preferences, keyed as that kind's
+ * `preference_schema` names them.
+ */
+export interface MembershipRightCreateParams {
+  type: string
+  name?: string | null
+  description?: string | null
+  badge?: string | null
+  image_url?: string | null
+  position?: number
+  /** A draft right is not shown to members. */
+  published?: boolean
+  preferences?: Record<string, unknown>
+}
+
+export type MembershipRightUpdateParams = Partial<MembershipRightCreateParams>
+
+/**
  * A marketplace seller. `status` is absent by design — a seller moves
  * through its lifecycle via the invite/approve/suspend/reject actions,
  * never through a plain update.

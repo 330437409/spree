@@ -25,14 +25,11 @@ module Spree
             collection.reorder(:rank, :id)
           end
 
-          # The rights are counted by the serializer from their own table: the
-          # group is core's and has no association to this gem's rows.
+          # The group each rung is, and the rights it counts: both hang off the
+          # group rather than off this row, so both are preloaded and a ladder
+          # stays a fixed number of reads.
           def collection_includes
-            [:customer_group]
-          end
-
-          def scope_includes
-            collection_includes
+            [:customer_group, :rights]
           end
         end
       end

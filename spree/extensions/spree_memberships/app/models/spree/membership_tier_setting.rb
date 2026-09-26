@@ -30,6 +30,18 @@ module Spree
     has_many :published_rights, -> { published.order(:position, :id) }, class_name: 'Spree::MembershipRight',
                                 primary_key: :customer_group_id, foreign_key: :customer_group_id, inverse_of: nil
 
+    # Every right, drafts included: what the ladder counts. Read through the
+    # association so a preloaded ladder sizes each rung without a query of its
+    # own — the count is one number per rung and asking for it per rung is a
+    # query per rung.
+    has_many :rights, class_name: 'Spree::MembershipRight',
+                      primary_key: :customer_group_id, foreign_key: :customer_group_id, inverse_of: nil
+
+    # The ladder is searched by the tier's name, which is its group's: this row
+    # has no name column, so a search on `name` would build SQL for one that does
+    # not exist.
+    self.whitelisted_ransackable_associations = %w[customer_group]
+
     # The tier reaches the store through its group: a second tenancy column
     # would be a second thing to keep in step.
     delegate :store, to: :customer_group, allow_nil: true
@@ -113,6 +125,17 @@ module Spree
       grace_days.to_i.positive? ? grace_days.to_i.days : nil
     end
 
+    # What the tier asks a basket to reach, in the store's own currency, or nil
+    # when it asks for nothing. The figure an operator reads rather than the one
+    # it is compared as.
+    #
+    # @return [Spree::Money, nil]
+    def display_threshold
+      return if threshold.blank?
+
+      Spree::Money.new(threshold, currency: store&.default_currency)
+    end
+
     # The savings popup's rows, in `SAVING_SLOTS` order. A row nobody has
     # written is answered blank rather than left out: the client places its icons
     # by position, so a shorter list would shift them.
@@ -172,8 +195,16 @@ module Spree
 
     # Assigning stages the price; it is written with the save, so a tier that
     # cannot be saved is never half-priced.
+    # Assigning stages the price; it is written with the save, so a tier that
+    # cannot be saved is never half-priced.
+    #
+    # A cleared field stages nought rather than nil, because the two mean
+    # different things here: nil is a field nobody touched — the write must
+    # leave the catalogue alone — and blank is an operator saying this tier
+    # grants no member price, which switches it off. A form that clears a field
+    # sends nothing else.
     def member_discount_percentage=(value)
-      @pending_member_discount = value.presence
+      @pending_member_discount = value.presence || 0
     end
 
     private

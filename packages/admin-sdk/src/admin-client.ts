@@ -294,6 +294,10 @@ import type {
   MediaLibraryCreateParams,
   MediaUpdateParams,
   MediaUsageReference,
+  MembershipRightCreateParams,
+  MembershipRightUpdateParams,
+  MembershipTierSettingCreateParams,
+  MembershipTierSettingUpdateParams,
   MeUpdateParams,
   OptionTypeCreateParams,
   OptionTypeUpdateParams,
@@ -446,6 +450,9 @@ import type {
   Locale,
   Market,
   Media,
+  MembershipRight,
+  MembershipTier,
+  MembershipTierSetting,
   OptionType,
   Order,
   OrderCancellationReason,
@@ -3058,6 +3065,109 @@ export class AdminClient {
 
     delete: (id: string, options?: RequestOptions): Promise<void> =>
       this.request<void>('DELETE', `/customer_groups/${id}`, options),
+
+    /**
+     * What makes the group a tier, read and written through the group: a tier is
+     * the group plus this row, so it hangs here rather than off a ladder of its
+     * own. Answers 404 while the group is not a tier.
+     */
+    tierSetting: {
+      get: (groupId: string, options?: RequestOptions): Promise<MembershipTierSetting> =>
+        this.request<MembershipTierSetting>('GET', `/customer_groups/${groupId}/tier_setting`, options),
+
+      create: (
+        groupId: string,
+        params: MembershipTierSettingCreateParams,
+        options?: RequestOptions,
+      ): Promise<MembershipTierSetting> =>
+        this.request<MembershipTierSetting>('POST', `/customer_groups/${groupId}/tier_setting`, {
+          ...options,
+          body: params,
+        }),
+
+      update: (
+        groupId: string,
+        params: MembershipTierSettingUpdateParams,
+        options?: RequestOptions,
+      ): Promise<MembershipTierSetting> =>
+        this.request<MembershipTierSetting>('PATCH', `/customer_groups/${groupId}/tier_setting`, {
+          ...options,
+          body: params,
+        }),
+    },
+
+    /**
+     * The rights the group's tier carries. The kind is chosen per request from
+     * the registry, and what it grants is that kind's own preferences.
+     */
+    membershipRights: {
+      list: (
+        groupId: string,
+        params?: ListParams & Record<string, unknown>,
+        options?: RequestOptions,
+      ): Promise<PaginatedResponse<MembershipRight>> =>
+        this.request<PaginatedResponse<MembershipRight>>(
+          'GET',
+          `/customer_groups/${groupId}/membership_rights`,
+          { ...options, params: params ? transformListParams(params) : undefined },
+        ),
+
+      get: (groupId: string, id: string, options?: RequestOptions): Promise<MembershipRight> =>
+        this.request<MembershipRight>('GET', `/customer_groups/${groupId}/membership_rights/${id}`, options),
+
+      create: (
+        groupId: string,
+        params: MembershipRightCreateParams,
+        options?: RequestOptions,
+      ): Promise<MembershipRight> =>
+        this.request<MembershipRight>('POST', `/customer_groups/${groupId}/membership_rights`, {
+          ...options,
+          body: params,
+        }),
+
+      update: (
+        groupId: string,
+        id: string,
+        params: MembershipRightUpdateParams,
+        options?: RequestOptions,
+      ): Promise<MembershipRight> =>
+        this.request<MembershipRight>('PATCH', `/customer_groups/${groupId}/membership_rights/${id}`, {
+          ...options,
+          body: params,
+        }),
+
+      delete: (groupId: string, id: string, options?: RequestOptions): Promise<void> =>
+        this.request<void>('DELETE', `/customer_groups/${groupId}/membership_rights/${id}`, options),
+    },
+  }
+
+  // ============================================
+  // Membership
+  // ============================================
+
+  /**
+   * The ladder an operator arranges: every tier the store runs, in rank order,
+   * each with the group its settings and rights are addressed by.
+   */
+  readonly membershipTiers = {
+    list: (
+      params?: ListParams & Record<string, unknown>,
+      options?: RequestOptions,
+    ): Promise<PaginatedResponse<MembershipTier>> =>
+      this.request<PaginatedResponse<MembershipTier>>('GET', '/membership_tiers', {
+        ...options,
+        params: params ? transformListParams(params) : undefined,
+      }),
+  }
+
+  /**
+   * The installed membership right kinds, as the registry declares them — the
+   * picker an operator adds a right from. Static at runtime, so a screen caches
+   * it for the session.
+   */
+  readonly membershipRights = {
+    types: (options?: RequestOptions): Promise<{ data: ResourceTypeDefinition[] }> =>
+      this.request<{ data: ResourceTypeDefinition[] }>('GET', '/membership_rights/types', options),
   }
 
   // ============================================

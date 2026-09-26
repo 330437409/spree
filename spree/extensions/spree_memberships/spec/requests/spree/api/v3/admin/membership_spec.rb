@@ -138,6 +138,9 @@ RSpec.describe 'the membership operator reads', type: :request do
 
             expect(response).to have_http_status(:created)
       expect(response.parsed_body).to include('rank' => 2, 'threshold' => '500.0', 'validity_days' => 365)
+      # The operator reads the figure in the store's own currency, and a tier
+      # that asks for nothing answers nothing rather than zero.
+      expect(response.parsed_body['display_threshold']).to include('500')
 
       patch "/api/v3/admin/customer_groups/#{group.prefixed_id}/tier_setting", headers: headers,
             params: { threshold: 800 }
@@ -229,6 +232,47 @@ RSpec.describe 'the membership operator reads', type: :request do
       post "/api/v3/admin/membership_cards/#{other.prefixed_id}/recycling", headers: headers
 
       expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  # The ladder the operator arranges: a tier is a group carrying settings, so
+  # the read answers both the rung and the group its settings and rights hang
+  # off.
+  describe 'GET /api/v3/admin/membership_tiers' do
+    let!(:top) { create(:membership_tier_setting, customer_group: group, rank: 9, validity_days: 365) }
+
+    it 'answers the ladder in rank order, each with the group it is' do
+      lower_group = create(:customer_group, store: store, name: '普通会员')
+      create(:membership_tier_setting, customer_group: lower_group, rank: 1)
+      create(:membership_right, customer_group: group)
+
+      get '/api/v3/admin/membership_tiers', headers: headers
+
+      expect(response).to have_http_status(:ok)
+      rows = response.parsed_body['data']
+      expect(rows.map { |row| row['rank'] }).to eq([1, 9])
+      expect(rows.last).to include('name' => group.name, 'customer_group_id' => group.prefixed_id,
+                                   'validity_days' => 365, 'rights_total' => 1)
+    end
+
+    # The ladder is searched by the tier's name, which is the group's: this row
+    # has none of its own, and a search built against a column that does not
+    # exist is a 500 rather than an empty answer.
+    it 'searches by the tier’s own name' do
+      get '/api/v3/admin/membership_tiers', headers: headers, params: { q: { customer_group_name_cont: group.name } }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['data'].map { |row| row['customer_group_id'] }).to eq([group.prefixed_id])
+    end
+
+    # A tier of another store is not this store's ladder.
+    it 'answers nothing for a store that runs none' do
+      other_store = create(:store)
+      create(:membership_tier_setting, customer_group: create(:customer_group, store: other_store))
+
+      get '/api/v3/admin/membership_tiers', headers: headers
+
+      expect(response.parsed_body['data'].map { |row| row['id'] }).to eq([top.prefixed_id])
     end
   end
 end
