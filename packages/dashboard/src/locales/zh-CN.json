@@ -2583,6 +2583,79 @@
         "title": "使用于"
       }
     },
+    "membership_rights": {
+      "title": "权益",
+      "help": "该档位提供的权益，每条单独保存。",
+      "add_cta": "添加权益",
+      "empty": "该档位还没有任何权益。",
+      "draft": "草稿——会员看不到",
+      "published": "会员可见",
+      "delete_confirm": {
+        "title": "移除这条权益？",
+        "message": "{{name}} 将不再由该档位提供。"
+      },
+      "picker": {
+        "title": "选择权益类型"
+      },
+      "messages": {
+        "created": "权益已添加",
+        "create_failed": "权益添加失败",
+        "updated": "权益已保存",
+        "update_failed": "权益保存失败",
+        "deleted": "权益已移除",
+        "delete_failed": "权益移除失败"
+      }
+    },
+    "membership_tiers": {
+      "new_cta": "新建档位",
+      "open_ended": "无期限",
+      "days_suffix": "天",
+      "table": {
+        "title": "会员档位",
+        "search_placeholder": "搜索档位",
+        "empty": "还没有档位。档位就是带权益的客户分组。"
+      },
+      "columns": {
+        "rank": "等级",
+        "validity_days": "有效期",
+        "rights": "权益数"
+      },
+      "new": {
+        "title": "新建档位",
+        "description": "档位是带独立设置的客户分组，所以先选择一个分组。",
+        "group_label": "客户分组",
+        "submit": "创建档位"
+      },
+      "settings": {
+        "title": "档位设置",
+        "help": "成为该档位会员的条件，以及它给会员什么。"
+      },
+      "copy": {
+        "title": "档位对外文案",
+        "help": "展示给还没购买的顾客——即「每月约省」弹窗的文案。"
+      },
+      "member_discount": {
+        "label": "会员价",
+        "help": "在售价基础上的折扣百分比，由平台承担。留空表示不设会员价。"
+      },
+      "sku": {
+        "label": "购买用的 SKU",
+        "help": "购买该档位时对应的商品。如果档位是发放而非售卖，留空。"
+      },
+      "grace_days": {
+        "label": "到期后宽限",
+        "help": "会员到期后仍保留该档位的天数。"
+      },
+      "auto_renew": {
+        "label": "自动续期"
+      },
+      "messages": {
+        "created": "档位已创建",
+        "create_failed": "档位创建失败",
+        "updated": "档位已保存",
+        "update_failed": "档位保存失败"
+      }
+    },
     "nav": {
       "account": "账户",
       "catalogs": "产品目录",
@@ -2615,6 +2688,7 @@
       "inventory": "库存",
       "suppliers": "供应商",
       "loyalty": "会员权益",
+      "memberships": "会员档位",
       "store_credits": "店铺信用",
       "commission_rates": "佣金费率"
     },
@@ -5392,6 +5466,7 @@
       "collections": "一起陈列的商品组合，可手动挑选或按规则生成。",
       "companies": "企业买家、他们的团队，以及采购条款。",
       "customer_groups": "用于定价和促销的客户分组。",
+      "membership_tiers": "档位阶梯：本店铺运行的所有会员档位，按展示顺序排列。",
       "delivery_profiles": "按商品应用的配送规则。",
       "options": "尺码、颜色等选项，用于生成商品的多个款式。",
       "price_lists": "规则匹配时生效的备选价格。",

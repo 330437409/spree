@@ -62,6 +62,7 @@ SpreeMemberships.membership_rights << MyGem::Rights::FreeShipping
 
 | Method and path | What it answers |
 | --- | --- |
+| `GET /api/v3/admin/membership_tiers` | The ladder an operator arranges: every tier this store runs, in rank order, each with its name, threshold (and the same figure as the operator reads it), term length and how many rights it carries — plus the group its settings and rights are addressed by, because a tier *is* a group carrying settings |
 | `GET /api/v3/admin/membership_rights/types` | The registry picker: every installed kind with the settings it declares, so an admin form renders whatever is installed |
 | `GET`/`POST`/`PATCH`/`DELETE /api/v3/admin/customer_groups/:id/membership_rights` | What a tier carries. The kind is chosen per request; its settings are its own preferences |
 | `GET`/`POST`/`PATCH /api/v3/admin/customer_groups/:id/tier_setting` | What makes the group a tier, and what it says it saves: the savings popup's copy is a `preferences` field on this row, declared as a typed schema so a form renders it. 404 while the group is not a tier |

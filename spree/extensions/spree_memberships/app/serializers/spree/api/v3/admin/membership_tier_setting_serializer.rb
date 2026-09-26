@@ -6,12 +6,17 @@ module Spree
         class MembershipTierSettingSerializer < BaseSerializer
           typelize rank: :number, threshold: 'string | null', validity_days: 'number | null',
                    rights_total: :number, member_discount_percentage: 'string | null',
+                   display_threshold: 'string | null',
                    auto_renew: :boolean, grace_days: :number, sku: 'string | null',
                    preferences: 'Record<string, unknown> | null',
-                   preference_schema: 'Array<Record<string, unknown>>', deleted_at: 'string | null'
+                   preference_schema: 'Array<{ key: string; type: string; default: unknown; choices?: string[] }>',
+                   deleted_at: 'string | null'
 
           attributes :rank
           attribute(:threshold) { |setting| decimal_string(setting.threshold) }
+          # The same figure as the operator reads it, in the store's currency —
+          # a ladder column is read, not compared.
+          attribute(:display_threshold) { |setting| setting.display_threshold&.to_s }
           attributes :validity_days
           # Ported from spree_crm's membership plan: whether a term extends
           # itself, how long it may sit lapsed, and the SKU the purchase is

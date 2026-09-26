@@ -791,6 +791,9 @@
       "tax": {
         "label": "税"
       },
+      "threshold": {
+        "label": "门槛"
+      },
       "total": {
         "label": "合计"
       },
@@ -1873,6 +1876,48 @@
         "weight_rule": {
           "name": "重量",
           "description": "仅当包裹重量在区间内时提供此配送方式"
+        }
+      },
+      "membership_right": {
+        "add_bag": {
+          "name": "会员加量包",
+          "description": "该档位可购买的券包"
+        },
+        "birthday_double_integral": {
+          "name": "生日双倍积分",
+          "description": "会员生日当天下单，积分翻倍"
+        },
+        "coupon": {
+          "name": "会员券",
+          "description": "该档位发放的券"
+        },
+        "exclusive_coupon": {
+          "name": "专属红包",
+          "description": "会员进入该档位时获得的券"
+        },
+        "give_gift": {
+          "name": "开卡送酒",
+          "description": "会员每年领取一次的赠礼，以券或实物形式发放"
+        },
+        "large_coupon": {
+          "name": "兑换大额券",
+          "description": "该档位可向上兑换的大额券"
+        },
+        "member_price": {
+          "name": "会员价",
+          "description": "该档位的会员专享价：独立的价目表与它给出的折扣"
+        },
+        "priority_distribution": {
+          "name": "优先发货",
+          "description": "该档位的订单优先处理"
+        },
+        "surprise_red_envelope": {
+          "name": "惊喜红包",
+          "description": "该档位发放的券包"
+        },
+        "svip_date": {
+          "name": "会员日",
+          "description": "该档位会员享受更优价格的工作日"
         }
       },
       "order_routing_rule": {

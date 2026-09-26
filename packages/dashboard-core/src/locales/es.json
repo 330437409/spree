@@ -823,6 +823,9 @@
       "tax": {
         "label": "Impuestos"
       },
+      "threshold": {
+        "label": "Umbral"
+      },
       "total": {
         "label": "Total"
       },
@@ -1240,6 +1243,48 @@
         "weight_rule": {
           "name": "Peso",
           "description": "Ofrecé este método de entrega solo cuando el peso del paquete esté dentro de un rango"
+        }
+      },
+      "membership_right": {
+        "add_bag": {
+          "name": "Pack adicional",
+          "description": "Paquetes de cupones que este nivel puede comprar"
+        },
+        "birthday_double_integral": {
+          "name": "Puntos dobles de cumpleaños",
+          "description": "Los puntos que se suman el día del cumpleaños del miembro se multiplican"
+        },
+        "coupon": {
+          "name": "Cupón de miembro",
+          "description": "Un cupón que entrega este nivel"
+        },
+        "exclusive_coupon": {
+          "name": "Cupón exclusivo",
+          "description": "Un cupón que los miembros del nivel reciben al ingresar"
+        },
+        "give_gift": {
+          "name": "Regalo anual",
+          "description": "Un regalo que el miembro reclama una vez al año, como cupón o como mercadería entregada"
+        },
+        "large_coupon": {
+          "name": "Canje por un cupón grande",
+          "description": "Cupones que este nivel puede canjear por uno más grande"
+        },
+        "member_price": {
+          "name": "Precio de miembro",
+          "description": "El precio de miembro del nivel: su propio catálogo y el descuento que otorga"
+        },
+        "priority_distribution": {
+          "name": "Preparación prioritaria",
+          "description": "Los pedidos de este nivel se atienden antes que los demás"
+        },
+        "surprise_red_envelope": {
+          "name": "Paquete sorpresa",
+          "description": "Un paquete de cupones que entrega este nivel"
+        },
+        "svip_date": {
+          "name": "Día del miembro",
+          "description": "Un día de la semana en el que los miembros del nivel compran en mejores condiciones"
         }
       },
       "order_routing_rule": {

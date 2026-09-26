@@ -142,6 +142,17 @@ RSpec.describe Spree::MembershipTierSetting, type: :model do
       expect(tier.catalog).not_to be_active
     end
 
+    # What an operator clearing the field writes: a form that empties a number
+    # sends blank, and "no member price" is a decision rather than an absence —
+    # the tier that had one must lose it.
+    it 'takes the price out of effect on a cleared field' do
+      tier.update!(member_discount_percentage: 10)
+      tier.update!(member_discount_percentage: nil)
+
+      expect(tier.reload.member_discount_percentage).to be_nil
+      expect(tier.catalog).not_to be_active
+    end
+
     # A retired tier leaves its members the group they were in, so a catalogue
     # left in effect would outlive the promise that set it up.
     it 'stops pricing when the tier is retired' do

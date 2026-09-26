@@ -792,6 +792,9 @@
       "tax": {
         "label": "Podatek"
       },
+      "threshold": {
+        "label": "Prog"
+      },
       "total": {
         "label": "Suma"
       },
@@ -1903,6 +1906,48 @@
         "weight_rule": {
           "name": "Waga",
           "description": "Oferuj tę metodę dostawy tylko, gdy waga paczki mieści się w przedziale"
+        }
+      },
+      "membership_right": {
+        "add_bag": {
+          "name": "Pakiet dodatkowy",
+          "description": "Pakiety kuponów, które ten poziom może kupić"
+        },
+        "birthday_double_integral": {
+          "name": "Podwójne punkty urodzinowe",
+          "description": "Punkty zdobyte w dniu urodzin członka są mnożone"
+        },
+        "coupon": {
+          "name": "Kupon członka",
+          "description": "Kupon, który ten poziom wydaje"
+        },
+        "exclusive_coupon": {
+          "name": "Kupon na wyłączność",
+          "description": "Kupon, który członkowie poziomu otrzymują przy dołączeniu"
+        },
+        "give_gift": {
+          "name": "Prezent roczny",
+          "description": "Prezent, który członek odbiera raz w roku — jako kupon lub dostarczony towar"
+        },
+        "large_coupon": {
+          "name": "Wymiana na duży kupon",
+          "description": "Kupony, które ten poziom może wymienić na większy"
+        },
+        "member_price": {
+          "name": "Cena dla członków",
+          "description": "Ceny dla członków poziomu: własny katalog i udzielany rabat"
+        },
+        "priority_distribution": {
+          "name": "Priorytetowa realizacja",
+          "description": "Zamówienia z tego poziomu są realizowane przed innymi"
+        },
+        "surprise_red_envelope": {
+          "name": "Paczka niespodzianka",
+          "description": "Paczka kuponów, którą ten poziom wydaje"
+        },
+        "svip_date": {
+          "name": "Dzień członka",
+          "description": "Dzień tygodnia, w którym członkowie poziomu kupują na lepszych warunkach"
         }
       },
       "order_routing_rule": {

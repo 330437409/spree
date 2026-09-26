@@ -2612,6 +2612,79 @@
         "title": "Używany w"
       }
     },
+    "membership_rights": {
+      "title": "Korzyści",
+      "help": "Co daje ten poziom. Każda korzyść zapisuje się osobno.",
+      "add_cta": "Dodaj korzyść",
+      "empty": "Ten poziom jeszcze nic nie daje.",
+      "draft": "Wersja robocza — członkowie jej nie widzą",
+      "published": "Widoczne dla członków",
+      "delete_confirm": {
+        "title": "Usunąć tę korzyść?",
+        "message": "{{name}} nie będzie już przyznawane temu poziomowi."
+      },
+      "picker": {
+        "title": "Jaki rodzaj korzyści?"
+      },
+      "messages": {
+        "created": "Korzyść dodana",
+        "create_failed": "Nie udało się dodać korzyści",
+        "updated": "Korzyść zapisana",
+        "update_failed": "Nie udało się zapisać korzyści",
+        "deleted": "Korzyść usunięta",
+        "delete_failed": "Nie udało się usunąć korzyści"
+      }
+    },
+    "membership_tiers": {
+      "new_cta": "Nowy poziom",
+      "open_ended": "Bez końca",
+      "days_suffix": "dni",
+      "table": {
+        "title": "Poziomy członkostwa",
+        "search_placeholder": "Szukaj poziomów",
+        "empty": "Nie ma jeszcze poziomów. Poziom to grupa klientów wraz z tym, co daje."
+      },
+      "columns": {
+        "rank": "Ranga",
+        "validity_days": "Okres",
+        "rights": "Korzyści"
+      },
+      "new": {
+        "title": "Nowy poziom",
+        "description": "Poziom to grupa klientów z własnymi ustawieniami, więc nowy poziom zaczyna się od grupy.",
+        "group_label": "Grupa klientów",
+        "submit": "Utwórz poziom"
+      },
+      "settings": {
+        "title": "Poziom",
+        "help": "Co daje klientowi dostęp do tego poziomu i co mu zapewnia."
+      },
+      "copy": {
+        "title": "Co poziom mówi o sobie",
+        "help": "Pokazywane klientom, którzy jeszcze go nie kupili — tekst okienka o oszczędnościach."
+      },
+      "member_discount": {
+        "label": "Cena dla członków",
+        "help": "Procent zniżki od ceny katalogowej, pokrywany przez sklep. Zostaw puste, aby nie ustawiać ceny dla członków."
+      },
+      "sku": {
+        "label": "Zakup przez SKU",
+        "help": "Produkt, jako który kupuje się ten poziom. Zostaw puste, gdy poziom jest przydzielany, a nie sprzedawany."
+      },
+      "grace_days": {
+        "label": "Karencja po zakończeniu",
+        "help": "Jak długo członek zachowuje poziom po zakończeniu okresu."
+      },
+      "auto_renew": {
+        "label": "Przedłuża się sam"
+      },
+      "messages": {
+        "created": "Poziom utworzony",
+        "create_failed": "Nie udało się utworzyć poziomu",
+        "updated": "Poziom zapisany",
+        "update_failed": "Nie udało się zapisać poziomu"
+      }
+    },
     "nav": {
       "account": "Konto",
       "catalogs": "Katalogi",
@@ -2644,6 +2717,7 @@
       "inventory": "Magazyn",
       "suppliers": "Dostawcy",
       "loyalty": "Lojalność",
+      "memberships": "Członkostwa",
       "store_credits": "Środki w sklepie",
       "commission_rates": "Stawki prowizji"
     },
@@ -5470,6 +5544,7 @@
       "collections": "Grupy produktów prezentowane razem, wybrane ręcznie lub regułą.",
       "companies": "Klienci biznesowi, ich zespoły i warunki, na jakich kupują.",
       "customer_groups": "Grupy, do których przypisujesz klientów — dla cen i promocji.",
+      "membership_tiers": "Drabina: wszystkie poziomy członkostwa w Twoim sklepie, w kolejności, w jakiej są prezentowane.",
       "delivery_profiles": "Reguły wysyłki produktu, stosowane dla każdego produktu.",
       "options": "Cechy takie jak rozmiar czy kolor, które tworzą warianty produktu.",
       "price_lists": "Alternatywne ceny, które obowiązują, gdy pasują ich reguły.",

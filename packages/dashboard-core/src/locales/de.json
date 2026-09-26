@@ -791,6 +791,9 @@
       "tax": {
         "label": "Steuer"
       },
+      "threshold": {
+        "label": "Schwelle"
+      },
       "total": {
         "label": "Gesamt"
       },
@@ -1874,6 +1877,48 @@
         "weight_rule": {
           "name": "Gewicht",
           "description": "Diese Versandart nur anbieten, wenn das Paketgewicht im Bereich liegt"
+        }
+      },
+      "membership_right": {
+        "add_bag": {
+          "name": "Zusatzpaket",
+          "description": "Gutschein-Bündel, die diese Stufe kaufen kann"
+        },
+        "birthday_double_integral": {
+          "name": "Doppelte Geburtstagspunkte",
+          "description": "Punkte, die am Geburtstag des Mitglieds gesammelt werden, werden vervielfacht"
+        },
+        "coupon": {
+          "name": "Mitglieds-Gutschein",
+          "description": "Ein Gutschein, den diese Stufe ausgibt"
+        },
+        "exclusive_coupon": {
+          "name": "Exklusiver Gutschein",
+          "description": "Ein Gutschein, den die Mitglieder der Stufe beim Eintritt erhalten"
+        },
+        "give_gift": {
+          "name": "Jahresgeschenk",
+          "description": "Ein Geschenk, das das Mitglied einmal im Jahr einlöst — als Gutschein oder als gelieferte Ware"
+        },
+        "large_coupon": {
+          "name": "Eintausch gegen einen großen Gutschein",
+          "description": "Gutscheine, die diese Stufe gegen einen größeren eintauschen kann"
+        },
+        "member_price": {
+          "name": "Mitgliedspreis",
+          "description": "Die Mitgliederpreise der Stufe: ein eigener Katalog und der gewährte Rabatt"
+        },
+        "priority_distribution": {
+          "name": "Bevorzugte Bearbeitung",
+          "description": "Bestellungen dieser Stufe werden vor anderen bearbeitet"
+        },
+        "surprise_red_envelope": {
+          "name": "Überraschungspaket",
+          "description": "Ein Paket Gutscheine, das diese Stufe ausgibt"
+        },
+        "svip_date": {
+          "name": "Mitgliedertag",
+          "description": "Ein Wochentag, an dem die Mitglieder der Stufe zu besseren Konditionen kaufen"
         }
       },
       "order_routing_rule": {

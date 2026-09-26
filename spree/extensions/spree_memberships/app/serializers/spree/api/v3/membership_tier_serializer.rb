@@ -15,7 +15,10 @@ module Spree
         attribute(:rank) { |tier| tier.rank }
         attribute(:threshold) { |tier| decimal_string(tier.threshold) }
         attribute(:validity_days) { |tier| tier.validity_days }
-        attribute(:rights_total) { |tier| Spree::MembershipRight.where(customer_group_id: tier.customer_group_id).count }
+        # Sized rather than counted: a ladder reader preloads the rights, and a
+        # rung whose rights nobody loaded answers with the count query `size`
+        # falls back to. One number per rung, and a ladder is one read.
+        attribute(:rights_total) { |tier| tier.rights.size }
       end
     end
   end

@@ -20,6 +20,7 @@ export type TypeFamily =
   | 'seller_requirement'
   | 'integration'
   | 'permission'
+  | 'membership_right'
 
 type Facet = 'name' | 'description'
 

@@ -82,6 +82,10 @@ Spree::Core::Engine.add_routes do
           collection { get :types }
         end
 
+        # The ladder the operator arranges, read as one: each tier with the group
+        # its settings and rights are addressed by.
+        resources :membership_tiers, only: [:index]
+
         # A tier is a customer group, so its settings and its rights hang from
         # the group the operator already manages.
         resources :customer_groups, only: [] do
