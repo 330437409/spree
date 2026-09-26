@@ -3073,7 +3073,11 @@ export class AdminClient {
      */
     tierSetting: {
       get: (groupId: string, options?: RequestOptions): Promise<MembershipTierSetting> =>
-        this.request<MembershipTierSetting>('GET', `/customer_groups/${groupId}/tier_setting`, options),
+        this.request<MembershipTierSetting>(
+          'GET',
+          `/customer_groups/${groupId}/tier_setting`,
+          options,
+        ),
 
       create: (
         groupId: string,
@@ -3113,7 +3117,11 @@ export class AdminClient {
         ),
 
       get: (groupId: string, id: string, options?: RequestOptions): Promise<MembershipRight> =>
-        this.request<MembershipRight>('GET', `/customer_groups/${groupId}/membership_rights/${id}`, options),
+        this.request<MembershipRight>(
+          'GET',
+          `/customer_groups/${groupId}/membership_rights/${id}`,
+          options,
+        ),
 
       create: (
         groupId: string,
@@ -3131,13 +3139,21 @@ export class AdminClient {
         params: MembershipRightUpdateParams,
         options?: RequestOptions,
       ): Promise<MembershipRight> =>
-        this.request<MembershipRight>('PATCH', `/customer_groups/${groupId}/membership_rights/${id}`, {
-          ...options,
-          body: params,
-        }),
+        this.request<MembershipRight>(
+          'PATCH',
+          `/customer_groups/${groupId}/membership_rights/${id}`,
+          {
+            ...options,
+            body: params,
+          },
+        ),
 
       delete: (groupId: string, id: string, options?: RequestOptions): Promise<void> =>
-        this.request<void>('DELETE', `/customer_groups/${groupId}/membership_rights/${id}`, options),
+        this.request<void>(
+          'DELETE',
+          `/customer_groups/${groupId}/membership_rights/${id}`,
+          options,
+        ),
     },
   }
 

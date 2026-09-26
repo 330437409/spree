@@ -43,13 +43,12 @@ describe('membershipTierToFormValues', () => {
 
   it('opens an unset figure blank rather than at nought', () => {
     const values = membershipTierToFormValues(
-      tierStub({ threshold: null, validity_days: null, grace_days: null, sku: null }),
+      tierStub({ threshold: null, validity_days: null, sku: null }),
     )
 
     expect(values).toMatchObject({
       threshold: '',
       validity_days: '',
-      grace_days: '',
       sku: '',
     })
   })
