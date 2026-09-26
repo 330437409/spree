@@ -791,6 +791,9 @@
       "tax": {
         "label": "税"
       },
+      "threshold": {
+        "label": "门槛"
+      },
       "total": {
         "label": "合计"
       },

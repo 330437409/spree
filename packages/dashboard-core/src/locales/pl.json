@@ -792,6 +792,9 @@
       "tax": {
         "label": "Podatek"
       },
+      "threshold": {
+        "label": "Prog"
+      },
       "total": {
         "label": "Suma"
       },

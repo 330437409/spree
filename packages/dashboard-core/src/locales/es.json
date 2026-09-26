@@ -823,6 +823,9 @@
       "tax": {
         "label": "Impuestos"
       },
+      "threshold": {
+        "label": "Umbral"
+      },
       "total": {
         "label": "Total"
       },

@@ -793,6 +793,9 @@
       "tax": {
         "label": "Tax"
       },
+      "threshold": {
+        "label": "Threshold"
+      },
       "total": {
         "label": "Total"
       },
