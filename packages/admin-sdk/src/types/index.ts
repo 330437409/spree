@@ -86,6 +86,8 @@ export type { default as InvitationAcceptanceLink } from './generated/Invitation
 export type { default as LineItem } from './generated/LineItem'
 export type { default as Market } from './generated/Market'
 export type { default as Media } from './generated/Media'
+export type { default as Membership } from './generated/Membership'
+export type { default as MembershipCard } from './generated/MembershipCard'
 export type { default as MembershipRight } from './generated/MembershipRight'
 export type { default as MembershipTier } from './generated/MembershipTier'
 export type { default as MembershipTierSetting } from './generated/MembershipTierSetting'

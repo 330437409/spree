@@ -294,6 +294,7 @@ import type {
   MediaLibraryCreateParams,
   MediaUpdateParams,
   MediaUsageReference,
+  MembershipCardRecycleParams,
   MembershipRightCreateParams,
   MembershipRightUpdateParams,
   MembershipTierRepositionParams,
@@ -451,6 +452,8 @@ import type {
   Locale,
   Market,
   Media,
+  Membership,
+  MembershipCard,
   MembershipRight,
   MembershipTier,
   MembershipTierSetting,
@@ -3199,6 +3202,50 @@ export class AdminClient {
   readonly membershipRights = {
     types: (options?: RequestOptions): Promise<{ data: ResourceTypeDefinition[] }> =>
       this.request<{ data: ResourceTypeDefinition[] }>('GET', '/membership_rights/types', options),
+  }
+
+  /**
+   * The cards a store issued, and what became of them. Read-only, with one
+   * write: voiding a card the client cannot — a lost phone, a fraud report.
+   */
+  readonly membershipCards = {
+    list: (
+      params?: ListParams & Record<string, unknown>,
+      options?: RequestOptions,
+    ): Promise<PaginatedResponse<MembershipCard>> =>
+      this.request<PaginatedResponse<MembershipCard>>('GET', '/membership_cards', {
+        ...options,
+        params: params ? transformListParams(params) : undefined,
+      }),
+
+    get: (id: string, options?: RequestOptions): Promise<MembershipCard> =>
+      this.request<MembershipCard>('GET', `/membership_cards/${id}`, options),
+
+    /** The same transition the customer's own 作废 runs. */
+    recycle: (
+      id: string,
+      params: MembershipCardRecycleParams = {},
+      options?: RequestOptions,
+    ): Promise<MembershipCard> =>
+      this.request<MembershipCard>('POST', `/membership_cards/${id}/recycling`, {
+        ...options,
+        body: params,
+      }),
+  }
+
+  /** Who holds which tier, and until when. */
+  readonly memberships = {
+    list: (
+      params?: ListParams & Record<string, unknown>,
+      options?: RequestOptions,
+    ): Promise<PaginatedResponse<Membership>> =>
+      this.request<PaginatedResponse<Membership>>('GET', '/memberships', {
+        ...options,
+        params: params ? transformListParams(params) : undefined,
+      }),
+
+    get: (id: string, options?: RequestOptions): Promise<Membership> =>
+      this.request<Membership>('GET', `/memberships/${id}`, options),
   }
 
   // ============================================

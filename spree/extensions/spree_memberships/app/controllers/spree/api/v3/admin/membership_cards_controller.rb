@@ -21,7 +21,7 @@ module Spree
           end
 
           def collection_includes
-            %i[customer customer_group membership scenario_order]
+            %i[customer customer_group membership scenario_order tier_setting]
           end
 
           def scope_includes

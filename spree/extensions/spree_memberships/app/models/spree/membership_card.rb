@@ -52,6 +52,13 @@ module Spree
     # Cards whose deadline to activate has passed. Read by the sweep.
     scope :overdue, -> { with_status(:dormant).where(activates_before: ..Time.current) }
 
+    # What the back office's own list searches and narrows by: whose card it is
+    # — through the customer, so an operator can look one up by the email a
+    # customer quotes — the tier it grants, and where it stands.
+    self.whitelisted_ransackable_attributes = %w[status source customer_id customer_group_id
+                                                 membership_id activates_before activated_at created_at]
+    self.whitelisted_ransackable_associations = %w[customer customer_group membership]
+
     # The window this card is inside, if any: what the client reads as 赠送中 —
     # and as 已过期 once its date has passed — and what 作废 closes. An association
     # rather than a query so a wallet can preload it.
