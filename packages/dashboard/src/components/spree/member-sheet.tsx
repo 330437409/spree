@@ -1,4 +1,3 @@
-import { adminClient, useResourceKey } from '@spree/dashboard-core'
 import {
   Card,
   CardContent,
@@ -13,9 +12,9 @@ import {
   Skeleton,
   StatusBadge,
 } from '@spree/dashboard-ui'
-import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+import { useMembership } from '../../hooks/use-memberships'
 import { tierName } from '../../lib/membership'
 
 /**
@@ -34,10 +33,7 @@ export function MemberSheet({
   onClose: () => void
 }) {
   const { t } = useTranslation()
-  const { data: term, isLoading } = useQuery({
-    queryKey: useResourceKey('memberships', memberId),
-    queryFn: () => adminClient.memberships.get(memberId),
-  })
+  const { data: term, isLoading } = useMembership(memberId)
 
   return (
     <Sheet open onOpenChange={(open) => !open && onClose()}>

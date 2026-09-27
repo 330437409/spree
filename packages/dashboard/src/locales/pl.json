@@ -2707,6 +2707,10 @@
       },
       "threshold": {
         "help": "Ile klient musi wydać, aby osiągnąć ten poziom. Zostaw puste, jeśli poziom jest sprzedawany lub przyznawany."
+      },
+      "filter": {
+        "placeholder": "Szukaj poziomów…",
+        "empty": "Brak pasujących poziomów"
       }
     },
     "nav": {
@@ -5602,7 +5606,9 @@
       "webhook_endpoints": "Gdzie Twoje inne systemy są powiadamiane, gdy coś dzieje się w sklepie.",
       "returns": "Towary wracające do sklepu, od zgłoszenia do zwrotu pieniędzy.",
       "exchanges": "Zakupy wymieniane na inny rozmiar, kolor lub produkt.",
-      "claims": "Nieudane dostawy — uszkodzone, brakujące lub błędne produkty — i sposób ich rozwiązania."
+      "claims": "Nieudane dostawy — uszkodzone, brakujące lub błędne produkty — i sposób ich rozwiązania.",
+      "members": "Kto ma jaki poziom i do kiedy.",
+      "membership_cards": "Wszystkie karty wydane przez ten sklep i ich losy."
     },
     "tax_categories": {
       "add_cta": "Dodaj kategorię podatkową",
@@ -6211,8 +6217,6 @@
       }
     },
     "members": {
-      "title": "Członkowie",
-      "help": "Kto ma jaki poziom i do kiedy.",
       "search_placeholder": "Szukaj członków",
       "empty": "Nie ma jeszcze członkostw. Członek pojawi się tu, gdy karta zostanie aktywowana.",
       "open_ended": "Bez końca",
@@ -6236,8 +6240,6 @@
       }
     },
     "membership_cards": {
-      "title": "Karty członkowskie",
-      "help": "Wszystkie karty wydane przez ten sklep i ich losy.",
       "search_placeholder": "Szukaj kart",
       "empty": "Nie ma jeszcze kart.",
       "view_customer": "Zobacz klienta",
@@ -6273,6 +6275,10 @@
       "sheet": {
         "help": "Ta karta i jej losy.",
         "unavailable": "Nie udało się wczytać tej karty."
+      },
+      "void_reason": {
+        "label": "Co się stało",
+        "help": "Zapisywane przy karcie na wypadek późniejszych pytań. Opcjonalne."
       }
     }
   }

@@ -4911,6 +4911,10 @@
       },
       "threshold": {
         "help": "Cuánto debe gastar un cliente para alcanzar este nivel. Déjalo vacío si el nivel se vende o se otorga."
+      },
+      "filter": {
+        "placeholder": "Buscar niveles…",
+        "empty": "Ningún nivel coincide"
       }
     },
     "nav": {
@@ -5547,7 +5551,9 @@
       "webhook_endpoints": "Dónde se notifica a tus otros sistemas cuando pasa algo en la tienda.",
       "returns": "Mercadería que vuelve, desde la solicitud hasta el reembolso.",
       "exchanges": "Compras cambiadas por un talle, color o producto distinto.",
-      "claims": "Entregas que salieron mal: artículos dañados, faltantes o equivocados, y cómo se resolvió cada una."
+      "claims": "Entregas que salieron mal: artículos dañados, faltantes o equivocados, y cómo se resolvió cada una.",
+      "members": "Quién tiene qué nivel y hasta cuándo.",
+      "membership_cards": "Todas las tarjetas emitidas por esta tienda y qué fue de ellas."
     },
     "gift_cards": {
       "batch_autocomplete": {
@@ -6116,8 +6122,6 @@
       "everywhere": "En todos lados"
     },
     "members": {
-      "title": "Miembros",
-      "help": "Quién tiene qué nivel y hasta cuándo.",
       "search_placeholder": "Buscar miembros",
       "empty": "Todavía no hay membresías. Un miembro aparece aquí cuando se activa una tarjeta.",
       "open_ended": "Sin fin",
@@ -6141,8 +6145,6 @@
       }
     },
     "membership_cards": {
-      "title": "Tarjetas de membresía",
-      "help": "Todas las tarjetas emitidas por esta tienda y qué fue de ellas.",
       "search_placeholder": "Buscar tarjetas",
       "empty": "Todavía no hay tarjetas.",
       "view_customer": "Ver cliente",
@@ -6178,6 +6180,10 @@
       "sheet": {
         "help": "Esta tarjeta y qué fue de ella.",
         "unavailable": "No se pudo cargar esta tarjeta."
+      },
+      "void_reason": {
+        "label": "Qué ocurrió",
+        "help": "Se guarda con la tarjeta por si alguien lo consulta. Opcional."
       }
     }
   }

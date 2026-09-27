@@ -33,6 +33,7 @@ module Spree
     has_one :card, class_name: 'Spree::MembershipCard', inverse_of: :membership, dependent: nil
 
     validates :customer_group_id, presence: true
+    validate :group_in_same_store
     validate :ends_after_starts
     validate :one_live_term_per_tier, on: :create
 
@@ -126,6 +127,16 @@ module Spree
     end
 
     private
+
+    # A term and its tier are one store's, so a pairing that reaches across
+    # stores is refused where it is written rather than published later as
+    # another store's tier name.
+    def group_in_same_store
+      return if customer_group.nil? || store_id.nil?
+      return if customer_group.store_id == store_id
+
+      errors.add(:customer_group, :invalid)
+    end
 
     def ends_after_starts
       return if starts_at.blank? || ends_at.blank? || ends_at >= starts_at

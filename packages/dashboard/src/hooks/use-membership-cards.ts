@@ -1,6 +1,16 @@
 import type { MembershipCard } from '@spree/admin-sdk'
-import { adminClient, useResourceMutation } from '@spree/dashboard-core'
+import { adminClient, useResourceKey, useResourceMutation } from '@spree/dashboard-core'
+import { useQuery } from '@tanstack/react-query'
 import i18n from 'i18next'
+
+/** One card, for the sheet a row opens. */
+export function useMembershipCard(id: string | undefined) {
+  return useQuery({
+    queryKey: useResourceKey('membership-cards', id ?? 'noop'),
+    queryFn: () => adminClient.membershipCards.get(id as string),
+    enabled: !!id,
+  })
+}
 
 /**
  * Voiding a card the customer cannot — a lost phone, a fraud report. The same

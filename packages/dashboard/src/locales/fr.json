@@ -2683,6 +2683,10 @@
       },
       "threshold": {
         "help": "Le montant qu’un client doit dépenser pour atteindre ce niveau. Laissez vide si le niveau est vendu ou attribué."
+      },
+      "filter": {
+        "placeholder": "Rechercher des niveaux…",
+        "empty": "Aucun niveau ne correspond"
       }
     },
     "nav": {
@@ -5534,7 +5538,9 @@
       "webhook_endpoints": "Où vos autres systèmes sont notifiés quand quelque chose se produit dans la boutique.",
       "returns": "Marchandises qui reviennent, de la demande au remboursement.",
       "exchanges": "Achats échangés contre une autre taille, une autre couleur ou un autre produit.",
-      "claims": "Livraisons qui ont mal tourné — articles endommagés, manquants ou erronés — et comment chacune a été résolue."
+      "claims": "Livraisons qui ont mal tourné — articles endommagés, manquants ou erronés — et comment chacune a été résolue.",
+      "members": "Qui détient quel niveau, et jusqu’à quand.",
+      "membership_cards": "Toutes les cartes émises par cette boutique, et ce qu’elles sont devenues."
     },
     "tax_categories": {
       "add_cta": "Ajouter une catégorie de taxe",
@@ -6141,8 +6147,6 @@
       }
     },
     "members": {
-      "title": "Membres",
-      "help": "Qui détient quel niveau, et jusqu’à quand.",
       "search_placeholder": "Rechercher des membres",
       "empty": "Pas encore d’adhésions. Un membre apparaît ici dès qu’une carte est activée.",
       "open_ended": "Sans fin",
@@ -6166,8 +6170,6 @@
       }
     },
     "membership_cards": {
-      "title": "Cartes de membre",
-      "help": "Toutes les cartes émises par cette boutique, et ce qu’elles sont devenues.",
       "search_placeholder": "Rechercher des cartes",
       "empty": "Pas encore de cartes.",
       "view_customer": "Voir le client",
@@ -6203,6 +6205,10 @@
       "sheet": {
         "help": "Cette carte et ce qu’elle est devenue.",
         "unavailable": "Cette carte n’a pas pu être chargée."
+      },
+      "void_reason": {
+        "label": "Ce qui s’est passé",
+        "help": "Conservé avec la carte pour qui le demandera. Facultatif."
       }
     }
   }

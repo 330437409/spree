@@ -318,6 +318,19 @@ RSpec.describe 'the membership operator reads', type: :request do
       expect(response.parsed_body['data'].map { |row| row['customer_group_id'] }).to eq([group.prefixed_id])
     end
 
+    # What a picker hydrates by: the ladder narrowed to the tiers a filter
+    # already names, which is how a chip keeps its label after a reload.
+    it 'narrows the ladder to the groups it is asked for' do
+      other_group = create(:customer_group, store: store, name: '普通会员')
+      create(:membership_tier_setting, customer_group: other_group, rank: 2)
+
+      get '/api/v3/admin/membership_tiers', headers: headers,
+                                            params: { q: { customer_group_id_in: [group.id] } }
+
+      expect(response.parsed_body['data'].map { |row| row['customer_group_id'] }).
+        to eq([group.prefixed_id])
+    end
+
     # A tier of another store is not this store's ladder.
     it 'answers nothing for a store that runs none' do
       other_store = create(:store)

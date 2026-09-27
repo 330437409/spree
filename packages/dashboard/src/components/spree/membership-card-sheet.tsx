@@ -1,10 +1,12 @@
-import { adminClient, Subject, usePermissions, useResourceKey } from '@spree/dashboard-core'
+import { Subject, usePermissions } from '@spree/dashboard-core'
 import {
   Button,
   Card,
   CardContent,
   DetailList,
   DetailRow,
+  Field,
+  FieldLabel,
   RelativeTime,
   Sheet,
   SheetContent,
@@ -13,13 +15,14 @@ import {
   SheetTitle,
   Skeleton,
   StatusBadge,
+  Textarea,
   useConfirm,
 } from '@spree/dashboard-ui'
-import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useRecycleMembershipCard } from '../../hooks/use-membership-cards'
-import { tierName } from '../../lib/membership'
+import { useMembershipCard, useRecycleMembershipCard } from '../../hooks/use-membership-cards'
+import { cardEndsAt, tierName } from '../../lib/membership'
 
 /**
  * One card: whose it is, what it grants, where it came from and what became of
@@ -40,13 +43,15 @@ export function MembershipCardSheet({
   const confirm = useConfirm()
   const recycle = useRecycleMembershipCard()
 
-  const { data: card, isLoading } = useQuery({
-    queryKey: useResourceKey('membership-cards', cardId),
-    queryFn: () => adminClient.membershipCards.get(cardId),
-  })
+  const { data: card, isLoading } = useMembershipCard(cardId)
+
+  const [reason, setReason] = useState('')
 
   const canVoid = permissions.can('update', Subject.MembershipCard)
-  const endsAt = (card?.membership as { ends_at?: string | null } | null)?.ends_at
+  const endsAt = card ? cardEndsAt(card) : null
+  // Only the states the server will actually void: a card already given back,
+  // or one nobody activated in time, is refused there.
+  const voidable = card?.status === 'dormant' || card?.status === 'active'
 
   async function handleVoid() {
     if (!card) return
@@ -64,7 +69,9 @@ export function MembershipCardSheet({
     })
     if (!ok) return
 
-    await recycle.mutateAsync({ id: card.id }).catch(() => undefined)
+    await recycle
+      .mutateAsync({ id: card.id, reason: reason.trim() || undefined })
+      .catch(() => undefined)
   }
 
   return (
@@ -104,12 +111,14 @@ export function MembershipCardSheet({
                       label={t('admin.membership_cards.columns.activated_at')}
                       value={card.activated_at ? <RelativeTime iso={card.activated_at} /> : '—'}
                     />
-                    <DetailRow
-                      label={t('admin.membership_cards.activate_before')}
-                      value={
-                        card.activates_before ? <RelativeTime iso={card.activates_before} /> : '—'
-                      }
-                    />
+                    {/* Only a card nobody activated has a deadline still ahead
+                        of it; what one was given stays on the row as history. */}
+                    {card.status === 'dormant' && card.activates_before && (
+                      <DetailRow
+                        label={t('admin.membership_cards.activate_before')}
+                        value={<RelativeTime iso={card.activates_before} />}
+                      />
+                    )}
                     <DetailRow
                       label={t('admin.membership_cards.columns.expires_at')}
                       value={endsAt ? <RelativeTime iso={endsAt} /> : '—'}
@@ -130,16 +139,31 @@ export function MembershipCardSheet({
                 {t('admin.membership_cards.view_customer')}
               </Link>
 
-              {canVoid && card.status !== 'recycled' && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="self-start text-destructive"
-                  disabled={recycle.isPending}
-                  onClick={handleVoid}
-                >
-                  {t('admin.membership_cards.void_cta')}
-                </Button>
+              {canVoid && voidable && (
+                <div className="flex flex-col gap-2">
+                  <Field>
+                    <FieldLabel htmlFor="membership-card-void-reason">
+                      {t('admin.membership_cards.void_reason.label')}
+                    </FieldLabel>
+                    <Textarea
+                      id="membership-card-void-reason"
+                      value={reason}
+                      onChange={(event) => setReason(event.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {t('admin.membership_cards.void_reason.help')}
+                    </p>
+                  </Field>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="self-start text-destructive"
+                    disabled={recycle.isPending}
+                    onClick={handleVoid}
+                  >
+                    {t('admin.membership_cards.void_cta')}
+                  </Button>
+                </div>
               )}
             </>
           ) : (

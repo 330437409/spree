@@ -3,16 +3,16 @@ import { defineTable } from '@spree/dashboard-core'
 import { RelativeTime, ResourceNameCell, StatusBadge } from '@spree/dashboard-ui'
 import { CreditCardIcon } from '@spree/dashboard-ui/icons'
 import i18n from 'i18next'
-import { customerGroupAutocompleteProps } from '../hooks/use-customer-groups'
-import { tierName } from '../lib/membership'
+import { membershipTierFilterProps } from '../hooks/use-membership-tiers'
+import { cardEndsAt, tierName } from '../lib/membership'
 
 /** A card's own vocabulary, in the order a support desk reads it. */
 const CARD_STATUSES = ['active', 'dormant', 'recycled', 'expired'] as const
 const CARD_SOURCES = ['purchase', 'grant'] as const
 
 defineTable<MembershipCard>('membership-cards', {
-  title: i18n.t('admin.membership_cards.title'),
-  description: i18n.t('admin.membership_cards.help'),
+  title: i18n.t('admin.nav.membership_cards'),
+  description: i18n.t('admin.table_descriptions.membership_cards'),
   searchParam: 'customer_email_cont',
   searchPlaceholder: i18n.t('admin.membership_cards.search_placeholder'),
   defaultSort: { field: 'created_at', direction: 'desc' },
@@ -37,7 +37,7 @@ defineTable<MembershipCard>('membership-cards', {
       ransackAttribute: 'customer_group_id',
       filterable: true,
       filterType: 'resource',
-      filterResource: customerGroupAutocompleteProps('membership-card-tier-filter'),
+      filterResource: membershipTierFilterProps('membership-card-tier-filter'),
       default: true,
       render: (card) => tierName(card.tier),
     },
@@ -86,7 +86,7 @@ defineTable<MembershipCard>('membership-cards', {
       // The window the card's own activation bought, read off the term it
       // started — a dormant card has none yet.
       render: (card) => {
-        const endsAt = (card.membership as { ends_at?: string | null } | null)?.ends_at
+        const endsAt = cardEndsAt(card)
 
         return endsAt ? <RelativeTime iso={endsAt} /> : '—'
       },

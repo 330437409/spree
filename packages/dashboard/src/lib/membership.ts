@@ -12,3 +12,8 @@ export interface MembershipTierRef {
 export function tierName(tier: Record<string, unknown> | null | undefined): string {
   return (tier as MembershipTierRef | null | undefined)?.name ?? '—'
 }
+
+/** The instant a card's term ends, when it started one. */
+export function cardEndsAt(card: { membership?: Record<string, unknown> | null }): string | null {
+  return (card.membership as { ends_at?: string | null } | null)?.ends_at ?? null
+}

@@ -13,6 +13,16 @@ RSpec.describe Spree::Membership, type: :model do
     expect(membership.card).to be_nil
   end
 
+  # A term and its tier are one store's. Without this, a pairing written from
+  # two stores — an import, a console — would publish another store's tier name
+  # on this store's members list.
+  it 'refuses a group from another store' do
+    other_group = create(:customer_group, store: create(:store))
+
+    expect(build(:membership, customer: customer, customer_group: other_group, store: store)).
+      not_to be_valid
+  end
+
   # One live term per customer per tier: a customer on two tiers is priced by
   # whichever catalogue sits lower, silently.
   it 'refuses a second live term on the same tier' do

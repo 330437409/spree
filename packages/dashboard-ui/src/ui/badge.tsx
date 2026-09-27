@@ -93,6 +93,12 @@ const statusToneMap: Record<string, StatusTone> = {
   unsupported: 'neutral',
   revoked: 'destructive',
   expired: 'destructive',
+  // Membership states: a card waiting to be activated is on its way, a term in
+  // its grace window is the one a support desk is looking for, and a card given
+  // back is history rather than a fault.
+  dormant: 'info',
+  past_due: 'warning',
+  recycled: 'neutral',
   ready: 'warning',
   available: 'success',
   // Stock states, as the Inventory page's filter names them: sellable is

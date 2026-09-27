@@ -3,15 +3,15 @@ import { defineTable } from '@spree/dashboard-core'
 import { RelativeTime, ResourceNameCell, StatusBadge } from '@spree/dashboard-ui'
 import { UsersIcon } from '@spree/dashboard-ui/icons'
 import i18n from 'i18next'
-import { customerGroupAutocompleteProps } from '../hooks/use-customer-groups'
+import { membershipTierFilterProps } from '../hooks/use-membership-tiers'
 import { tierName } from '../lib/membership'
 
 /** A term's own vocabulary, in the order it is worth reading. */
 const TERM_STATUSES = ['active', 'past_due', 'pending', 'expired', 'cancelled'] as const
 
 defineTable<Membership>('members', {
-  title: i18n.t('admin.members.title'),
-  description: i18n.t('admin.members.help'),
+  title: i18n.t('admin.nav.members'),
+  description: i18n.t('admin.table_descriptions.members'),
   // The question a support desk asks is the one a customer can answer: the
   // address they wrote in with.
   searchParam: 'customer_email_cont',
@@ -40,7 +40,7 @@ defineTable<Membership>('members', {
       ransackAttribute: 'customer_group_id',
       filterable: true,
       filterType: 'resource',
-      filterResource: customerGroupAutocompleteProps('member-tier-filter'),
+      filterResource: membershipTierFilterProps('member-tier-filter'),
       default: true,
       render: (term) => tierName(term.tier),
     },
