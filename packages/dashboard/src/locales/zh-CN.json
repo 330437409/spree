@@ -6236,7 +6236,9 @@
       "messages": {
         "saved": "横幅已保存",
         "save_failed": "横幅保存失败"
-      }
+      },
+      "unavailable": "无法读取这个横幅。",
+      "unavailable_help": "请刷新页面。目前没有任何改动。"
     }
   }
 }

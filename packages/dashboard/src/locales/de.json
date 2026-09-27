@@ -6249,7 +6249,9 @@
       "messages": {
         "saved": "Banner gespeichert",
         "save_failed": "Der Banner konnte nicht gespeichert werden"
-      }
+      },
+      "unavailable": "Dieser Banner konnte nicht geladen werden.",
+      "unavailable_help": "Bitte die Seite neu laden. Es wurde nichts geändert."
     }
   }
 }

@@ -327,6 +327,12 @@ function BannerLink({ storeId, groupId }: { storeId: string; groupId: string }) 
   )
 }
 
+/** The two pages a tier has of its own, as the literals the router types against. */
+const TIER_PAGES = {
+  rights: '/$storeId/loyalty/memberships/$groupId/rights',
+  banner: '/$storeId/loyalty/memberships/$groupId/banner',
+} as const
+
 /**
  * What the tier carries, and the way to it: the two things edited on pages of
  * their own — the rights it grants and the banner its members open on.
@@ -353,7 +359,7 @@ function TierDetailLink({
         <span>{label}</span>
       </div>
       <Link
-        to={`/$storeId/loyalty/memberships/$groupId/${path}` as never}
+        to={TIER_PAGES[path]}
         params={{ storeId, groupId }}
         className="text-sm font-medium text-primary hover:underline"
       >

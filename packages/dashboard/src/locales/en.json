@@ -6249,7 +6249,9 @@
       "messages": {
         "saved": "Banner saved",
         "save_failed": "The banner could not be saved"
-      }
+      },
+      "unavailable": "This banner could not be read.",
+      "unavailable_help": "Reload the page. Nothing was changed."
     }
   }
 }

@@ -2,6 +2,7 @@ import type {
   MembershipBanner,
   MembershipBannerCreateParams,
   MembershipBannerUpdateParams,
+  SpreeError,
 } from '@spree/admin-sdk'
 import { adminClient, useResourceKey, useResourceMutation } from '@spree/dashboard-core'
 import { useQuery } from '@tanstack/react-query'
@@ -14,7 +15,18 @@ import i18n from 'i18next'
 export function useMembershipBanner(groupId: string | undefined) {
   return useQuery({
     queryKey: useResourceKey('customer-groups', groupId ?? 'noop', 'banner'),
-    queryFn: () => adminClient.customerGroups.banner.get(groupId as string).catch(() => null),
+    // A tier with no banner answers 404, which is a state; anything else is a
+    // read that failed, and showing an empty editor for it would invite an
+    // operator to write over a banner nobody could see.
+    queryFn: async () => {
+      try {
+        return await adminClient.customerGroups.banner.get(groupId as string)
+      } catch (error) {
+        if ((error as SpreeError)?.status === 404) return null
+
+        throw error
+      }
+    },
     enabled: !!groupId,
   })
 }
@@ -36,5 +48,8 @@ export function useSaveMembershipBanner(groupId: string) {
     invalidate: [['customer-groups', groupId, 'banner']],
     successMessage: i18n.t('admin.membership_banners.messages.saved'),
     errorMessage: i18n.t('admin.membership_banners.messages.save_failed'),
+    // The page's own checks mirror the model's; what it refuses on its own
+    // terms is said out loud rather than toasted away.
+    showValidationErrors: true,
   })
 }

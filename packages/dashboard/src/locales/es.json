@@ -6224,7 +6224,9 @@
       "messages": {
         "saved": "Banner guardado",
         "save_failed": "No se pudo guardar el banner"
-      }
+      },
+      "unavailable": "No se pudo cargar este banner.",
+      "unavailable_help": "Recarga la página. No se ha cambiado nada."
     }
   }
 }

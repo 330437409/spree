@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatAreaRem, NEW_AREA_BOX, parseAreaRem, toAreas } from './banner-areas'
+import { formatAreaRem, NEW_AREA_BOX, parseAreaRem, toAreas, toBannerArea } from './banner-areas'
 
 describe('parseAreaRem', () => {
   it('reads the coordinates the client writes', () => {
@@ -45,11 +45,30 @@ describe('formatAreaRem', () => {
   })
 })
 
+describe('toBannerArea', () => {
+  it('writes the row without the editor’s own key', () => {
+    expect(
+      toBannerArea({
+        key: 'k1',
+        area_rem: 'left: 1rem;',
+        link: ' /pages/member/index ',
+        name: ' 会员中心 ',
+      }),
+    ).toEqual({ area_rem: 'left: 1rem;', link: '/pages/member/index', name: '会员中心' })
+  })
+
+  it('answers a note nobody wrote as nothing', () => {
+    expect(
+      toBannerArea({ key: 'k2', area_rem: 'left: 2rem;', link: '/a', name: '   ' }).name,
+    ).toBeNull()
+  })
+})
+
 describe('toAreas', () => {
   it('holds what a payload carried, and a target nobody wrote as blanks', () => {
     expect(
       toAreas([{ area_rem: 'left: 1rem;', link: '/a', name: '左上' }, { area_rem: 12 }]),
-    ).toEqual([
+    ).toMatchObject([
       { area_rem: 'left: 1rem;', link: '/a', name: '左上' },
       { area_rem: '12', link: '', name: null },
     ])

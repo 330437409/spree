@@ -6249,7 +6249,9 @@
       "messages": {
         "saved": "Bannière enregistrée",
         "save_failed": "La bannière n’a pas pu être enregistrée"
-      }
+      },
+      "unavailable": "Cette bannière n’a pas pu être chargée.",
+      "unavailable_help": "Rechargez la page. Rien n’a été modifié."
     }
   }
 }
