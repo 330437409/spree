@@ -209,8 +209,16 @@ module Spree
 
     private
 
+    before_validation :place_at_the_end_of_the_ladder, on: :create, if: -> { rank.nil? }
     before_save :apply_member_discount
     after_destroy :switch_off_member_price
+
+    # A tier nobody placed lands at the end of the ladder. The order is the
+    # operator's and they arrange it by dragging it, so a fresh rung is the
+    # last one until they move it — there is no number for them to type.
+    def place_at_the_end_of_the_ladder
+      self.rank = self.class.for_store(store).maximum(:rank).to_i + 1
+    end
 
     # The member price lives on a catalogue and its owned list, so writing it is
     # a service rather than a column (Design Details, "Member pricing is the

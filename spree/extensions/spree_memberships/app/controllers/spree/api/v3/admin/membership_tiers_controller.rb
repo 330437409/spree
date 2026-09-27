@@ -14,6 +14,38 @@ module Spree
         class MembershipTiersController < ResourceController
           scoped_resource :memberships
 
+          # PATCH /api/v3/admin/membership_tiers/:id/reposition
+          #
+          # The ladder's order is the operator's and they arrange it by
+          # dragging a rung, so a move carries the position it was dropped at
+          # rather than a rank somebody kept in step: the service settles the
+          # store's whole ladder into 1..n in one transaction
+          # (`Spree::Memberships::RepositionTier`).
+          def reposition
+            tier = find_resource
+            authorize! :update, tier
+
+            position = integer_param(:new_position)
+            return render_invalid_position if position.nil?
+
+            result = Spree::Memberships::RepositionTier.call(
+              tier_setting: tier, new_position: position
+            )
+            unless result.success?
+              # The service's own words: a rung whose store cannot be reached is
+              # something the operator can be told, and this gem already names it
+              # (`config/locales/en.yml`, `memberships.errors`).
+              return render_error(
+                code: ERROR_CODES[:validation_error],
+                message: Spree.t(result.error, scope: 'memberships.errors',
+                                               default: 'This tier could not be moved.'),
+                status: :unprocessable_content
+              )
+            end
+
+            render json: serialize_resource(tier.reload)
+          end
+
           protected
 
           def model_class

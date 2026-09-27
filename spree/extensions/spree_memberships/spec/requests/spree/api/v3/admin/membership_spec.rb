@@ -134,10 +134,12 @@ RSpec.describe 'the membership operator reads', type: :request do
 
     it 'creates and updates it once the group is a tier' do
       post "/api/v3/admin/customer_groups/#{group.prefixed_id}/tier_setting", headers: headers,
-           params: { rank: 2, threshold: 500, validity_days: 365 }
+           params: { threshold: 500, validity_days: 365 }
 
-            expect(response).to have_http_status(:created)
-      expect(response.parsed_body).to include('rank' => 2, 'threshold' => '500.0', 'validity_days' => 365)
+      expect(response).to have_http_status(:created)
+      # The rung a fresh tier takes is the ladder's own: a tier nobody has
+      # dragged is the last one.
+      expect(response.parsed_body).to include('rank' => 1, 'threshold' => '500.0', 'validity_days' => 365)
       # The operator reads the figure in the store's own currency, and a tier
       # that asks for nothing answers nothing rather than zero.
       expect(response.parsed_body['display_threshold']).to include('500')
@@ -152,7 +154,7 @@ RSpec.describe 'the membership operator reads', type: :request do
       create(:membership_tier_setting, customer_group: group)
 
       post "/api/v3/admin/customer_groups/#{group.prefixed_id}/tier_setting", headers: headers,
-           params: { rank: 3 }
+           params: { threshold: 300 }
 
       expect(response).to have_http_status(:unprocessable_content)
     end
@@ -161,7 +163,7 @@ RSpec.describe 'the membership operator reads', type: :request do
     # with the tier and read back from it.
     it 'takes the savings copy with the tier, and answers it back' do
       post "/api/v3/admin/customer_groups/#{group.prefixed_id}/tier_setting", headers: headers,
-           params: { rank: 2, preferences: { saving_order_title: '下单立省', saving_month_amount: 12.5 } }
+           params: { preferences: { saving_order_title: '下单立省', saving_month_amount: 12.5 } }
 
       expect(response).to have_http_status(:created)
       expect(response.parsed_body['preferences']).to include('saving_order_title' => '下单立省')
@@ -179,7 +181,7 @@ RSpec.describe 'the membership operator reads', type: :request do
     # visit the catalogues page to say what a tier gives its members.
     it 'takes a member price with the tier, and answers it back' do
       post "/api/v3/admin/customer_groups/#{group.prefixed_id}/tier_setting", headers: headers,
-           params: { rank: 2, member_discount_percentage: 10 }
+           params: { member_discount_percentage: 10 }
 
       expect(response).to have_http_status(:created)
       expect(response.parsed_body).to include('member_discount_percentage' => '10.0')
@@ -273,6 +275,62 @@ RSpec.describe 'the membership operator reads', type: :request do
       get '/api/v3/admin/membership_tiers', headers: headers
 
       expect(response.parsed_body['data'].map { |row| row['id'] }).to eq([top.prefixed_id])
+    end
+  end
+
+  # The ladder is arranged by dragging a rung, so a move carries the position
+  # it was dropped at and the server settles every rank behind it.
+  describe 'PATCH /api/v3/admin/membership_tiers/:id/reposition' do
+    let!(:top) { create(:membership_tier_setting, customer_group: group, rank: 9) }
+
+    it 'moves the rung and settles the ladder into its positions' do
+      middle = create(:membership_tier_setting, rank: 4,
+                                                customer_group: create(:customer_group, store: store))
+      bottom = create(:membership_tier_setting, rank: 7,
+                                                customer_group: create(:customer_group, store: store))
+
+      patch "/api/v3/admin/membership_tiers/#{top.prefixed_id}/reposition", headers: headers,
+            params: { new_position: 1 }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['rank']).to eq(1)
+
+      get '/api/v3/admin/membership_tiers', headers: headers
+
+      expect(response.parsed_body['data'].map { |row| [row['rank'], row['name']] }).
+        to eq([[1, group.name], [2, middle.name], [3, bottom.name]])
+    end
+
+    # A rung dropped past the end lands at the end rather than refused: the
+    # client counts rows it was shown, and a stale one is not an error.
+    it 'lands a rung dropped past the end at the end' do
+      create(:membership_tier_setting, rank: 1, customer_group: create(:customer_group, store: store))
+
+      patch "/api/v3/admin/membership_tiers/#{top.prefixed_id}/reposition", headers: headers,
+            params: { new_position: 99 }
+
+      expect(response).to have_http_status(:ok)
+      expect(top.reload.rank).to eq(2)
+    end
+
+    it 'refuses a position that is not a number' do
+      patch "/api/v3/admin/membership_tiers/#{top.prefixed_id}/reposition", headers: headers,
+            params: { new_position: 'first' }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(top.reload.rank).to eq(9)
+    end
+
+    it 'answers 404 for a tier of another store' do
+      elsewhere = create(:membership_tier_setting,
+                         customer_group: create(:customer_group, store: create(:store)))
+      rank = elsewhere.rank
+
+      patch "/api/v3/admin/membership_tiers/#{elsewhere.prefixed_id}/reposition", headers: headers,
+            params: { new_position: 1 }
+
+      expect(response).to have_http_status(:not_found)
+      expect(elsewhere.reload.rank).to eq(rank)
     end
   end
 end

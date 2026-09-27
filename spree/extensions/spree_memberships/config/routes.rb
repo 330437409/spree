@@ -83,8 +83,15 @@ Spree::Core::Engine.add_routes do
         end
 
         # The ladder the operator arranges, read as one: each tier with the group
-        # its settings and rights are addressed by.
-        resources :membership_tiers, only: [:index]
+        # its settings and rights are addressed by. A move is its own action
+        # rather than a rank written through an update, because arranging the
+        # ladder settles every rung's rank at once
+        # (`Spree::Memberships::RepositionTier`).
+        resources :membership_tiers, only: [:index] do
+          member do
+            patch :reposition
+          end
+        end
 
         # A tier is a customer group, so its settings and its rights hang from
         # the group the operator already manages.
