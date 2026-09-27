@@ -6210,6 +6210,46 @@
         "label": "What happened",
         "help": "Kept with the card for whoever asks later. Optional."
       }
+    },
+    "membership_banners": {
+      "title": "Banner",
+      "edit_cta": "Edit banner",
+      "picture": {
+        "title": "The picture",
+        "help": "What members see at the top of the member centre. A URL: the client draws it as a background image, so it can come from your own CDN."
+      },
+      "targets": {
+        "title": "Tap targets",
+        "help": "Placed on the picture, in the units the mini program lays it out in — what you place is what renders."
+      },
+      "fields": {
+        "pic": {
+          "label": "Picture URL",
+          "placeholder": "https://…"
+        },
+        "name": {
+          "label": "Name"
+        },
+        "link": {
+          "label": "Opens",
+          "placeholder": "/pages/member/index"
+        }
+      },
+      "no_picture": "Add a picture URL to lay targets over it.",
+      "editor_help": "Drag a target to move it, its corner to resize it, or the arrow keys to nudge it.",
+      "target_label": "Target {{position}}",
+      "add_cta": "Add target",
+      "remove_cta": "Remove target",
+      "remove_confirm": {
+        "title": "Remove this target?",
+        "message": "The picture stays; only this tap target goes."
+      },
+      "unlinkable_area": "Every target needs a link: it is what a tap opens.",
+      "read_only": "Your role can read this banner but not change it.",
+      "messages": {
+        "saved": "Banner saved",
+        "save_failed": "The banner could not be saved"
+      }
     }
   }
 }

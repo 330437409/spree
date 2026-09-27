@@ -6210,6 +6210,46 @@
         "label": "Was vorgefallen ist",
         "help": "Wird bei der Karte vermerkt. Optional."
       }
+    },
+    "membership_banners": {
+      "title": "Banner",
+      "edit_cta": "Banner bearbeiten",
+      "picture": {
+        "title": "Das Bild",
+        "help": "Was Mitglieder oben im Mitgliederbereich sehen. Eine URL: der Client zeichnet sie als Hintergrundbild, sie darf also vom eigenen CDN kommen."
+      },
+      "targets": {
+        "title": "Tippflächen",
+        "help": "Direkt auf dem Bild platziert, in den Einheiten, in denen die Mini-App rechnet — was Sie platzieren, wird so gerendert."
+      },
+      "fields": {
+        "pic": {
+          "label": "Bild-URL",
+          "placeholder": "https://…"
+        },
+        "name": {
+          "label": "Name"
+        },
+        "link": {
+          "label": "Öffnet",
+          "placeholder": "/pages/member/index"
+        }
+      },
+      "no_picture": "Bild-URL eintragen, dann lassen sich Flächen darauf platzieren.",
+      "editor_help": "Fläche ziehen zum Verschieben, an der Ecke zum Größenändern, oder mit den Pfeiltasten verschieben.",
+      "target_label": "Fläche {{position}}",
+      "add_cta": "Fläche hinzufügen",
+      "remove_cta": "Fläche entfernen",
+      "remove_confirm": {
+        "title": "Diese Fläche entfernen?",
+        "message": "Das Bild bleibt; nur diese Tippfläche verschwindet."
+      },
+      "unlinkable_area": "Jede Fläche braucht ein Ziel: es ist das, was ein Tipp öffnet.",
+      "read_only": "Ihre Rolle darf diesen Banner lesen, aber nicht ändern.",
+      "messages": {
+        "saved": "Banner gespeichert",
+        "save_failed": "Der Banner konnte nicht gespeichert werden"
+      }
     }
   }
 }

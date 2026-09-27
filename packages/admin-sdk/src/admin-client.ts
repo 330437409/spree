@@ -294,6 +294,8 @@ import type {
   MediaLibraryCreateParams,
   MediaUpdateParams,
   MediaUsageReference,
+  MembershipBannerCreateParams,
+  MembershipBannerUpdateParams,
   MembershipCardRecycleParams,
   MembershipRightCreateParams,
   MembershipRightUpdateParams,
@@ -453,6 +455,7 @@ import type {
   Market,
   Media,
   Membership,
+  MembershipBanner,
   MembershipCard,
   MembershipRight,
   MembershipTier,
@@ -3099,6 +3102,36 @@ export class AdminClient {
         options?: RequestOptions,
       ): Promise<MembershipTierSetting> =>
         this.request<MembershipTierSetting>('PATCH', `/customer_groups/${groupId}/tier_setting`, {
+          ...options,
+          body: params,
+        }),
+    },
+
+    /**
+     * The banner the tier's members see at the top of the member centre: the
+     * picture, and the tap targets laid over it. One per tier, so it is written
+     * the way the tier's settings row is.
+     */
+    banner: {
+      get: (groupId: string, options?: RequestOptions): Promise<MembershipBanner> =>
+        this.request<MembershipBanner>('GET', `/customer_groups/${groupId}/banner`, options),
+
+      create: (
+        groupId: string,
+        params: MembershipBannerCreateParams,
+        options?: RequestOptions,
+      ): Promise<MembershipBanner> =>
+        this.request<MembershipBanner>('POST', `/customer_groups/${groupId}/banner`, {
+          ...options,
+          body: params,
+        }),
+
+      update: (
+        groupId: string,
+        params: MembershipBannerUpdateParams,
+        options?: RequestOptions,
+      ): Promise<MembershipBanner> =>
+        this.request<MembershipBanner>('PATCH', `/customer_groups/${groupId}/banner`, {
           ...options,
           body: params,
         }),

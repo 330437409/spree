@@ -26,7 +26,7 @@ import {
   Skeleton,
   Switch,
 } from '@spree/dashboard-ui'
-import { SparklesIcon } from '@spree/dashboard-ui/icons'
+import { ImageIcon, SparklesIcon } from '@spree/dashboard-ui/icons'
 import { Link } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
@@ -262,6 +262,7 @@ export function MembershipTierSheet({
                 )}
 
                 <RightsLink storeId={storeId} groupId={groupId} count={setting.rights_total} />
+                <BannerLink storeId={storeId} groupId={groupId} />
               </>
             )}
           </div>
@@ -299,17 +300,64 @@ function RightsLink({
   const { t } = useTranslation()
 
   return (
+    <TierDetailLink
+      storeId={storeId}
+      groupId={groupId}
+      path="rights"
+      icon={<SparklesIcon className="size-4 text-muted-foreground" />}
+      label={t('admin.membership_rights.count', { count })}
+      cta={t('admin.membership_rights.manage')}
+    />
+  )
+}
+
+/** The banner those members see, and the way to it. */
+function BannerLink({ storeId, groupId }: { storeId: string; groupId: string }) {
+  const { t } = useTranslation()
+
+  return (
+    <TierDetailLink
+      storeId={storeId}
+      groupId={groupId}
+      path="banner"
+      icon={<ImageIcon className="size-4 text-muted-foreground" />}
+      label={t('admin.membership_banners.title')}
+      cta={t('admin.membership_banners.edit_cta')}
+    />
+  )
+}
+
+/**
+ * What the tier carries, and the way to it: the two things edited on pages of
+ * their own — the rights it grants and the banner its members open on.
+ */
+function TierDetailLink({
+  storeId,
+  groupId,
+  path,
+  icon,
+  label,
+  cta,
+}: {
+  storeId: string
+  groupId: string
+  path: 'rights' | 'banner'
+  icon: React.ReactNode
+  label: string
+  cta: string
+}) {
+  return (
     <div className="flex items-center justify-between rounded-md border bg-muted/40 px-3 py-2">
       <div className="flex items-center gap-2 text-sm">
-        <SparklesIcon className="size-4 text-muted-foreground" />
-        <span>{t('admin.membership_rights.count', { count })}</span>
+        {icon}
+        <span>{label}</span>
       </div>
       <Link
-        to="/$storeId/loyalty/memberships/$groupId/rights"
+        to={`/$storeId/loyalty/memberships/$groupId/${path}` as never}
         params={{ storeId, groupId }}
         className="text-sm font-medium text-primary hover:underline"
       >
-        {t('admin.membership_rights.manage')}
+        {cta}
       </Link>
     </div>
   )
