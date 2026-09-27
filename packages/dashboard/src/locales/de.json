@@ -2717,9 +2717,11 @@
       "inventory": "Lagerbestand",
       "suppliers": "Lieferanten",
       "loyalty": "Treue",
-      "memberships": "Mitgliedschaften",
+      "memberships": "Mitgliedsstufen",
       "store_credits": "Guthaben",
-      "commission_rates": "Provisionssätze"
+      "commission_rates": "Provisionssätze",
+      "members": "Mitglieder",
+      "membership_cards": "Mitgliedskarten"
     },
     "option_types": {
       "columns": {
@@ -6136,6 +6138,71 @@
       "no_customer": "Kein Kunde",
       "page": {
         "subtitle": "Was der Shop an Guthaben schuldet, über alle Kunden hinweg."
+      }
+    },
+    "members": {
+      "title": "Mitglieder",
+      "help": "Wer welche Stufe hält – und bis wann.",
+      "search_placeholder": "Mitglieder suchen",
+      "empty": "Noch keine Mitgliedschaften. Ein Mitglied erscheint hier, sobald eine Karte aktiviert ist.",
+      "open_ended": "Kein Ende",
+      "view_customer": "Kunde ansehen",
+      "columns": {
+        "customer": "Mitglied",
+        "tier": "Stufe",
+        "starts_at": "Beginnt",
+        "ends_at": "Endet"
+      },
+      "status": {
+        "active": "Aktiv",
+        "past_due": "In der Nachfrist",
+        "pending": "Beginnt später",
+        "expired": "Abgelaufen",
+        "cancelled": "Storniert"
+      },
+      "sheet": {
+        "help": "Diese Mitgliedschaft und ihr Stand.",
+        "unavailable": "Diese Mitgliedschaft konnte nicht geladen werden."
+      }
+    },
+    "membership_cards": {
+      "title": "Mitgliedskarten",
+      "help": "Alle Karten dieses Shops und was aus ihnen wurde.",
+      "search_placeholder": "Karten suchen",
+      "empty": "Noch keine Karten.",
+      "view_customer": "Kunde ansehen",
+      "void_cta": "Karte stornieren",
+      "activate_before": "Aktivieren bis",
+      "giftable": "Kann verschenkt werden",
+      "columns": {
+        "customer": "Kunde",
+        "tier": "Stufe",
+        "source": "Herkunft",
+        "activated_at": "Aktiviert",
+        "expires_at": "Läuft ab"
+      },
+      "status": {
+        "dormant": "Wartet auf Aktivierung",
+        "active": "Aktiv",
+        "recycled": "Storniert",
+        "expired": "Abgelaufen"
+      },
+      "source": {
+        "purchase": "Gekauft",
+        "grant": "Zugewiesen"
+      },
+      "void_confirm": {
+        "title": "Diese Karte stornieren?",
+        "confirm": "Karte stornieren",
+        "message": "{{customer}} behält die Tage, die andere Karten gewähren. Die Tage dieser Karte fallen zurück, und die Mitgliedschaft endet nur, wenn keine andere Karte sie hält."
+      },
+      "messages": {
+        "voided": "Karte storniert",
+        "void_failed": "Die Karte konnte nicht storniert werden"
+      },
+      "sheet": {
+        "help": "Diese Karte und was aus ihr wurde.",
+        "unavailable": "Diese Karte konnte nicht geladen werden."
       }
     }
   }

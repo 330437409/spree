@@ -87,6 +87,8 @@ export const Subject = {
   SellerTransfer: 'Spree::SellerTransfer',
   MembershipTierSetting: 'Spree::MembershipTierSetting',
   MembershipRight: 'Spree::MembershipRight',
+  MembershipCard: 'Spree::MembershipCard',
+  Membership: 'Spree::Membership',
 } as const
 
 export type SubjectName = (typeof Subject)[keyof typeof Subject] | string

@@ -4945,9 +4945,11 @@
       "inventory": "Inventario",
       "suppliers": "Proveedores",
       "loyalty": "Fidelización",
-      "memberships": "Membresías",
+      "memberships": "Niveles de membresía",
       "store_credits": "Créditos de tienda",
-      "commission_rates": "Tasas de comisión"
+      "commission_rates": "Tasas de comisión",
+      "members": "Miembros",
+      "membership_cards": "Tarjetas de membresía"
     },
     "tax_exemption_certificates": {
       "add_cta": "Agregar certificado",
@@ -6112,6 +6114,71 @@
     },
     "jurisdiction": {
       "everywhere": "En todos lados"
+    },
+    "members": {
+      "title": "Miembros",
+      "help": "Quién tiene qué nivel y hasta cuándo.",
+      "search_placeholder": "Buscar miembros",
+      "empty": "Todavía no hay membresías. Un miembro aparece aquí cuando se activa una tarjeta.",
+      "open_ended": "Sin fin",
+      "view_customer": "Ver cliente",
+      "columns": {
+        "customer": "Miembro",
+        "tier": "Nivel",
+        "starts_at": "Empieza",
+        "ends_at": "Termina"
+      },
+      "status": {
+        "active": "Activa",
+        "past_due": "En periodo de gracia",
+        "pending": "Aún no empieza",
+        "expired": "Caducada",
+        "cancelled": "Cancelada"
+      },
+      "sheet": {
+        "help": "Esta membresía y cómo va.",
+        "unavailable": "No se pudo cargar esta membresía."
+      }
+    },
+    "membership_cards": {
+      "title": "Tarjetas de membresía",
+      "help": "Todas las tarjetas emitidas por esta tienda y qué fue de ellas.",
+      "search_placeholder": "Buscar tarjetas",
+      "empty": "Todavía no hay tarjetas.",
+      "view_customer": "Ver cliente",
+      "void_cta": "Anular esta tarjeta",
+      "activate_before": "Activar antes de",
+      "giftable": "Se puede regalar",
+      "columns": {
+        "customer": "Cliente",
+        "tier": "Nivel",
+        "source": "Procedencia",
+        "activated_at": "Activada",
+        "expires_at": "Caduca"
+      },
+      "status": {
+        "dormant": "Pendiente de activar",
+        "active": "Activa",
+        "recycled": "Anulada",
+        "expired": "Caducada"
+      },
+      "source": {
+        "purchase": "Comprada",
+        "grant": "Otorgada"
+      },
+      "void_confirm": {
+        "title": "¿Anular esta tarjeta?",
+        "confirm": "Anular tarjeta",
+        "message": "{{customer}} conserva los días que otorgan sus otras tarjetas. Los de esta tarjeta se devuelven, y la membresía solo termina si ninguna otra tarjeta la sostiene."
+      },
+      "messages": {
+        "voided": "Tarjeta anulada",
+        "void_failed": "No se pudo anular la tarjeta"
+      },
+      "sheet": {
+        "help": "Esta tarjeta y qué fue de ella.",
+        "unavailable": "No se pudo cargar esta tarjeta."
+      }
     }
   }
 }

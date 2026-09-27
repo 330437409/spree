@@ -2735,9 +2735,11 @@
       "inventory": "المخزون",
       "suppliers": "الموردون",
       "loyalty": "الولاء",
-      "memberships": "العضويات",
+      "memberships": "مستويات العضوية",
       "store_credits": "أرصدة المتجر",
-      "commission_rates": "نسب العمولة"
+      "commission_rates": "نسب العمولة",
+      "members": "الأعضاء",
+      "membership_cards": "بطاقات العضوية"
     },
     "option_types": {
       "columns": {
@@ -6176,6 +6178,71 @@
       "no_customer": "بدون عميل",
       "page": {
         "subtitle": "ما يدين به المتجر من أرصدة مدفوعة مسبقًا لجميع العملاء."
+      }
+    },
+    "members": {
+      "title": "الأعضاء",
+      "help": "من يحمل أي مستوى، وإلى متى.",
+      "search_placeholder": "ابحث عن الأعضاء",
+      "empty": "لا توجد عضويات بعد. يظهر العضو هنا بعد تنشيط بطاقة.",
+      "open_ended": "بلا نهاية",
+      "view_customer": "عرض العميل",
+      "columns": {
+        "customer": "العضو",
+        "tier": "المستوى",
+        "starts_at": "يبدأ",
+        "ends_at": "ينتهي"
+      },
+      "status": {
+        "active": "نشطة",
+        "past_due": "في مهلة السماح",
+        "pending": "لم تبدأ بعد",
+        "expired": "منتهية",
+        "cancelled": "ملغاة"
+      },
+      "sheet": {
+        "help": "هذه العضوية وحالتها.",
+        "unavailable": "تعذّر تحميل هذه العضوية."
+      }
+    },
+    "membership_cards": {
+      "title": "بطاقات العضوية",
+      "help": "كل البطاقات التي أصدرها المتجر وما آلت إليه.",
+      "search_placeholder": "ابحث عن البطاقات",
+      "empty": "لا توجد بطاقات بعد.",
+      "view_customer": "عرض العميل",
+      "void_cta": "إبطال هذه البطاقة",
+      "activate_before": "التنشيط قبل",
+      "giftable": "قابلة للإهداء",
+      "columns": {
+        "customer": "العميل",
+        "tier": "المستوى",
+        "source": "المصدر",
+        "activated_at": "تاريخ التنشيط",
+        "expires_at": "تنتهي"
+      },
+      "status": {
+        "dormant": "بانتظار التنشيط",
+        "active": "نشطة",
+        "recycled": "مبطلة",
+        "expired": "منتهية"
+      },
+      "source": {
+        "purchase": "شراء",
+        "grant": "منح"
+      },
+      "void_confirm": {
+        "title": "إبطال هذه البطاقة؟",
+        "confirm": "إبطال البطاقة",
+        "message": "يحتفظ {{customer}} بالأيام التي منحتها بطاقاته الأخرى. تعود أيام هذه البطاقة، ولا تنتهي العضوية إلا إذا لم تكن هناك بطاقة أخرى تحملها."
+      },
+      "messages": {
+        "voided": "تم إبطال البطاقة",
+        "void_failed": "تعذّر إبطال البطاقة"
+      },
+      "sheet": {
+        "help": "هذه البطاقة وما آلت إليه.",
+        "unavailable": "تعذّر تحميل هذه البطاقة."
       }
     }
   }
