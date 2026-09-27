@@ -4839,6 +4839,29 @@
         "update_failed": "No se pudo guardar el beneficio",
         "deleted": "Beneficio quitado",
         "delete_failed": "No se pudo quitar el beneficio"
+      },
+      "count": {
+        "count_one": "{{count}} beneficio",
+        "count_other": "{{count}} beneficios"
+      },
+      "manage": "Gestionar beneficios",
+      "new": {
+        "title": "Agregar beneficio",
+        "help": "Elige el tipo de beneficio y luego indica qué otorga."
+      },
+      "edit": {
+        "help": "Qué otorga este beneficio y si los miembros lo ven."
+      },
+      "name": {
+        "help": "Se muestra a los miembros en lugar del nombre del tipo."
+      },
+      "status": {
+        "published": "Visible",
+        "draft": "Borrador"
+      },
+      "columns": {
+        "kind": "Tipo",
+        "published": "Visibilidad"
       }
     },
     "membership_tiers": {
@@ -4851,7 +4874,6 @@
         "empty": "Todavía no hay niveles. Un nivel es un grupo de clientes con lo que otorga."
       },
       "columns": {
-        "rank": "Rango",
         "validity_days": "Vigencia",
         "rights": "Beneficios"
       },
@@ -4863,7 +4885,8 @@
       },
       "settings": {
         "title": "El nivel",
-        "help": "Qué hace que un cliente acceda a este nivel y qué le da."
+        "help": "Qué hace que un cliente acceda a este nivel y qué le da.",
+        "unavailable": "No se pudo cargar este nivel."
       },
       "copy": {
         "title": "Lo que el nivel dice de sí mismo",
@@ -4889,6 +4912,9 @@
         "create_failed": "No se pudo crear el nivel",
         "updated": "Nivel guardado",
         "update_failed": "No se pudo guardar el nivel"
+      },
+      "threshold": {
+        "help": "Cuánto debe gastar un cliente para alcanzar este nivel. Déjalo vacío si el nivel se vende o se otorga."
       }
     },
     "nav": {

@@ -2611,6 +2611,29 @@
         "update_failed": "Impossible d’enregistrer l’avantage",
         "deleted": "Avantage retiré",
         "delete_failed": "Impossible de retirer l’avantage"
+      },
+      "count": {
+        "count_one": "{{count}} avantage",
+        "count_other": "{{count}} avantages"
+      },
+      "manage": "Gérer les avantages",
+      "new": {
+        "title": "Ajouter un avantage",
+        "help": "Choisissez le type d’avantage, puis indiquez ce qu’il accorde."
+      },
+      "edit": {
+        "help": "Ce que cet avantage accorde et s’il est visible par les membres."
+      },
+      "name": {
+        "help": "Affiché aux membres à la place du nom du type."
+      },
+      "status": {
+        "published": "Visible",
+        "draft": "Brouillon"
+      },
+      "columns": {
+        "kind": "Type",
+        "published": "Visibilité"
       }
     },
     "membership_tiers": {
@@ -2623,7 +2646,6 @@
         "empty": "Aucun niveau pour le moment. Un niveau est un groupe de clients avec ce qu’il accorde."
       },
       "columns": {
-        "rank": "Rang",
         "validity_days": "Durée",
         "rights": "Avantages"
       },
@@ -2635,7 +2657,8 @@
       },
       "settings": {
         "title": "Le niveau",
-        "help": "Ce qui donne accès à ce niveau, et ce qu’il apporte."
+        "help": "Ce qui donne accès à ce niveau, et ce qu’il apporte.",
+        "unavailable": "Ce niveau n’a pas pu être chargé."
       },
       "copy": {
         "title": "Ce que le niveau dit de lui-même",
@@ -2661,6 +2684,9 @@
         "create_failed": "Impossible de créer le niveau",
         "updated": "Niveau enregistré",
         "update_failed": "Impossible d’enregistrer le niveau"
+      },
+      "threshold": {
+        "help": "Le montant qu’un client doit dépenser pour atteindre ce niveau. Laissez vide si le niveau est vendu ou attribué."
       }
     },
     "nav": {

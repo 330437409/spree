@@ -2633,6 +2633,31 @@
         "update_failed": "Nie udało się zapisać korzyści",
         "deleted": "Korzyść usunięta",
         "delete_failed": "Nie udało się usunąć korzyści"
+      },
+      "count": {
+        "count_one": "{{count}} korzyść",
+        "count_few": "{{count}} korzyści",
+        "count_many": "{{count}} korzyści",
+        "count_other": "{{count}} korzyści"
+      },
+      "manage": "Zarządzaj korzyściami",
+      "new": {
+        "title": "Dodaj korzyść",
+        "help": "Wybierz rodzaj korzyści, a potem opisz, co daje."
+      },
+      "edit": {
+        "help": "Co daje ta korzyść i czy członkowie ją widzą."
+      },
+      "name": {
+        "help": "Pokazywane członkom zamiast nazwy rodzaju."
+      },
+      "status": {
+        "published": "Widoczna",
+        "draft": "Szkic"
+      },
+      "columns": {
+        "kind": "Rodzaj",
+        "published": "Widoczność"
       }
     },
     "membership_tiers": {
@@ -2645,7 +2670,6 @@
         "empty": "Nie ma jeszcze poziomów. Poziom to grupa klientów wraz z tym, co daje."
       },
       "columns": {
-        "rank": "Ranga",
         "validity_days": "Okres",
         "rights": "Korzyści"
       },
@@ -2657,7 +2681,8 @@
       },
       "settings": {
         "title": "Poziom",
-        "help": "Co daje klientowi dostęp do tego poziomu i co mu zapewnia."
+        "help": "Co daje klientowi dostęp do tego poziomu i co mu zapewnia.",
+        "unavailable": "Nie udało się wczytać tego poziomu."
       },
       "copy": {
         "title": "Co poziom mówi o sobie",
@@ -2683,6 +2708,9 @@
         "create_failed": "Nie udało się utworzyć poziomu",
         "updated": "Poziom zapisany",
         "update_failed": "Nie udało się zapisać poziomu"
+      },
+      "threshold": {
+        "help": "Ile klient musi wydać, aby osiągnąć ten poziom. Zostaw puste, jeśli poziom jest sprzedawany lub przyznawany."
       }
     },
     "nav": {

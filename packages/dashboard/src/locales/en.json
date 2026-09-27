@@ -2611,6 +2611,29 @@
         "update_failed": "The right could not be saved",
         "deleted": "Right removed",
         "delete_failed": "The right could not be removed"
+      },
+      "count": {
+        "count_one": "{{count}} right",
+        "count_other": "{{count}} rights"
+      },
+      "manage": "Manage rights",
+      "new": {
+        "title": "Add a right",
+        "help": "Pick the kind of right, then say what it grants."
+      },
+      "edit": {
+        "help": "What this right grants, and whether members see it."
+      },
+      "name": {
+        "help": "Shown to members in place of the kind’s name."
+      },
+      "status": {
+        "published": "Visible",
+        "draft": "Draft"
+      },
+      "columns": {
+        "kind": "Kind",
+        "published": "Visibility"
       }
     },
     "membership_tiers": {
@@ -2623,7 +2646,6 @@
         "empty": "No tiers yet. A tier is a customer group with what it grants."
       },
       "columns": {
-        "rank": "Rank",
         "validity_days": "Term",
         "rights": "Rights"
       },
@@ -2635,7 +2657,8 @@
       },
       "settings": {
         "title": "The tier",
-        "help": "What qualifies a customer for this tier, and what it gives them."
+        "help": "What qualifies a customer for this tier, and what it gives them.",
+        "unavailable": "This tier could not be read."
       },
       "copy": {
         "title": "What the tier says about itself",
@@ -2661,6 +2684,9 @@
         "create_failed": "The tier could not be created",
         "updated": "Tier saved",
         "update_failed": "The tier could not be saved"
+      },
+      "threshold": {
+        "help": "What a customer must spend to reach this tier. Leave it blank for a tier that is sold or granted."
       }
     },
     "nav": {

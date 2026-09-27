@@ -2604,6 +2604,29 @@
         "update_failed": "权益保存失败",
         "deleted": "权益已移除",
         "delete_failed": "权益移除失败"
+      },
+      "count": {
+        "count_one": "{{count}} 项权益",
+        "count_other": "{{count}} 项权益"
+      },
+      "manage": "管理权益",
+      "new": {
+        "title": "添加权益",
+        "help": "先选择权益类型，再填写它提供的内容。"
+      },
+      "edit": {
+        "help": "这项权益提供什么，以及会员能否看到。"
+      },
+      "name": {
+        "help": "显示给会员时，替代类型名称。"
+      },
+      "status": {
+        "published": "可见",
+        "draft": "草稿"
+      },
+      "columns": {
+        "kind": "类型",
+        "published": "可见性"
       }
     },
     "membership_tiers": {
@@ -2616,7 +2639,6 @@
         "empty": "还没有档位。档位就是带权益的客户分组。"
       },
       "columns": {
-        "rank": "等级",
         "validity_days": "有效期",
         "rights": "权益数"
       },
@@ -2628,7 +2650,8 @@
       },
       "settings": {
         "title": "档位设置",
-        "help": "成为该档位会员的条件，以及它给会员什么。"
+        "help": "成为该档位会员的条件，以及它给会员什么。",
+        "unavailable": "无法读取该档位。"
       },
       "copy": {
         "title": "档位对外文案",
@@ -2654,6 +2677,9 @@
         "create_failed": "档位创建失败",
         "updated": "档位已保存",
         "update_failed": "档位保存失败"
+      },
+      "threshold": {
+        "help": "客户累计消费达到多少可进入该档位。留空表示该档位是出售或直接授予的。"
       }
     },
     "nav": {

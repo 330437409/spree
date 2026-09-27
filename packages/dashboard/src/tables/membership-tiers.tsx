@@ -34,13 +34,8 @@ defineTable<MembershipTier>('membership-tiers', {
           <span>{tier.name}</span>
         ),
     },
-    {
-      key: 'rank',
-      label: i18n.t('admin.membership_tiers.columns.rank'),
-      sortable: true,
-      default: true,
-      render: (tier) => tier.rank,
-    },
+    // No rank column: the ladder's order is what the rows' arrangement and the
+    // drag handle say, as it is on every other list an operator reorders.
     {
       key: 'threshold',
       label: i18n.t('admin.fields.threshold.label'),
