@@ -12,4 +12,5 @@ zh-CN:
         friday: 每周五
         saturday: 每周六
       errors:
+        position_invalid: 档位位置必须是从 1 开始的整数
         not_member_day: 您暂未获得会员日多倍积分的福利，下单不参与多倍积分活动

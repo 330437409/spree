@@ -321,6 +321,18 @@ RSpec.describe 'the membership operator reads', type: :request do
       expect(top.reload.rank).to eq(9)
     end
 
+    # Nought is an integer but not a rung: placed as one it would land the tier
+    # above the bottom of the ladder, which is not what anybody asked for.
+    it 'refuses a position off the ladder' do
+      patch "/api/v3/admin/membership_tiers/#{top.prefixed_id}/reposition", headers: headers,
+            params: { new_position: 0 }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body['error']['message']).
+        to eq('the rung has to be a position on the ladder')
+      expect(top.reload.rank).to eq(9)
+    end
+
     it 'answers 404 for a tier of another store' do
       elsewhere = create(:membership_tier_setting,
                          customer_group: create(:customer_group, store: create(:store)))

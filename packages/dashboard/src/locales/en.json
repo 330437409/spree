@@ -2595,7 +2595,6 @@
       "help": "What this tier grants. Each right is saved on its own.",
       "add_cta": "Add right",
       "empty": "This tier grants nothing yet.",
-      "draft": "Draft — members do not see it",
       "published": "Visible to members",
       "delete_confirm": {
         "title": "Remove this right?",
@@ -2612,11 +2611,9 @@
         "deleted": "Right removed",
         "delete_failed": "The right could not be removed"
       },
-      "count": {
-        "count_one": "{{count}} right",
-        "count_other": "{{count}} rights"
-      },
       "manage": "Manage rights",
+      "count_one": "{{count}} right",
+      "count_other": "{{count}} rights",
       "new": {
         "title": "Add a right",
         "help": "Pick the kind of right, then say what it grants."
@@ -2656,7 +2653,6 @@
         "submit": "Create tier"
       },
       "settings": {
-        "title": "The tier",
         "help": "What qualifies a customer for this tier, and what it gives them.",
         "unavailable": "This tier could not be read."
       },

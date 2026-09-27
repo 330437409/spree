@@ -21,29 +21,41 @@ module Spree
         position = new_position.to_i
         return failure(tier_setting, :position_invalid) if position < 1
 
-        ladder = other_rungs(store, tier_setting)
-        ladder.insert([position - 1, ladder.length].min, tier_setting)
+        wrote = false
 
+        # The ladder is read inside the transaction and every rung of it is
+        # held until the move is written: two operators dragging at the same
+        # moment would otherwise each settle the ladder from their own snapshot
+        # and leave two rungs sharing a rank.
         Spree::MembershipTierSetting.transaction do
-          ladder.each_with_index do |rung, index|
+          rungs = Spree::MembershipTierSetting.for_store(store).ordered.lock.to_a
+          moved = rungs.find { |rung| rung.id == tier_setting.id }
+          next if moved.nil?
+
+          moved_to_position(rungs - [moved], moved, position).each_with_index do |rung, index|
             rank = index + 1
             rung.update_column(:rank, rank) unless rung.rank == rank
           end
+
+          wrote = true
         end
+
+        # A tier that is not on the ladder it asked to move within — retired
+        # between the read and the write, or pointed at another store.
+        return failure(tier_setting, :tier_unknown) unless wrote
 
         success(tier_setting)
       end
 
       private
 
-      # The store's other rungs, in the order they stand. The moved tier is
-      # placed among them rather than read back from the table, so the position
-      # an operator dropped it at is the position it takes whatever its rank
-      # was before.
+      # The ladder with the moved tier dropped at the position it was given:
+      # placed among the rungs rather than read back from the table, so it takes
+      # the position the operator dropped it at whatever its rank was before.
       #
       # @return [Array<Spree::MembershipTierSetting>]
-      def other_rungs(store, tier_setting)
-        Spree::MembershipTierSetting.for_store(store).where.not(id: tier_setting.id).ordered.to_a
+      def moved_to_position(other_rungs, moved, position)
+        other_rungs.insert([position - 1, other_rungs.length].min, moved)
       end
     end
   end

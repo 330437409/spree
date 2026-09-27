@@ -2588,7 +2588,6 @@
       "help": "该档位提供的权益，每条单独保存。",
       "add_cta": "添加权益",
       "empty": "该档位还没有任何权益。",
-      "draft": "草稿——会员看不到",
       "published": "会员可见",
       "delete_confirm": {
         "title": "移除这条权益？",
@@ -2605,11 +2604,9 @@
         "deleted": "权益已移除",
         "delete_failed": "权益移除失败"
       },
-      "count": {
-        "count_one": "{{count}} 项权益",
-        "count_other": "{{count}} 项权益"
-      },
       "manage": "管理权益",
+      "count_one": "{{count}} 项权益",
+      "count_other": "{{count}} 项权益",
       "new": {
         "title": "添加权益",
         "help": "先选择权益类型，再填写它提供的内容。"
@@ -2649,7 +2646,6 @@
         "submit": "创建档位"
       },
       "settings": {
-        "title": "档位设置",
         "help": "成为该档位会员的条件，以及它给会员什么。",
         "unavailable": "无法读取该档位。"
       },

@@ -4823,7 +4823,6 @@
       "help": "Lo que otorga este nivel. Cada beneficio se guarda por separado.",
       "add_cta": "Agregar beneficio",
       "empty": "Este nivel todavía no otorga nada.",
-      "draft": "Borrador: los miembros no lo ven",
       "published": "Visible para los miembros",
       "delete_confirm": {
         "title": "¿Quitar este beneficio?",
@@ -4840,11 +4839,9 @@
         "deleted": "Beneficio quitado",
         "delete_failed": "No se pudo quitar el beneficio"
       },
-      "count": {
-        "count_one": "{{count}} beneficio",
-        "count_other": "{{count}} beneficios"
-      },
       "manage": "Gestionar beneficios",
+      "count_one": "{{count}} beneficio",
+      "count_other": "{{count}} beneficios",
       "new": {
         "title": "Agregar beneficio",
         "help": "Elige el tipo de beneficio y luego indica qué otorga."
@@ -4884,7 +4881,6 @@
         "submit": "Crear nivel"
       },
       "settings": {
-        "title": "El nivel",
         "help": "Qué hace que un cliente acceda a este nivel y qué le da.",
         "unavailable": "No se pudo cargar este nivel."
       },

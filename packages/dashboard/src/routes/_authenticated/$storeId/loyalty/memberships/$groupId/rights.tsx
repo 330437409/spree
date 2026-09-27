@@ -6,7 +6,9 @@ import {
   ResourceTable,
   resourceSearchSchema,
   Subject,
+  typeLabel,
   usePermissions,
+  useResourceKeyBuilder,
 } from '@spree/dashboard-core'
 import {
   Button,
@@ -53,6 +55,7 @@ function MembershipRightsPage() {
   const search = Route.useSearch() as z.infer<typeof rightsSearchSchema>
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const buildKey = useResourceKeyBuilder()
   const confirm = useConfirm()
   const { permissions } = usePermissions()
 
@@ -84,10 +87,12 @@ function MembershipRightsPage() {
   useRowClickBridge('data-membership-right-id', openEdit)
 
   async function handleDelete(right: MembershipRight) {
+    const kind = types.find((type) => type.type === right.type)
+
     const ok = await confirm({
       title: t('admin.membership_rights.delete_confirm.title'),
       message: t('admin.membership_rights.delete_confirm.message', {
-        name: right.name?.trim() || right.type,
+        name: right.name?.trim() || typeLabel('membership_right', right.type, kind?.label),
       }),
       variant: 'destructive',
       confirmLabel: t('admin.actions.delete'),
@@ -132,8 +137,10 @@ function MembershipRightsPage() {
             reorder={{
               onReorder: async (id, position) => {
                 await adminClient.customerGroups.membershipRights.update(groupId, id, { position })
+                // Through the key builder, like every other write: a bare key
+                // has no tenant id at index 1 and matches nothing cached.
                 queryClient.invalidateQueries({
-                  queryKey: ['customer-groups', groupId, 'membership-rights'],
+                  queryKey: buildKey('customer-groups', groupId, 'membership-rights'),
                 })
               },
             }}

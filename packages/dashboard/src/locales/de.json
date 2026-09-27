@@ -2595,7 +2595,6 @@
       "help": "Was diese Stufe gewährt. Jeder Vorteil wird einzeln gespeichert.",
       "add_cta": "Vorteil hinzufügen",
       "empty": "Diese Stufe gewährt noch nichts.",
-      "draft": "Entwurf — Mitglieder sehen ihn nicht",
       "published": "Für Mitglieder sichtbar",
       "delete_confirm": {
         "title": "Diesen Vorteil entfernen?",
@@ -2612,11 +2611,9 @@
         "deleted": "Vorteil entfernt",
         "delete_failed": "Der Vorteil konnte nicht entfernt werden"
       },
-      "count": {
-        "count_one": "{{count}} Vorteil",
-        "count_other": "{{count}} Vorteile"
-      },
       "manage": "Vorteile verwalten",
+      "count_one": "{{count}} Vorteil",
+      "count_other": "{{count}} Vorteile",
       "new": {
         "title": "Vorteil hinzufügen",
         "help": "Art des Vorteils wählen und angeben, was er gewährt."
@@ -2656,7 +2653,6 @@
         "submit": "Stufe erstellen"
       },
       "settings": {
-        "title": "Die Stufe",
         "help": "Was einen Kunden für diese Stufe qualifiziert und was sie ihm bietet.",
         "unavailable": "Diese Stufe konnte nicht geladen werden."
       },

@@ -2595,7 +2595,6 @@
       "help": "Ce que ce niveau accorde. Chaque avantage est enregistré séparément.",
       "add_cta": "Ajouter un avantage",
       "empty": "Ce niveau n’accorde encore rien.",
-      "draft": "Brouillon — les membres ne le voient pas",
       "published": "Visible par les membres",
       "delete_confirm": {
         "title": "Retirer cet avantage ?",
@@ -2612,11 +2611,9 @@
         "deleted": "Avantage retiré",
         "delete_failed": "Impossible de retirer l’avantage"
       },
-      "count": {
-        "count_one": "{{count}} avantage",
-        "count_other": "{{count}} avantages"
-      },
       "manage": "Gérer les avantages",
+      "count_one": "{{count}} avantage",
+      "count_other": "{{count}} avantages",
       "new": {
         "title": "Ajouter un avantage",
         "help": "Choisissez le type d’avantage, puis indiquez ce qu’il accorde."
@@ -2656,7 +2653,6 @@
         "submit": "Créer le niveau"
       },
       "settings": {
-        "title": "Le niveau",
         "help": "Ce qui donne accès à ce niveau, et ce qu’il apporte.",
         "unavailable": "Ce niveau n’a pas pu être chargé."
       },

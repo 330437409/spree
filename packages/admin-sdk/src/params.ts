@@ -1906,12 +1906,10 @@ export interface CustomerGroupUpdateParams {
  * as groups.
  */
 export interface MembershipTierSettingCreateParams {
-  /**
-   * The rung the tier takes. Omit it and the tier joins the end of the ladder —
-   * the order is the operator's, and they arrange it by dragging a rung
-   * (`membershipTiers.reposition`).
-   */
-  rank?: number
+  // No `rank`: a new tier joins the end of the ladder, and the order is the
+  // operator's to arrange by dragging a rung (`membershipTiers.reposition`).
+  // A rank written on its own would leave the rungs under the moved one where
+  // they were, so the server does not accept one.
   threshold?: string | null
   validity_days?: number | null
   auto_renew?: boolean

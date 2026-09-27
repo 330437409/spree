@@ -74,6 +74,16 @@ function MembershipTiersPage() {
       },
     })
 
+  // Making one hands straight over to editing it: the creating sheet closes as
+  // the tier's own opens, rather than stacking on top of it.
+  const openCreated = (groupId: string) =>
+    navigate({
+      search: (prev: Record<string, unknown>) => {
+        const { new: _new, ...rest } = prev
+        return { ...rest, edit: groupId } as never
+      },
+    })
+
   useRowClickBridge('data-membership-tier-id', openEdit)
 
   return (
@@ -112,7 +122,7 @@ function MembershipTiersPage() {
         }
       />
 
-      {isCreating && <NewTierSheet onClose={closeSheet} onCreated={openEdit} />}
+      {isCreating && <NewTierSheet onClose={closeSheet} onCreated={openCreated} />}
       {editGroupId && (
         <MembershipTierSheet storeId={storeId} groupId={editGroupId} onClose={closeSheet} />
       )}

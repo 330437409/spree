@@ -270,7 +270,10 @@ export function MembershipTierSheet({
             <Button type="button" variant="outline" onClick={onClose}>
               {t('admin.actions.cancel')}
             </Button>
-            <Button type="submit" disabled={!canUpdate || updateTier.isPending}>
+            {/* Save waits for the tier: the form holds its defaults until the
+                read lands, and submitting those would blank every figure the
+                operator never touched. */}
+            <Button type="submit" disabled={!canUpdate || !setting || updateTier.isPending}>
               {t('admin.actions.save')}
             </Button>
           </SheetFooter>

@@ -2,8 +2,10 @@ import type { MembershipRight, PreferenceField, ResourceTypeDefinition } from '@
 import {
   defaultPreferences,
   PreferencesForm,
+  Subject,
   typeDescription,
   typeLabel,
+  usePermissions,
 } from '@spree/dashboard-core'
 import {
   Button,
@@ -27,6 +29,7 @@ import {
   useUpdateMembershipRight,
 } from '../../hooks/use-membership-rights'
 import {
+  type MembershipRightFormValues,
   membershipRightToFormValues,
   membershipRightValuesToParams,
 } from '../../schemas/membership-right'
@@ -58,14 +61,13 @@ export function MembershipRightSheet({
   onClose: () => void
 }) {
   const { t } = useTranslation()
+  const { permissions } = usePermissions()
   const createMutation = useCreateMembershipRight(groupId)
   const updateMutation = useUpdateMembershipRight(groupId)
 
   const [type, setType] = useState(right?.type ?? '')
-  const [values, setValues] = useState(() =>
-    right
-      ? membershipRightToFormValues(right)
-      : { type: '', name: '', description: '', preferences: {} as Record<string, unknown> },
+  const [values, setValues] = useState<MembershipRightFormValues>(() =>
+    right ? membershipRightToFormValues(right) : { name: '', description: '', preferences: {} },
   )
   const [published, setPublished] = useState(right?.published ?? true)
 
@@ -73,11 +75,13 @@ export function MembershipRightSheet({
   const availableTypes = types.filter((candidate) => !usedTypes.includes(candidate.type))
   const editing = !!right
   const saving = createMutation.isPending || updateMutation.isPending
+  // The door the operator came through is the one the write is checked
+  // against: adding is a create, editing an update.
+  const canWrite = permissions.can(right ? 'update' : 'create', Subject.MembershipRight)
 
   function pickKind(kind: ResourceTypeDefinition) {
     setType(kind.type)
     setValues({
-      type: kind.type,
       name: '',
       description: '',
       // What the kind declares where the operator has written nothing: the
@@ -146,6 +150,7 @@ export function MembershipRightSheet({
                   </FieldLabel>
                   <Input
                     id="membership-right-name"
+                    disabled={!canWrite}
                     value={values.name ?? ''}
                     onChange={(event) =>
                       setValues((prev) => ({ ...prev, name: event.target.value }))
@@ -163,6 +168,7 @@ export function MembershipRightSheet({
                   </FieldLabel>
                   <Textarea
                     id="membership-right-description"
+                    disabled={!canWrite}
                     value={values.description ?? ''}
                     onChange={(event) =>
                       setValues((prev) => ({ ...prev, description: event.target.value }))
@@ -186,6 +192,7 @@ export function MembershipRightSheet({
                 <Switch
                   id="membership-right-published"
                   checked={published}
+                  disabled={!canWrite}
                   onCheckedChange={setPublished}
                 />
               </Field>
@@ -197,7 +204,7 @@ export function MembershipRightSheet({
           <Button type="button" variant="outline" onClick={onClose}>
             {t('admin.actions.cancel')}
           </Button>
-          <Button type="button" onClick={handleSave} disabled={!type || saving}>
+          <Button type="button" onClick={handleSave} disabled={!type || !canWrite || saving}>
             {t('admin.actions.save')}
           </Button>
         </SheetFooter>

@@ -19,6 +19,7 @@ en:
         saturday: Every Saturday
       errors:
         store_missing: the tier's store cannot be reached
+        position_invalid: the rung has to be a position on the ladder
         catalog_unavailable: the member price catalogue could not be set up
         card_not_activatable: this card cannot be activated
         card_expired: this card expired before it was activated
