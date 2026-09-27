@@ -1925,6 +1925,28 @@ export interface MembershipTierSettingCreateParams {
 export type MembershipTierSettingUpdateParams = Partial<MembershipTierSettingCreateParams>
 
 /**
+ * One tap target over a banner: the coordinates the client lays it out in, and
+ * what a tap opens. `area_rem` is a CSS style written in rem — `left: 1rem;top:
+ * 2rem;width: 3rem;height: 1rem;` — because the client's rem is the unit it
+ * scales, so what an operator places is what renders.
+ */
+export interface MembershipBannerAreaInput {
+  area_rem: string
+  link: string
+  /** Optional: a note for whoever edits the banner next, never rendered. */
+  name?: string | null
+}
+
+/** The member centre's banner for one tier. The picture is a URL the store's CDN serves. */
+export interface MembershipBannerCreateParams {
+  pic: string
+  name?: string | null
+  areas?: MembershipBannerAreaInput[]
+}
+
+export type MembershipBannerUpdateParams = Partial<MembershipBannerCreateParams>
+
+/**
  * Voiding a card the customer cannot: what the support desk was told, kept with
  * the record of what happened.
  */

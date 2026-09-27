@@ -108,6 +108,7 @@ import { Route as OrdersOrderIdEditRouteImport } from './routes/_authenticated/$
 import { Route as SettingsDeliveryProfilesProfileIdIndexRouteImport } from './routes/_authenticated/$storeId/settings/delivery-profiles/$profileId/index'
 import { Route as ProductsPriceListsPriceListIdIndexRouteImport } from './routes/_authenticated/$storeId/products/price-lists/$priceListId/index'
 import { Route as LoyaltyMembershipsGroupIdRightsRouteImport } from './routes/_authenticated/$storeId/loyalty/memberships/$groupId/rights'
+import { Route as LoyaltyMembershipsGroupIdBannerRouteImport } from './routes/_authenticated/$storeId/loyalty/memberships/$groupId/banner'
 import { Route as SettingsDeliveryProfilesProfileIdMethodsNewRouteImport } from './routes/_authenticated/$storeId/settings/delivery-profiles/$profileId/methods/new'
 import { Route as SettingsDeliveryProfilesProfileIdMethodsMethodIdRouteImport } from './routes/_authenticated/$storeId/settings/delivery-profiles/$profileId/methods/$methodId'
 
@@ -621,6 +622,12 @@ const LoyaltyMembershipsGroupIdRightsRoute =
     path: '/loyalty/memberships/$groupId/rights',
     getParentRoute: () => authenticatedStoreIdRoute,
   } as any)
+const LoyaltyMembershipsGroupIdBannerRoute =
+  LoyaltyMembershipsGroupIdBannerRouteImport.update({
+    id: '/loyalty/memberships/$groupId/banner',
+    path: '/loyalty/memberships/$groupId/banner',
+    getParentRoute: () => authenticatedStoreIdRoute,
+  } as any)
 const SettingsDeliveryProfilesProfileIdMethodsNewRoute =
   SettingsDeliveryProfilesProfileIdMethodsNewRouteImport.update({
     id: '/delivery-profiles/$profileId/methods/new',
@@ -730,6 +737,7 @@ export interface FileRoutesByFullPath {
   '/$storeId/settings/imports/': typeof SettingsImportsIndexRoute
   '/$storeId/settings/webhooks/': typeof SettingsWebhooksIndexRoute
   '/$storeId/transfers/$transferId/': typeof TransfersTransferIdIndexRoute
+  '/$storeId/loyalty/memberships/$groupId/banner': typeof LoyaltyMembershipsGroupIdBannerRoute
   '/$storeId/loyalty/memberships/$groupId/rights': typeof LoyaltyMembershipsGroupIdRightsRoute
   '/$storeId/products/price-lists/$priceListId/': typeof ProductsPriceListsPriceListIdIndexRoute
   '/$storeId/settings/delivery-profiles/$profileId/': typeof SettingsDeliveryProfilesProfileIdIndexRoute
@@ -830,6 +838,7 @@ export interface FileRoutesByTo {
   '/$storeId/settings/imports': typeof SettingsImportsIndexRoute
   '/$storeId/settings/webhooks': typeof SettingsWebhooksIndexRoute
   '/$storeId/transfers/$transferId': typeof TransfersTransferIdIndexRoute
+  '/$storeId/loyalty/memberships/$groupId/banner': typeof LoyaltyMembershipsGroupIdBannerRoute
   '/$storeId/loyalty/memberships/$groupId/rights': typeof LoyaltyMembershipsGroupIdRightsRoute
   '/$storeId/products/price-lists/$priceListId': typeof ProductsPriceListsPriceListIdIndexRoute
   '/$storeId/settings/delivery-profiles/$profileId': typeof SettingsDeliveryProfilesProfileIdIndexRoute
@@ -934,6 +943,7 @@ export interface FileRoutesById {
   '/_authenticated/$storeId/settings/imports/': typeof SettingsImportsIndexRoute
   '/_authenticated/$storeId/settings/webhooks/': typeof SettingsWebhooksIndexRoute
   '/_authenticated/$storeId/transfers/$transferId/': typeof TransfersTransferIdIndexRoute
+  '/_authenticated/$storeId/loyalty/memberships/$groupId/banner': typeof LoyaltyMembershipsGroupIdBannerRoute
   '/_authenticated/$storeId/loyalty/memberships/$groupId/rights': typeof LoyaltyMembershipsGroupIdRightsRoute
   '/_authenticated/$storeId/products/price-lists/$priceListId/': typeof ProductsPriceListsPriceListIdIndexRoute
   '/_authenticated/$storeId/settings/delivery-profiles/$profileId/': typeof SettingsDeliveryProfilesProfileIdIndexRoute
@@ -1038,6 +1048,7 @@ export interface FileRouteTypes {
     | '/$storeId/settings/imports/'
     | '/$storeId/settings/webhooks/'
     | '/$storeId/transfers/$transferId/'
+    | '/$storeId/loyalty/memberships/$groupId/banner'
     | '/$storeId/loyalty/memberships/$groupId/rights'
     | '/$storeId/products/price-lists/$priceListId/'
     | '/$storeId/settings/delivery-profiles/$profileId/'
@@ -1138,6 +1149,7 @@ export interface FileRouteTypes {
     | '/$storeId/settings/imports'
     | '/$storeId/settings/webhooks'
     | '/$storeId/transfers/$transferId'
+    | '/$storeId/loyalty/memberships/$groupId/banner'
     | '/$storeId/loyalty/memberships/$groupId/rights'
     | '/$storeId/products/price-lists/$priceListId'
     | '/$storeId/settings/delivery-profiles/$profileId'
@@ -1241,6 +1253,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$storeId/settings/imports/'
     | '/_authenticated/$storeId/settings/webhooks/'
     | '/_authenticated/$storeId/transfers/$transferId/'
+    | '/_authenticated/$storeId/loyalty/memberships/$groupId/banner'
     | '/_authenticated/$storeId/loyalty/memberships/$groupId/rights'
     | '/_authenticated/$storeId/products/price-lists/$priceListId/'
     | '/_authenticated/$storeId/settings/delivery-profiles/$profileId/'
@@ -1952,6 +1965,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoyaltyMembershipsGroupIdRightsRouteImport
       parentRoute: typeof authenticatedStoreIdRoute
     }
+    '/_authenticated/$storeId/loyalty/memberships/$groupId/banner': {
+      id: '/_authenticated/$storeId/loyalty/memberships/$groupId/banner'
+      path: '/loyalty/memberships/$groupId/banner'
+      fullPath: '/$storeId/loyalty/memberships/$groupId/banner'
+      preLoaderRoute: typeof LoyaltyMembershipsGroupIdBannerRouteImport
+      parentRoute: typeof authenticatedStoreIdRoute
+    }
     '/_authenticated/$storeId/settings/delivery-profiles/$profileId/methods/new': {
       id: '/_authenticated/$storeId/settings/delivery-profiles/$profileId/methods/new'
       path: '/delivery-profiles/$profileId/methods/new'
@@ -2105,6 +2125,7 @@ interface authenticatedStoreIdRouteChildren {
   PurchaseOrdersPurchaseOrderIdIndexRoute: typeof PurchaseOrdersPurchaseOrderIdIndexRoute
   SellersPayoutsIndexRoute: typeof SellersPayoutsIndexRoute
   TransfersTransferIdIndexRoute: typeof TransfersTransferIdIndexRoute
+  LoyaltyMembershipsGroupIdBannerRoute: typeof LoyaltyMembershipsGroupIdBannerRoute
   LoyaltyMembershipsGroupIdRightsRoute: typeof LoyaltyMembershipsGroupIdRightsRoute
   ProductsPriceListsPriceListIdIndexRoute: typeof ProductsPriceListsPriceListIdIndexRoute
 }
@@ -2173,6 +2194,7 @@ const authenticatedStoreIdRouteChildren: authenticatedStoreIdRouteChildren = {
     PurchaseOrdersPurchaseOrderIdIndexRoute,
   SellersPayoutsIndexRoute: SellersPayoutsIndexRoute,
   TransfersTransferIdIndexRoute: TransfersTransferIdIndexRoute,
+  LoyaltyMembershipsGroupIdBannerRoute: LoyaltyMembershipsGroupIdBannerRoute,
   LoyaltyMembershipsGroupIdRightsRoute: LoyaltyMembershipsGroupIdRightsRoute,
   ProductsPriceListsPriceListIdIndexRoute:
     ProductsPriceListsPriceListIdIndexRoute,

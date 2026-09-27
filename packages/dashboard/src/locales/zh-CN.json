@@ -6197,6 +6197,48 @@
         "label": "原因",
         "help": "会记在会员卡上，供以后查证。可以不填。"
       }
+    },
+    "membership_banners": {
+      "title": "会员横幅",
+      "edit_cta": "编辑横幅",
+      "picture": {
+        "title": "图片",
+        "help": "会员进入会员中心时最先看到的画面。填图片地址即可：客户端把它当背景图渲染，所以图片可以放在自己的 CDN 上。"
+      },
+      "targets": {
+        "title": "点按区域",
+        "help": "直接摆在图片上，用的就是小程序自己的单位——摆成什么样，用户看到的就是什么样。"
+      },
+      "fields": {
+        "pic": {
+          "label": "图片地址",
+          "placeholder": "https://…"
+        },
+        "name": {
+          "label": "名称"
+        },
+        "link": {
+          "label": "点击后跳转",
+          "placeholder": "/pages/member/index"
+        }
+      },
+      "no_picture": "填入图片地址后，就可以在上面摆放区域。",
+      "editor_help": "拖动可移动区域，拖右下角可调整大小，也可以用方向键微调。",
+      "target_label": "区域 {{position}}",
+      "add_cta": "添加区域",
+      "remove_cta": "删除区域",
+      "remove_confirm": {
+        "title": "删除这个区域？",
+        "message": "图片保留，只删掉这个点按区域。"
+      },
+      "unlinkable_area": "每个区域都要有跳转链接，否则用户点了没有反应。",
+      "read_only": "你的角色只能查看这个横幅，不能修改。",
+      "messages": {
+        "saved": "横幅已保存",
+        "save_failed": "横幅保存失败"
+      },
+      "unavailable": "无法读取这个横幅。",
+      "unavailable_help": "请刷新页面。目前没有任何改动。"
     }
   }
 }

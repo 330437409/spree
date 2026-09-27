@@ -6185,6 +6185,48 @@
         "label": "Qué ocurrió",
         "help": "Se guarda con la tarjeta por si alguien lo consulta. Opcional."
       }
+    },
+    "membership_banners": {
+      "title": "Banner",
+      "edit_cta": "Editar banner",
+      "picture": {
+        "title": "La imagen",
+        "help": "Lo que ven los miembros al entrar en el área de miembro. Una URL: el cliente la dibuja como imagen de fondo, así que puede venir de su propio CDN."
+      },
+      "targets": {
+        "title": "Zonas pulsables",
+        "help": "Se colocan sobre la imagen, en las unidades con las que calcula el mini programa — lo que coloques es lo que se verá."
+      },
+      "fields": {
+        "pic": {
+          "label": "URL de la imagen",
+          "placeholder": "https://…"
+        },
+        "name": {
+          "label": "Nombre"
+        },
+        "link": {
+          "label": "Abre",
+          "placeholder": "/pages/member/index"
+        }
+      },
+      "no_picture": "Introduce una URL para poder colocar zonas sobre la imagen.",
+      "editor_help": "Arrastra una zona para moverla, su esquina para redimensionarla, o usa las flechas del teclado para ajustarla.",
+      "target_label": "Zona {{position}}",
+      "add_cta": "Agregar zona",
+      "remove_cta": "Quitar zona",
+      "remove_confirm": {
+        "title": "¿Quitar esta zona?",
+        "message": "La imagen se queda; solo desaparece esta zona pulsable."
+      },
+      "unlinkable_area": "Cada zona necesita un enlace: es lo que se abre al pulsarla.",
+      "read_only": "Tu rol puede leer este banner, pero no cambiarlo.",
+      "messages": {
+        "saved": "Banner guardado",
+        "save_failed": "No se pudo guardar el banner"
+      },
+      "unavailable": "No se pudo cargar este banner.",
+      "unavailable_help": "Recarga la página. No se ha cambiado nada."
     }
   }
 }

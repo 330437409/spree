@@ -87,6 +87,7 @@ export const Subject = {
   SellerTransfer: 'Spree::SellerTransfer',
   MembershipTierSetting: 'Spree::MembershipTierSetting',
   MembershipRight: 'Spree::MembershipRight',
+  MembershipBanner: 'Spree::MembershipBanner',
   MembershipCard: 'Spree::MembershipCard',
   Membership: 'Spree::Membership',
 } as const

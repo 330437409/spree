@@ -6280,6 +6280,48 @@
         "label": "Co się stało",
         "help": "Zapisywane przy karcie na wypadek późniejszych pytań. Opcjonalne."
       }
+    },
+    "membership_banners": {
+      "title": "Baner",
+      "edit_cta": "Edytuj baner",
+      "picture": {
+        "title": "Grafika",
+        "help": "To, co członkowie widzą na górze strefy członka. Adres URL: klient wyświetla go jako tło, więc grafika może leżeć na własnym CDN."
+      },
+      "targets": {
+        "title": "Obszary klikalne",
+        "help": "Umieszczane na grafice, w jednostkach, którymi liczy mini aplikacja — co ustawisz, to się wyświetli."
+      },
+      "fields": {
+        "pic": {
+          "label": "Adres grafiki",
+          "placeholder": "https://…"
+        },
+        "name": {
+          "label": "Nazwa"
+        },
+        "link": {
+          "label": "Otwiera",
+          "placeholder": "/pages/member/index"
+        }
+      },
+      "no_picture": "Podaj adres grafiki, aby móc umieścić na niej obszary.",
+      "editor_help": "Przeciągnij obszar, aby go przenieść, jego róg, aby zmienić rozmiar, albo użyj strzałek.",
+      "target_label": "Obszar {{position}}",
+      "add_cta": "Dodaj obszar",
+      "remove_cta": "Usuń obszar",
+      "remove_confirm": {
+        "title": "Usunąć ten obszar?",
+        "message": "Grafika zostaje; znika tylko ten obszar."
+      },
+      "unlinkable_area": "Każdy obszar potrzebuje linku: to on się otwiera po dotknięciu.",
+      "read_only": "Twoja rola może odczytać ten baner, ale nie zmienić.",
+      "messages": {
+        "saved": "Baner zapisany",
+        "save_failed": "Nie udało się zapisać banera"
+      },
+      "unavailable": "Nie udało się wczytać tego banera.",
+      "unavailable_help": "Odśwież stronę. Nic nie zostało zmienione."
     }
   }
 }

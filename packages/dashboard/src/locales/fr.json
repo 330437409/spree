@@ -6210,6 +6210,48 @@
         "label": "Ce qui s’est passé",
         "help": "Conservé avec la carte pour qui le demandera. Facultatif."
       }
+    },
+    "membership_banners": {
+      "title": "Bannière",
+      "edit_cta": "Modifier la bannière",
+      "picture": {
+        "title": "L’image",
+        "help": "Ce que les membres voient en haut de l’espace membre. Une URL : le client la dessine en image de fond, elle peut donc venir de votre propre CDN."
+      },
+      "targets": {
+        "title": "Zones cliquables",
+        "help": "Posées sur l’image, dans les unités que le mini-programme utilise — ce que vous placez est ce qui s’affiche."
+      },
+      "fields": {
+        "pic": {
+          "label": "URL de l’image",
+          "placeholder": "https://…"
+        },
+        "name": {
+          "label": "Nom"
+        },
+        "link": {
+          "label": "Ouvre",
+          "placeholder": "/pages/member/index"
+        }
+      },
+      "no_picture": "Saisissez une URL pour poser des zones sur l’image.",
+      "editor_help": "Faites glisser une zone pour la déplacer, son coin pour la redimensionner, ou les flèches du clavier pour l’ajuster.",
+      "target_label": "Zone {{position}}",
+      "add_cta": "Ajouter une zone",
+      "remove_cta": "Supprimer la zone",
+      "remove_confirm": {
+        "title": "Supprimer cette zone ?",
+        "message": "L’image reste ; seule cette zone disparaît."
+      },
+      "unlinkable_area": "Chaque zone a besoin d’un lien : c’est ce que le clic ouvre.",
+      "read_only": "Votre rôle peut lire cette bannière, pas la modifier.",
+      "messages": {
+        "saved": "Bannière enregistrée",
+        "save_failed": "La bannière n’a pas pu être enregistrée"
+      },
+      "unavailable": "Cette bannière n’a pas pu être chargée.",
+      "unavailable_help": "Rechargez la page. Rien n’a été modifié."
     }
   }
 }
