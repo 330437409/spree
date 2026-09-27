@@ -2595,7 +2595,6 @@
       "help": "Was diese Stufe gewährt. Jeder Vorteil wird einzeln gespeichert.",
       "add_cta": "Vorteil hinzufügen",
       "empty": "Diese Stufe gewährt noch nichts.",
-      "draft": "Entwurf — Mitglieder sehen ihn nicht",
       "published": "Für Mitglieder sichtbar",
       "delete_confirm": {
         "title": "Diesen Vorteil entfernen?",
@@ -2611,6 +2610,27 @@
         "update_failed": "Der Vorteil konnte nicht gespeichert werden",
         "deleted": "Vorteil entfernt",
         "delete_failed": "Der Vorteil konnte nicht entfernt werden"
+      },
+      "manage": "Vorteile verwalten",
+      "count_one": "{{count}} Vorteil",
+      "count_other": "{{count}} Vorteile",
+      "new": {
+        "title": "Vorteil hinzufügen",
+        "help": "Art des Vorteils wählen und angeben, was er gewährt."
+      },
+      "edit": {
+        "help": "Was dieser Vorteil gewährt und ob Mitglieder ihn sehen."
+      },
+      "name": {
+        "help": "Wird Mitgliedern statt des Namens der Art angezeigt."
+      },
+      "status": {
+        "published": "Sichtbar",
+        "draft": "Entwurf"
+      },
+      "columns": {
+        "kind": "Art",
+        "published": "Sichtbarkeit"
       }
     },
     "membership_tiers": {
@@ -2623,7 +2643,6 @@
         "empty": "Noch keine Stufen. Eine Stufe ist eine Kundengruppe mit dem, was sie gewährt."
       },
       "columns": {
-        "rank": "Rang",
         "validity_days": "Laufzeit",
         "rights": "Vorteile"
       },
@@ -2634,8 +2653,8 @@
         "submit": "Stufe erstellen"
       },
       "settings": {
-        "title": "Die Stufe",
-        "help": "Was einen Kunden für diese Stufe qualifiziert und was sie ihm bietet."
+        "help": "Was einen Kunden für diese Stufe qualifiziert und was sie ihm bietet.",
+        "unavailable": "Diese Stufe konnte nicht geladen werden."
       },
       "copy": {
         "title": "Was die Stufe über sich sagt",
@@ -2661,6 +2680,9 @@
         "create_failed": "Die Stufe konnte nicht erstellt werden",
         "updated": "Stufe gespeichert",
         "update_failed": "Die Stufe konnte nicht gespeichert werden"
+      },
+      "threshold": {
+        "help": "Wie viel ein Kunde ausgeben muss, um diese Stufe zu erreichen. Leer lassen, wenn die Stufe verkauft oder zugeteilt wird."
       }
     },
     "nav": {

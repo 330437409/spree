@@ -296,6 +296,7 @@ import type {
   MediaUsageReference,
   MembershipRightCreateParams,
   MembershipRightUpdateParams,
+  MembershipTierRepositionParams,
   MembershipTierSettingCreateParams,
   MembershipTierSettingUpdateParams,
   MeUpdateParams,
@@ -3173,6 +3174,20 @@ export class AdminClient {
       this.request<PaginatedResponse<MembershipTier>>('GET', '/membership_tiers', {
         ...options,
         params: params ? transformListParams(params) : undefined,
+      }),
+
+    /**
+     * Drops a rung at a position, which settles the rest of the ladder behind
+     * it: the order is the operator's, and they arrange it by dragging.
+     */
+    reposition: (
+      id: string,
+      params: MembershipTierRepositionParams,
+      options?: RequestOptions,
+    ): Promise<MembershipTier> =>
+      this.request<MembershipTier>('PATCH', `/membership_tiers/${id}/reposition`, {
+        ...options,
+        body: params,
       }),
   }
 

@@ -17,8 +17,12 @@ module Spree
               Spree::Api::V3::Admin::MembershipTierSettingSerializer
             end
 
+            # No rank: the ladder is arranged by dragging a rung, and a rank
+            # written on its own would leave the rungs under it in the order
+            # they were rather than the one the operator dropped it into
+            # (`Spree::Memberships::RepositionTier`).
             def permitted_params
-              params.permit(*model_additional_permitted_attributes, :rank, :threshold, :validity_days,
+              params.permit(*model_additional_permitted_attributes, :threshold, :validity_days,
                             :member_discount_percentage, :auto_renew, :grace_days, :sku,
                             preferences: {})
             end

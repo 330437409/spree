@@ -12,7 +12,6 @@ import { z } from 'zod/v4'
  * not the same as nought.
  */
 export const membershipTierFormSchema = z.object({
-  rank: z.coerce.number().int().min(0),
   threshold: z.string().optional(),
   validity_days: z.string().optional(),
   auto_renew: z.boolean(),
@@ -28,7 +27,6 @@ export const membershipTierFormSchema = z.object({
 export type MembershipTierFormValues = z.infer<typeof membershipTierFormSchema>
 
 export const MEMBERSHIP_TIER_DEFAULTS: MembershipTierFormValues = {
-  rank: 0,
   threshold: '',
   validity_days: '',
   auto_renew: false,
@@ -42,7 +40,6 @@ export function membershipTierToFormValues(
   setting: MembershipTierSetting,
 ): MembershipTierFormValues {
   return {
-    rank: setting.rank,
     threshold: setting.threshold == null ? '' : String(setting.threshold),
     validity_days: setting.validity_days == null ? '' : String(setting.validity_days),
     auto_renew: setting.auto_renew,
@@ -68,7 +65,6 @@ export function membershipTierValuesToParams(
   values: MembershipTierFormValues,
 ): MembershipTierSettingCreateParams & MembershipTierSettingUpdateParams {
   return {
-    rank: values.rank,
     threshold: decimalOrNull(values.threshold),
     validity_days: integerOrNull(values.validity_days),
     auto_renew: values.auto_renew,

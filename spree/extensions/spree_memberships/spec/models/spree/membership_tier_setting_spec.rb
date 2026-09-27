@@ -85,10 +85,20 @@ RSpec.describe Spree::MembershipTierSetting, type: :model do
     expect(build(:membership_tier_setting, customer_group: group)).to be_valid
   end
 
-  it 'needs a rank, and a term of positive days when it has one' do
-    expect(build(:membership_tier_setting, customer_group: group, rank: nil)).not_to be_valid
+  # The order is the operator's and they arrange it by dragging it, so a tier
+  # nobody placed is the last rung rather than one with no number at all.
+  it 'places a tier nobody ranked at the end of the ladder' do
+    create(:membership_tier_setting, customer_group: create(:customer_group, store: store), rank: 3)
 
+    fresh = create(:membership_tier_setting, customer_group: create(:customer_group, store: store),
+                                             rank: nil)
+
+    expect(fresh.rank).to eq(4)
+  end
+
+  it 'needs a term of positive days when it has one' do
     other = create(:customer_group, store: store)
+
     expect(build(:membership_tier_setting, customer_group: other, validity_days: 0)).not_to be_valid
   end
 

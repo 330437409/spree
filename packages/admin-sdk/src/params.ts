@@ -1906,7 +1906,10 @@ export interface CustomerGroupUpdateParams {
  * as groups.
  */
 export interface MembershipTierSettingCreateParams {
-  rank: number
+  // No `rank`: a new tier joins the end of the ladder, and the order is the
+  // operator's to arrange by dragging a rung (`membershipTiers.reposition`).
+  // A rank written on its own would leave the rungs under the moved one where
+  // they were, so the server does not accept one.
   threshold?: string | null
   validity_days?: number | null
   auto_renew?: boolean
@@ -1920,6 +1923,15 @@ export interface MembershipTierSettingCreateParams {
 }
 
 export type MembershipTierSettingUpdateParams = Partial<MembershipTierSettingCreateParams>
+
+/**
+ * The rung an operator dropped a tier at. The server settles the store's whole
+ * ladder into 1..n behind it, so the position is the only thing a move carries.
+ */
+export interface MembershipTierRepositionParams {
+  /** 1-based rung the tier takes; past either end it lands at that end. */
+  new_position: number
+}
 
 /**
  * One right a tier carries. The `type` is the registry shorthand

@@ -40,6 +40,10 @@ module Spree
     # so both spellings land on the one the readers use.
     normalizes :preferences, with: ->(value) { value.to_h.deep_symbolize_keys }
 
+    # What the operator's screen searches their own list by: the wording they
+    # wrote, and the kind they picked it from.
+    self.whitelisted_ransackable_attributes = %w[name type]
+
     validates :type, presence: true
     # One of each kind per tier. Among live rows only, matching the index — the
     # row a replacement supersedes is retired first, because a retired row is

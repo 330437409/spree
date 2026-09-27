@@ -32,7 +32,6 @@ describe('membershipTierToFormValues', () => {
     const values = membershipTierToFormValues(tierStub())
 
     expect(values).toMatchObject({
-      rank: 3,
       threshold: '199.5',
       validity_days: '365',
       member_discount_percentage: '10.0',
@@ -81,7 +80,6 @@ describe('membershipTierValuesToParams', () => {
   it('sends the figures as written', () => {
     const params = membershipTierValuesToParams({
       ...MEMBERSHIP_TIER_DEFAULTS,
-      rank: 2,
       threshold: '199.5',
       validity_days: '365',
       member_discount_percentage: '10',
@@ -90,7 +88,6 @@ describe('membershipTierValuesToParams', () => {
     })
 
     expect(params).toMatchObject({
-      rank: 2,
       threshold: '199.5',
       validity_days: 365,
       member_discount_percentage: '10',

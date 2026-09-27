@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { MembershipTier } from '@spree/admin-sdk'
 import {
+  adminClient,
   Can,
   mapSpreeErrorsToForm,
   ResourceCombobox,
@@ -14,7 +15,6 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
-  Input,
   RowActions,
   Sheet,
   SheetContent,
@@ -25,10 +25,12 @@ import {
   useRowClickBridge,
 } from '@spree/dashboard-ui'
 import { PlusIcon } from '@spree/dashboard-ui/icons'
+import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod/v4'
+import { MembershipTierSheet } from '../../../../../components/spree/membership-tier-sheet'
 import { customerGroupAutocompleteProps } from '../../../../../hooks/use-customer-groups'
 import {
   listMembershipTiers,
@@ -38,6 +40,7 @@ import '../../../../../tables/membership-tiers'
 
 const membershipTiersSearchSchema = resourceSearchSchema.extend({
   new: z.coerce.boolean().optional(),
+  edit: z.string().optional(),
 })
 
 export const Route = createFileRoute('/_authenticated/$storeId/loyalty/memberships/')({
@@ -50,27 +53,38 @@ function MembershipTiersPage() {
   const { storeId } = Route.useParams()
   const search = Route.useSearch() as z.infer<typeof membershipTiersSearchSchema>
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
+  const editGroupId = search.edit
   const isCreating = !!search.new
 
   const openCreate = () =>
     navigate({ search: (prev: Record<string, unknown>) => ({ ...prev, new: true }) as never })
 
+  const openEdit = (groupId: string) =>
+    navigate({
+      search: (prev: Record<string, unknown>) => ({ ...prev, edit: groupId }) as never,
+    })
+
   const closeSheet = () =>
     navigate({
       search: (prev: Record<string, unknown>) => {
-        const { new: _new, ...rest } = prev
+        const { new: _new, edit: _edit, ...rest } = prev
         return rest as never
       },
     })
 
-  const openTier = (groupId: string) =>
+  // Making one hands straight over to editing it: the creating sheet closes as
+  // the tier's own opens, rather than stacking on top of it.
+  const openCreated = (groupId: string) =>
     navigate({
-      to: '/$storeId/loyalty/memberships/$groupId',
-      params: { storeId, groupId },
+      search: (prev: Record<string, unknown>) => {
+        const { new: _new, ...rest } = prev
+        return { ...rest, edit: groupId } as never
+      },
     })
 
-  useRowClickBridge('data-membership-tier-id', openTier)
+  useRowClickBridge('data-membership-tier-id', openEdit)
 
   return (
     <>
@@ -79,13 +93,21 @@ function MembershipTiersPage() {
         queryKey="membership-tiers"
         queryFn={listMembershipTiers}
         searchParams={search}
-        // The rung is a group carrying settings, so the row it opens is the
-        // group's — the ladder is read here and edited there.
+        // The ladder's order is the operator's and they arrange it by dragging
+        // a rung: the table's own reorder drops it at the position it was
+        // dropped in, and the server settles every rank behind it.
+        reorder={{
+          positionField: 'rank',
+          onReorder: async (id, position) => {
+            await adminClient.membershipTiers.reposition(id, { new_position: position })
+            queryClient.invalidateQueries({ queryKey: ['membership-tiers'] })
+          },
+        }}
         rowActions={(tier) =>
           tier.customer_group_id ? (
             <RowActions
               actions={[
-                { key: 'edit', onSelect: () => openTier(tier.customer_group_id as string) },
+                { key: 'edit', onSelect: () => openEdit(tier.customer_group_id as string) },
               ]}
             />
           ) : null
@@ -100,23 +122,25 @@ function MembershipTiersPage() {
         }
       />
 
-      {isCreating && <NewTierSheet onClose={closeSheet} onCreated={openTier} />}
+      {isCreating && <NewTierSheet onClose={closeSheet} onCreated={openCreated} />}
+      {editGroupId && (
+        <MembershipTierSheet storeId={storeId} groupId={editGroupId} onClose={closeSheet} />
+      )}
     </>
   )
 }
 
 const newTierFormSchema = z.object({
   customer_group_id: z.string().min(1),
-  rank: z.coerce.number().int().min(0),
 })
 
 type NewTierFormValues = z.infer<typeof newTierFormSchema>
 
 /**
  * A tier is a customer group carrying settings, so making one is picking the
- * group: the ladder order is the operator's, and a group that is already a tier
- * is refused by the server rather than filtered out of a list the picker is
- * still searching.
+ * group: the rung it takes is the ladder's own — it joins the end until the
+ * operator drags it — and a group that is already a tier is refused by the
+ * server rather than filtered out of a list the picker is still searching.
  */
 function NewTierSheet({
   onClose,
@@ -130,15 +154,12 @@ function NewTierSheet({
   const form = useForm<NewTierFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(newTierFormSchema) as any,
-    defaultValues: { customer_group_id: '', rank: 1 },
+    defaultValues: { customer_group_id: '' },
   })
 
   async function handleSubmit(values: NewTierFormValues) {
     try {
-      await createTier.mutateAsync({
-        groupId: values.customer_group_id,
-        params: { rank: values.rank },
-      })
+      await createTier.mutateAsync({ groupId: values.customer_group_id, params: {} })
       onCreated(values.customer_group_id)
     } catch (error) {
       if (!mapSpreeErrorsToForm(error, form.setError)) throw error
@@ -174,19 +195,6 @@ function NewTierSheet({
                   </Field>
                 )}
               />
-
-              <Field data-invalid={form.formState.errors.rank?.message ? true : undefined}>
-                <FieldLabel htmlFor="membership-tier-rank">
-                  {t('admin.membership_tiers.columns.rank')}
-                </FieldLabel>
-                <Input
-                  id="membership-tier-rank"
-                  type="number"
-                  inputMode="numeric"
-                  {...form.register('rank')}
-                />
-                <FieldError errors={[form.formState.errors.rank]} />
-              </Field>
             </FieldGroup>
           </div>
 
