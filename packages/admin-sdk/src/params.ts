@@ -1925,6 +1925,14 @@ export interface MembershipTierSettingCreateParams {
 export type MembershipTierSettingUpdateParams = Partial<MembershipTierSettingCreateParams>
 
 /**
+ * Voiding a card the customer cannot: what the support desk was told, kept with
+ * the record of what happened.
+ */
+export interface MembershipCardRecycleParams {
+  reason?: string
+}
+
+/**
  * The rung an operator dropped a tier at. The server settles the store's whole
  * ladder into 1..n behind it, so the position is the only thing a move carries.
  */

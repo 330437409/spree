@@ -2683,6 +2683,10 @@
       },
       "threshold": {
         "help": "What a customer must spend to reach this tier. Leave it blank for a tier that is sold or granted."
+      },
+      "filter": {
+        "placeholder": "Search tiers…",
+        "empty": "No tiers match"
       }
     },
     "nav": {
@@ -2717,9 +2721,11 @@
       "inventory": "Inventory",
       "suppliers": "Suppliers",
       "loyalty": "Loyalty",
-      "memberships": "Memberships",
+      "memberships": "Membership tiers",
       "store_credits": "Store Credits",
-      "commission_rates": "Commission rates"
+      "commission_rates": "Commission rates",
+      "members": "Members",
+      "membership_cards": "Membership cards"
     },
     "option_types": {
       "columns": {
@@ -5532,7 +5538,9 @@
       "webhook_endpoints": "Where your other systems are notified when something happens in the store.",
       "returns": "Goods coming back, from request to refund.",
       "exchanges": "Purchases swapped for a different size, colour or product.",
-      "claims": "Deliveries that went wrong — damaged, missing or wrong items — and how each was resolved."
+      "claims": "Deliveries that went wrong — damaged, missing or wrong items — and how each was resolved.",
+      "members": "Who holds which tier, and until when.",
+      "membership_cards": "Every card this store has issued, and what became of it."
     },
     "tax_categories": {
       "add_cta": "Add tax category",
@@ -6136,6 +6144,71 @@
       "no_customer": "No customer",
       "page": {
         "subtitle": "What the store owes in prepaid balances, across every customer."
+      }
+    },
+    "members": {
+      "search_placeholder": "Search members",
+      "empty": "No memberships yet. A member appears here once a card is activated.",
+      "open_ended": "No end",
+      "view_customer": "View customer",
+      "columns": {
+        "customer": "Member",
+        "tier": "Tier",
+        "starts_at": "Starts",
+        "ends_at": "Ends"
+      },
+      "status": {
+        "active": "Active",
+        "past_due": "In grace",
+        "pending": "Not started yet",
+        "expired": "Expired",
+        "cancelled": "Cancelled"
+      },
+      "sheet": {
+        "help": "This membership, and how it is going.",
+        "unavailable": "This membership could not be read."
+      }
+    },
+    "membership_cards": {
+      "search_placeholder": "Search cards",
+      "empty": "No cards yet.",
+      "view_customer": "View customer",
+      "void_cta": "Void this card",
+      "activate_before": "Activate before",
+      "giftable": "Can be given away",
+      "columns": {
+        "customer": "Customer",
+        "tier": "Tier",
+        "source": "Where it came from",
+        "activated_at": "Activated",
+        "expires_at": "Expires"
+      },
+      "status": {
+        "dormant": "Waiting to be activated",
+        "active": "Active",
+        "recycled": "Voided",
+        "expired": "Expired"
+      },
+      "source": {
+        "purchase": "Bought",
+        "grant": "Granted"
+      },
+      "void_confirm": {
+        "title": "Void this card?",
+        "confirm": "Void card",
+        "message": "{{customer}} keeps the days their other cards granted. This card’s own days come back, and the membership ends only if no other card holds it."
+      },
+      "messages": {
+        "voided": "Card voided",
+        "void_failed": "The card could not be voided"
+      },
+      "sheet": {
+        "help": "This card, and what became of it.",
+        "unavailable": "This card could not be read."
+      },
+      "void_reason": {
+        "label": "What happened",
+        "help": "Kept with the card for whoever asks later. Optional."
       }
     }
   }

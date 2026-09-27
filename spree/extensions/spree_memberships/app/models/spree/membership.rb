@@ -33,6 +33,7 @@ module Spree
     has_one :card, class_name: 'Spree::MembershipCard', inverse_of: :membership, dependent: nil
 
     validates :customer_group_id, presence: true
+    validate :group_in_same_store
     validate :ends_after_starts
     validate :one_live_term_per_tier, on: :create
 
@@ -49,6 +50,12 @@ module Spree
       with_status(:pending).where(starts_at: ..now).
         or(with_status(:active, :past_due).where(ends_at: ..now))
     }
+
+    # What the back office's own list searches and narrows by: whose term it is
+    # — through the customer, so an operator can look one up by the email a
+    # customer quotes — the tier it holds, and where it stands.
+    self.whitelisted_ransackable_attributes = %w[status customer_id customer_group_id starts_at ends_at created_at]
+    self.whitelisted_ransackable_associations = %w[customer customer_group card]
 
     # What a term of this tier would find waiting: the live terms the customer
     # already holds, and which of them a new one is subject to.
@@ -120,6 +127,16 @@ module Spree
     end
 
     private
+
+    # A term and its tier are one store's, so a pairing that reaches across
+    # stores is refused where it is written rather than published later as
+    # another store's tier name.
+    def group_in_same_store
+      return if customer_group.nil? || store_id.nil?
+      return if customer_group.store_id == store_id
+
+      errors.add(:customer_group, :invalid)
+    end
 
     def ends_after_starts
       return if starts_at.blank? || ends_at.blank? || ends_at >= starts_at

@@ -15,12 +15,9 @@ module Spree
                  activated_at: 'string | null', membership: 'Record<string, unknown> | null',
                  transfer: 'Record<string, unknown> | null'
 
-        attribute(:tier) do |card|
-          tier = card.tier_setting
-          next if tier.nil?
+        include MembershipNesting
 
-          Spree::Api::V3::MembershipCardTierSerializer.new(tier, params: params).to_h
-        end
+        attribute(:tier) { |card| nested_tier(card) }
 
         attributes :status, :source
 
@@ -37,11 +34,7 @@ module Spree
         attribute(:activates_before) { |card| card.activates_before&.iso8601 }
         attribute(:activated_at) { |card| card.activated_at&.iso8601 }
 
-        attribute(:membership) do |card|
-          next if card.membership.nil?
-
-          Spree::Api::V3::MembershipSerializer.new(card.membership, params: params).to_h
-        end
+        attribute(:membership) { |card| nested_membership(card) }
 
         # The window the card is inside, in whatever state it is: 赠送中 while it
         # is on its way, and 已赠送 once it was claimed, which the client reads

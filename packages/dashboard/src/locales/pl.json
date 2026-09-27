@@ -2707,6 +2707,10 @@
       },
       "threshold": {
         "help": "Ile klient musi wydać, aby osiągnąć ten poziom. Zostaw puste, jeśli poziom jest sprzedawany lub przyznawany."
+      },
+      "filter": {
+        "placeholder": "Szukaj poziomów…",
+        "empty": "Brak pasujących poziomów"
       }
     },
     "nav": {
@@ -2741,9 +2745,11 @@
       "inventory": "Magazyn",
       "suppliers": "Dostawcy",
       "loyalty": "Lojalność",
-      "memberships": "Członkostwa",
+      "memberships": "Poziomy członkostwa",
       "store_credits": "Środki w sklepie",
-      "commission_rates": "Stawki prowizji"
+      "commission_rates": "Stawki prowizji",
+      "members": "Członkowie",
+      "membership_cards": "Karty członkowskie"
     },
     "option_types": {
       "columns": {
@@ -5600,7 +5606,9 @@
       "webhook_endpoints": "Gdzie Twoje inne systemy są powiadamiane, gdy coś dzieje się w sklepie.",
       "returns": "Towary wracające do sklepu, od zgłoszenia do zwrotu pieniędzy.",
       "exchanges": "Zakupy wymieniane na inny rozmiar, kolor lub produkt.",
-      "claims": "Nieudane dostawy — uszkodzone, brakujące lub błędne produkty — i sposób ich rozwiązania."
+      "claims": "Nieudane dostawy — uszkodzone, brakujące lub błędne produkty — i sposób ich rozwiązania.",
+      "members": "Kto ma jaki poziom i do kiedy.",
+      "membership_cards": "Wszystkie karty wydane przez ten sklep i ich losy."
     },
     "tax_categories": {
       "add_cta": "Dodaj kategorię podatkową",
@@ -6206,6 +6214,71 @@
       "no_customer": "Brak klienta",
       "page": {
         "subtitle": "Ile sklep jest winien w środkach, w rozbiciu na wszystkich klientów."
+      }
+    },
+    "members": {
+      "search_placeholder": "Szukaj członków",
+      "empty": "Nie ma jeszcze członkostw. Członek pojawi się tu, gdy karta zostanie aktywowana.",
+      "open_ended": "Bez końca",
+      "view_customer": "Zobacz klienta",
+      "columns": {
+        "customer": "Członek",
+        "tier": "Poziom",
+        "starts_at": "Od",
+        "ends_at": "Do"
+      },
+      "status": {
+        "active": "Aktywne",
+        "past_due": "W okresie karencji",
+        "pending": "Jeszcze się nie zaczęło",
+        "expired": "Wygasłe",
+        "cancelled": "Anulowane"
+      },
+      "sheet": {
+        "help": "To członkostwo i jego stan.",
+        "unavailable": "Nie udało się wczytać tego członkostwa."
+      }
+    },
+    "membership_cards": {
+      "search_placeholder": "Szukaj kart",
+      "empty": "Nie ma jeszcze kart.",
+      "view_customer": "Zobacz klienta",
+      "void_cta": "Anuluj tę kartę",
+      "activate_before": "Aktywuj do",
+      "giftable": "Można podarować",
+      "columns": {
+        "customer": "Klient",
+        "tier": "Poziom",
+        "source": "Pochodzenie",
+        "activated_at": "Aktywowana",
+        "expires_at": "Wygasa"
+      },
+      "status": {
+        "dormant": "Czeka na aktywację",
+        "active": "Aktywna",
+        "recycled": "Anulowana",
+        "expired": "Wygasła"
+      },
+      "source": {
+        "purchase": "Kupiona",
+        "grant": "Przyznana"
+      },
+      "void_confirm": {
+        "title": "Anulować tę kartę?",
+        "confirm": "Anuluj kartę",
+        "message": "{{customer}} zachowuje dni przyznane przez inne karty. Dni tej karty wracają, a członkostwo kończy się tylko wtedy, gdy nie podtrzymuje go żadna inna karta."
+      },
+      "messages": {
+        "voided": "Karta anulowana",
+        "void_failed": "Nie udało się anulować karty"
+      },
+      "sheet": {
+        "help": "Ta karta i jej losy.",
+        "unavailable": "Nie udało się wczytać tej karty."
+      },
+      "void_reason": {
+        "label": "Co się stało",
+        "help": "Zapisywane przy karcie na wypadek późniejszych pytań. Opcjonalne."
       }
     }
   }

@@ -280,6 +280,20 @@ nav.add({
       position: 150,
     },
     {
+      key: 'loyalty.members',
+      labelKey: 'admin.nav.members',
+      path: '/loyalty/members',
+      subject: Subject.Membership,
+      position: 160,
+    },
+    {
+      key: 'loyalty.membership-cards',
+      labelKey: 'admin.nav.membership_cards',
+      path: '/loyalty/membership-cards',
+      subject: Subject.MembershipCard,
+      position: 170,
+    },
+    {
       key: 'loyalty.store-credits',
       labelKey: 'admin.nav.store_credits',
       path: '/loyalty/store-credits',

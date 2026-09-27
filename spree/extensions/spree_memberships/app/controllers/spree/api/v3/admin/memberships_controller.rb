@@ -21,7 +21,7 @@ module Spree
           end
 
           def collection_includes
-            %i[customer customer_group card]
+            [:customer, :customer_group, :card, { tier_setting: :customer_group }]
           end
 
           def scope_includes

@@ -2683,6 +2683,10 @@
       },
       "threshold": {
         "help": "Wie viel ein Kunde ausgeben muss, um diese Stufe zu erreichen. Leer lassen, wenn die Stufe verkauft oder zugeteilt wird."
+      },
+      "filter": {
+        "placeholder": "Stufen suchen…",
+        "empty": "Keine passenden Stufen"
       }
     },
     "nav": {
@@ -2717,9 +2721,11 @@
       "inventory": "Lagerbestand",
       "suppliers": "Lieferanten",
       "loyalty": "Treue",
-      "memberships": "Mitgliedschaften",
+      "memberships": "Mitgliedsstufen",
       "store_credits": "Guthaben",
-      "commission_rates": "Provisionssätze"
+      "commission_rates": "Provisionssätze",
+      "members": "Mitglieder",
+      "membership_cards": "Mitgliedskarten"
     },
     "option_types": {
       "columns": {
@@ -5532,7 +5538,9 @@
       "webhook_endpoints": "Wohin Ihre anderen Systeme benachrichtigt werden, wenn im Shop etwas passiert.",
       "returns": "Zurückkommende Ware, von der Anfrage bis zur Erstattung.",
       "exchanges": "Käufe, die gegen eine andere Größe, Farbe oder ein anderes Produkt getauscht werden.",
-      "claims": "Fehlgeschlagene Lieferungen — beschädigte, fehlende oder falsche Artikel — und wie sie gelöst wurden."
+      "claims": "Fehlgeschlagene Lieferungen — beschädigte, fehlende oder falsche Artikel — und wie sie gelöst wurden.",
+      "members": "Wer welche Stufe hält – und bis wann.",
+      "membership_cards": "Alle Karten dieses Shops und was aus ihnen wurde."
     },
     "tax_categories": {
       "add_cta": "Steuerkategorie hinzufügen",
@@ -6136,6 +6144,71 @@
       "no_customer": "Kein Kunde",
       "page": {
         "subtitle": "Was der Shop an Guthaben schuldet, über alle Kunden hinweg."
+      }
+    },
+    "members": {
+      "search_placeholder": "Mitglieder suchen",
+      "empty": "Noch keine Mitgliedschaften. Ein Mitglied erscheint hier, sobald eine Karte aktiviert ist.",
+      "open_ended": "Kein Ende",
+      "view_customer": "Kunde ansehen",
+      "columns": {
+        "customer": "Mitglied",
+        "tier": "Stufe",
+        "starts_at": "Beginnt",
+        "ends_at": "Endet"
+      },
+      "status": {
+        "active": "Aktiv",
+        "past_due": "In der Nachfrist",
+        "pending": "Beginnt später",
+        "expired": "Abgelaufen",
+        "cancelled": "Storniert"
+      },
+      "sheet": {
+        "help": "Diese Mitgliedschaft und ihr Stand.",
+        "unavailable": "Diese Mitgliedschaft konnte nicht geladen werden."
+      }
+    },
+    "membership_cards": {
+      "search_placeholder": "Karten suchen",
+      "empty": "Noch keine Karten.",
+      "view_customer": "Kunde ansehen",
+      "void_cta": "Karte stornieren",
+      "activate_before": "Aktivieren bis",
+      "giftable": "Kann verschenkt werden",
+      "columns": {
+        "customer": "Kunde",
+        "tier": "Stufe",
+        "source": "Herkunft",
+        "activated_at": "Aktiviert",
+        "expires_at": "Läuft ab"
+      },
+      "status": {
+        "dormant": "Wartet auf Aktivierung",
+        "active": "Aktiv",
+        "recycled": "Storniert",
+        "expired": "Abgelaufen"
+      },
+      "source": {
+        "purchase": "Gekauft",
+        "grant": "Zugewiesen"
+      },
+      "void_confirm": {
+        "title": "Diese Karte stornieren?",
+        "confirm": "Karte stornieren",
+        "message": "{{customer}} behält die Tage, die andere Karten gewähren. Die Tage dieser Karte fallen zurück, und die Mitgliedschaft endet nur, wenn keine andere Karte sie hält."
+      },
+      "messages": {
+        "voided": "Karte storniert",
+        "void_failed": "Die Karte konnte nicht storniert werden"
+      },
+      "sheet": {
+        "help": "Diese Karte und was aus ihr wurde.",
+        "unavailable": "Diese Karte konnte nicht geladen werden."
+      },
+      "void_reason": {
+        "label": "Was vorgefallen ist",
+        "help": "Wird bei der Karte vermerkt. Optional."
       }
     }
   }

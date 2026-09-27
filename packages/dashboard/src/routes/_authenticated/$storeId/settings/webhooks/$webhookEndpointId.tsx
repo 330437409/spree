@@ -23,6 +23,8 @@ import {
   CardTitle,
   CopyToClipboardButton,
   cn,
+  DetailList,
+  DetailRow,
   ErrorState,
   RelativeTime,
   ResourceLayout,
@@ -457,31 +459,33 @@ function DetailsCard({ endpoint }: { endpoint: WebhookEndpoint }) {
       <CardHeader>
         <CardTitle>{t('admin.pages.settings.webhooks.detail.details_title')}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col divide-y divide-border p-0">
-        <DetailRow
-          label={t('admin.pages.settings.webhooks.detail.subscriptions')}
-          value={
-            endpoint.subscriptions && endpoint.subscriptions.length > 0 ? (
-              <div className="flex max-w-[16rem] flex-wrap justify-end gap-1">
-                {endpoint.subscriptions.map((s) => (
-                  <Badge key={s} variant="secondary" className="font-mono text-[10px]">
-                    {s}
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <Badge variant="secondary">{t('admin.pages.settings.webhooks.events_all')}</Badge>
-            )
-          }
-        />
-        <DetailRow
-          label={t('admin.fields.created_at.label')}
-          value={<RelativeTime iso={endpoint.created_at} />}
-        />
-        <DetailRow
-          label={t('admin.fields.updated_at.label')}
-          value={<RelativeTime iso={endpoint.updated_at} />}
-        />
+      <CardContent className="p-0">
+        <DetailList>
+          <DetailRow
+            label={t('admin.pages.settings.webhooks.detail.subscriptions')}
+            value={
+              endpoint.subscriptions && endpoint.subscriptions.length > 0 ? (
+                <div className="flex max-w-[16rem] flex-wrap justify-end gap-1">
+                  {endpoint.subscriptions.map((s) => (
+                    <Badge key={s} variant="secondary" className="font-mono text-[10px]">
+                      {s}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <Badge variant="secondary">{t('admin.pages.settings.webhooks.events_all')}</Badge>
+              )
+            }
+          />
+          <DetailRow
+            label={t('admin.fields.created_at.label')}
+            value={<RelativeTime iso={endpoint.created_at} />}
+          />
+          <DetailRow
+            label={t('admin.fields.updated_at.label')}
+            value={<RelativeTime iso={endpoint.updated_at} />}
+          />
+        </DetailList>
       </CardContent>
     </Card>
   )
@@ -593,7 +597,7 @@ function DeliveryDetailSheet({
             <>
               <Card>
                 <CardContent className="p-0">
-                  <dl className="divide-y divide-border">
+                  <DetailList>
                     <DetailRow
                       label={t('admin.pages.settings.webhooks.deliveries.detail.event')}
                       value={<code className="font-mono text-xs">{delivery.event_name}</code>}
@@ -663,7 +667,7 @@ function DeliveryDetailSheet({
                         }
                       />
                     )}
-                  </dl>
+                  </DetailList>
                 </CardContent>
               </Card>
 
@@ -741,15 +745,6 @@ function DeliveryDetailSheet({
         )}
       </SheetContent>
     </Sheet>
-  )
-}
-
-function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex flex-row items-start justify-between gap-4 px-4 py-3">
-      <dt className="text-sm text-muted-foreground">{label}</dt>
-      <dd className="max-w-full text-right text-sm">{value}</dd>
-    </div>
   )
 }
 

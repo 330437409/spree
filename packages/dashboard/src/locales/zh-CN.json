@@ -2676,6 +2676,10 @@
       },
       "threshold": {
         "help": "客户累计消费达到多少可进入该档位。留空表示该档位是出售或直接授予的。"
+      },
+      "filter": {
+        "placeholder": "搜索档位…",
+        "empty": "没有匹配的档位"
       }
     },
     "nav": {
@@ -2712,7 +2716,9 @@
       "loyalty": "会员权益",
       "memberships": "会员档位",
       "store_credits": "店铺信用",
-      "commission_rates": "佣金费率"
+      "commission_rates": "佣金费率",
+      "members": "会员",
+      "membership_cards": "会员卡"
     },
     "option_types": {
       "columns": {
@@ -5520,7 +5526,9 @@
       "webhook_endpoints": "店铺发生事件时通知您其他系统的地址。",
       "returns": "退回的商品，从申请到退款。",
       "exchanges": "换成其他尺码、颜色或商品的购买。",
-      "claims": "出问题的配送——损坏、缺失或错发的商品——以及各自的处理结果。"
+      "claims": "出问题的配送——损坏、缺失或错发的商品——以及各自的处理结果。",
+      "members": "谁持有哪个档位，以及期限到什么时候。",
+      "membership_cards": "本店发出的所有会员卡，以及它们的去向。"
     },
     "tax_categories": {
       "add_cta": "添加税务类别",
@@ -6123,6 +6131,71 @@
       "no_customer": "无客户",
       "page": {
         "subtitle": "店铺在所有客户中欠下的预付余额总额。"
+      }
+    },
+    "members": {
+      "search_placeholder": "搜索会员",
+      "empty": "还没有会员。会员卡激活后，会员会出现在这里。",
+      "open_ended": "无到期时间",
+      "view_customer": "查看客户",
+      "columns": {
+        "customer": "会员",
+        "tier": "档位",
+        "starts_at": "开始",
+        "ends_at": "到期"
+      },
+      "status": {
+        "active": "生效中",
+        "past_due": "宽限期内",
+        "pending": "待开始",
+        "expired": "已过期",
+        "cancelled": "已取消"
+      },
+      "sheet": {
+        "help": "这份会员档期及其状态。",
+        "unavailable": "无法读取这份会员档期。"
+      }
+    },
+    "membership_cards": {
+      "search_placeholder": "搜索会员卡",
+      "empty": "还没有会员卡。",
+      "view_customer": "查看客户",
+      "void_cta": "作废这张卡",
+      "activate_before": "激活截止",
+      "giftable": "可赠送",
+      "columns": {
+        "customer": "客户",
+        "tier": "档位",
+        "source": "来源",
+        "activated_at": "激活时间",
+        "expires_at": "到期"
+      },
+      "status": {
+        "dormant": "待激活",
+        "active": "生效中",
+        "recycled": "已作废",
+        "expired": "已过期"
+      },
+      "source": {
+        "purchase": "购买",
+        "grant": "运营赠送"
+      },
+      "void_confirm": {
+        "title": "作废这张会员卡？",
+        "confirm": "作废",
+        "message": "{{customer}} 其它会员卡给出的天数不受影响；这张卡自己的天数会收回，只有在没有其它卡支撑时，档期才会提前结束。"
+      },
+      "messages": {
+        "voided": "会员卡已作废",
+        "void_failed": "会员卡作废失败"
+      },
+      "sheet": {
+        "help": "这张会员卡及其去向。",
+        "unavailable": "无法读取这张会员卡。"
+      },
+      "void_reason": {
+        "label": "原因",
+        "help": "会记在会员卡上，供以后查证。可以不填。"
       }
     }
   }

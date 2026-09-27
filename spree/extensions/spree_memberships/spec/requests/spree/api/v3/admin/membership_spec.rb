@@ -213,7 +213,58 @@ RSpec.describe 'the membership operator reads', type: :request do
       get '/api/v3/admin/memberships', headers: headers
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body['data'].first).to include('status' => 'active', 'customer_id' => customer.prefixed_id)
+      expect(response.parsed_body['data'].first).
+        to include('status' => 'active', 'customer_id' => customer.prefixed_id)
+    end
+
+    # Which tier a term holds is read here as it is on a card: the group's name
+    # and the ladder's rung, so an operator's list names the tier rather than
+    # resolving a group id of its own.
+    it 'names the tier a term holds' do
+      create(:membership_tier_setting, customer_group: group, rank: 4)
+      create(:membership, customer: customer, customer_group: group)
+
+      get '/api/v3/admin/memberships', headers: headers
+
+      expect(response.parsed_body['data'].first['tier']).to include('name' => group.name, 'rank' => 4)
+    end
+
+    # The operator's list is searched by the email a customer quotes and
+    # narrowed by where the card stands — the two questions a support desk
+    # actually asks.
+    it 'searches the cards by the customer and narrows them by status' do
+      other = create(:membership_card, customer: create(:customer, email: 'looked-up@example.com'),
+                                       customer_group: group)
+
+      get '/api/v3/admin/membership_cards', headers: headers,
+                                           params: { q: { customer_email_cont: 'looked-up@' } }
+
+      expect(response.parsed_body['data'].map { |row| row['id'] }).to eq([other.prefixed_id])
+
+      get '/api/v3/admin/membership_cards', headers: headers, params: { q: { status_eq: 'dormant' } }
+
+      expect(response.parsed_body['data'].map { |row| row['id'] }).
+        to contain_exactly(card.prefixed_id, other.prefixed_id)
+    end
+
+    it 'searches the terms by the customer and narrows them by status' do
+      held = create(:membership, customer: customer, customer_group: group)
+      elsewhere = create(:membership, customer: create(:customer, email: 'looked-up@example.com'),
+                                      customer_group: create(:customer_group, store: store))
+
+      get '/api/v3/admin/memberships', headers: headers,
+                                       params: { q: { customer_email_cont: 'looked-up@' } }
+
+      expect(response.parsed_body['data'].map { |row| row['id'] }).to eq([elsewhere.prefixed_id])
+
+      get '/api/v3/admin/memberships', headers: headers, params: { q: { status_eq: 'expired' } }
+
+      expect(response.parsed_body['data']).to be_empty
+
+      get '/api/v3/admin/memberships', headers: headers, params: { q: { status_in: %w[active pending] } }
+
+      expect(response.parsed_body['data'].map { |row| row['id'] }).
+        to contain_exactly(held.prefixed_id, elsewhere.prefixed_id)
     end
 
     # The one write this surface has: a card the client cannot void.
@@ -265,6 +316,19 @@ RSpec.describe 'the membership operator reads', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['data'].map { |row| row['customer_group_id'] }).to eq([group.prefixed_id])
+    end
+
+    # What a picker hydrates by: the ladder narrowed to the tiers a filter
+    # already names, which is how a chip keeps its label after a reload.
+    it 'narrows the ladder to the groups it is asked for' do
+      other_group = create(:customer_group, store: store, name: '普通会员')
+      create(:membership_tier_setting, customer_group: other_group, rank: 2)
+
+      get '/api/v3/admin/membership_tiers', headers: headers,
+                                            params: { q: { customer_group_id_in: [group.id] } }
+
+      expect(response.parsed_body['data'].map { |row| row['customer_group_id'] }).
+        to eq([group.prefixed_id])
     end
 
     # A tier of another store is not this store's ladder.

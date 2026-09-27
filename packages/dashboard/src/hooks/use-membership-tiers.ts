@@ -52,5 +52,36 @@ export function useUpdateMembershipTierSetting(groupId: string) {
   })
 }
 
+/**
+ * Shared config for a picker that narrows a list to one or more tiers. The
+ * ladder is the list of things that *are* tiers — a customer group that is not
+ * one can never appear in a member or card list — so the picker offers the
+ * ladder rather than every group, and each option answers with the group id
+ * those lists actually filter on.
+ */
+export function membershipTierFilterProps(queryKey: string) {
+  const asGroups = (rows: MembershipTier[]) => ({
+    data: rows
+      .filter((tier) => tier.customer_group_id)
+      .map((tier) => ({ ...tier, id: tier.customer_group_id as string })),
+  })
+
+  return {
+    queryKey,
+    search: async (q: string) =>
+      asGroups(
+        (await adminClient.membershipTiers.list({ customer_group_name_cont: q, limit: 100 })).data,
+      ),
+    hydrate: async (ids: string[]) =>
+      asGroups(
+        (await adminClient.membershipTiers.list({ customer_group_id_in: ids, limit: ids.length }))
+          .data,
+      ),
+    getOptionLabel: (tier: MembershipTier) => tier.name ?? tier.id,
+    placeholder: i18n.t('admin.membership_tiers.filter.placeholder'),
+    emptyText: i18n.t('admin.membership_tiers.filter.empty'),
+  }
+}
+
 /** The rungs a picker may choose from, as the table reads them. */
 export type { MembershipTier }

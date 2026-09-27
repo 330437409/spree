@@ -40,6 +40,7 @@ module Spree
     # The ladder is searched by the tier's name, which is its group's: this row
     # has no name column, so a search on `name` would build SQL for one that does
     # not exist.
+    self.whitelisted_ransackable_attributes = %w[rank threshold validity_days customer_group_id]
     self.whitelisted_ransackable_associations = %w[customer_group]
 
     # The tier reaches the store through its group: a second tenancy column

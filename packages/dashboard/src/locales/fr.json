@@ -2683,6 +2683,10 @@
       },
       "threshold": {
         "help": "Le montant qu’un client doit dépenser pour atteindre ce niveau. Laissez vide si le niveau est vendu ou attribué."
+      },
+      "filter": {
+        "placeholder": "Rechercher des niveaux…",
+        "empty": "Aucun niveau ne correspond"
       }
     },
     "nav": {
@@ -2717,9 +2721,11 @@
       "inventory": "Inventaire",
       "suppliers": "Fournisseurs",
       "loyalty": "Fidélité",
-      "memberships": "Adhésions",
+      "memberships": "Niveaux d’adhésion",
       "store_credits": "Avoirs",
-      "commission_rates": "Taux de commission"
+      "commission_rates": "Taux de commission",
+      "members": "Membres",
+      "membership_cards": "Cartes de membre"
     },
     "option_types": {
       "columns": {
@@ -5532,7 +5538,9 @@
       "webhook_endpoints": "Où vos autres systèmes sont notifiés quand quelque chose se produit dans la boutique.",
       "returns": "Marchandises qui reviennent, de la demande au remboursement.",
       "exchanges": "Achats échangés contre une autre taille, une autre couleur ou un autre produit.",
-      "claims": "Livraisons qui ont mal tourné — articles endommagés, manquants ou erronés — et comment chacune a été résolue."
+      "claims": "Livraisons qui ont mal tourné — articles endommagés, manquants ou erronés — et comment chacune a été résolue.",
+      "members": "Qui détient quel niveau, et jusqu’à quand.",
+      "membership_cards": "Toutes les cartes émises par cette boutique, et ce qu’elles sont devenues."
     },
     "tax_categories": {
       "add_cta": "Ajouter une catégorie de taxe",
@@ -6136,6 +6144,71 @@
       "no_customer": "Aucun client",
       "page": {
         "subtitle": "Total des avoirs dus par la boutique, tous clients confondus."
+      }
+    },
+    "members": {
+      "search_placeholder": "Rechercher des membres",
+      "empty": "Pas encore d’adhésions. Un membre apparaît ici dès qu’une carte est activée.",
+      "open_ended": "Sans fin",
+      "view_customer": "Voir le client",
+      "columns": {
+        "customer": "Membre",
+        "tier": "Niveau",
+        "starts_at": "Débute",
+        "ends_at": "Se termine"
+      },
+      "status": {
+        "active": "Active",
+        "past_due": "En délai de grâce",
+        "pending": "À venir",
+        "expired": "Expirée",
+        "cancelled": "Annulée"
+      },
+      "sheet": {
+        "help": "Cette adhésion et son état.",
+        "unavailable": "Cette adhésion n’a pas pu être chargée."
+      }
+    },
+    "membership_cards": {
+      "search_placeholder": "Rechercher des cartes",
+      "empty": "Pas encore de cartes.",
+      "view_customer": "Voir le client",
+      "void_cta": "Annuler cette carte",
+      "activate_before": "À activer avant",
+      "giftable": "Peut être offerte",
+      "columns": {
+        "customer": "Client",
+        "tier": "Niveau",
+        "source": "Origine",
+        "activated_at": "Activée",
+        "expires_at": "Expire"
+      },
+      "status": {
+        "dormant": "En attente d’activation",
+        "active": "Active",
+        "recycled": "Annulée",
+        "expired": "Expirée"
+      },
+      "source": {
+        "purchase": "Achetée",
+        "grant": "Attribuée"
+      },
+      "void_confirm": {
+        "title": "Annuler cette carte ?",
+        "confirm": "Annuler la carte",
+        "message": "{{customer}} conserve les jours accordés par ses autres cartes. Les jours de celle-ci sont repris, et l’adhésion ne se termine que si aucune autre carte ne la porte."
+      },
+      "messages": {
+        "voided": "Carte annulée",
+        "void_failed": "La carte n’a pas pu être annulée"
+      },
+      "sheet": {
+        "help": "Cette carte et ce qu’elle est devenue.",
+        "unavailable": "Cette carte n’a pas pu être chargée."
+      },
+      "void_reason": {
+        "label": "Ce qui s’est passé",
+        "help": "Conservé avec la carte pour qui le demandera. Facultatif."
       }
     }
   }
